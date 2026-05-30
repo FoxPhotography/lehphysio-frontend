@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { OtpInput } from '../components/OtpInput';
 
 interface ResetPasswordProps {
   email: string;
@@ -33,17 +34,9 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
         {authError && <div className="pl-form-error">{authError}</div>}
         {authSuccess && <div className="pl-form-success">{authSuccess}</div>}
         <form onSubmit={handleSubmit}>
-          <div className="pl-form-group">
-            <label>6-Digit Code</label>
-            <input
-              type="text"
-              className="pl-input"
-              maxLength={6}
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              style={{ textAlign: 'center', fontSize: '20px', letterSpacing: '8px', fontWeight: 900 }}
-              required
-            />
+          <div className="pl-form-group" style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '8px', textAlign: 'center' }}>6-Digit Code</label>
+            <OtpInput value={code} onChange={setCode} />
           </div>
           <div className="pl-form-group">
             <label>New Password</label>
