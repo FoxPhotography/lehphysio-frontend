@@ -14,6 +14,8 @@ import { Rewards } from './pages/Rewards';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Confirm } from './pages/Confirm';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
 import { Admin } from './pages/Admin';
 
 // Components
@@ -39,6 +41,7 @@ function App() {
   const [user, setUser] = useState<any>(null);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [confirmEmail, setConfirmEmail] = useState('');
+  const [forgotEmail, setForgotEmail] = useState('');
   
   // App Data
   const [episodes, setEpisodes] = useState([]);
@@ -900,6 +903,55 @@ function App() {
       }
     } catch (e) {
       setAuthError('Failed to activate account.');
+    }
+  };
+
+  const handleForgotPassword = async (email: string) => {
+    setAuthError('');
+    setAuthSuccess('');
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAuthSuccess(data.message);
+        setForgotEmail(email);
+        setTimeout(() => {
+          setCurrentPage('reset-password');
+          setAuthSuccess('');
+        }, 1500);
+      } else {
+        setAuthError(data.error);
+      }
+    } catch (e) {
+      setAuthError('Connection error occurred.');
+    }
+  };
+
+  const handleResetPassword = async (code: string, newPassword: string) => {
+    setAuthError('');
+    setAuthSuccess('');
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail, code, newPassword })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAuthSuccess(data.message);
+        setTimeout(() => {
+          setCurrentPage('login');
+          setAuthSuccess('');
+        }, 2000);
+      } else {
+        setAuthError(data.error);
+      }
+    } catch (e) {
+      setAuthError('Connection error occurred.');
     }
   };
 
@@ -1941,6 +1993,29 @@ function App() {
     );
   };
 
+  const renderForgotPasswordPage = () => {
+    return (
+      <ForgotPassword
+        authError={authError}
+        authSuccess={authSuccess}
+        onSubmit={handleForgotPassword}
+        setCurrentPage={setCurrentPage}
+      />
+    );
+  };
+
+  const renderResetPasswordPage = () => {
+    return (
+      <ResetPassword
+        email={forgotEmail}
+        authError={authError}
+        authSuccess={authSuccess}
+        onSubmit={handleResetPassword}
+        setCurrentPage={setCurrentPage}
+      />
+    );
+  };
+
   const renderAdminPage = () => {
     return (
       <Admin
@@ -2016,6 +2091,8 @@ function App() {
           {currentPage === 'login' && renderLoginPage()}
           {currentPage === 'register' && renderRegisterPage()}
           {currentPage === 'confirm' && renderConfirmPage()}
+          {currentPage === 'forgot-password' && renderForgotPasswordPage()}
+          {currentPage === 'reset-password' && renderResetPasswordPage()}
           {currentPage === 'admin' && renderAdminPage()}
         </main>
 
