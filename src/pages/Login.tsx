@@ -43,7 +43,7 @@ export const Login: React.FC<LoginProps> = ({
             />
           </div>
           <div style={{ textAlign: 'right', marginTop: '0.5rem' }}>
-            <button type="button" onClick={() => setCurrentPage('forgot-password')} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>نسيت كلمة المرور؟</button>
+            <button type="button" onClick={() => setCurrentPage('forgot-password')} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer' }}>Forgot Password?</button>
           </div>
           <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Login</button>
         </form>
