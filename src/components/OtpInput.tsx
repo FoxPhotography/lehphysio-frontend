@@ -3,9 +3,10 @@ import React, { useRef } from 'react';
 interface OtpInputProps {
   value: string;
   onChange: (val: string) => void;
+  onComplete?: (code: string) => void;
 }
 
-export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange }) => {
+export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange, onComplete }) => {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
   // Split value into array of 6 digits (padded with empty strings)
@@ -14,6 +15,20 @@ export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const val = e.target.value;
     const numericVal = val.replace(/[^0-9]/g, ''); // Allow only digits
+
+    // If the user pasted a longer string directly into one of the boxes
+    if (numericVal.length > 1) {
+      const code = numericVal.slice(0, 6);
+      onChange(code);
+      if (code.length === 6 && onComplete) {
+        onComplete(code);
+      }
+      // Focus the last input box after pasting
+      const focusIndex = Math.min(code.length - 1, 5);
+      inputsRef.current[focusIndex]?.focus();
+      return;
+    }
+
     if (!numericVal) {
       // If cleared
       const newCode = [...codeArray];
@@ -32,6 +47,11 @@ export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange }) => {
     // Auto-focus next input
     if (index < 5 && digit) {
       inputsRef.current[index + 1]?.focus();
+    }
+
+    // Trigger onComplete if code is full
+    if (combined.length === 6 && onComplete) {
+      onComplete(combined);
     }
   };
 
@@ -63,8 +83,12 @@ export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange }) => {
     onChange(digitsOnly);
 
     // Focus the appropriate input box after pasting
-    const focusIndex = Math.min(digitsOnly.length, 5);
+    const focusIndex = Math.min(digitsOnly.length - 1, 5);
     inputsRef.current[focusIndex]?.focus();
+
+    if (digitsOnly.length === 6 && onComplete) {
+      onComplete(digitsOnly);
+    }
   };
 
   return (
@@ -76,7 +100,6 @@ export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange }) => {
           type="text"
           inputMode="numeric"
           pattern="[0-9]*"
-          maxLength={1}
           value={digit}
           onChange={(e) => handleChange(e, idx)}
           onKeyDown={(e) => handleKeyDown(e, idx)}
@@ -102,3 +125,4 @@ export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange }) => {
     </div>
   );
 };
+

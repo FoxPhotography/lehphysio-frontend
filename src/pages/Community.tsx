@@ -32,6 +32,7 @@ interface CommunityProps {
   handleCreateSuggestion: (title: string, content: string) => void;
   handleUpvoteSuggestion: (id: number) => void;
   handleOpenModerationModal: (username: string, userId: number) => void;
+  handleDeleteSuggestion: (id: number) => void;
 }
 
 export const Community: React.FC<CommunityProps> = ({
@@ -64,12 +65,80 @@ export const Community: React.FC<CommunityProps> = ({
   suggestions,
   handleCreateSuggestion,
   handleUpvoteSuggestion,
-  handleOpenModerationModal
+  handleOpenModerationModal,
+  handleDeleteSuggestion,
+  usernames = []
 }) => {
   const [showScrollDownBtn, setShowScrollDownBtn] = React.useState(false);
   const [activeSubTab, setActiveSubTab] = React.useState<'chat' | 'suggestions'>('chat');
   const [suggTitle, setSuggTitle] = React.useState('');
   const [suggContent, setSuggContent] = React.useState('');
+
+  // Mentions autocomplete state
+  const [mentionSearch, setMentionSearch] = React.useState('');
+  const [mentionStartIndex, setMentionStartIndex] = React.useState(-1);
+  const [showMentionSuggestions, setShowMentionSuggestions] = React.useState(false);
+
+  const renderTextWithMentions = (text: string) => {
+    if (!text) return '';
+    const parts = text.split(/(@\w+)/g);
+    return parts.map((part, idx) => {
+      if (part.startsWith('@')) {
+        return (
+          <span key={idx} className="mention-tag" style={{ color: 'var(--orange)', fontWeight: 800 }}>
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setChatInput(value);
+
+    // Get cursor position
+    const selectionStart = e.target.selectionStart || 0;
+    const textBeforeCursor = value.substring(0, selectionStart);
+    
+    // Check if there is an @ symbol before the cursor
+    const lastAtIdx = textBeforeCursor.lastIndexOf('@');
+    if (lastAtIdx !== -1) {
+      const isStartOrAfterSpace = lastAtIdx === 0 || textBeforeCursor[lastAtIdx - 1] === ' ' || textBeforeCursor[lastAtIdx - 1] === '\n';
+      const textAfterAt = textBeforeCursor.substring(lastAtIdx + 1);
+      
+      if (isStartOrAfterSpace && !textAfterAt.includes(' ')) {
+        setMentionSearch(textAfterAt);
+        setMentionStartIndex(lastAtIdx);
+        setShowMentionSuggestions(true);
+        return;
+      }
+    }
+    
+    setShowMentionSuggestions(false);
+  };
+
+  const handleSelectMention = (targetUsername: string) => {
+    if (mentionStartIndex === -1) return;
+    const value = chatInput;
+    const selectionStart = mentionStartIndex + targetUsername.length + 2; // +2 for '@' and space at end
+    const newValue = 
+      value.substring(0, mentionStartIndex) + 
+      `@${targetUsername} ` + 
+      value.substring(mentionStartIndex + mentionSearch.length + 1);
+    
+    setChatInput(newValue);
+    setShowMentionSuggestions(false);
+    
+    setTimeout(() => {
+      const inputEl = document.getElementById('community-chat-input') as HTMLInputElement;
+      if (inputEl) {
+        inputEl.focus();
+        inputEl.setSelectionRange(selectionStart, selectionStart);
+      }
+    }, 50);
+  };
 
   const submitSuggestion = (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +194,7 @@ export const Community: React.FC<CommunityProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.4rem', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <i className="ti ti-messages" style={{ color: 'var(--orange)', fontSize: '20px' }}></i>
-                  <h3 style={{ fontSize: '14px', fontWeight: 900 }}>Why Physio? Chat</h3>
+                  <h3 style={{ fontSize: '14px', fontWeight: 900 }}>Leh Physio? Chat</h3>
                 </div>
                 <span style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 800 }}>
                   {onlineCount} Online Now 🟢
@@ -173,6 +242,13 @@ export const Community: React.FC<CommunityProps> = ({
                         transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28)',
                         userSelect: 'none',
                         cursor: 'pointer'
+                      }}
+                      onClick={() => {
+                        if (isMultiSelectMode) {
+                          setSelectedMessageIds(prev => 
+                            prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]
+                          );
+                        }
                       }}
                       onContextMenu={(e) => handleChatContextMenu(e, msg)}
                       onTouchStart={(e) => handleChatTouchStart(e, msg)}
@@ -238,6 +314,30 @@ export const Community: React.FC<CommunityProps> = ({
                         </div>
                       )}
 
+                      {/* Outgoing User Avatar */}
+                      {isMyMsg && (
+                        <div 
+                          className="mobile-avatar-ring" 
+                          style={{ 
+                            width: '32px', 
+                            height: '32px', 
+                            flexShrink: 0, 
+                            marginTop: '16px', 
+                            cursor: 'default',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                            background: 'var(--gradient-main)' 
+                          }}
+                        >
+                          <div className="mobile-avatar-inner" style={{ fontSize: '11px', background: 'var(--bg-primary)' }}>
+                            {msg.avatar_url ? (
+                              <img src={msg.avatar_url} alt={msg.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                            ) : (
+                              msg.username ? msg.username[0].toUpperCase() : 'U'
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Message Bubble Container */}
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMyMsg ? 'flex-start' : 'flex-end', width: 'auto' }}>
                         
@@ -252,8 +352,16 @@ export const Community: React.FC<CommunityProps> = ({
                           <span style={{ fontSize: '9px', color: 'var(--text-secondary)' }}>
                             {msg.rank.emoji} {msg.rank.name_en}
                           </span>
-                          {msg.role === 'admin' && (
-                            <span className="badge-tag mini" style={{ borderColor: 'var(--orange)', color: 'var(--orange)', background: 'rgba(255, 106, 0, 0.15)', padding: '1px 4px', fontSize: '8px', marginLeft: '4px', verticalAlign: 'middle' }}>Admin</span>
+                          {(msg.role === 'admin' || msg.role === 'owner') && (
+                            <span className="badge-tag mini" style={{ 
+                              borderColor: msg.role === 'owner' ? '#FFD700' : 'var(--orange)', 
+                              color: msg.role === 'owner' ? '#FFD700' : 'var(--orange)', 
+                              background: msg.role === 'owner' ? 'rgba(255, 215, 0, 0.15)' : 'rgba(255, 106, 0, 0.15)', 
+                              padding: '1px 4px', fontSize: '8px', marginLeft: '4px', verticalAlign: 'middle',
+                              fontWeight: msg.role === 'owner' ? 900 : 700 
+                            }}>
+                              {msg.role === 'owner' ? '👑 Owner' : 'Admin'}
+                            </span>
                           )}
                         </div>
 
@@ -298,24 +406,24 @@ export const Community: React.FC<CommunityProps> = ({
                           )}
 
                           {/* Message content wrapper (text & time side-by-side) */}
-                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', flexWrap: 'wrap', justifyContent: 'space-between', direction: 'ltr' }}>
-                              {/* Message text */}
-                              <p style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.4, textAlign: 'left' }}>
-                                {msg.message}
-                              </p>
+                          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', flexWrap: 'wrap', justifyContent: 'space-between', direction: 'ltr' }}>
+                            {/* Message text */}
+                            <p style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.4, textAlign: 'left' }}>
+                              {renderTextWithMentions(msg.message)}
+                            </p>
 
-                              {/* Edited badge & timestamp inline next to the message */}
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px', opacity: 0.7, whiteSpace: 'nowrap', alignSelf: 'flex-end', userSelect: 'none', marginLeft: 'auto' }}>
-                               {!!msg.is_edited && <span>(edited)</span>}
-                               <span>{new Date(msg.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-                               {isMyMsg && (
-                                 msg.isPending ? (
-                                   <i className="ti ti-clock" style={{ fontSize: '11px', color: 'rgba(0, 0, 0, 0.6)' }}></i>
-                                 ) : (
-                                   <i className="ti ti-check" style={{ fontSize: '11px', color: '#000' }}></i>
-                                 )
-                               )}
-                             </div>
+                            {/* Edited badge & timestamp inline next to the message */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px', opacity: 0.7, whiteSpace: 'nowrap', alignSelf: 'flex-end', userSelect: 'none', marginLeft: 'auto' }}>
+                              {!!msg.is_edited && <span>(edited)</span>}
+                              <span>{new Date(msg.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                              {isMyMsg && (
+                                msg.isPending ? (
+                                  <i className="ti ti-clock" style={{ fontSize: '11px', color: 'rgba(0, 0, 0, 0.6)' }}></i>
+                                ) : (
+                                  <i className="ti ti-check" style={{ fontSize: '11px', color: '#000' }}></i>
+                                )
+                              )}
+                            </div>
                           </div>
 
                           {/* Reactions badges display */}
@@ -350,6 +458,30 @@ export const Community: React.FC<CommunityProps> = ({
                           )}
                         </div>
                       </div>
+
+                      {/* Incoming User Avatar */}
+                      {!isMyMsg && (
+                        <div 
+                          className="mobile-avatar-ring" 
+                          style={{ 
+                            width: '32px', 
+                            height: '32px', 
+                            flexShrink: 0, 
+                            marginTop: '16px', 
+                            cursor: 'default',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                            background: 'var(--gradient-main)' 
+                          }}
+                        >
+                          <div className="mobile-avatar-inner" style={{ fontSize: '11px', background: 'var(--bg-primary)' }}>
+                            {msg.avatar_url ? (
+                              <img src={msg.avatar_url} alt={msg.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                            ) : (
+                              msg.username[0].toUpperCase()
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -357,7 +489,7 @@ export const Community: React.FC<CommunityProps> = ({
             </div>
 
             {/* Chat Form Area */}
-            <div style={{ marginTop: '1rem', borderTop: '1px solid var(--card-border)', paddingTop: '0.75rem', flexShrink: 0, direction: 'ltr', textAlign: 'left' }}>
+            <div style={{ marginTop: '1rem', borderTop: '1px solid var(--card-border)', paddingTop: '0.75rem', flexShrink: 0, direction: 'ltr', textAlign: 'left', position: 'relative' }}>
               
               {/* Replying Indicator Bar */}
               {replyingTo && (
@@ -384,6 +516,74 @@ export const Community: React.FC<CommunityProps> = ({
                   >
                     <i className="ti ti-x"></i>
                   </button>
+                </div>
+              )}
+
+              {/* Mentions Autocomplete suggestions */}
+              {showMentionSuggestions && usernames && usernames.length > 0 && (
+                <div 
+                  className="glass-card mention-suggestions-dropdown"
+                  style={{
+                    position: 'absolute',
+                    bottom: 'calc(100% + 5px)',
+                    left: 0,
+                    right: 0,
+                    maxHeight: '180px',
+                    overflowY: 'auto',
+                    zIndex: 20,
+                    background: 'rgba(15, 15, 15, 0.95)',
+                    border: '1px solid var(--card-border)',
+                    borderRadius: '12px',
+                    boxShadow: '0 -8px 24px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 106, 0, 0.1)',
+                    backdropFilter: 'blur(10px)',
+                    padding: '6px'
+                  }}
+                >
+                  {usernames
+                    .filter((u: any) => u.username.toLowerCase().includes(mentionSearch.toLowerCase()) && u.username !== user?.username)
+                    .map((u: any) => (
+                      <button
+                        key={u.username}
+                        type="button"
+                        onClick={() => handleSelectMention(u.username)}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '8px 12px',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#fff',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          borderRadius: '8px',
+                          transition: 'background 0.2s',
+                          fontFamily: 'Outfit, sans-serif'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 106, 0, 0.1)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <div className="mobile-avatar-ring" style={{ width: '24px', height: '24px', flexShrink: 0 }}>
+                          <div className="mobile-avatar-inner" style={{ fontSize: '9px' }}>
+                            {u.avatar_url ? (
+                              <img src={u.avatar_url} alt={u.username} />
+                            ) : (
+                              u.username[0].toUpperCase()
+                            )}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--orange)' }}>@{u.username}</span>
+                          <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{u.role === 'owner' ? '👑 Owner' : u.role === 'admin' ? '🛡️ Admin' : 'Student'}</span>
+                        </div>
+                      </button>
+                    ))}
+                  {usernames.filter((u: any) => u.username.toLowerCase().includes(mentionSearch.toLowerCase()) && u.username !== user?.username).length === 0 && (
+                    <div style={{ padding: '8px 12px', fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                      No matching users found
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -430,7 +630,7 @@ export const Community: React.FC<CommunityProps> = ({
                     className="pl-input"
                     placeholder={editingMessage ? "Edit your message here..." : "Message"}
                     value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
+                    onChange={handleInputChange}
                   />
                   <button type="submit" className="pl-chat-send-btn" onMouseDown={(e) => e.preventDefault()}>
                     <i className={`ti ${editingMessage ? 'ti-check' : 'ti-send'}`} style={{ transform: editingMessage ? 'none' : 'scaleX(-1)' }}></i>
@@ -547,6 +747,16 @@ export const Community: React.FC<CommunityProps> = ({
                         >
                           <i className={s.isUpvoted ? "ti ti-thumb-up-filled" : "ti ti-thumb-up"}></i> {s.upvotes || 0} Upvotes
                         </button>
+                        {user && (user.role === 'admin' || user.role === 'owner') && (
+                          <button 
+                            type="button" 
+                            className="feed-action-btn" 
+                            onClick={() => handleDeleteSuggestion(s.id)}
+                            style={{ fontSize: '11px', display: 'flex', gap: '4px', alignItems: 'center', color: '#ff4d4d' }}
+                          >
+                            <i className="ti ti-trash"></i> Delete
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -629,7 +839,7 @@ export const Community: React.FC<CommunityProps> = ({
               <i className="ti ti-select"></i> Select
             </button>
 
-            {user && (activeContextMenu.msg.username === user.username || user.role === 'admin') && (
+            {user && (activeContextMenu.msg.username === user.username || user.role === 'admin' || user.role === 'owner') && (
               <button 
                 className="context-menu-item delete"
                 onClick={() => {
@@ -640,7 +850,7 @@ export const Community: React.FC<CommunityProps> = ({
                 <i className="ti ti-trash"></i> Delete
               </button>
             )}
-            {user && user.role === 'admin' && activeContextMenu.msg.username !== user.username && (
+            {user && (user.role === 'admin' || user.role === 'owner') && activeContextMenu.msg.username !== user.username && (
               <button 
                 className="context-menu-item moderate"
                 onClick={() => {

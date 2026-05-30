@@ -23,8 +23,17 @@ export const Confirm: React.FC<ConfirmProps> = ({
         <p style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '2rem' }}>Enter the 6-digit verification code sent to your email</p>
         {authError && <div className="pl-form-error">{authError}</div>}
         {authSuccess && <div className="pl-form-success">{authSuccess}</div>}
-        <form onSubmit={handleConfirm}>
-          <OtpInput value={confirmCode} onChange={setConfirmCode} />
+        <form id="verify-form" onSubmit={handleConfirm}>
+          <OtpInput
+            value={confirmCode}
+            onChange={setConfirmCode}
+            onComplete={() => {
+              setTimeout(() => {
+                const form = document.getElementById('verify-form') as HTMLFormElement;
+                if (form) form.requestSubmit();
+              }, 50);
+            }}
+          />
           <button type="submit" className="btn-primary" style={{ width: '100%' }}>Verify Account</button>
         </form>
       </div>

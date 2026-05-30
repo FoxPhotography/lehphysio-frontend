@@ -23,6 +23,7 @@ interface EpisodeDetailProps {
   setReplyingToComment: (cmt: any) => void;
   showToast: (msg: string) => void;
   handleOpenModerationModal: (username: string, userId: number) => void;
+  usernames?: any[];
 }
 
 export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
@@ -46,8 +47,25 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
   replyingToComment,
   setReplyingToComment,
   showToast,
-  handleOpenModerationModal
+  handleOpenModerationModal,
+  usernames = []
 }) => {
+  const [mentionSearchText, setMentionSearchText] = React.useState<string | null>(null);
+
+  const renderTextWithMentions = (text: string) => {
+    if (!text) return '';
+    const parts = text.split(/(@\w+)/g);
+    return parts.map((part, idx) => {
+      if (part.startsWith('@')) {
+        return (
+          <span key={idx} className="mention-tag" style={{ color: 'var(--orange)', fontWeight: 800 }}>
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
   if (episodeDetailLoading) {
     return (
       <div style={{ textAlign: 'center', padding: '5rem 0' }}>
@@ -96,7 +114,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                 borderRadius: '12px'
               }}
             >
-              <i className="ti ti-heart"></i> <span>{likes_count} Likes</span>
+              <i className={has_liked ? 'ti ti-heart-filled' : 'ti ti-heart'}></i> <span>{likes_count} Likes</span>
             </button>
             <button 
               className="btn-outline mini" 
@@ -197,26 +215,98 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
         </h2>
         
         {user ? (
-          <div className="composer-row glass-card" style={{ marginBottom: '1.5rem' }}>
+          <div className="composer-row glass-card" style={{ marginBottom: '1.5rem', position: 'relative' }}>
             <input
+              id="episode-comment-input"
               type="text"
               className="pl-input"
               placeholder={replyingToComment ? `Reply to @${replyingToComment.username}...` : "Add your medical comment here..."}
               value={commentInput}
-              onChange={(e) => setCommentInput(e.target.value)}
+              onChange={(e) => {
+                const text = e.target.value;
+                setCommentInput(text);
+                
+                const cursor = e.target.selectionStart || 0;
+                const textBeforeCursor = text.slice(0, cursor);
+                const match = textBeforeCursor.match(/@(\w*)$/);
+                if (match) {
+                  setMentionSearchText(match[1]);
+                } else {
+                  setMentionSearchText(null);
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && commentInput.trim()) {
                   handleEpisodeInteract('comment', commentInput, replyingToComment?.id);
                 }
               }}
             />
+
+            {mentionSearchText !== null && usernames.length > 0 && (
+              <div className="mention-autocomplete-dropdown" style={{
+                position: 'absolute',
+                bottom: '100%',
+                left: 0,
+                right: 0,
+                background: 'rgba(20, 20, 20, 0.95)',
+                border: '1px solid var(--orange)',
+                borderRadius: '8px',
+                maxHeight: '150px',
+                overflowY: 'auto',
+                zIndex: 100,
+                boxShadow: '0 -4px 10px rgba(0,0,0,0.3)',
+                padding: '4px'
+              }}>
+                {usernames
+                  .filter(u => u.username.toLowerCase().startsWith(mentionSearchText.toLowerCase()))
+                  .map(u => (
+                    <div 
+                      key={u.username} 
+                      className="mention-autocomplete-item" 
+                      onClick={() => {
+                        const cursor = commentInput.length;
+                        const before = commentInput.slice(0, cursor);
+                        const after = commentInput.slice(cursor);
+                        const replacedBefore = before.replace(/@\w*$/, `@${u.username} `);
+                        setCommentInput(replacedBefore + after);
+                        setMentionSearchText(null);
+                        document.getElementById('episode-comment-input')?.focus();
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '6px 12px',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
+                        color: '#fff',
+                        fontSize: '12px'
+                      }}
+                    >
+                      {u.avatar_url ? (
+                        <img src={u.avatar_url} alt={u.username} style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'var(--orange)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 'bold' }}>
+                          {u.username.substring(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      <span>@{u.username}</span>
+                    </div>
+                  ))
+                }
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', justifyContent: 'flex-end' }}>
               {replyingToComment && (
                 <button className="btn-outline mini" onClick={() => setReplyingToComment(null)}>Cancel</button>
               )}
               <button 
                 className="btn-primary mini" 
-                onClick={() => handleEpisodeInteract('comment', commentInput, replyingToComment?.id)} 
+                onClick={() => {
+                  handleEpisodeInteract('comment', commentInput, replyingToComment?.id);
+                  setMentionSearchText(null);
+                }} 
                 disabled={!commentInput.trim()}
               >
                 {replyingToComment ? 'Reply' : 'Comment'}
@@ -234,8 +324,17 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
             <div key={c.id} className="glass-card" style={{ background: '#0D0D0D' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', overflow: 'hidden', border: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {c.avatar_url ? (
+                      <img src={c.avatar_url} alt={c.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 106, 0, 0.15)', color: 'var(--orange)', fontSize: '11px', fontWeight: 'bold' }}>
+                        {c.username.substring(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
                   <span style={{ fontWeight: 800, color: 'var(--orange)' }}>@{c.username}</span>
-                  {user && user.role === 'admin' && c.user_id !== user.id && (
+                  {user && (user.role === 'admin' || user.role === 'owner') && c.user_id !== user.id && (
                     <button 
                       onClick={() => handleOpenModerationModal(c.username, c.user_id)}
                       className="btn-outline mini"
@@ -249,7 +348,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                   {new Date(c.created_at).toLocaleDateString('ar-EG')}
                 </span>
               </div>
-              <p style={{ fontSize: '13px', color: '#fff', lineHeight: 1.5 }}>{c.content}</p>
+              <p style={{ fontSize: '13px', color: '#fff', lineHeight: 1.5 }}>{renderTextWithMentions(c.content)}</p>
               
               <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
                 <button 
@@ -257,7 +356,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                   onClick={() => handleEpisodeInteract('comment_like', undefined, c.id)}
                   style={{ fontSize: '11px' }}
                 >
-                  <i className="ti ti-heart"></i> {c.likes_count} Likes
+                  <i className={c.has_liked ? 'ti ti-heart-filled' : 'ti ti-heart'}></i> {c.likes_count} Likes
                 </button>
                 {user && (
                   <button className="feed-action-btn" onClick={() => setReplyingToComment(c)} style={{ fontSize: '11px' }}>
@@ -273,8 +372,17 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                     <div key={r.id} style={{ background: 'rgba(255,255,255,0.02)', padding: '0.5rem 0.75rem', borderRadius: '8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <div style={{ width: '24px', height: '24px', borderRadius: '50%', overflow: 'hidden', border: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {r.avatar_url ? (
+                              <img src={r.avatar_url} alt={r.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', fontSize: '10px', fontWeight: 'bold' }}>
+                                {r.username.substring(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
                           <span style={{ fontWeight: 800, color: 'var(--text-secondary)' }}>@{r.username}</span>
-                          {user && user.role === 'admin' && r.user_id !== user.id && (
+                          {user && (user.role === 'admin' || user.role === 'owner') && r.user_id !== user.id && (
                             <button 
                               onClick={() => handleOpenModerationModal(r.username, r.user_id)}
                               className="btn-outline mini"
@@ -288,13 +396,13 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                           {new Date(r.created_at).toLocaleDateString('ar-EG')}
                         </span>
                       </div>
-                      <p style={{ fontSize: '12px', color: '#ccc' }}>{r.content}</p>
+                      <p style={{ fontSize: '12px', color: '#ccc' }}>{renderTextWithMentions(r.content)}</p>
                       <button 
                         className={`feed-action-btn ${r.has_liked ? 'active' : ''}`}
                         onClick={() => handleEpisodeInteract('comment_like', undefined, r.id)}
                         style={{ fontSize: '10px', marginTop: '0.25rem' }}
                       >
-                        <i className="ti ti-heart"></i> {r.likes_count}
+                        <i className={r.has_liked ? 'ti ti-heart-filled' : 'ti ti-heart'}></i> {r.likes_count}
                       </button>
                     </div>
                   ))}

@@ -18,6 +18,8 @@ interface AdminProps {
   handleAdminUpdateSuggestionStatus: (suggestionId: number, status: 'approved' | 'rejected') => void;
   handleAdminDeleteCode: (codeId: number, codeName: string) => void;
   handleOpenModerationModal: (username: string, userId: number) => void;
+  handleAdminDeleteUser: (userId: number, username: string) => void;
+  user: any;
 }
 
 export const Admin: React.FC<AdminProps> = ({
@@ -37,7 +39,9 @@ export const Admin: React.FC<AdminProps> = ({
   handleAdminToggleUserRole,
   handleAdminUpdateSuggestionStatus,
   handleAdminDeleteCode,
-  handleOpenModerationModal
+  handleOpenModerationModal,
+  handleAdminDeleteUser,
+  user
 }) => {
   return (
     <div className="admin-panel animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '3rem' }}>
@@ -402,22 +406,25 @@ export const Admin: React.FC<AdminProps> = ({
                     <td style={{ padding: '8px 12px', color: 'var(--orange)', fontWeight: 700 }}>{u.total_xp.toLocaleString()}</td>
                     <td style={{ padding: '8px 12px' }}>
                       <span className="badge-tag mini" style={{ 
-                        borderColor: u.role === 'admin' ? 'var(--orange)' : 'var(--text-secondary)',
-                        color: u.role === 'admin' ? 'var(--orange)' : 'var(--text-secondary)',
-                        background: u.role === 'admin' ? 'rgba(255, 106, 0, 0.15)' : 'transparent',
-                        textTransform: 'uppercase'
+                        borderColor: u.role === 'owner' ? '#FFD700' : u.role === 'admin' ? 'var(--orange)' : 'var(--text-secondary)',
+                        color: u.role === 'owner' ? '#FFD700' : u.role === 'admin' ? 'var(--orange)' : 'var(--text-secondary)',
+                        background: u.role === 'owner' ? 'rgba(255, 215, 0, 0.15)' : u.role === 'admin' ? 'rgba(255, 106, 0, 0.15)' : 'transparent',
+                        textTransform: 'uppercase',
+                        fontWeight: u.role === 'owner' ? 900 : 700
                       }}>
-                        {u.role}
+                        {u.role === 'owner' ? '👑 OWNER' : u.role}
                       </span>
                     </td>
-                    <td style={{ padding: '8px 12px', textAlign: 'center', display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
-                      <button 
-                        onClick={() => handleAdminToggleUserRole(u.id, u.role)}
-                        className="btn-outline mini" 
-                        style={{ fontSize: '10px', padding: '4px 8px' }}
-                      >
-                        Toggle Role
-                      </button>
+                    <td style={{ padding: '8px 12px', textAlign: 'center', display: 'flex', gap: '0.25rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      {user?.role === 'owner' && u.role !== 'owner' && (
+                        <button 
+                          onClick={() => handleAdminToggleUserRole(u.id, u.role)}
+                          className="btn-outline mini" 
+                          style={{ fontSize: '10px', padding: '4px 8px' }}
+                        >
+                          Toggle Role
+                        </button>
+                      )}
                       <button 
                         onClick={() => handleOpenModerationModal(u.username, u.id)}
                         className="btn-outline mini" 
@@ -425,6 +432,15 @@ export const Admin: React.FC<AdminProps> = ({
                       >
                         Moderate
                       </button>
+                      {user?.role === 'owner' && u.role !== 'owner' && (
+                        <button 
+                          onClick={() => handleAdminDeleteUser(u.id, u.username)}
+                          className="btn-outline mini" 
+                          style={{ fontSize: '10px', padding: '4px 8px', color: '#ff4d4d', borderColor: 'rgba(255,77,77,0.3)' }}
+                        >
+                          🗑️ Delete
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))

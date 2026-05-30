@@ -33,14 +33,29 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
         </p>
         {authError && <div className="pl-form-error">{authError}</div>}
         {authSuccess && <div className="pl-form-success">{authSuccess}</div>}
-        <form onSubmit={handleSubmit}>
+        <form id="reset-password-form" onSubmit={handleSubmit}>
           <div className="pl-form-group" style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', marginBottom: '8px', textAlign: 'center' }}>6-Digit Code</label>
-            <OtpInput value={code} onChange={setCode} />
+            <OtpInput
+              value={code}
+              onChange={setCode}
+              onComplete={() => {
+                setTimeout(() => {
+                  const passInput = document.getElementById('new-password-input') as HTMLInputElement;
+                  if (passInput && !passInput.value) {
+                    passInput.focus();
+                  } else {
+                    const form = document.getElementById('reset-password-form') as HTMLFormElement;
+                    if (form) form.requestSubmit();
+                  }
+                }, 50);
+              }}
+            />
           </div>
           <div className="pl-form-group">
             <label>New Password</label>
             <input
+              id="new-password-input"
               type="password"
               className="pl-input"
               value={newPassword}

@@ -35,7 +35,7 @@ export const Rewards: React.FC<RewardsProps> = ({
   return (
     <div className="rewards-panel animate-fade-in">
       <div className="pl-section-h2">
-        <span className="title-text"><i className="ti ti-gift"></i> Reward Center & XP Shop</span>
+        <span className="title-text"><i className="ti ti-building-store"></i> XP Shop & Reward Center</span>
       </div>
 
       <section className="stats-badge-grid" style={{ gridTemplateColumns: '1fr' }}>

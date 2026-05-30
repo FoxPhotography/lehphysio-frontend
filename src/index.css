@@ -2500,3 +2500,155 @@ html, body {
 .pl-otp-box:not(:placeholder-shown) {
   border-color: var(--orange) !important;
 }
+
+/* ========== PREMIUM RANK CARD ========== */
+.rank-card-premium {
+  position: relative;
+  width: 100%;
+  margin: 1rem 0 1.5rem;
+  padding: 1.25rem 1rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 106, 0, 0.12) 0%, rgba(255, 176, 0, 0.06) 50%, rgba(255, 60, 0, 0.1) 100%);
+  border: 1.5px solid rgba(255, 106, 0, 0.25);
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: rankCardPulse 4s ease-in-out infinite;
+}
+
+.rank-card-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 60% 60%, rgba(255, 106, 0, 0.15), transparent 60%);
+  animation: rankGlowDrift 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.rank-card-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.rank-particle {
+  position: absolute;
+  bottom: -8px;
+  border-radius: 50%;
+  background: var(--orange);
+  opacity: 0;
+  animation: rankParticleFloat 3s ease-out infinite;
+}
+
+.rank-card-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 2;
+  margin-bottom: 0.75rem;
+}
+
+.rank-card-emoji {
+  font-size: 36px;
+  animation: rankEmojiPulse 2.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(255, 106, 0, 0.5));
+}
+
+.rank-card-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.rank-card-title {
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 10px rgba(255, 106, 0, 0.3);
+}
+
+.rank-card-subtitle {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.rank-card-role-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  animation: rankBadgePulse 2s ease-in-out infinite;
+  white-space: nowrap;
+}
+
+.rank-card-xp-bar {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  z-index: 2;
+  margin-bottom: 0.4rem;
+}
+
+.rank-card-xp-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #FF6A00, #FFB000, #FF6A00);
+  background-size: 200% 100%;
+  animation: rankXpShimmer 2s linear infinite;
+  box-shadow: 0 0 8px rgba(255, 106, 0, 0.5);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rank-card-xp-labels {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  z-index: 2;
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+/* Rank Card Animations */
+@keyframes rankCardPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 106, 0, 0.1), inset 0 0 20px rgba(255, 106, 0, 0.02); }
+  50% { box-shadow: 0 0 30px rgba(255, 106, 0, 0.2), inset 0 0 30px rgba(255, 106, 0, 0.05); }
+}
+
+@keyframes rankGlowDrift {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(10%, -5%) rotate(2deg); }
+  66% { transform: translate(-5%, 10%) rotate(-1deg); }
+}
+
+@keyframes rankParticleFloat {
+  0% { transform: translateY(0) scale(0); opacity: 0; }
+  20% { opacity: 0.8; transform: translateY(-10px) scale(1); }
+  100% { transform: translateY(-80px) scale(0.3); opacity: 0; }
+}
+
+@keyframes rankEmojiPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes rankBadgePulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 215, 0, 0.3); transform: scale(1); }
+  50% { box-shadow: 0 0 16px rgba(255, 215, 0, 0.6); transform: scale(1.03); }
+}
+
+@keyframes rankXpShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

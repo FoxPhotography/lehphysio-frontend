@@ -22,7 +22,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside className="app-sidebar">
       <a href="#" className="sidebar-logo" onClick={(e) => { e.preventDefault(); setCurrentPage('home'); }}>
-        <i className="ti ti-microphone"></i> Why <span>Physio?</span>
+        <i className="ti ti-microphone"></i> Leh <span>Physio?</span>
       </a>
 
       <ul className="sidebar-nav">
@@ -60,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </li>
         <li>
           <button className={`sidebar-link-btn ${currentPage === 'rewards' ? 'active' : ''}`} onClick={() => setCurrentPage('rewards')}>
-            <i className="ti ti-gift"></i> Rewards
+            <i className="ti ti-building-store"></i> Shop
           </button>
         </li>
         {user && (
@@ -77,7 +77,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div className={`mobile-avatar-ring ${getAvatarFrameClass()}`}>
-              <div className="mobile-avatar-inner">{user.username[0].toUpperCase()}</div>
+              <div className="mobile-avatar-inner">
+                {user.avatar_url ? (
+                  <img src={user.avatar_url} alt={user.username} />
+                ) : (
+                  user.username[0].toUpperCase()
+                )}
+              </div>
             </div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontWeight: 800, fontSize: '14px', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

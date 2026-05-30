@@ -19,7 +19,7 @@ export const Login: React.FC<LoginProps> = ({
     <div className="auth-panel animate-fade-in" style={{ maxWidth: '400px', margin: '4rem auto' }}>
       <div className="glass-card" style={{ padding: '2rem' }}>
         <h2 style={{ fontSize: '24px', fontWeight: 900, textAlign: 'center', marginBottom: '0.25rem' }}>Login</h2>
-        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '2rem' }}>Welcome back to Why Physio? family</p>
+        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '2rem' }}>Welcome back to Leh Physio? family</p>
         {authError && <div className="pl-form-error">{authError}</div>}
         <form onSubmit={handleLogin}>
           <div className="pl-form-group">

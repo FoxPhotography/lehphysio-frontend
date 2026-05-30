@@ -79,6 +79,7 @@ function App() {
   const [customModal, setCustomModal] = useState<any>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [onlineCount, setOnlineCount] = useState(1);
+  const [usernamesDirectory, setUsernamesDirectory] = useState<any[]>([]);
 
   // Polls Mock State
   const [pollVotes, setPollVotes] = useState<number[]>([42, 12, 8, 25]);
@@ -201,9 +202,11 @@ function App() {
     if (token) {
       localStorage.setItem('token', token);
       fetchUserProfile();
+      fetchUsernamesDirectory();
     } else {
       localStorage.removeItem('token');
       setUser(null);
+      setUsernamesDirectory([]);
     }
   }, [token]);
 
@@ -381,6 +384,185 @@ function App() {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const fetchUsernamesDirectory = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/users/usernames`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUsernamesDirectory(data);
+      }
+    } catch (e) {
+      console.error('Error fetching usernames directory:', e);
+    }
+  };
+
+  const handleUpdateProfile = async (batch?: string, avatarUrl?: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/user/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ batch, avatar_url: avatarUrl })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        fetchUserProfile();
+        fetchUsernamesDirectory();
+        showToast(data.message || 'Profile updated!');
+      } else {
+        showToast(data.error || 'Failed to update profile.');
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('Error updating profile.');
+    }
+  };
+
+  const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              resolve(file);
+            }
+          },
+          'image/jpeg',
+          0.85
+        );
+      };
+      img.onerror = () => {
+        resolve(file);
+      };
+    });
+  };
+
+  const handleUploadImage = async (file: File): Promise<string | null> => {
+    if (!token) return null;
+    try {
+      showToast('Compressing image... ⚙️');
+      const compressedBlob = await resizeImage(file, 1200, 1200);
+
+      const formData = new FormData();
+      formData.append('image', compressedBlob, file.name.replace(/\.[^/.]+$/, "") + ".jpg");
+
+      const res = await fetch(`${API_BASE}/api/upload/image`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error('Server returned non-JSON response:', res.status);
+        showToast('Upload failed: Server error or file too large.');
+        return null;
+      }
+
+      const data = await res.json();
+      if (res.ok) {
+        return data.url;
+      } else {
+        showToast(data.error || 'Upload failed.');
+        return null;
+      }
+    } catch (e) {
+      console.error('Error uploading image:', e);
+      showToast('Upload error.');
+      return null;
+    }
+  };
+
+  const handleLikeEpisode = async (episodeId: number) => {
+    if (!token) {
+      showToast('Please login to like episodes.');
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/api/episodes/${episodeId}/interact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ type: 'like' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.xp_earned > 0) triggerXpPopup(data.xp_earned);
+        fetchEpisodes();
+        fetchUserProfile();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleShareEpisode = async (episodeId: number) => {
+    const shareLink = `${window.location.origin}/?page=episode-detail&id=${episodeId}`;
+    navigator.clipboard.writeText(shareLink);
+    showToast('Episode link copied to clipboard! 🔗');
+
+    if (!token) return;
+    try {
+      await fetch(`${API_BASE}/api/episodes/${episodeId}/interact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ type: 'share' })
+      });
+      fetchEpisodes();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleShareCommunityPost = async (postId: number) => {
+    const shareLink = `${window.location.origin}/?page=community&post=${postId}`;
+    navigator.clipboard.writeText(shareLink);
+    showToast('Post link copied to clipboard! 🔗');
+
+    if (!token) return;
+    try {
+      await fetch(`${API_BASE}/api/community/posts/${postId}/share`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      fetchCommunityPosts();
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -601,7 +783,7 @@ function App() {
   };
 
   useEffect(() => {
-    if (currentPage === 'admin' && user?.role === 'admin') {
+    if (currentPage === 'admin' && (user?.role === 'admin' || user?.role === 'owner')) {
       fetchAdminUsers();
       fetchAdminCodes();
       fetchAdminSuggestions();
@@ -1041,14 +1223,13 @@ function App() {
   };
 
   // Community Feed Interaction API calls
-  const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPostContent.trim() || !token) return;
+  const handleCreatePost = async (title: string, content: string, imageUrl: string) => {
+    if (!content.trim() || !token) return;
     try {
       const res = await fetch(`${API_BASE}/api/community/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ content: newPostContent.trim() })
+        body: JSON.stringify({ title, content, image_url: imageUrl })
       });
       const data = await res.json();
       if (res.ok) {
@@ -1057,9 +1238,12 @@ function App() {
         triggerXpPopup(data.xp_reward);
         fetchCommunityPosts();
         fetchUserProfile();
+      } else {
+        showToast(data.error || 'Failed to publish post.');
       }
-    } catch (err) {
-      console.error(err);
+    } catch (e) {
+      console.error(e);
+      showToast('Error publishing post.');
     }
   };
 
@@ -1138,9 +1322,9 @@ function App() {
     const deltaX = touch.clientX - touchStartXRef.current;
     const deltaY = touch.clientY - touchStartYRef.current;
 
-    if (Math.abs(deltaX) > Math.abs(deltaY) && deltaX < 0) {
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
       if (e.cancelable) e.preventDefault();
-      const dragX = Math.max(-70, deltaX);
+      const dragX = deltaX > 0 ? Math.min(70, deltaX) : Math.max(-70, deltaX);
       setSwipeTranslateX(prev => ({ ...prev, [msg.id]: dragX }));
     }
   };
@@ -1153,7 +1337,7 @@ function App() {
 
     if (swipeMessageIdRef.current === msg.id) {
       const currentTranslateX = swipeTranslateX[msg.id] || 0;
-      if (currentTranslateX < -45) {
+      if (Math.abs(currentTranslateX) > 45) {
         setReplyingTo({
           id: msg.id,
           username: msg.username,
@@ -1199,6 +1383,8 @@ function App() {
       rank: user?.rank || { name_en: 'Anatomy Rookie', emoji: '🧪', tier: 1 },
       message: messageText,
       created_at: new Date().toISOString(),
+      avatar_url: user?.avatar_url || null,
+      role: user?.role || 'student',
       reply_to: replyingTo ? {
         id: replyingTo.id,
         username: replyingTo.username,
@@ -1596,6 +1782,85 @@ function App() {
     );
   };
 
+  const handleDeletePost = (postId: number) => {
+    showConfirm(
+      'Delete Post',
+      'Are you sure you want to delete this post? This action cannot be undone.',
+      async () => {
+        if (!token) return;
+        try {
+          const res = await fetch(`${API_BASE}/api/community/posts/${postId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (res.ok) {
+            showToast(data.message || 'Post deleted successfully.');
+            fetchCommunityPosts();
+          } else {
+            showToast(data.error || 'Failed to delete post.');
+          }
+        } catch (err) {
+          showToast('Connection error.');
+        }
+      },
+      undefined, 'Delete', 'Cancel', 'danger'
+    );
+  };
+
+  const handleDeleteSuggestion = (suggestionId: number) => {
+    showConfirm(
+      'Delete Suggestion',
+      'Are you sure you want to delete this suggestion? This action cannot be undone.',
+      async () => {
+        if (!token) return;
+        try {
+          const res = await fetch(`${API_BASE}/api/suggestions/${suggestionId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (res.ok) {
+            showToast(data.message || 'Suggestion deleted.');
+            fetchPublicSuggestions();
+            fetchAdminSuggestions();
+          } else {
+            showToast(data.error || 'Failed to delete suggestion.');
+          }
+        } catch (err) {
+          showToast('Connection error.');
+        }
+      },
+      undefined, 'Delete', 'Cancel', 'danger'
+    );
+  };
+
+  const handleAdminDeleteUser = (userId: number, username: string) => {
+    showConfirm(
+      'Delete User Permanently',
+      `⚠️ This will permanently delete user "${username}" and ALL their data (posts, messages, suggestions, XP, etc). This cannot be undone!`,
+      async () => {
+        if (!token) return;
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (res.ok) {
+            showToast(data.message || 'User deleted successfully.');
+            fetchAdminUsers();
+          } else {
+            showToast(data.error || 'Failed to delete user.');
+          }
+        } catch (err) {
+          showToast('Connection error.');
+        }
+      },
+      undefined, 'Delete User', 'Cancel', 'danger'
+    );
+  };
+
   const handleOpenModerationModal = (username: string, userId: number) => {
     setModerationUser({ username, id: userId });
     setModerationAction('mute');
@@ -1821,6 +2086,10 @@ function App() {
         handleCreatePost={handleCreatePost}
         communityPosts={communityPosts}
         handleLikePost={handleLikePost}
+        handleDeletePost={handleDeletePost}
+        handleSharePost={handleShareCommunityPost}
+        handleUploadImage={handleUploadImage}
+        usernames={usernamesDirectory}
         showToast={showToast}
       />
     );
@@ -1831,6 +2100,9 @@ function App() {
       <Episodes
         episodes={episodes}
         navigateToEpisode={navigateToEpisode}
+        handleLikeEpisode={handleLikeEpisode}
+        handleShareEpisode={handleShareEpisode}
+        user={user}
       />
     );
   };
@@ -1849,16 +2121,18 @@ function App() {
         handleRedeem={handleRedeem}
         secretCode={secretCode}
         setSecretCode={setSecretCode}
-        quizAnswer={quizAnswer}
-        setQuizAnswer={setQuizAnswer}
         quizResult={quizResult}
         setQuizResult={setQuizResult}
+        quizAnswer={quizAnswer}
+        setQuizAnswer={setQuizAnswer}
         commentInput={commentInput}
         setCommentInput={setCommentInput}
         replyingToComment={replyingToComment}
         setReplyingToComment={setReplyingToComment}
-        showToast={showToast}
+        episodeInteracting={episodeInteracting}
         handleOpenModerationModal={handleOpenModerationModal}
+        usernames={usernamesDirectory}
+        showToast={showToast}
       />
     );
   };
@@ -1896,6 +2170,8 @@ function App() {
         handleCreateSuggestion={handleCreateSuggestion}
         handleUpvoteSuggestion={handleUpvoteSuggestion}
         handleOpenModerationModal={handleOpenModerationModal}
+        handleDeleteSuggestion={handleDeleteSuggestion}
+        usernames={usernamesDirectory}
       />
     );
   };
@@ -1951,6 +2227,8 @@ function App() {
         handlePlayAgain={handlePlayAgain}
         showToast={showToast}
         token={token}
+        apiBase={API_BASE}
+        setActiveGameRoom={setActiveGameRoom}
       />
     );
   };
@@ -1977,6 +2255,8 @@ function App() {
         unlockedCosmetics={unlockedCosmetics}
         setCurrentPage={setCurrentPage}
         handleLogout={handleLogout}
+        handleUpdateProfile={handleUpdateProfile}
+        handleUploadImage={handleUploadImage}
       />
     );
   };
@@ -2083,6 +2363,8 @@ function App() {
         handleAdminUpdateSuggestionStatus={handleAdminUpdateSuggestionStatus}
         handleAdminDeleteCode={handleAdminDeleteCode}
         handleOpenModerationModal={handleOpenModerationModal}
+        handleAdminDeleteUser={handleAdminDeleteUser}
+        user={user}
       />
     );
   };
