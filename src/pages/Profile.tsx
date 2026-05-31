@@ -274,7 +274,7 @@ export const Profile: React.FC<ProfileProps> = ({
           
           {/* Level indicator pill overlay at the bottom of the circle */}
           <div style={{ position: 'absolute', bottom: '-4px', left: '50%', transform: 'translateX(-50%)', background: 'var(--orange)', color: '#000', borderRadius: '10px', padding: '2px 8px', fontSize: '10px', fontWeight: 900, border: '2px solid #000', zIndex: 6 }}>
-            {user.rank?.name_ar || `Tier ${currentTier}`}
+            {user.rank?.name_en || `Tier ${currentTier}`}
           </div>
         </div>
 

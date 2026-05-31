@@ -27,11 +27,15 @@ import { Toast } from './components/Toast';
 import { XPPopup } from './components/XPPopup';
 
 // Use environment variable VITE_API_BASE if defined, otherwise detect localhost / local networks
+import { io } from 'socket.io-client';
+
 const API_BASE = import.meta.env.VITE_API_BASE || (
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') 
     ? `http://${window.location.hostname}:5000` 
     : ''
 );
+
+const socket = io(API_BASE || window.location.origin);
 
 function App() {
   // Navigation State
@@ -296,11 +300,24 @@ function App() {
     }
   }, []);
 
-  // Poll for chat and lobby
+  // Fetch chat messages on mount/page focus
   useEffect(() => {
-    fetchChatMessages();
-    const chatInterval = setInterval(fetchChatMessages, communityTab === 'chat' && currentPage === 'community' ? 1500 : 8000);
-    return () => clearInterval(chatInterval);
+    if (communityTab === 'chat' && currentPage === 'community') {
+      fetchChatMessages();
+    }
+  }, [communityTab, currentPage]);
+
+  // Reactive real-time Socket updates (bypasses primitive 1.5s interval polling)
+  useEffect(() => {
+    const handleChatUpdate = () => {
+      if (communityTab === 'chat' && currentPage === 'community') {
+        fetchChatMessages();
+      }
+    };
+    socket.on('chat_update', handleChatUpdate);
+    return () => {
+      socket.off('chat_update', handleChatUpdate);
+    };
   }, [communityTab, currentPage]);
 
   // Autoscroll chat to bottom smartly
