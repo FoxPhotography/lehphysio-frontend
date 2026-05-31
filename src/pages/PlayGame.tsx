@@ -138,7 +138,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   const [, setTick] = useState(0);
   useEffect(() => {
     let timerId: any;
-    if (room.status === 'playing' && !room.roundWinner) {
+    if (activeGameRoom?.status === 'playing' && !activeGameRoom?.roundWinner) {
       timerId = setInterval(() => {
         setTick(t => t + 1);
       }, 250);
@@ -146,7 +146,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     return () => {
       if (timerId) clearInterval(timerId);
     };
-  }, [room.status, room.roundWinner]);
+  }, [activeGameRoom?.status, activeGameRoom?.roundWinner]);
 
   if (!activeGameRoom) return null;
   const room = activeGameRoom;
