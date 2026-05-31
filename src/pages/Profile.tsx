@@ -350,19 +350,7 @@ export const Profile: React.FC<ProfileProps> = ({
         </div>
         {/* ========== END RANK CARD ========== */}
 
-        {/* Equips frames and titles badges */}
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1.5rem' }}>
-          {equippedFrame !== 'none' && (
-            <span className="badge-tag" style={{ borderColor: equippedFrame === 'gold-glow' ? '#FFD700' : '#00ffff', color: '#fff' }}>
-              Frame: {equippedFrame === 'gold-glow' ? 'Gold Glow 🌟' : 'Neon Ring 🩵'}
-            </span>
-          )}
-          {equippedTitle !== 'none' && (
-            <span className="badge-tag" style={{ background: 'rgba(255,255,255,0.06)', color: '#fff', borderColor: 'var(--orange)' }}>
-              Title: {equippedTitle}
-            </span>
-          )}
-        </div>
+
 
         {/* Stats Badges Grid */}
         <div className="stats-badge-grid" style={{ gridTemplateColumns: '1fr 1fr', width: '100%', marginBottom: '1.5rem' }}>

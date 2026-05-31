@@ -383,6 +383,19 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                 <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'block' }}>My Score</span>
                 <span style={{ fontSize: '16px', fontWeight: 900, color: '#fff', fontFamily: 'monospace' }}>{myScore}</span>
               </div>
+              <button 
+                className="btn-outline mini" 
+                style={{ 
+                  color: '#ff4d4d', 
+                  borderColor: 'rgba(255,77,77,0.2)', 
+                  padding: '4px 8px', 
+                  fontSize: '11px',
+                  borderRadius: '6px'
+                }} 
+                onClick={handleLeaveGameRoom}
+              >
+                Leave
+              </button>
             </div>
           </div>
 
