@@ -32,6 +32,7 @@ interface HomeProps {
   equippedFrame?: string;
   episodes?: any[];
   triggerXpPopup: (amount: number) => void;
+  xpSettings?: any;
 }
 
 export const Home: React.FC<HomeProps> = ({
@@ -58,7 +59,8 @@ export const Home: React.FC<HomeProps> = ({
   leaderboard,
   equippedFrame,
   episodes,
-  triggerXpPopup
+  triggerXpPopup,
+  xpSettings = {}
 }) => {
   const activeStreak = user?.streak_count || 12;
   const first = leaderboard[0];
@@ -374,14 +376,15 @@ export const Home: React.FC<HomeProps> = ({
       {loginReward && loginReward.daily_login && (
         <div className="pl-banner">
           <i className="ti ti-gift"></i>
-          <span>Welcome back! You earned <strong>+10 XP</strong> for your daily login.</span>
+          <span>Welcome back! You earned <strong>+{xpSettings.daily_login || 10} XP</strong> for your daily login.</span>
         </div>
       )}
 
       {/* Hero podcast card - latest episode */}
       <section className="home-hero-card glass-card">
         {(() => {
-          const latestEp = episodes.length > 0 ? episodes[episodes.length - 1] : null;
+          const sorted = [...episodes].sort((a: any, b: any) => b.id - a.id);
+          const latestEp = sorted.length > 0 ? sorted[0] : null;
           return latestEp ? (
             <>
               <div className="hero-thumbnail" style={{ backgroundImage: `url(${latestEp.thumbnail_url || 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop'})` }}>
@@ -443,22 +446,22 @@ export const Home: React.FC<HomeProps> = ({
         <div className="quick-action-card" onClick={() => setCurrentPage('episodes')}>
           <div className="quick-action-icon"><i className="ti ti-player-play"></i></div>
           <span className="quick-action-name">Watch</span>
-          <span className="quick-action-xp">+50 XP</span>
+          <span className="quick-action-xp">+{xpSettings.quiz_solve || 150} XP</span>
         </div>
         <div className="quick-action-card" onClick={() => setCurrentPage('rewards')}>
           <div className="quick-action-icon"><i className="ti ti-key"></i></div>
           <span className="quick-action-name">Enter Code</span>
-          <span className="quick-action-xp">+100 XP</span>
+          <span className="quick-action-xp">Custom</span>
         </div>
         <div className="quick-action-card" onClick={() => { setCurrentPage('community'); setCommunityTab('chat'); }}>
           <div className="quick-action-icon"><i className="ti ti-messages"></i></div>
           <span className="quick-action-name">Comment</span>
-          <span className="quick-action-xp">+20 XP</span>
+          <span className="quick-action-xp">+{xpSettings.comment || 15} XP</span>
         </div>
         <div className="quick-action-card" onClick={() => setCurrentPage('games')}>
           <div className="quick-action-icon"><i className="ti ti-device-gamepad-2"></i></div>
           <span className="quick-action-name">Challenges</span>
-          <span className="quick-action-xp">+30 XP</span>
+          <span className="quick-action-xp">+{xpSettings.game_play || 50} XP</span>
         </div>
         <div className="quick-action-card" onClick={() => setCurrentPage('rewards')}>
           <div className="quick-action-icon"><i className="ti ti-building-store"></i></div>
@@ -578,60 +581,27 @@ export const Home: React.FC<HomeProps> = ({
         </div>
       </section>
 
-      {/* Continue Listening row */}
+      {/* All Episodes row */}
       <section className="continue-listening-section">
         <div className="pl-section-h2">
-          <span className="title-text"><i className="ti ti-playlist"></i> Continue Listening</span>
-          <button className="title-link" onClick={() => setCurrentPage('episodes')}>
-            View All <i className="ti ti-chevron-left"></i>
+          <button className="title-text" onClick={() => setCurrentPage('episodes')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'inherit', font: 'inherit' }}>
+            <i className="ti ti-playlist"></i> All Episodes
           </button>
         </div>
         <div className="horizontal-slider">
-          <div className="continue-card glass-card">
-            <div className="continue-thumb" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=280&auto=format&fit=crop')` }}>
-              <button className="continue-play-btn" onClick={() => navigateToEpisode(1)}>
-                <i className="ti ti-player-play"></i>
-              </button>
-            </div>
-            <div className="continue-info">
-              <h4 className="continue-title">SPASM</h4>
-              <div className="continue-episode-num">Episode 23</div>
-              <div className="continue-progress-container">
-                <div className="progress-track"><div className="progress-fill" style={{ width: '62%' }}></div></div>
-                <span>62%</span>
+          {(episodes || []).slice(0, 6).map((ep: any) => (
+            <div key={ep.id} className="continue-card glass-card" onClick={() => navigateToEpisode(ep.id)} style={{ cursor: 'pointer' }}>
+              <div className="continue-thumb" style={{ backgroundImage: `url(${ep.thumbnail_url || 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=280&auto=format&fit=crop'})` }}>
+                <button className="continue-play-btn" onClick={(e) => { e.stopPropagation(); navigateToEpisode(ep.id); }}>
+                  <i className="ti ti-player-play"></i>
+                </button>
+              </div>
+              <div className="continue-info">
+                <h4 className="continue-title">{ep.title_ar}</h4>
+                <div className="continue-episode-num">Episode {ep.id}</div>
               </div>
             </div>
-          </div>
-          <div className="continue-card glass-card">
-            <div className="continue-thumb" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=280&auto=format&fit=crop')` }}>
-              <button className="continue-play-btn" onClick={() => navigateToEpisode(2)}>
-                <i className="ti ti-player-play"></i>
-              </button>
-            </div>
-            <div className="continue-info">
-              <h4 className="continue-title">PAIN Mechanics</h4>
-              <div className="continue-episode-num">Episode 22</div>
-              <div className="continue-progress-container">
-                <div className="progress-track"><div className="progress-fill" style={{ width: '40%' }}></div></div>
-                <span>40%</span>
-              </div>
-            </div>
-          </div>
-          <div className="continue-card glass-card">
-            <div className="continue-thumb" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=280&auto=format&fit=crop')` }}>
-              <button className="continue-play-btn" onClick={() => navigateToEpisode(3)}>
-                <i className="ti ti-player-play"></i>
-              </button>
-            </div>
-            <div className="continue-info">
-              <h4 className="continue-title">GAIT & Biomechanics</h4>
-              <div className="continue-episode-num">Episode 21</div>
-              <div className="continue-progress-container">
-                <div className="progress-track"><div className="progress-fill" style={{ width: '75%' }}></div></div>
-                <span>75%</span>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
@@ -668,7 +638,7 @@ export const Home: React.FC<HomeProps> = ({
           </div>
           {hasVotedPoll && (
             <p style={{ fontSize: '11px', color: 'var(--amber)', marginTop: '0.75rem', fontWeight: 800 }}>
-              You earned +30 XP for participating in the interactive poll! ⚡
+              You earned +{xpSettings.poll_vote || 30} XP for participating in the interactive poll! ⚡
             </p>
           )}
         </div>

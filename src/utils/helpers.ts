@@ -188,6 +188,21 @@ export const setFramesCache = (frames: any[]) => {
   framesCache = frames;
 };
 
+export const copyToClipboard = async (text: string): Promise<void> => {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+  }
+};
+
 export const getFrameImage = (frameId: string | null | undefined): string | null => {
   if (!frameId || frameId === 'none') return null;
   // CSS frame names are not PNG overlays

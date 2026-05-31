@@ -29,6 +29,10 @@ interface AdminProps {
   handleOpenModerationModal: (username: string, userId: number) => void;
   handleAdminDeleteUser: (userId: number, username: string) => void;
   user: any;
+  fetchXpSettings?: () => void;
+  episodes?: any[];
+  fetchEpisodes?: () => void;
+  showConfirm?: (title: string, message: string, onConfirm: () => void, onCancel?: () => void, confirmText?: string, cancelText?: string, type?: 'danger' | 'info' | 'success' | 'warning') => void;
 }
 
 export const Admin: React.FC<AdminProps> = ({
@@ -52,10 +56,16 @@ export const Admin: React.FC<AdminProps> = ({
   handleAdminDeleteCode,
   handleOpenModerationModal,
   handleAdminDeleteUser,
-  user
+  user,
+  fetchXpSettings,
+  episodes = [],
+  fetchEpisodes,
+  showConfirm
 }) => {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailUploading, setThumbnailUploading] = useState(false);
+  const [editingEpisodeId, setEditingEpisodeId] = useState<number | null>(null);
+  const [editingLoading, setEditingLoading] = useState(false);
 
   const handleEpisodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,8 +118,12 @@ export const Admin: React.FC<AdminProps> = ({
       body.xp_code = { code: adminEpisodeForm.code, max_uses: adminEpisodeForm.code_max_uses, expiry_date: adminEpisodeForm.code_expiry || null };
     }
     try {
-      const res = await fetch(`${API_BASE}/api/admin/episode`, {
-        method: 'POST',
+      const url = editingEpisodeId 
+        ? `${API_BASE}/api/admin/episodes/${editingEpisodeId}` 
+        : `${API_BASE}/api/admin/episode`;
+      const method = editingEpisodeId ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(body)
       });
@@ -118,11 +132,89 @@ export const Admin: React.FC<AdminProps> = ({
       if (res.ok) {
         setAdminEpisodeForm({ title_ar: '', title_en: '', description: '', thumbnail_url: '', youtube_url: '', quiz_question: '', quiz_options: ['', '', '', ''], quiz_correct: 0, code: '', code_max_uses: 200, code_expiry: '' });
         setThumbnailFile(null);
+        setEditingEpisodeId(null);
+        if (fetchEpisodes) fetchEpisodes();
       }
     } catch {
       setAdminMessage('Connection to server failed.');
     }
     setAdminSubmitting(false);
+  };
+
+  const handleStartEditEpisode = async (episodeId: number) => {
+    setEditingLoading(true);
+    setAdminMessage('');
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/episodes/${episodeId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEditingEpisodeId(episodeId);
+        setAdminEpisodeForm({
+          title_ar: data.episode.title_ar || '',
+          title_en: data.episode.title_en || '',
+          description: data.episode.description || '',
+          thumbnail_url: data.episode.thumbnail_url || '',
+          youtube_url: data.episode.youtube_url || '',
+          quiz_question: data.quiz ? data.quiz.question : '',
+          quiz_options: data.quiz ? data.quiz.options : ['', '', '', ''],
+          quiz_correct: data.quiz ? data.quiz.correct_option_index : 0,
+          code: data.xp_code ? data.xp_code.code : '',
+          code_max_uses: data.xp_code ? data.xp_code.max_uses : 200,
+          code_expiry: data.xp_code && data.xp_code.expiry_date ? data.xp_code.expiry_date.split('T')[0] : ''
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setAdminMessage(data.error || 'Failed to fetch episode details.');
+      }
+    } catch {
+      setAdminMessage('Failed to connect to server.');
+    } finally {
+      setEditingLoading(false);
+    }
+  };
+
+  const handleCancelEditEpisode = () => {
+    setEditingEpisodeId(null);
+    setAdminEpisodeForm({ title_ar: '', title_en: '', description: '', thumbnail_url: '', youtube_url: '', quiz_question: '', quiz_options: ['', '', '', ''], quiz_correct: 0, code: '', code_max_uses: 200, code_expiry: '' });
+    setThumbnailFile(null);
+    setAdminMessage('');
+  };
+
+  const handleDeleteEpisode = async (episodeId: number, title: string) => {
+    const proceed = async () => {
+      setAdminMessage('');
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/episodes/${episodeId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        setAdminMessage(data.message || data.error);
+        if (res.ok) {
+          if (fetchEpisodes) fetchEpisodes();
+        }
+      } catch {
+        setAdminMessage('Failed to delete episode.');
+      }
+    };
+
+    if (showConfirm) {
+      showConfirm(
+        'Delete Episode',
+        `Are you sure you want to delete "${title}"? This will permanently delete the episode, quiz, and any associated XP codes/submissions.`,
+        proceed,
+        undefined,
+        'Delete permanently',
+        'Cancel',
+        'danger'
+      );
+    } else {
+      if (confirm(`Are you sure you want to delete "${title}"?`)) {
+        proceed();
+      }
+    }
   };
 
   // Frames management state
@@ -198,17 +290,34 @@ export const Admin: React.FC<AdminProps> = ({
   };
 
   const handleDeleteFrame = async (frameId: string) => {
-    if (!confirm('Delete this frame?')) return;
-    try {
-      const res = await fetch(`${API_BASE}/api/admin/frames/${frameId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        fetchAdminFrames();
+    const proceed = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/frames/${frameId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          fetchAdminFrames();
+        }
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
+    };
+
+    if (showConfirm) {
+      showConfirm(
+        'Delete Cosmetic Frame',
+        'Are you sure you want to delete this avatar frame? This action cannot be undone.',
+        proceed,
+        undefined,
+        'Delete Frame',
+        'Cancel',
+        'danger'
+      );
+    } else {
+      if (confirm('Delete this frame?')) {
+        proceed();
+      }
     }
   };
   return (
@@ -254,6 +363,13 @@ export const Admin: React.FC<AdminProps> = ({
         >
           🖼️ Frames
         </button>
+        <button 
+          className={`games-filter-btn ${adminSection === 'xp_settings' ? 'active' : ''}`} 
+          onClick={() => setAdminSection('xp_settings')}
+          style={{ whiteSpace: 'nowrap' }}
+        >
+          ⚙️ XP Settings
+        </button>
       </div>
 
       {adminMessage && (
@@ -266,7 +382,7 @@ export const Admin: React.FC<AdminProps> = ({
       {adminSection === 'episodes' && (
         <form onSubmit={handleEpisodeSubmit} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '2rem' }}>
           <h3 style={{ fontSize: '15px', fontWeight: 900, borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem', color: 'var(--orange)' }}>
-            Publish a New Podcast Episode
+            {editingEpisodeId ? `✏️ Edit Episode: ${adminEpisodeForm.title_en}` : 'Publish a New Podcast Episode'}
           </h3>
           
           <div className="pl-form-group">
@@ -438,10 +554,73 @@ export const Admin: React.FC<AdminProps> = ({
             </div>
           </div>
 
-          <button type="submit" className="btn-primary" disabled={adminSubmitting} style={{ marginTop: '0.5rem' }}>
-            {adminSubmitting ? 'Uploading Episode...' : 'Publish Episode & Enable Quiz'}
-          </button>
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+            <button type="submit" className="btn-primary" disabled={adminSubmitting} style={{ flex: 1 }}>
+              {adminSubmitting 
+                ? (editingEpisodeId ? 'Saving Changes...' : 'Uploading Episode...') 
+                : (editingEpisodeId ? 'Save Episode Changes' : 'Publish Episode & Enable Quiz')}
+            </button>
+            {editingEpisodeId && (
+              <button type="button" className="btn-outline" onClick={handleCancelEditEpisode} style={{ flex: 1 }}>
+                Cancel Edit
+              </button>
+            )}
+          </div>
         </form>
+      )}
+
+      {/* List of existing episodes for editing/deleting */}
+      {adminSection === 'episodes' && (
+        <div className="glass-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 900, color: 'var(--orange)', marginBottom: '1rem' }}>
+            Manage Existing Episodes ({episodes.length})
+          </h3>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {episodes.length === 0 ? (
+              <div style={{ color: 'var(--text-secondary)', fontSize: '12px', textAlign: 'center', padding: '1rem 0' }}>
+                No episodes published yet.
+              </div>
+            ) : (
+              episodes.map((ep: any) => (
+                <div key={ep.id} className="admin-episode-row">
+                  <div className="admin-episode-info">
+                    {ep.thumbnail_url && (
+                      <img 
+                        src={ep.thumbnail_url} 
+                        alt={ep.title_en} 
+                        className="admin-episode-thumbnail"
+                      />
+                    )}
+                    <div className="admin-episode-details">
+                      <h4 style={{ fontSize: '13px', fontWeight: 800, margin: 0, color: '#fff' }}>{ep.title_en}</h4>
+                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>{ep.description ? ep.description.substring(0, 80) + '...' : 'No description'}</p>
+                    </div>
+                  </div>
+                  <div className="admin-episode-actions">
+                    <button 
+                      type="button"
+                      onClick={() => handleStartEditEpisode(ep.id)}
+                      className="btn-outline mini"
+                      disabled={editingLoading}
+                      style={{ fontSize: '11px', padding: '6px 12px' }}
+                    >
+                      {editingEpisodeId === ep.id ? 'Editing...' : '✏️ Edit'}
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => handleDeleteEpisode(ep.id, ep.title_en)}
+                      className="btn-outline mini"
+                      style={{ fontSize: '11px', padding: '6px 12px', color: '#ff4d4d', borderColor: 'rgba(255,77,77,0.2)' }}
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       )}
 
       {/* 2. STANDALONE XP CODES */}
@@ -810,6 +989,173 @@ export const Admin: React.FC<AdminProps> = ({
           </div>
         </div>
       )}
+
+      {/* 6. XP SETTINGS CONFIGURATION */}
+      {adminSection === 'xp_settings' && (
+        <XpSettingsManager 
+          token={token} 
+          apiBase={API_BASE} 
+          fetchXpSettings={fetchXpSettings || (() => {})} 
+          setAdminMessage={setAdminMessage} 
+        />
+      )}
     </div>
+  );
+};
+
+// Sub-component to manage dynamic XP reward values
+const XpSettingsManager: React.FC<{
+  token: string | null;
+  apiBase: string;
+  fetchXpSettings: () => void;
+  setAdminMessage: (msg: string) => void;
+}> = ({ token, apiBase, fetchXpSettings, setAdminMessage }) => {
+  const [localSettings, setLocalSettings] = useState<any>({
+    like: 5,
+    comment: 15,
+    share: 25,
+    comment_like: 2,
+    daily_login: 10,
+    streak_bonus: 70,
+    game_play: 50,
+    referral: 25,
+    surprise_box: 50,
+    poll_vote: 30,
+    quiz_solve: 150
+  });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const fetchSettings = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${apiBase}/api/admin/xp-settings`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setLocalSettings(data);
+      } else {
+        setError(data.error || 'Failed to fetch XP settings.');
+      }
+    } catch (err) {
+      setError('Connection to server failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    setAdminMessage('');
+    try {
+      const res = await fetch(`${apiBase}/api/admin/xp-settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(localSettings)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAdminMessage('XP settings updated successfully! 🎉');
+        fetchXpSettings(); // Update global cache in App.tsx
+      } else {
+        setError(data.error || 'Failed to update XP settings.');
+      }
+    } catch (err) {
+      setError('Connection to server failed.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleInputChange = (key: string, value: string) => {
+    const val = parseInt(value, 10) || 0;
+    setLocalSettings((prev: any) => ({
+      ...prev,
+      [key]: val >= 0 ? val : 0
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="glass-card" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+        <p>Loading XP Configuration... ⚙️</p>
+      </div>
+    );
+  }
+
+  // Readable labels and descriptions for keys
+  const settingMetadata: { [key: string]: { label: string; desc: string; icon: string } } = {
+    like: { label: 'Episode/Post Like', desc: 'XP awarded for liking an episode or community post.', icon: 'ti-thumb-up' },
+    comment: { label: 'Comment Made', desc: 'XP awarded for adding a comment on an episode or post.', icon: 'ti-message' },
+    share: { label: 'Share Link Created', desc: 'XP awarded to user when they generate a share link.', icon: 'ti-share' },
+    comment_like: { label: 'Comment Liked', desc: 'XP awarded for liking someone else\'s comment.', icon: 'ti-heart' },
+    daily_login: { label: 'Daily Login Reward', desc: 'XP awarded for logging in each day.', icon: 'ti-gift' },
+    streak_bonus: { label: '7-Day Streak Bonus', desc: 'Extra XP awarded when user reaches a 7-day login streak.', icon: 'ti-flame' },
+    game_play: { label: 'Memory Game Play', desc: 'XP awarded for completing the single-player match game.', icon: 'ti-device-gamepad-2' },
+    referral: { label: 'Shared Link Visit', desc: 'XP awarded when a unique visitor visits user\'s shared link.', icon: 'ti-user-plus' },
+    surprise_box: { label: 'Surprise Box claim', desc: 'XP awarded when opening the daily surprise box.', icon: 'ti-package' },
+    poll_vote: { label: 'Daily Poll Vote', desc: 'XP awarded for voting in the daily dashboard interactive poll.', icon: 'ti-checkbox' },
+    quiz_solve: { label: 'Quiz Solved Fallback', desc: 'Fallback XP for solving an episode quiz if not overridden by the quiz itself.', icon: 'ti-school' }
+  };
+
+  return (
+    <form onSubmit={handleSave} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '2rem' }}>
+      <h3 style={{ fontSize: '15px', fontWeight: 900, borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem', color: 'var(--orange)' }}>
+        ⚙️ Manage Global XP Reward Settings
+      </h3>
+
+      {error && (
+        <div style={{ color: '#ff4d4d', fontSize: '12px', padding: '8px 12px', background: 'rgba(255,77,77,0.1)', borderRadius: '8px' }}>
+          {error}
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }} className="xp-settings-grid">
+        {Object.entries(localSettings).map(([key, val]: [string, any]) => {
+          const meta = settingMetadata[key] || { label: key, desc: 'XP reward for this activity.', icon: 'ti-settings' };
+          return (
+            <div key={key} className="xp-setting-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--card-border)', borderRadius: '12px', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
+                <div style={{ fontSize: '18px', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(255,106,0,0.1)' }}>
+                  <i className={`ti ${meta.icon}`}></i>
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '13px', fontWeight: 800, margin: 0, color: '#fff' }}>{meta.label}</h4>
+                  <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>{meta.desc}</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  type="number"
+                  className="pl-input"
+                  value={val}
+                  onChange={(e) => handleInputChange(key, e.target.value)}
+                  style={{ width: '80px', textAlign: 'center', fontWeight: 700 }}
+                  min={0}
+                  required
+                />
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 700 }}>XP</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <button type="submit" className="btn-primary" disabled={saving}>
+        {saving ? 'Saving Settings...' : 'Save XP Settings'}
+      </button>
+    </form>
   );
 };

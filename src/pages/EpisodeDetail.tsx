@@ -1,5 +1,5 @@
 import React from 'react';
-import { getYoutubeEmbedUrl } from '../utils/helpers';
+import { getYoutubeEmbedUrl, copyToClipboard } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
 
 interface EpisodeDetailProps {
@@ -121,60 +121,34 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
               <h1 className="cinematic-title-ar">{episode.title_ar}</h1>
               <h2 className="cinematic-title-en">{episode.title_en}</h2>
             </div>
-            <span style={{ background: 'rgba(255,255,255,0.06)', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontFamily: 'sans-serif' }}>
-              1:02:45
-            </span>
           </div>
 
           {/* Integrated Likes & Shares buttons row inside episode card box */}
-          <div className="cinematic-actions-row" style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+          <div className="cinematic-actions-row">
             <button 
-              className={`btn-outline mini ${has_liked ? 'active' : ''}`} 
+              className={`cinematic-action-btn ${has_liked ? 'active' : ''}`} 
               onClick={() => handleEpisodeInteract('like')}
-              style={{ 
-                background: has_liked ? 'var(--gradient-main)' : 'rgba(255,255,255,0.08)', 
-                color: has_liked ? '#000' : '#fff',
-                border: '1px solid rgba(255,255,255,0.15)',
-                backdropFilter: 'blur(5px)',
-                padding: '6px 12px',
-                borderRadius: '12px'
-              }}
             >
               <i className={has_liked ? 'ti ti-heart-filled' : 'ti ti-heart'}></i> <span>{likes_count} Likes</span>
             </button>
             <button 
-              className="btn-outline mini" 
+              className="cinematic-action-btn" 
               onClick={() => {
                 setCommentsExpanded(true);
                 setTimeout(() => {
                   document.querySelector('.comments-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 100);
               }}
-              style={{ 
-                background: 'rgba(255,255,255,0.04)', 
-                color: '#fff',
-                border: '1px solid rgba(255,255,255,0.15)',
-                backdropFilter: 'blur(5px)',
-                padding: '6px 12px',
-                borderRadius: '12px'
-              }}
             >
               <i className="ti ti-message-circle"></i> <span>{comments.length} Comments</span>
             </button>
             <button 
-              className="btn-outline mini" 
+              className="cinematic-action-btn" 
               onClick={() => {
-                const refUrl = `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(user ? user.username : '')}&episode=${episode.id}`;
-                navigator.clipboard.writeText(refUrl);
+                const ref = user ? user.username : '';
+                const shareLink = `${window.location.origin}/?page=episode-detail&id=${episode.id}${ref ? '&ref=' + ref : ''}`;
+                copyToClipboard(shareLink);
                 showToast('Your share link has been copied! Share it to earn XP when others join 🔗');
-              }}
-              style={{ 
-                background: 'rgba(255,255,255,0.04)', 
-                border: '1px solid rgba(255,255,255,0.15)',
-                color: '#fff',
-                backdropFilter: 'blur(5px)',
-                padding: '6px 12px',
-                borderRadius: '12px'
               }}
             >
               <i className="ti ti-share"></i> <span>{shares_count} Shares</span>

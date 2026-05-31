@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { playChatSound, getNameColor, getYoutubeEmbedUrl, getLocalDateString, setFramesCache } from './utils/helpers';
+import { playChatSound, getNameColor, getYoutubeEmbedUrl, getLocalDateString, setFramesCache, copyToClipboard } from './utils/helpers';
 
 // Pages
 import { Home } from './pages/Home';
@@ -85,6 +85,21 @@ function App() {
   const [pollVotes, setPollVotes] = useState<number[]>([42, 12, 8, 25]);
   const [hasVotedPoll, setHasVotedPoll] = useState(false);
   const [userVotedOption, setUserVotedOption] = useState<number | null>(null);
+
+  // Dynamic XP Settings State
+  const [xpSettings, setXpSettings] = useState<any>({
+    like: 5,
+    comment: 15,
+    share: 25,
+    comment_like: 2,
+    daily_login: 10,
+    streak_bonus: 70,
+    game_play: 50,
+    referral: 25,
+    surprise_box: 50,
+    poll_vote: 30,
+    quiz_solve: 150
+  });
 
   // Multiplayer Room Game States
   const [activeGameRoom, setActiveGameRoom] = useState<any>(null);
@@ -228,11 +243,11 @@ function App() {
     fetchLeaderboard();
     fetchPublicSuggestions();
     fetchFrames();
+    fetchXpSettings();
 
     // Check query parameters for referral or game code
     const params = new URLSearchParams(window.location.search);
     const refUsername = params.get('ref');
-    const refEpisodeId = params.get('episode');
     const gameCode = params.get('gameCode');
 
     if (gameCode) {
@@ -248,23 +263,33 @@ function App() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    if (refUsername && refEpisodeId) {
+    // Track share link visit (any page with ?ref=username)
+    if (refUsername) {
       const activeToken = localStorage.getItem('token');
-      fetch(`${API_BASE}/api/episodes/${refEpisodeId}/referral`, {
+      const page = params.get('page');
+      const contentId = params.get('id') || params.get('post') || null;
+      let contentType = null;
+      if (page === 'episode-detail' && contentId) contentType = 'episode';
+      else if (page === 'community' && contentId) contentType = 'community_post';
+      fetch(`${API_BASE}/api/share/visit`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           ...(activeToken ? { 'Authorization': `Bearer ${activeToken}` } : {})
         },
-        body: JSON.stringify({ referrer: refUsername })
+        body: JSON.stringify({ 
+          referrer: refUsername,
+          content_type: contentType,
+          content_id: contentId ? parseInt(contentId) : null
+        })
       })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          showToast(`You joined via a share link from @${refUsername}! 🎉`);
+          showToast(`You came via a link from @${refUsername}! 🎉`);
         }
       })
-      .catch(err => console.error('Error tracking referral:', err));
+      .catch(err => console.error('Error tracking share visit:', err));
 
       // Clean up URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -380,6 +405,11 @@ function App() {
       const data = await res.json();
       if (res.ok) {
         setUser(data.user);
+        if (data.user.last_poll_vote_date === new Date().toISOString().split('T')[0]) {
+          setHasVotedPoll(true);
+        } else {
+          setHasVotedPoll(false);
+        }
         if (data.user.equipped_frame) {
           setEquippedFrame(data.user.equipped_frame);
           localStorage.setItem('eq_frame', data.user.equipped_frame);
@@ -393,6 +423,18 @@ function App() {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const fetchXpSettings = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/xp-settings`);
+      const data = await res.json();
+      if (res.ok) {
+        setXpSettings(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch XP settings:', err);
     }
   };
 
@@ -581,52 +623,17 @@ function App() {
   };
 
   const handleShareEpisode = async (episodeId: number) => {
-    const shareLink = `${window.location.origin}/?page=episode-detail&id=${episodeId}`;
-    navigator.clipboard.writeText(shareLink);
+    const ref = user ? user.username : '';
+    const shareLink = `${window.location.origin}/?page=episode-detail&id=${episodeId}${ref ? '&ref=' + ref : ''}`;
+    copyToClipboard(shareLink).catch(() => {});
     showToast('Episode link copied to clipboard! 🔗');
-
-    if (!token) return;
-    try {
-      const res = await fetch(`${API_BASE}/api/episodes/${episodeId}/interact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ type: 'share' })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.xp_earned) triggerXpPopup(data.xp_earned);
-        if (data.total_xp !== undefined) {
-          setUser((prev: any) => prev ? { ...prev, total_xp: data.total_xp, weekly_xp: data.weekly_xp } : prev);
-        }
-      }
-      fetchEpisodes();
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   const handleShareCommunityPost = async (postId: number) => {
-    const shareLink = `${window.location.origin}/?page=community&post=${postId}`;
-    navigator.clipboard.writeText(shareLink);
+    const ref = user ? user.username : '';
+    const shareLink = `${window.location.origin}/?page=community&post=${postId}${ref ? '&ref=' + ref : ''}`;
+    copyToClipboard(shareLink).catch(() => {});
     showToast('Post link copied to clipboard! 🔗');
-
-    if (!token) return;
-    try {
-      const res = await fetch(`${API_BASE}/api/community/posts/${postId}/share`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.xp_earned) triggerXpPopup(data.xp_earned);
-        if (data.total_xp !== undefined) {
-          setUser((prev: any) => prev ? { ...prev, total_xp: data.total_xp } : prev);
-        }
-      }
-      fetchCommunityPosts();
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   const fetchEpisodes = async () => {
@@ -2241,7 +2248,7 @@ function App() {
   };
 
   // Poll Vote Handler
-  const handlePollVote = (idx: number) => {
+  const handlePollVote = async (idx: number) => {
     if (hasVotedPoll) return;
     setPollVotes(prev => {
       const next = [...prev];
@@ -2251,8 +2258,25 @@ function App() {
     setHasVotedPoll(true);
     setUserVotedOption(idx);
     playChatSound('success');
-    triggerXpPopup(30);
-    claimMockReward(30);
+    
+    const xpGain = xpSettings.poll_vote !== undefined ? xpSettings.poll_vote : 30;
+    triggerXpPopup(xpGain);
+    
+    if (token) {
+      try {
+        await fetch(`${API_BASE}/api/rewards/poll-vote`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ clientDate: new Date().toISOString().split('T')[0] })
+        });
+        fetchUserProfile();
+      } catch (err) {
+        console.error('Failed to claim poll vote XP reward:', err);
+      }
+    }
   };
 
   // Admin and other helpers
@@ -2322,6 +2346,7 @@ function App() {
         leaderboard={leaderboard}
         episodes={episodes}
         triggerXpPopup={triggerXpPopup}
+        xpSettings={xpSettings}
       />
     );
   };
@@ -2444,6 +2469,7 @@ function App() {
         handleJoinGameRoom={handleJoinGameRoom}
         isGameLoading={isGameLoading}
         hasSpunToday={hasSpunToday}
+        xpSettings={xpSettings}
       />
     );
   };
@@ -2603,6 +2629,12 @@ function App() {
         handleOpenModerationModal={handleOpenModerationModal}
         handleAdminDeleteUser={handleAdminDeleteUser}
         user={user}
+        token={token}
+        apiBase={API_BASE}
+        fetchXpSettings={fetchXpSettings}
+        episodes={episodes}
+        fetchEpisodes={fetchEpisodes}
+        showConfirm={showConfirm}
       />
     );
   };

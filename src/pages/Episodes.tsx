@@ -27,7 +27,7 @@ export const Episodes: React.FC<EpisodesProps> = ({
       <div className="game-card-grid">
         {episodes.map((ep: any) => (
           <div key={ep.id} className="game-widget-card glass-card" onClick={() => navigateToEpisode(ep.id)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column' }}>
-            <div className="continue-thumb" style={{ backgroundImage: `url(${ep.thumbnail_url || 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop'})`, borderRadius: '12px', height: '140px', backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
+            <div className="continue-thumb" style={{ backgroundImage: `url(${ep.thumbnail_url || 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop'})`, borderRadius: '12px' }}>
               <span className="game-tag-badge" style={{ position: 'absolute', top: '10px', right: '10px' }}>Episode {ep.id}</span>
             </div>
             <h3 className="game-card-title" style={{ marginTop: '0.5rem', flexGrow: 1 }}>{ep.title_ar}</h3>

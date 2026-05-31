@@ -29,6 +29,7 @@ interface GamesProps {
   handleJoinGameRoom: (code: string) => void;
   isGameLoading: boolean;
   hasSpunToday: boolean;
+  xpSettings?: any;
 }
 
 export const Games: React.FC<GamesProps> = ({
@@ -59,7 +60,8 @@ export const Games: React.FC<GamesProps> = ({
   setGameRoomCodeInput,
   handleJoinGameRoom,
   isGameLoading,
-  hasSpunToday
+  hasSpunToday,
+  xpSettings = {}
 }) => {
   const [showMultiplayerSetup, setShowMultiplayerSetup] = React.useState(false);
 
@@ -211,7 +213,7 @@ export const Games: React.FC<GamesProps> = ({
                 <h3 className="game-card-title">Anatomy Match</h3>
                 <p className="game-card-desc">Strengthen your anatomical memory and match muscles with medical terms in fewer moves.</p>
                 <div className="game-card-footer">
-                  <span className="game-card-reward">+50 XP ⚡</span>
+                  <span className="game-card-reward">+{xpSettings.game_play || 50} XP ⚡</span>
                   <button className="btn-primary mini" onClick={() => { setActiveGame('memory'); initMemoryGame(); }}>Play Now</button>
                 </div>
               </div>
