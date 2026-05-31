@@ -1,7 +1,7 @@
 // Web Audio API Sound Generator (Zero external dependencies)
 let globalAudioCtx: any = null;
 
-export const playChatSound = (type: 'send' | 'receive' | 'react' | 'success' | 'error' | 'start' | 'win' | 'tick') => {
+export const playChatSound = (type: 'send' | 'receive' | 'react' | 'success' | 'error' | 'start' | 'win' | 'tick' | 'xp_gain' | 'xp_loss') => {
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContextClass) return;
@@ -121,6 +121,35 @@ export const playChatSound = (type: 'send' | 'receive' | 'react' | 'success' | '
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
       osc.start();
       osc.stop(now + 0.1);
+    } else if (type === 'xp_gain') {
+      const playTone = (freq: number, startTime: number, duration: number) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'triangle';
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.frequency.setValueAtTime(freq, startTime);
+        g.gain.setValueAtTime(0.08, startTime);
+        g.gain.exponentialRampToValueAtTime(0.001, startTime + duration - 0.02);
+        o.start(startTime);
+        o.stop(startTime + duration);
+      };
+      playTone(523.25, now, 0.1);
+      playTone(659.25, now + 0.1, 0.1);
+      playTone(783.99, now + 0.2, 0.15);
+      playTone(1046.50, now + 0.35, 0.3);
+    } else if (type === 'xp_loss') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.linearRampToValueAtTime(80, now + 0.3);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.start();
+      osc.stop(now + 0.35);
     }
   } catch (e) {
     // Audio context blocked
@@ -141,7 +170,8 @@ export const getYoutubeEmbedUrl = (url: string) => {
   if (!url) return '';
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
-  return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : '';
+  // Use youtube-nocookie.com for privacy-enhanced mode (reduces tracking)
+  return (match && match[2].length === 11) ? `https://www.youtube-nocookie.com/embed/${match[2]}?rel=0&modestbranding=1` : '';
 };
 
 export const getLocalDateString = () => {
@@ -149,4 +179,21 @@ export const getLocalDateString = () => {
   const offset = d.getTimezoneOffset();
   const localDate = new Date(d.getTime() - (offset * 60000));
   return localDate.toISOString().split('T')[0];
+};
+
+// Frame image cache (populated by App.tsx on mount)
+let framesCache: any[] = [];
+
+export const setFramesCache = (frames: any[]) => {
+  framesCache = frames;
+};
+
+export const getFrameImage = (frameId: string | null | undefined): string | null => {
+  if (!frameId || frameId === 'none') return null;
+  // CSS frame names are not PNG overlays
+  if (frameId === 'gold-glow' || frameId === 'neon-ring') return null;
+  const numericId = parseInt(frameId, 10);
+  if (isNaN(numericId)) return null;
+  const frame = framesCache.find((f: any) => f._id === numericId || f.id === numericId);
+  return frame?.image_url || null;
 };

@@ -35,7 +35,7 @@ export const Episodes: React.FC<EpisodesProps> = ({
             <div className="game-card-footer" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
               <span className="game-card-reward">🔑 Secret Code + Quiz</span>
               <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                {new Date(ep.created_at).toLocaleDateString('ar-EG')}
+                {new Date(ep.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
               </span>
             </div>
 

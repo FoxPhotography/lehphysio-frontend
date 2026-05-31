@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { playChatSound, getNameColor, getYoutubeEmbedUrl, getLocalDateString } from './utils/helpers';
+import { playChatSound, getNameColor, getYoutubeEmbedUrl, getLocalDateString, setFramesCache } from './utils/helpers';
 
 // Pages
 import { Home } from './pages/Home';
@@ -227,6 +227,7 @@ function App() {
     fetchCommunityPosts();
     fetchLeaderboard();
     fetchPublicSuggestions();
+    fetchFrames();
 
     // Check query parameters for referral or game code
     const params = new URLSearchParams(window.location.search);
@@ -379,6 +380,14 @@ function App() {
       const data = await res.json();
       if (res.ok) {
         setUser(data.user);
+        if (data.user.equipped_frame) {
+          setEquippedFrame(data.user.equipped_frame);
+          localStorage.setItem('eq_frame', data.user.equipped_frame);
+        }
+        if (data.user.equipped_title) {
+          setEquippedTitle(data.user.equipped_title);
+          localStorage.setItem('eq_title', data.user.equipped_title);
+        }
       } else {
         setToken('');
       }
@@ -402,13 +411,18 @@ function App() {
     }
   };
 
-  const handleUpdateProfile = async (batch?: string, avatarUrl?: string) => {
+  const handleUpdateProfile = async (batch?: string, avatarUrl?: string, equippedFrameVal?: string, equippedTitleVal?: string) => {
     if (!token) return;
     try {
+      const body: any = {};
+      if (batch) body.batch = batch;
+      if (avatarUrl !== undefined) body.avatar_url = avatarUrl;
+      if (equippedFrameVal !== undefined) body.equipped_frame = equippedFrameVal;
+      if (equippedTitleVal !== undefined) body.equipped_title = equippedTitleVal;
       const res = await fetch(`${API_BASE}/api/user/profile`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ batch, avatar_url: avatarUrl })
+        body: JSON.stringify(body)
       });
       const data = await res.json();
       if (res.ok) {
@@ -514,6 +528,30 @@ function App() {
       showToast('Please login to like episodes.');
       return;
     }
+    playChatSound('react');
+    const likeXp = 5;
+    // Determine current liked state before optimistic update
+    const currentEp = episodes.find((ep: any) => ep.id === episodeId);
+    const wasLiked = currentEp?.isLiked ?? (episodeDetail?.episode?.id === episodeId ? episodeDetail.has_liked : false);
+    // Optimistic updates
+    setEpisodes(prev => prev.map((ep: any) => {
+      if (ep.id !== episodeId) return ep;
+      return { ...ep, isLiked: !ep.isLiked, likes_count: ep.likes_count + (ep.isLiked ? -1 : 1) };
+    }));
+    if (episodeDetail && episodeDetail.episode?.id === episodeId) {
+      setEpisodeDetail((prev: any) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          has_liked: !prev.has_liked,
+          likes_count: prev.likes_count + (prev.has_liked ? -1 : 1)
+        };
+      });
+    }
+    // Optimistic XP update
+    const xpDelta = wasLiked ? -likeXp : likeXp;
+    setUser((prev: any) => prev ? { ...prev, total_xp: prev.total_xp + xpDelta, weekly_xp: (prev.weekly_xp || 0) + xpDelta } : prev);
+    triggerXpPopup(wasLiked ? -likeXp : likeXp);
     try {
       const res = await fetch(`${API_BASE}/api/episodes/${episodeId}/interact`, {
         method: 'POST',
@@ -522,11 +560,22 @@ function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        if (data.xp_earned > 0) triggerXpPopup(data.xp_earned);
-        fetchEpisodes();
         fetchUserProfile();
+      } else {
+        // Revert optimistic XP
+        setUser((prev: any) => prev ? { ...prev, total_xp: prev.total_xp - xpDelta, weekly_xp: (prev.weekly_xp || 0) - xpDelta } : prev);
+        fetchEpisodes();
+        if (episodeDetail && episodeDetail.episode?.id === episodeId) {
+          fetch(`${API_BASE}/api/episodes/${episodeId}`)
+            .then(r => r.json())
+            .then(d => { if (d.episode) setEpisodeDetail(d); })
+            .catch(() => {});
+        }
       }
     } catch (e) {
+      // Revert optimistic XP
+      setUser((prev: any) => prev ? { ...prev, total_xp: prev.total_xp - xpDelta, weekly_xp: (prev.weekly_xp || 0) - xpDelta } : prev);
+      fetchEpisodes();
       console.error(e);
     }
   };
@@ -538,11 +587,18 @@ function App() {
 
     if (!token) return;
     try {
-      await fetch(`${API_BASE}/api/episodes/${episodeId}/interact`, {
+      const res = await fetch(`${API_BASE}/api/episodes/${episodeId}/interact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ type: 'share' })
       });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.xp_earned) triggerXpPopup(data.xp_earned);
+        if (data.total_xp !== undefined) {
+          setUser((prev: any) => prev ? { ...prev, total_xp: data.total_xp, weekly_xp: data.weekly_xp } : prev);
+        }
+      }
       fetchEpisodes();
     } catch (e) {
       console.error(e);
@@ -556,10 +612,17 @@ function App() {
 
     if (!token) return;
     try {
-      await fetch(`${API_BASE}/api/community/posts/${postId}/share`, {
+      const res = await fetch(`${API_BASE}/api/community/posts/${postId}/share`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.xp_earned) triggerXpPopup(data.xp_earned);
+        if (data.total_xp !== undefined) {
+          setUser((prev: any) => prev ? { ...prev, total_xp: data.total_xp } : prev);
+        }
+      }
       fetchCommunityPosts();
     } catch (e) {
       console.error(e);
@@ -568,9 +631,23 @@ function App() {
 
   const fetchEpisodes = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/episodes`);
+      const headers: any = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}/api/episodes`, { headers });
       const data = await res.json();
       if (res.ok) setEpisodes(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchFrames = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/frames`);
+      const data = await res.json();
+      if (res.ok) {
+        setFramesCache(data);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -1005,6 +1082,7 @@ function App() {
   const triggerXpPopup = (amount: number) => {
     const id = Date.now() + Math.random();
     setXpPopups(prev => [...prev, { id, amount }]);
+    playChatSound(amount > 0 ? 'xp_gain' : 'xp_loss');
     setTimeout(() => {
       setXpPopups(prev => prev.filter(p => p.id !== id));
     }, 1500);
@@ -1175,6 +1253,57 @@ function App() {
   const handleEpisodeInteract = async (type: string, content?: string, parentId?: number) => {
     if (!token || !selectedEpisodeId) return;
     setEpisodeInteracting(true);
+
+    const commentLikeXp = 2;
+
+    // Determine current comment liked state before optimistic update
+    let wasCommentLiked = false;
+    if (type === 'comment_like' && episodeDetail && episodeDetail.episode?.id === selectedEpisodeId && parentId) {
+      for (const c of episodeDetail.comments || []) {
+        if (c.id === parentId) { wasCommentLiked = c.has_liked; break; }
+        const reply = (c.replies || []).find((r: any) => r.id === parentId);
+        if (reply) { wasCommentLiked = reply.has_liked; break; }
+      }
+    }
+
+    // Optimistic comment likes with XP
+    if (type === 'comment_like' && episodeDetail && episodeDetail.episode?.id === selectedEpisodeId) {
+      setEpisodeDetail((prev: any) => {
+        if (!prev) return prev;
+        const updatedComments = prev.comments.map((c: any) => {
+          if (c.id === parentId) {
+            return { ...c, has_liked: !c.has_liked, likes_count: c.likes_count + (c.has_liked ? -1 : 1) };
+          }
+          if (c.replies) {
+            return {
+              ...c,
+              replies: c.replies.map((r: any) =>
+                r.id === parentId ? { ...r, has_liked: !r.has_liked, likes_count: r.likes_count + (r.has_liked ? -1 : 1) } : r
+              )
+            };
+          }
+          return c;
+        });
+        return { ...prev, comments: updatedComments };
+      });
+      const xpDelta = wasCommentLiked ? -commentLikeXp : commentLikeXp;
+      setUser((prev: any) => prev ? { ...prev, total_xp: prev.total_xp + xpDelta, weekly_xp: (prev.weekly_xp || 0) + xpDelta } : prev);
+      triggerXpPopup(wasCommentLiked ? -commentLikeXp : commentLikeXp);
+    }
+
+    // Optimistic episode like (on detail page)
+    if (type === 'like' && episodeDetail && episodeDetail.episode?.id === selectedEpisodeId) {
+      setEpisodeDetail((prev: any) => {
+        if (!prev) return prev;
+        const wasLiked = prev.has_liked;
+        return {
+          ...prev,
+          has_liked: !prev.has_liked,
+          likes_count: prev.likes_count + (prev.has_liked ? -1 : 1)
+        };
+      });
+    }
+
     try {
       const res = await fetch(`${API_BASE}/api/episodes/${selectedEpisodeId}/interact`, {
         method: 'POST',
@@ -1183,18 +1312,65 @@ function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        if (data.xp_earned > 0) triggerXpPopup(data.xp_earned);
-        fetchEpisodeDetail(selectedEpisodeId);
+        if (data.xp_earned) triggerXpPopup(data.xp_earned);
+        if (type !== 'comment_like' && type !== 'like') {
+          fetchEpisodeDetail(selectedEpisodeId);
+        }
         fetchUserProfile();
         if (type === 'comment') {
           setCommentInput('');
           setReplyingToComment(null);
         }
+      } else {
+        // Revert on error
+        fetchEpisodeDetail(selectedEpisodeId);
+        fetchUserProfile();
       }
     } catch (e) {
       console.error(e);
+      fetchEpisodeDetail(selectedEpisodeId);
+      fetchUserProfile();
     } finally {
       setEpisodeInteracting(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        showToast('Comment deleted.');
+        fetchEpisodeDetail(selectedEpisodeId!);
+      } else {
+        const data = await res.json();
+        showToast(data.error || 'Failed to delete comment.');
+      }
+    } catch (e) {
+      showToast('Error deleting comment.');
+    }
+  };
+
+  const handleEditComment = async (commentId: number, content: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/comments/${commentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ content })
+      });
+      if (res.ok) {
+        showToast('Comment updated.');
+        fetchEpisodeDetail(selectedEpisodeId!);
+      } else {
+        const data = await res.json();
+        showToast(data.error || 'Failed to edit comment.');
+      }
+    } catch (e) {
+      showToast('Error editing comment.');
     }
   };
 
@@ -1249,6 +1425,10 @@ function App() {
 
   const handleLikePost = async (postId: number) => {
     if (!token) { showToast('Login to interact 🔐'); return; }
+    playChatSound('react');
+    const postXp = 5;
+    const currentPost = communityPosts.find(p => p.id === postId);
+    const wasLiked = currentPost?.isLiked ?? false;
     try {
       // Optimistic state update
       setCommunityPosts(prev => prev.map(p => {
@@ -1259,18 +1439,26 @@ function App() {
           likes_count: p.likes_count + (p.isLiked ? -1 : 1)
         };
       }));
+      const xpDelta = wasLiked ? -postXp : postXp;
+      setUser((prev: any) => prev ? { ...prev, total_xp: prev.total_xp + xpDelta, weekly_xp: (prev.weekly_xp || 0) + xpDelta } : prev);
+      triggerXpPopup(wasLiked ? -postXp : postXp);
 
       const res = await fetch(`${API_BASE}/api/community/posts/${postId}/like`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) {
-        playChatSound('react');
-      } else {
+      if (!res.ok) {
         fetchCommunityPosts();
+        fetchUserProfile();
+      } else {
+        const data = await res.json();
+        if (data.total_xp !== undefined) {
+          setUser((prev: any) => prev ? { ...prev, total_xp: data.total_xp, weekly_xp: data.weekly_xp } : prev);
+        }
       }
     } catch (e) {
       fetchCommunityPosts();
+      fetchUserProfile();
     }
   };
 
@@ -1640,7 +1828,6 @@ function App() {
     requestAnimationFrame(animateTicks);
 
     setTimeout(() => {
-      setIsSpinning(false);
       // Math formula for 12 segments centered under the 12 o'clock pointer (0° relative to drawing, not 270°)
       const actualDeg = (360 - (newRot % 360)) % 360;
       const segs = [
@@ -1677,10 +1864,13 @@ function App() {
       } else {
         playChatSound('error');
       }
-      // Update state locally immediately to prevent race conditions
-      const todayStr = getLocalDateString();
-      setUser((prev: any) => prev ? { ...prev, last_spin_wheel_date: todayStr } : null);
-      claimSpinWheelReward(xpAmt);
+      if (prize.includes('Try Again')) {
+        claimSpinWheelReward(0, prize);
+      } else {
+        const todayStr = getLocalDateString();
+        setUser((prev: any) => prev ? { ...prev, last_spin_wheel_date: todayStr } : null);
+        claimSpinWheelReward(xpAmt, prize);
+      }
     }, 4000);
   };
 
@@ -1714,8 +1904,11 @@ function App() {
     }
   };
 
-  const claimSpinWheelReward = async (amount: number) => {
-    if (!token) return;
+  const claimSpinWheelReward = async (amount: number, prizeLabel?: string) => {
+    if (!token) {
+      setIsSpinning(false);
+      return;
+    }
     const todayStr = getLocalDateString();
     try {
       const res = await fetch(`${API_BASE}/api/rewards/spin-wheel`, {
@@ -1724,10 +1917,14 @@ function App() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ xpAmount: amount, clientDate: todayStr })
+        body: JSON.stringify({ xpAmount: amount, clientDate: todayStr, prizeLabel })
       });
       const data = await res.json();
       if (res.ok) {
+        if (data.try_again) {
+          showToast('Try Again! You get another spin! 🍀');
+          setUser((prev: any) => prev ? { ...prev, last_spin_wheel_date: null } : null);
+        }
         fetchUserProfile();
       } else {
         setUser((prev: any) => prev ? { ...prev, last_spin_wheel_date: null } : null);
@@ -1736,6 +1933,8 @@ function App() {
     } catch (err) {
       setUser((prev: any) => prev ? { ...prev, last_spin_wheel_date: null } : null);
       showToast('Connection error.');
+    } finally {
+      setIsSpinning(false);
     }
   };
 
@@ -1806,6 +2005,33 @@ function App() {
       },
       undefined, 'Delete', 'Cancel', 'danger'
     );
+  };
+
+  const handleEditPost = async (postId: number, content: string, imageUrl: string, title?: string | null) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/community/posts/${postId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          title: title || null,
+          content, 
+          image_url: imageUrl || null 
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || 'Post updated successfully!');
+        fetchCommunityPosts();
+      } else {
+        showToast(data.error || 'Failed to update post.');
+      }
+    } catch (err) {
+      showToast('Connection error.');
+    }
   };
 
   const handleDeleteSuggestion = (suggestionId: number) => {
@@ -2084,6 +2310,7 @@ function App() {
         newPostContent={newPostContent}
         setNewPostContent={setNewPostContent}
         handleCreatePost={handleCreatePost}
+        handleEditPost={handleEditPost}
         communityPosts={communityPosts}
         handleLikePost={handleLikePost}
         handleDeletePost={handleDeletePost}
@@ -2091,6 +2318,10 @@ function App() {
         handleUploadImage={handleUploadImage}
         usernames={usernamesDirectory}
         showToast={showToast}
+        equippedFrame={equippedFrame}
+        leaderboard={leaderboard}
+        episodes={episodes}
+        triggerXpPopup={triggerXpPopup}
       />
     );
   };
@@ -2112,6 +2343,7 @@ function App() {
       <EpisodeDetail
         episodeDetailLoading={episodeDetailLoading}
         episodeDetail={episodeDetail}
+        episodeInteracting={episodeInteracting}
         user={user}
         setCurrentPage={setCurrentPage}
         handleEpisodeInteract={handleEpisodeInteract}
@@ -2129,8 +2361,9 @@ function App() {
         setCommentInput={setCommentInput}
         replyingToComment={replyingToComment}
         setReplyingToComment={setReplyingToComment}
-        episodeInteracting={episodeInteracting}
         handleOpenModerationModal={handleOpenModerationModal}
+        handleDeleteComment={handleDeleteComment}
+        handleEditComment={handleEditComment}
         usernames={usernamesDirectory}
         showToast={showToast}
       />
@@ -2172,6 +2405,8 @@ function App() {
         handleOpenModerationModal={handleOpenModerationModal}
         handleDeleteSuggestion={handleDeleteSuggestion}
         usernames={usernamesDirectory}
+        getAvatarFrameClass={getAvatarFrameClass}
+        equippedFrame={equippedFrame}
       />
     );
   };
@@ -2279,6 +2514,7 @@ function App() {
         handleShopPurchase={handleShopPurchase}
         hasOpenedBoxToday={hasOpenedBoxToday}
         handleClaimSurpriseBox={handleClaimSurpriseBox}
+        handleBuyFrame={async () => { fetchUserProfile(); return true; }}
       />
     );
   };
@@ -2349,10 +2585,12 @@ function App() {
         adminSection={adminSection}
         setAdminSection={setAdminSection}
         adminMessage={adminMessage}
+        setAdminMessage={setAdminMessage}
         adminEpisodeForm={adminEpisodeForm}
         setAdminEpisodeForm={setAdminEpisodeForm}
         handleAdminCreateEpisode={handleAdminCreateEpisode}
         adminSubmitting={adminSubmitting}
+        setAdminSubmitting={setAdminSubmitting}
         adminUsers={adminUsers}
         adminCodes={adminCodes}
         adminSuggestions={adminSuggestions}
@@ -2398,7 +2636,7 @@ function App() {
       />
 
       {/* Main Column Wrapper */}
-      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, width: '100%' }}>
+      <div className="app-body-wrapper">
         {/* Mobile Header */}
         <MobileHeader
           setCurrentPage={setCurrentPage}

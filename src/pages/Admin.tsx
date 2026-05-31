@@ -1,13 +1,22 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { setFramesCache } from '../utils/helpers';
+
+const API_BASE = import.meta.env.VITE_API_BASE || (
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') 
+    ? `http://${window.location.hostname}:5000` 
+    : ''
+);
 
 interface AdminProps {
   adminSection: string;
   setAdminSection: (val: string) => void;
   adminMessage: string;
+  setAdminMessage: (val: string) => void;
   adminEpisodeForm: any;
   setAdminEpisodeForm: React.Dispatch<React.SetStateAction<any>>;
   handleAdminCreateEpisode: (e: React.FormEvent) => void;
   adminSubmitting: boolean;
+  setAdminSubmitting: (val: boolean) => void;
   adminUsers: any[];
   adminCodes: any[];
   adminSuggestions: any[];
@@ -26,10 +35,12 @@ export const Admin: React.FC<AdminProps> = ({
   adminSection,
   setAdminSection,
   adminMessage,
+  setAdminMessage,
   adminEpisodeForm,
   setAdminEpisodeForm,
   handleAdminCreateEpisode,
   adminSubmitting,
+  setAdminSubmitting,
   adminUsers,
   adminCodes,
   adminSuggestions,
@@ -43,6 +54,163 @@ export const Admin: React.FC<AdminProps> = ({
   handleAdminDeleteUser,
   user
 }) => {
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailUploading, setThumbnailUploading] = useState(false);
+
+  const handleEpisodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminSubmitting(true);
+    setAdminMessage('');
+    let thumbnailUrl = adminEpisodeForm.thumbnail_url;
+    if (thumbnailFile) {
+      setThumbnailUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('image', thumbnailFile);
+        const uploadRes = await fetch(`${API_BASE}/api/upload/image`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        const uploadData = await uploadRes.json();
+        if (uploadRes.ok) {
+          thumbnailUrl = uploadData.url;
+        } else {
+          setAdminMessage(uploadData.error || 'Image upload failed.');
+          setThumbnailUploading(false);
+          setAdminSubmitting(false);
+          return;
+        }
+      } catch {
+        setAdminMessage('Image upload failed.');
+        setThumbnailUploading(false);
+        setAdminSubmitting(false);
+        return;
+      }
+      setThumbnailUploading(false);
+    }
+    // Build body with updated thumbnail
+    const body: any = {
+      title_ar: adminEpisodeForm.title_ar,
+      title_en: adminEpisodeForm.title_en,
+      description: adminEpisodeForm.description,
+      thumbnail_url: thumbnailUrl,
+      youtube_url: adminEpisodeForm.youtube_url
+    };
+    if (adminEpisodeForm.quiz_question) {
+      body.quiz = {
+        question: adminEpisodeForm.quiz_question,
+        options: adminEpisodeForm.quiz_options.filter((o: string) => o.trim()),
+        correct_option_index: adminEpisodeForm.quiz_correct
+      };
+    }
+    if (adminEpisodeForm.code) {
+      body.xp_code = { code: adminEpisodeForm.code, max_uses: adminEpisodeForm.code_max_uses, expiry_date: adminEpisodeForm.code_expiry || null };
+    }
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/episode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      setAdminMessage(data.message || data.error);
+      if (res.ok) {
+        setAdminEpisodeForm({ title_ar: '', title_en: '', description: '', thumbnail_url: '', youtube_url: '', quiz_question: '', quiz_options: ['', '', '', ''], quiz_correct: 0, code: '', code_max_uses: 200, code_expiry: '' });
+        setThumbnailFile(null);
+      }
+    } catch {
+      setAdminMessage('Connection to server failed.');
+    }
+    setAdminSubmitting(false);
+  };
+
+  // Frames management state
+  const [adminFrames, setAdminFrames] = useState<any[]>([]);
+  const [frameName, setFrameName] = useState('');
+  const [framePrice, setFramePrice] = useState(0);
+  const [frameFile, setFrameFile] = useState<File | null>(null);
+  const [frameUploading, setFrameUploading] = useState(false);
+  const [frameError, setFrameError] = useState('');
+
+  const token = localStorage.getItem('token');
+
+  const fetchAdminFrames = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/frames`);
+      const data = await res.json();
+      if (res.ok) {
+        setAdminFrames(data);
+        setFramesCache(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (adminSection === 'frames') {
+      fetchAdminFrames();
+    }
+  }, [adminSection]);
+
+  const handleFrameUpload = async () => {
+    if (!frameName.trim() || !frameFile || framePrice <= 0) {
+      setFrameError('Name, image file, and price > 0 are required.');
+      return;
+    }
+    setFrameUploading(true);
+    setFrameError('');
+    try {
+      // Upload image first
+      const formData = new FormData();
+      formData.append('image', frameFile);
+      const uploadRes = await fetch(`${API_BASE}/api/upload/image`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) {
+        setFrameError(uploadData.error || 'Image upload failed.');
+        setFrameUploading(false);
+        return;
+      }
+      // Create frame with returned image_url
+      const createRes = await fetch(`${API_BASE}/api/admin/frames`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ name: frameName.trim(), image_url: uploadData.url, price: framePrice })
+      });
+      const createData = await createRes.json();
+      if (!createRes.ok) {
+        setFrameError(createData.error || 'Failed to create frame.');
+      } else {
+        setFrameName('');
+        setFramePrice(0);
+        setFrameFile(null);
+        fetchAdminFrames();
+      }
+    } catch (e: any) {
+      setFrameError(e.message || 'An error occurred.');
+    }
+    setFrameUploading(false);
+  };
+
+  const handleDeleteFrame = async (frameId: string) => {
+    if (!confirm('Delete this frame?')) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/frames/${frameId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        fetchAdminFrames();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
   return (
     <div className="admin-panel animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '3rem' }}>
       <h2 className="pl-section-h2" style={{ marginBottom: '1.5rem' }}>
@@ -79,6 +247,13 @@ export const Admin: React.FC<AdminProps> = ({
         >
           💡 Suggestions
         </button>
+        <button 
+          className={`games-filter-btn ${adminSection === 'frames' ? 'active' : ''}`} 
+          onClick={() => setAdminSection('frames')}
+          style={{ whiteSpace: 'nowrap' }}
+        >
+          🖼️ Frames
+        </button>
       </div>
 
       {adminMessage && (
@@ -89,7 +264,7 @@ export const Admin: React.FC<AdminProps> = ({
 
       {/* 1. EPISODES MANAGEMENT */}
       {adminSection === 'episodes' && (
-        <form onSubmit={handleAdminCreateEpisode} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '2rem' }}>
+        <form onSubmit={handleEpisodeSubmit} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '2rem' }}>
           <h3 style={{ fontSize: '15px', fontWeight: 900, borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem', color: 'var(--orange)' }}>
             Publish a New Podcast Episode
           </h3>
@@ -127,14 +302,41 @@ export const Admin: React.FC<AdminProps> = ({
           </div>
 
           <div className="pl-form-group">
-            <label style={{ fontSize: '12px', fontWeight: 800 }}>Thumbnail URL (Poster Image)</label>
-            <input 
-              type="url" 
-              className="pl-input" 
-              placeholder="https://images.unsplash.com/photo-..."
-              value={adminEpisodeForm.thumbnail_url} 
-              onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, thumbnail_url: e.target.value }))} 
-            />
+            <label style={{ fontSize: '12px', fontWeight: 800 }}>Thumbnail Image (16:9 recommended)</label>
+            <div className="pl-file-upload-container">
+              <label className="pl-file-upload-label">
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => setThumbnailFile(e.target.files?.[0] || null)} 
+                />
+                {thumbnailFile ? (
+                  <>
+                    <div className="pl-file-preview-16-9">
+                      <img 
+                        src={URL.createObjectURL(thumbnailFile)} 
+                        alt="Preview" 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                      />
+                    </div>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{thumbnailFile.name}</span>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Click or drag to change image</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="ti ti-photo-plus pl-file-upload-icon"></i>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Upload Episode Thumbnail</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>Drag & drop or browse (16:9 ratio recommended)</span>
+                  </>
+                )}
+              </label>
+            </div>
+            {adminEpisodeForm.thumbnail_url && !thumbnailFile && (
+              <div style={{ marginTop: '0.5rem', fontSize: '11px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <img src={adminEpisodeForm.thumbnail_url} alt="Current" style={{ width: '60px', height: '34px', borderRadius: '4px', objectFit: 'cover' }} />
+                <span>Current thumbnail (or uploaded)</span>
+              </div>
+            )}
           </div>
 
           <div className="pl-form-group">
@@ -350,7 +552,7 @@ export const Admin: React.FC<AdminProps> = ({
                         <td style={{ padding: '8px 12px', textTransform: 'capitalize' }}>{c.type}</td>
                         <td style={{ padding: '8px 12px' }}>{c.current_uses} / {c.max_uses}</td>
                         <td style={{ padding: '8px 12px', color: isExpired ? '#e74c3c' : 'inherit' }}>
-                          {c.expiry_date ? new Date(c.expiry_date).toLocaleDateString('en-US') : 'Never'}
+                          {c.expiry_date ? new Date(c.expiry_date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Never'}
                           {isExpired && ' (Expired)'}
                         </td>
                         <td style={{ padding: '8px 12px', textAlign: 'center' }}>
@@ -450,6 +652,91 @@ export const Admin: React.FC<AdminProps> = ({
         </div>
       )}
 
+      {/* 5. FRAMES MANAGEMENT */}
+      {adminSection === 'frames' && (
+        <div className="glass-card" style={{ padding: '1.5rem' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 900, color: 'var(--orange)', marginBottom: '1rem' }}>
+            🖼️ Avatar Frames Management
+          </h3>
+
+          {frameError && (
+            <div style={{ color: '#ff4d4d', fontSize: '12px', marginBottom: '1rem', padding: '8px 12px', background: 'rgba(255,77,77,0.1)', borderRadius: '8px' }}>
+              {frameError}
+            </div>
+          )}
+
+          {/* Upload form */}
+          <div className="admin-frames-upload">
+            <h4 style={{ fontSize: '13px', fontWeight: 800 }}>Upload New Frame</h4>
+            <div className="pl-form-group">
+              <label>Frame Name</label>
+              <input type="text" value={frameName} onChange={e => setFrameName(e.target.value)} placeholder="e.g. Legendary Flame" />
+            </div>
+            <div className="pl-form-group">
+              <label>XP Price</label>
+              <input type="number" value={framePrice} onChange={e => setFramePrice(Math.max(0, Number(e.target.value)))} placeholder="e.g. 500" min={0} />
+            </div>
+            <div className="pl-form-group">
+              <label>Frame Image (PNG with transparent background)</label>
+              <div className="pl-file-upload-container">
+                <label className="pl-file-upload-label">
+                  <input 
+                    type="file" 
+                    accept="image/png,image/webp,image/gif" 
+                    onChange={e => setFrameFile(e.target.files?.[0] || null)} 
+                  />
+                  {frameFile ? (
+                    <>
+                      <div className="pl-file-preview-square">
+                        <img 
+                          src={URL.createObjectURL(frameFile)} 
+                          alt="Preview" 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
+                      </div>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{frameFile.name}</span>
+                      <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Click or drag to change image</span>
+                    </>
+                  ) : (
+                    <>
+                      <i className="ti ti-photo-plus pl-file-upload-icon"></i>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Upload Frame PNG</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>Transparent PNG format</span>
+                    </>
+                  )}
+                </label>
+              </div>
+            </div>
+            <button onClick={handleFrameUpload} disabled={frameUploading} className="btn-primary" style={{ alignSelf: 'flex-start', fontSize: '12px' }}>
+              {frameUploading ? 'Uploading...' : 'Upload Frame'}
+            </button>
+          </div>
+
+          {/* Frames grid */}
+          <h4 style={{ fontSize: '13px', fontWeight: 800, marginBottom: '1rem' }}>Existing Frames ({adminFrames.length})</h4>
+          <div className="admin-frames-grid">
+            {adminFrames.length === 0 ? (
+              <div style={{ color: 'var(--text-secondary)', fontSize: '12px', padding: '2rem 0', width: '100%', textAlign: 'center' }}>
+                No frames uploaded yet.
+              </div>
+            ) : (
+              adminFrames.map((f: any) => (
+                <div key={f._id} className="admin-frame-card">
+                  <div className="admin-frame-preview">
+                    <img src={f.image_url} alt={f.name} />
+                  </div>
+                  <span className="admin-frame-name">{f.name}</span>
+                  <span className="admin-frame-price">{f.price.toLocaleString()} XP</span>
+                  <button onClick={() => handleDeleteFrame(f._id)} className="btn-outline mini" style={{ fontSize: '10px', padding: '3px 8px', color: '#ff4d4d', borderColor: 'rgba(255,77,77,0.2)' }}>
+                    Delete
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 4. SUGGESTIONS MODERATION */}
       {adminSection === 'suggestions' && (
         <div className="glass-card" style={{ padding: '1.5rem' }}>
@@ -480,7 +767,7 @@ export const Admin: React.FC<AdminProps> = ({
                       <div>
                         <h4 style={{ fontSize: '14.5px', fontWeight: 800, color: '#fff' }}>{s.title}</h4>
                         <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                          Submitted by @{s.username} · {new Date(s.created_at).toLocaleString('en-US')}
+                          Submitted by @{s.username} · {new Date(s.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
                         </span>
                       </div>
                       <span className="badge-tag" style={{ color: statusColor, borderColor: statusColor, background: statusBg, fontSize: '9px', textTransform: 'capitalize' }}>

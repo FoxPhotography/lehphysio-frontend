@@ -1,4 +1,5 @@
 import React from 'react';
+import { UserAvatar } from './UserAvatar';
 
 interface SidebarProps {
   currentPage: string;
@@ -76,15 +77,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="sidebar-user-section">
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div className={`mobile-avatar-ring ${getAvatarFrameClass()}`}>
-              <div className="mobile-avatar-inner">
-                {user.avatar_url ? (
-                  <img src={user.avatar_url} alt={user.username} />
-                ) : (
-                  user.username[0].toUpperCase()
-                )}
-              </div>
-            </div>
+            <UserAvatar 
+              username={user.username} 
+              avatarUrl={user.avatar_url} 
+              equippedFrame={user.equipped_frame} 
+              size={36} 
+            />
             <div style={{ minWidth: 0 }}>
               <div style={{ fontWeight: 800, fontSize: '14px', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {user.username}

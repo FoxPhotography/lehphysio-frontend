@@ -8,8 +8,8 @@ export const XPPopup: React.FC<XPPopupProps> = ({ popups }) => {
   return (
     <>
       {popups.map((popup) => (
-        <div key={popup.id} className="pl-xp-popup">
-          +{popup.amount} XP ⚡
+        <div key={popup.id} className={`pl-xp-popup ${popup.amount >= 0 ? 'positive' : 'negative'}`}>
+          {popup.amount > 0 ? '+' : ''}{popup.amount} XP ⚡
         </div>
       ))}
     </>

@@ -1,5 +1,5 @@
 /* Physio Army - Dark Futuristic Glassmorphism Design System */
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Outfit:wght@300;400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Outfit:wght@300;400;600;800&display=swap');
 
 :root {
   --bg-primary: #0A0A0A;
@@ -63,7 +63,7 @@ html, body {
   overflow-y: auto;
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Outfit', 'Outfit', sans-serif;
+  font-family: 'Tajawal', 'Outfit', sans-serif;
   min-height: 100vh;
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
@@ -85,12 +85,24 @@ html, body {
   background: var(--orange);
 }
 
-/* App Wrapper Grid Layout */
+/* App Wrapper Layout */
 .app-layout {
-  display: grid;
-  grid-template-columns: 280px 1fr;
+  display: flex;
   min-height: 100vh;
   position: relative;
+}
+
+.app-body-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+@media (min-width: 1024px) {
+  .app-body-wrapper {
+    margin-left: 280px;
+    width: calc(100% - 280px);
+  }
 }
 
 /* Ambient glow overlay background */
@@ -114,8 +126,11 @@ html, body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280px;
   padding: 2rem 1.5rem;
   z-index: 100;
 }
@@ -159,7 +174,7 @@ html, body {
   color: var(--text-secondary);
   padding: 1rem 1.25rem;
   border-radius: var(--radius-sm);
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Tajawal', 'Outfit', sans-serif;
   font-size: 15px;
   font-weight: 700;
   display: flex;
@@ -315,7 +330,7 @@ html, body {
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Tajawal', 'Outfit', sans-serif;
   font-weight: 700;
   font-size: 11px;
   display: flex;
@@ -435,6 +450,132 @@ html, body {
   min-height: auto;
 }
 
+/* Admin frames upload form */
+.admin-frames-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.admin-frames-upload .pl-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.admin-frames-upload .pl-form-group label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.admin-frames-upload .pl-form-group input[type="text"],
+.admin-frames-upload .pl-form-group input[type="number"] {
+  background: #0A0A0A;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #fff;
+  font-family: 'Tajawal', 'Outfit', sans-serif;
+  font-size: 13px;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.admin-frames-upload .pl-form-group input[type="text"]:focus,
+.admin-frames-upload .pl-form-group input[type="number"]:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 8px rgba(255, 106, 0, 0.15);
+}
+
+.admin-frames-upload .pl-form-group input[type="file"] {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 6px 0;
+}
+
+.admin-frames-upload .pl-form-group input[type="file"]::-webkit-file-upload-button {
+  background: rgba(255, 106, 0, 0.12);
+  border: 1px solid rgba(255, 106, 0, 0.25);
+  border-radius: 8px;
+  padding: 6px 14px;
+  color: var(--orange);
+  font-family: 'Tajawal', 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: 8px;
+}
+
+.admin-frames-upload .pl-form-group input[type="file"]::-webkit-file-upload-button:hover {
+  background: rgba(255, 106, 0, 0.2);
+  border-color: var(--orange);
+}
+
+/* Admin frames grid */
+.admin-frames-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.admin-frame-card {
+  width: 150px;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-frame-card:hover {
+  border-color: rgba(255, 106, 0, 0.3);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.admin-frame-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  position: relative;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.admin-frame-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.admin-frame-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+}
+
+.admin-frame-price {
+  font-size: 11px;
+  color: var(--orange);
+  font-weight: 700;
+}
+
 /* Input Fields */
 .pl-input {
   background: #0A0A0A;
@@ -442,7 +583,7 @@ html, body {
   border-radius: 12px;
   padding: 12px 16px;
   color: #fff;
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Tajawal', 'Outfit', sans-serif;
   font-size: 14px;
   width: 100%;
   transition: var(--transition);
@@ -510,6 +651,10 @@ html, body {
   0% { box-shadow: 0 0 5px rgba(255, 106, 0, 0.2); }
   100% { box-shadow: 0 0 15px rgba(255, 106, 0, 0.4); }
 }
+@keyframes firePulse {
+  0% { transform: scale(1) rotate(-3deg); filter: drop-shadow(0 0 4px rgba(255,106,0,0.5)); }
+  100% { transform: scale(1.15) rotate(3deg); filter: drop-shadow(0 0 12px rgba(255,106,0,0.9)); }
+}
 
 /* Floating XP Popup overlays */
 .pl-xp-popup {
@@ -517,16 +662,22 @@ html, body {
   top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: var(--gradient-main);
   color: #0A0A0A;
   padding: 0.75rem 1.75rem;
   border-radius: 50px;
   font-weight: 900;
   font-size: 20px;
-  box-shadow: var(--shadow-orange-intense);
   z-index: 10000;
   pointer-events: none;
   animation: xpFloatUp 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+.pl-xp-popup.positive {
+  background: linear-gradient(135deg, #00e676, #00c853);
+  box-shadow: 0 0 20px rgba(0, 230, 118, 0.6);
+}
+.pl-xp-popup.negative {
+  background: linear-gradient(135deg, #ff1744, #d50000);
+  box-shadow: 0 0 20px rgba(255, 23, 68, 0.6);
 }
 
 @keyframes xpFloatUp {
@@ -1291,7 +1442,7 @@ html, body {
   color: var(--text-secondary);
   padding: 10px;
   border-radius: 8px;
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Tajawal', 'Outfit', sans-serif;
   font-weight: 700;
   font-size: 13.5px;
   cursor: pointer;
@@ -1706,7 +1857,7 @@ html, body {
   border-radius: 12px;
   padding: 12px;
   color: #fff;
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Tajawal', 'Outfit', sans-serif;
   font-size: 14px;
   resize: none;
   min-height: 80px;
@@ -1754,7 +1905,7 @@ html, body {
   padding: 12px 16px;
   color: #fff;
   text-align: right;
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Tajawal', 'Outfit', sans-serif;
   font-weight: 700;
   font-size: 13.5px;
   cursor: pointer;
@@ -1870,7 +2021,7 @@ html, body {
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Tajawal', 'Outfit', sans-serif;
   font-size: 13px;
   font-weight: 700;
   display: flex;
@@ -2106,23 +2257,62 @@ html, body {
 }
 
 /* Equipped cosmetics decoration frames/titles */
+/* Discord-style outline decoration for avatars */
 .avatar-frame-gold-glow {
-  box-shadow: 0 0 15px #FFD700 !important;
-  border: 2px solid #FFD700 !important;
-  background: #FFD700 !important;
+  outline: 2.5px solid #FFD700 !important;
+  outline-offset: -2.5px;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.5), 0 0 0 0.5px rgba(255, 215, 0, 0.8) inset !important;
 }
 
 .avatar-frame-neon-ring {
-  box-shadow: 0 0 15px #00ffff !important;
-  border: 2px solid #00ffff !important;
-  background: #00ffff !important;
+  outline: 2.5px solid #00ffff !important;
+  outline-offset: -2.5px;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.5), 0 0 0 0.5px rgba(0, 255, 255, 0.8) inset !important;
+}
+
+/* Floating heart animation for double-tap like */
+.floating-heart {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 60px;
+  pointer-events: none;
+  z-index: 10;
+  animation: floatHeartUp 0.8s ease-out forwards;
+  user-select: none;
+}
+
+@keyframes floatHeartUp {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -100%) scale(1);
+  }
+}
+
+/* PNG frame overlay sits on top of avatar with no distortion */
+.avatar-frame-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  user-select: none;
+  object-fit: fill;
 }
 
 /* Responsive Media Queries */
 @media (min-width: 1024px) {
-  .app-layout {
-    grid-template-columns: 280px 1fr;
-  }
   .app-sidebar {
     display: flex;
   }
@@ -2145,9 +2335,6 @@ html, body {
 }
 
 @media (max-width: 1024px) {
-  .app-layout {
-    grid-template-columns: 1fr;
-  }
   .app-sidebar {
     display: none; /* Hide sidebar drawer overlays on mobile */
   }
@@ -2296,7 +2483,7 @@ html, body {
   color: var(--text-primary);
   padding: 10px 14px;
   border-radius: 12px;
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Tajawal', 'Outfit', sans-serif;
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
@@ -2652,3 +2839,202 @@ html, body {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Cropper Modal Styles */
+.pl-crop-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  z-index: 11000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pl-crop-modal-content {
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  width: 90%;
+  max-width: 450px;
+  padding: 2rem;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.pl-crop-viewport-container {
+  width: 300px;
+  height: 300px;
+  overflow: hidden;
+  position: relative;
+  border-radius: 50%;
+  background: #000;
+  border: 2px dashed var(--orange);
+  cursor: grab;
+  user-select: none;
+}
+
+.pl-crop-viewport-container:active {
+  cursor: grabbing;
+}
+
+.pl-crop-image {
+  position: absolute;
+  pointer-events: none;
+  transform-origin: center;
+}
+
+.pl-crop-slider-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pl-crop-slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.pl-crop-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  outline: none;
+}
+
+.pl-crop-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--orange);
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(255, 106, 0, 0.5);
+  transition: transform 0.1s ease;
+}
+
+.pl-crop-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.pl-crop-actions {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+}
+
+.pl-crop-actions button {
+  flex: 1;
+}
+
+.avatar-container-profile {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  cursor: pointer;
+  overflow: visible;
+}
+
+.avatar-container-profile:hover .avatar-upload-overlay {
+  opacity: 1 !important;
+}
+
+/* Custom Premium File Uploader Style */
+.pl-file-upload-container {
+  position: relative;
+  margin-top: 0.25rem;
+}
+
+.pl-file-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  border: 2px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.25s ease-in-out;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  min-height: 120px;
+}
+
+.pl-file-upload-label:hover {
+  border-color: var(--orange);
+  background: rgba(255, 106, 0, 0.04);
+  box-shadow: 0 0 20px rgba(255, 106, 0, 0.08);
+}
+
+.pl-file-upload-label input[type="file"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.pl-file-preview-16-9 {
+  width: 120px;
+  height: 67.5px; /* 16:9 ratio */
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--orange);
+  background: var(--bg-secondary);
+  box-shadow: 0 0 10px rgba(255, 106, 0, 0.25);
+  margin-bottom: 0.25rem;
+  transition: transform 0.2s ease;
+}
+
+.pl-file-upload-label:hover .pl-file-preview-16-9 {
+  transform: scale(1.05);
+}
+
+.pl-file-preview-square {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--orange);
+  background: var(--bg-secondary);
+  box-shadow: 0 0 10px rgba(255, 106, 0, 0.25);
+  margin-bottom: 0.25rem;
+  transition: transform 0.2s ease;
+}
+
+.pl-file-upload-label:hover .pl-file-preview-square {
+  transform: scale(1.05);
+}
+
+.pl-file-upload-icon {
+  font-size: 28px;
+  color: var(--orange);
+  margin-bottom: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.pl-file-upload-label:hover .pl-file-upload-icon {
+  transform: translateY(-2px);
+}
+

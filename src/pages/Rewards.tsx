@@ -1,5 +1,11 @@
-import React from 'react';
-import { playChatSound } from '../utils/helpers';
+import React, { useState, useEffect } from 'react';
+import { playChatSound, setFramesCache } from '../utils/helpers';
+
+const API_BASE = import.meta.env.VITE_API_BASE || (
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') 
+    ? `http://${window.location.hostname}:5000` 
+    : ''
+);
 
 interface RewardsProps {
   user: any;
@@ -15,6 +21,7 @@ interface RewardsProps {
   handleShopPurchase: (itemId: string, cost: number) => void;
   hasOpenedBoxToday: boolean;
   handleClaimSurpriseBox: () => void;
+  handleBuyFrame?: (frameId: string, price: number) => Promise<boolean>;
 }
 
 export const Rewards: React.FC<RewardsProps> = ({
@@ -30,8 +37,49 @@ export const Rewards: React.FC<RewardsProps> = ({
   unlockedCosmetics,
   handleShopPurchase,
   hasOpenedBoxToday,
-  handleClaimSurpriseBox
+  handleClaimSurpriseBox,
+  handleBuyFrame
 }) => {
+  const [shopFrames, setShopFrames] = useState<any[]>([]);
+  const [buyingFrameId, setBuyingFrameId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/frames`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setShopFrames(data);
+          setFramesCache(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const isFrameOwned = (frameId: number) => {
+    return user?.unlocked_frames?.includes(frameId) || false;
+  };
+
+  const handleFrameBuy = async (frameId: string) => {
+    if (buyingFrameId) return;
+    setBuyingFrameId(frameId);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/frames/buy/${frameId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || 'Frame purchased!');
+        if (handleBuyFrame) await handleBuyFrame(frameId, 0);
+      } else {
+        showToast(data.error || 'Failed to purchase frame.');
+      }
+    } catch (e) {
+      showToast('An error occurred.');
+    }
+    setBuyingFrameId(null);
+  };
   return (
     <div className="rewards-panel animate-fade-in">
       <div className="pl-section-h2">
@@ -134,6 +182,31 @@ export const Rewards: React.FC<RewardsProps> = ({
               {unlockedCosmetics.includes('diagnosis-legend') ? 'Purchased' : 'Buy Item'}
             </button>
           </div>
+
+          {/* Dynamic frame shop items */}
+          {shopFrames.map((f: any) => {
+            const owned = isFrameOwned(f._id);
+            const canAfford = user && user.total_xp >= f.price;
+            return (
+              <div key={f._id} className="shop-item-card glass-card">
+                <div className="shop-item-preview-box" style={{ position: 'relative', width: '72px', height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-secondary)', borderRadius: '50%' }}>
+                  <div style={{ width: '64px', height: '64px', borderRadius: '50%', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,106,0,0.12)' }}>
+                    <span style={{ fontSize: '22px', fontWeight: 800, color: 'var(--orange)' }}>A</span>
+                    <img src={f.image_url} alt={f.name} style={{ position: 'absolute', top: '-7.5%', left: '-7.5%', width: '115%', height: '115%', objectFit: 'fill', pointerEvents: 'none' }} />
+                  </div>
+                </div>
+                <h4 className="shop-item-title">{f.name}</h4>
+                <span className="shop-item-cost">{f.price.toLocaleString()} XP</span>
+                <button
+                  className={`btn-primary mini ${buyingFrameId === String(f._id) ? 'loading' : ''}`}
+                  onClick={() => handleFrameBuy(String(f._id))}
+                  disabled={owned || buyingFrameId !== null}
+                >
+                  {buyingFrameId === String(f._id) ? 'Buying...' : owned ? 'Owned' : canAfford ? 'Buy' : 'Not enough XP'}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </section>
     </div>

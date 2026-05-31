@@ -1,4 +1,5 @@
 import React from 'react';
+import { UserAvatar } from './UserAvatar';
 
 interface MobileHeaderProps {
   setCurrentPage: (page: string) => void;
@@ -8,8 +9,7 @@ interface MobileHeaderProps {
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({
   setCurrentPage,
-  user,
-  getAvatarFrameClass
+  user
 }) => {
   return (
     <header className="app-mobile-header">
@@ -23,15 +23,14 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         </button>
         
         {user ? (
-          <div className={`mobile-avatar-ring ${getAvatarFrameClass()}`} onClick={() => setCurrentPage('profile')}>
-            <div className="mobile-avatar-inner">
-              {user.avatar_url ? (
-                <img src={user.avatar_url} alt={user.username} />
-              ) : (
-                user.username[0].toUpperCase()
-              )}
-            </div>
-          </div>
+          <UserAvatar 
+            username={user.username} 
+            avatarUrl={user.avatar_url} 
+            equippedFrame={user.equipped_frame} 
+            size={32} 
+            onClick={() => setCurrentPage('profile')}
+            style={{ cursor: 'pointer' }}
+          />
         ) : (
           <button className="mobile-btn" onClick={() => setCurrentPage('login')}>
             <i className="ti ti-login"></i>

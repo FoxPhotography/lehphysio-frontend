@@ -1,5 +1,5 @@
 import React from 'react';
-import { getNameColor } from '../utils/helpers';
+import { getNameColor, getFrameImage } from '../utils/helpers';
 
 interface CommunityProps {
   user: any;
@@ -33,6 +33,9 @@ interface CommunityProps {
   handleUpvoteSuggestion: (id: number) => void;
   handleOpenModerationModal: (username: string, userId: number) => void;
   handleDeleteSuggestion: (id: number) => void;
+  usernames?: any[];
+  getAvatarFrameClass?: () => string;
+  equippedFrame?: string;
 }
 
 export const Community: React.FC<CommunityProps> = ({
@@ -67,8 +70,16 @@ export const Community: React.FC<CommunityProps> = ({
   handleUpvoteSuggestion,
   handleOpenModerationModal,
   handleDeleteSuggestion,
-  usernames = []
+  usernames = [],
+  getAvatarFrameClass,
+  equippedFrame
 }) => {
+
+  const getFrameClass = (frameName: string) => {
+    if (frameName === 'gold-glow') return 'avatar-frame-gold-glow';
+    if (frameName === 'neon-ring') return 'avatar-frame-neon-ring';
+    return '';
+  };
   const [showScrollDownBtn, setShowScrollDownBtn] = React.useState(false);
   const [activeSubTab, setActiveSubTab] = React.useState<'chat' | 'suggestions'>('chat');
   const [suggTitle, setSuggTitle] = React.useState('');
@@ -94,9 +105,11 @@ export const Community: React.FC<CommunityProps> = ({
     });
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setChatInput(value);
+    e.target.style.height = 'auto';
+    e.target.style.height = `${e.target.scrollHeight}px`;
 
     // Get cursor position
     const selectionStart = e.target.selectionStart || 0;
@@ -132,7 +145,7 @@ export const Community: React.FC<CommunityProps> = ({
     setShowMentionSuggestions(false);
     
     setTimeout(() => {
-      const inputEl = document.getElementById('community-chat-input') as HTMLInputElement;
+      const inputEl = document.getElementById('community-chat-input') as HTMLTextAreaElement;
       if (inputEl) {
         inputEl.focus();
         inputEl.setSelectionRange(selectionStart, selectionStart);
@@ -219,6 +232,7 @@ export const Community: React.FC<CommunityProps> = ({
                 // Swipe state values
                 const tx = swipeTranslateX[msg.id] || 0;
                 const isSwiping = swipeMessageIdRef.current === msg.id;
+                const framePngUrl = getFrameImage(msg.equipped_frame);
 
                 return (
                   <div 
@@ -317,7 +331,7 @@ export const Community: React.FC<CommunityProps> = ({
                       {/* Outgoing User Avatar */}
                       {isMyMsg && (
                         <div 
-                          className="mobile-avatar-ring" 
+                          className={`mobile-avatar-ring ${getFrameClass(msg.equipped_frame)}`}
                           style={{ 
                             width: '32px', 
                             height: '32px', 
@@ -325,7 +339,8 @@ export const Community: React.FC<CommunityProps> = ({
                             marginTop: '16px', 
                             cursor: 'default',
                             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                            background: 'var(--gradient-main)' 
+                            background: 'var(--gradient-main)',
+                            position: 'relative'
                           }}
                         >
                           <div className="mobile-avatar-inner" style={{ fontSize: '11px', background: 'var(--bg-primary)' }}>
@@ -335,6 +350,9 @@ export const Community: React.FC<CommunityProps> = ({
                               msg.username ? msg.username[0].toUpperCase() : 'U'
                             )}
                           </div>
+                          {framePngUrl && (
+                            <img src={framePngUrl} alt="" style={{ position: 'absolute', top: '-7.5%', left: '-7.5%', width: '115%', height: '115%', pointerEvents: 'none', zIndex: 2, userSelect: 'none' }} />
+                          )}
                         </div>
                       )}
 
@@ -462,7 +480,7 @@ export const Community: React.FC<CommunityProps> = ({
                       {/* Incoming User Avatar */}
                       {!isMyMsg && (
                         <div 
-                          className="mobile-avatar-ring" 
+                          className={`mobile-avatar-ring ${getFrameClass(msg.equipped_frame)}`}
                           style={{ 
                             width: '32px', 
                             height: '32px', 
@@ -470,7 +488,8 @@ export const Community: React.FC<CommunityProps> = ({
                             marginTop: '16px', 
                             cursor: 'default',
                             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                            background: 'var(--gradient-main)' 
+                            background: 'var(--gradient-main)',
+                            position: 'relative'
                           }}
                         >
                           <div className="mobile-avatar-inner" style={{ fontSize: '11px', background: 'var(--bg-primary)' }}>
@@ -480,6 +499,9 @@ export const Community: React.FC<CommunityProps> = ({
                               msg.username[0].toUpperCase()
                             )}
                           </div>
+                          {framePngUrl && (
+                            <img src={framePngUrl} alt="" style={{ position: 'absolute', top: '-7.5%', left: '-7.5%', width: '115%', height: '115%', pointerEvents: 'none', zIndex: 2, userSelect: 'none' }} />
+                          )}
                         </div>
                       )}
                     </div>
@@ -559,7 +581,7 @@ export const Community: React.FC<CommunityProps> = ({
                           cursor: 'pointer',
                           borderRadius: '8px',
                           transition: 'background 0.2s',
-                          fontFamily: 'Outfit, sans-serif'
+                          fontFamily: 'Tajawal, Outfit, sans-serif'
                         }}
                         onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 106, 0, 0.1)'}
                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
@@ -617,20 +639,35 @@ export const Community: React.FC<CommunityProps> = ({
 
               {/* Send Input Form */}
               {user ? (
-                <form onSubmit={handleSendChatMessage} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <input
+                <form
+                  onSubmit={(e) => {
+                    handleSendChatMessage(e);
+                    const el = document.getElementById('community-chat-input');
+                    if (el) el.style.height = 'auto';
+                  }}
+                  style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}
+                >
+                  <textarea
                     id="community-chat-input"
-                    type="text"
                     name="chatMessage"
                     autoComplete="off"
                     autoCorrect="on"
                     spellCheck="true"
-                    data-lpignore="true" /* LastPass ignore */
-                    data-1p-ignore="true" /* 1Password ignore */
+                    data-lpignore="true"
+                    data-1p-ignore="true"
                     className="pl-input"
                     placeholder={editingMessage ? "Edit your message here..." : "Message"}
                     value={chatInput}
                     onChange={handleInputChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        const form = e.currentTarget.form;
+                        if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                      }
+                    }}
+                    rows={1}
+                    style={{ flex: 1, resize: 'none', minHeight: '38px', maxHeight: '120px', fontFamily: 'inherit', fontSize: '13px' }}
                   />
                   <button type="submit" className="pl-chat-send-btn" onMouseDown={(e) => e.preventDefault()}>
                     <i className={`ti ${editingMessage ? 'ti-check' : 'ti-send'}`} style={{ transform: editingMessage ? 'none' : 'scaleX(-1)' }}></i>
@@ -728,7 +765,7 @@ export const Community: React.FC<CommunityProps> = ({
                         <div>
                           <h4 style={{ fontSize: '13.5px', fontWeight: 800, color: '#fff' }}>{s.title}</h4>
                           <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-                            By @{s.username} · {new Date(s.created_at).toLocaleDateString('en-US')}
+                            By @{s.username} · {new Date(s.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                           </span>
                         </div>
                         <span className="badge-tag" style={{ color: statusColor, borderColor: statusColor, background: statusBg, fontSize: '9px', textTransform: 'capitalize' }}>
