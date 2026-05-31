@@ -41,40 +41,6 @@ function App() {
   // Navigation State
   const [currentPage, _setCurrentPage] = useState('home'); // home, episodes, community, games, leaderboard, profile, rewards, episode-detail, play-game, login, register, confirm, admin
 
-  const changePage = (page: string, params?: any) => {
-    let path = '/';
-    if (page === 'home') path = '/';
-    else if (page === 'episodes') path = '/episodes';
-    else if (page === 'episode-detail') {
-      const epId = params?.id || selectedEpisodeId || (episodeDetail && episodeDetail.episode ? episodeDetail.episode.id : '');
-      path = `/episodes/${epId}`;
-    }
-    else if (page === 'community') path = '/chat';
-    else if (page === 'games') path = '/games';
-    else if (page === 'play-game') {
-      const code = params?.roomCode || (activeGameRoom ? activeGameRoom.code : '');
-      path = `/game/${code}`;
-    }
-    else if (page === 'leaderboard') path = '/leaderboard';
-    else if (page === 'rewards') path = '/rewards';
-    else if (page === 'profile') path = '/profile';
-    else if (page === 'login') path = '/login';
-    else if (page === 'register') path = '/register';
-    else if (page === 'confirm') path = '/confirm';
-    else if (page === 'forgot-password') path = '/forgot-password';
-    else if (page === 'reset-password') path = '/reset-password';
-    else if (page === 'admin') path = '/admin';
-    
-    if (window.location.pathname !== path) {
-      window.history.pushState(null, '', path);
-    }
-    _setCurrentPage(page);
-  };
-
-  const setCurrentPage = (page: string) => {
-    changePage(page);
-  };
-  
   // Auth State
   const [user, setUser] = useState<any>(null);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -216,6 +182,40 @@ function App() {
   const swipeMessageIdRef = useRef<number | null>(null);
   const prevMessagesCountRef = useRef<number>(0);
   const prevPageRef = useRef<string>('');
+
+  const changePage = (page: string, params?: any) => {
+    let path = '/';
+    if (page === 'home') path = '/';
+    else if (page === 'episodes') path = '/episodes';
+    else if (page === 'episode-detail') {
+      const epId = params?.id || selectedEpisodeId || (episodeDetail && episodeDetail.episode ? episodeDetail.episode.id : '');
+      path = `/episodes/${epId}`;
+    }
+    else if (page === 'community') path = '/chat';
+    else if (page === 'games') path = '/games';
+    else if (page === 'play-game') {
+      const code = params?.roomCode || (activeGameRoom ? activeGameRoom.code : '');
+      path = `/game/${code}`;
+    }
+    else if (page === 'leaderboard') path = '/leaderboard';
+    else if (page === 'rewards') path = '/rewards';
+    else if (page === 'profile') path = '/profile';
+    else if (page === 'login') path = '/login';
+    else if (page === 'register') path = '/register';
+    else if (page === 'confirm') path = '/confirm';
+    else if (page === 'forgot-password') path = '/forgot-password';
+    else if (page === 'reset-password') path = '/reset-password';
+    else if (page === 'admin') path = '/admin';
+    
+    if (window.location.pathname !== path) {
+      window.history.pushState(null, '', path);
+    }
+    _setCurrentPage(page);
+  };
+
+  const setCurrentPage = (page: string) => {
+    changePage(page);
+  };
 
   // Toast Functionality
   const showToast = (msg: string) => {
