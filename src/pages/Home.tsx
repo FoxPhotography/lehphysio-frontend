@@ -205,9 +205,13 @@ export const Home: React.FC<HomeProps> = ({
         }
         setNewCommentTexts(prev => ({ ...prev, [postId]: '' }));
         setReplyingToComment(prev => ({ ...prev, [postId]: null }));
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || 'Failed to post comment');
       }
     } catch (e) {
       console.error(e);
+      showToast('Network error: Failed to post comment');
     } finally {
       setCommentSubmitting(prev => ({ ...prev, [postId]: false }));
     }
@@ -361,7 +365,7 @@ export const Home: React.FC<HomeProps> = ({
     return parts.map((part, idx) => {
       if (part.startsWith('@')) {
         return (
-          <span key={idx} className="mention-tag" style={{ color: 'var(--orange)', fontWeight: 800 }}>
+          <span key={idx} className="mention-tag" style={{ color: '#FFD93D', fontWeight: 800 }}>
             {part}
           </span>
         );
@@ -737,7 +741,7 @@ export const Home: React.FC<HomeProps> = ({
                     </div>
                   </div>
                   {/* 3-dot menu */}
-                  {user && (post.user_id === user.id || user.role === 'admin' || user.role === 'owner') && (
+                  {user && (post.user_id === user.id || post.username === user.username || user.role === 'admin' || user.role === 'owner') && (
                     <div style={{ position: 'relative' }}>
                       <button
                         onClick={(e) => {

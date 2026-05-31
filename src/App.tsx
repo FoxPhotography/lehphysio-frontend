@@ -1579,6 +1579,7 @@ function App() {
       message: messageText,
       created_at: new Date().toISOString(),
       avatar_url: user?.avatar_url || null,
+      equipped_frame: user?.equipped_frame || 'none',
       role: user?.role || 'student',
       reply_to: replyingTo ? {
         id: replyingTo.id,
@@ -1592,6 +1593,8 @@ function App() {
 
     // Update messages locally instantly
     setChatMessages(prev => [...prev, optimisticMsg]);
+    // Manually sync ref so polling doesn't lose the optimistic message
+    chatMessagesRef.current = [...chatMessagesRef.current, optimisticMsg];
     setChatInput('');
     setReplyingTo(null);
 
@@ -1603,10 +1606,9 @@ function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        // Play sound when the message actually sends successfully
         playChatSound('send');
-        setChatMessages(prev => prev.map(m => m.id === optimisticId ? { ...m, id: data.id, isPending: false } : m));
-        fetchChatMessages();
+        setChatMessages(prev => prev.map(m => m.id === optimisticId ? { ...m, id: data.id, isPending: false, equipped_frame: data.equipped_frame || m.equipped_frame, role: data.role || m.role, avatar_url: data.avatar_url || m.avatar_url, batch: data.batch || m.batch, rank: data.rank || m.rank } : m));
+        chatMessagesRef.current = chatMessagesRef.current.map(m => m.id === optimisticId ? { ...m, id: data.id, isPending: false, equipped_frame: data.equipped_frame || m.equipped_frame, role: data.role || m.role, avatar_url: data.avatar_url || m.avatar_url, batch: data.batch || m.batch, rank: data.rank || m.rank } : m);
       } else {
         // Remove optimistic message if error occurred
         setChatMessages(prev => prev.filter(m => m.id !== optimisticId));

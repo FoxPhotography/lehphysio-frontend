@@ -96,7 +96,7 @@ export const Community: React.FC<CommunityProps> = ({
     return parts.map((part, idx) => {
       if (part.startsWith('@')) {
         return (
-          <span key={idx} className="mention-tag" style={{ color: 'var(--orange)', fontWeight: 800 }}>
+          <span key={idx} className="mention-tag" style={{ color: '#FFD93D', fontWeight: 800 }}>
             {part}
           </span>
         );

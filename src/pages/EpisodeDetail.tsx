@@ -84,7 +84,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
     return parts.map((part, idx) => {
       if (part.startsWith('@')) {
         return (
-          <span key={idx} className="mention-tag" style={{ color: 'var(--orange)', fontWeight: 800 }}>
+          <span key={idx} className="mention-tag" style={{ color: '#FFD93D', fontWeight: 800 }}>
             {part}
           </span>
         );
@@ -372,9 +372,9 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
               ) : comments.map((c: any) => (
                 <div key={c.id} className="glass-card" style={{ background: '#0D0D0D' }}
                   onContextMenu={(e) => {
-                    if (user && (c.user_id === user.id || user.role === 'admin' || user.role === 'owner')) {
+                    if (user && (c.user_id === user.id || c.username === user.username || user.role === 'admin' || user.role === 'owner')) {
                       e.preventDefault();
-                      setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, isOwner: c.user_id === user.id });
+                      setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, isOwner: c.user_id === user.id || c.username === user.username });
                     }
                   }}
                 >
@@ -406,7 +406,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, isOwner: c.user_id === user.id });
+                      setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, isOwner: c.user_id === user.id || c.username === user.username });
                           }}
                           style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '14px', padding: '0 4px' }}
                           title="More"
@@ -488,11 +488,11 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                               <span style={{ fontSize: '9px', color: 'var(--text-secondary)' }}>
                                 {new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                               </span>
-                              {user && (r.user_id === user.id || user.role === 'admin' || user.role === 'owner') && (
+                              {user && (r.user_id === user.id || r.username === user.username || user.role === 'admin' || user.role === 'owner') && (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setContextMenu({ x: e.clientX, y: e.clientY, commentId: r.id, content: r.content, isOwner: r.user_id === user.id });
+                                    setContextMenu({ x: e.clientX, y: e.clientY, commentId: r.id, content: r.content, isOwner: r.user_id === user.id || r.username === user.username });
                                   }}
                                   style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '11px', padding: '0 2px' }}
                                   title="More"
