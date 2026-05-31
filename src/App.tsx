@@ -418,6 +418,14 @@ function App() {
           setEquippedTitle(data.user.equipped_title);
           localStorage.setItem('eq_title', data.user.equipped_title);
         }
+        if (data.rewards) {
+          if (data.rewards.daily_login) {
+            triggerXpPopup(xpSettings.daily_login || 10);
+          }
+          if (data.rewards.streak_bonus) {
+            setTimeout(() => triggerXpPopup(xpSettings.streak_bonus || 70), 1000);
+          }
+        }
       } else {
         setToken('');
       }
@@ -1111,8 +1119,13 @@ function App() {
         setUser(data.user);
         setLoginForm({ username: '', password: '' });
         playChatSound('success');
-        if (data.rewards && data.rewards.daily_login) {
-          triggerXpPopup(10);
+        if (data.rewards) {
+          if (data.rewards.daily_login) {
+            triggerXpPopup(xpSettings.daily_login || 10);
+          }
+          if (data.rewards.streak_bonus) {
+            setTimeout(() => triggerXpPopup(xpSettings.streak_bonus || 70), 1000);
+          }
         }
         if (!sessionStorage.getItem('pendingGameCode')) {
           setCurrentPage('home');
