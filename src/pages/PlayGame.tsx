@@ -134,6 +134,20 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   const prevWinnerRef = useRef<string | null>(null);
   const prevStatusRef = useRef<string | null>(null);
 
+  // Local timer ticker to force re-render for smooth countdown timer updates
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    let timerId: any;
+    if (room.status === 'playing' && !room.roundWinner) {
+      timerId = setInterval(() => {
+        setTick(t => t + 1);
+      }, 250);
+    }
+    return () => {
+      if (timerId) clearInterval(timerId);
+    };
+  }, [room.status, room.roundWinner]);
+
   if (!activeGameRoom) return null;
   const room = activeGameRoom;
   const isHost = room.host === user?.username;
@@ -146,7 +160,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     timeLeft = Math.max(0, Math.ceil(room.roundDuration - elapsed));
   }
   
-  const inviteUrl = `${window.location.origin}${window.location.pathname}?gameCode=${room.code}`;
+  const inviteUrl = `${window.location.origin}/game/${room.code}`;
   
   const handleCopyInviteUrl = () => {
     navigator.clipboard.writeText(inviteUrl);

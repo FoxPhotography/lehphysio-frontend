@@ -721,7 +721,7 @@ export const Home: React.FC<HomeProps> = ({
             <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem 0' }}>No posts available at the moment.</p>
           ) : (
             communityPosts.map((post: any) => (
-              <div key={post.id} className="community-feed-item glass-card" style={{ marginBottom: '1.25rem', padding: '1.25rem', position: 'relative' }}>
+              <div key={post.id} id={`post-${post.id}`} className="community-feed-item glass-card" style={{ marginBottom: '1.25rem', padding: '1.25rem', position: 'relative' }}>
                 <div className="feed-item-header">
                   <div className="feed-user-block" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flex: 1 }}>
                     <UserAvatar

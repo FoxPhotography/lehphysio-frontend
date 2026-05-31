@@ -39,7 +39,41 @@ const socket = io(API_BASE || window.location.origin);
 
 function App() {
   // Navigation State
-  const [currentPage, setCurrentPage] = useState('home'); // home, episodes, community, games, leaderboard, profile, rewards, episode-detail, play-game, login, register, confirm, admin
+  const [currentPage, _setCurrentPage] = useState('home'); // home, episodes, community, games, leaderboard, profile, rewards, episode-detail, play-game, login, register, confirm, admin
+
+  const changePage = (page: string, params?: any) => {
+    let path = '/';
+    if (page === 'home') path = '/';
+    else if (page === 'episodes') path = '/episodes';
+    else if (page === 'episode-detail') {
+      const epId = params?.id || selectedEpisodeId || (episodeDetail && episodeDetail.episode ? episodeDetail.episode.id : '');
+      path = `/episodes/${epId}`;
+    }
+    else if (page === 'community') path = '/chat';
+    else if (page === 'games') path = '/games';
+    else if (page === 'play-game') {
+      const code = params?.roomCode || (activeGameRoom ? activeGameRoom.code : '');
+      path = `/game/${code}`;
+    }
+    else if (page === 'leaderboard') path = '/leaderboard';
+    else if (page === 'rewards') path = '/rewards';
+    else if (page === 'profile') path = '/profile';
+    else if (page === 'login') path = '/login';
+    else if (page === 'register') path = '/register';
+    else if (page === 'confirm') path = '/confirm';
+    else if (page === 'forgot-password') path = '/forgot-password';
+    else if (page === 'reset-password') path = '/reset-password';
+    else if (page === 'admin') path = '/admin';
+    
+    if (window.location.pathname !== path) {
+      window.history.pushState(null, '', path);
+    }
+    _setCurrentPage(page);
+  };
+
+  const setCurrentPage = (page: string) => {
+    changePage(page);
+  };
   
   // Auth State
   const [user, setUser] = useState<any>(null);
@@ -240,41 +274,37 @@ function App() {
     }
   }, [token]);
 
-  // Initial Fetching & Referral/Game Invite Tracking
-  useEffect(() => {
-    fetchEpisodes();
-    fetchCommunityPosts();
-    fetchLeaderboard();
-    fetchPublicSuggestions();
-    fetchFrames();
-    fetchXpSettings();
-
-    // Check query parameters for referral or game code
+  const handleUrlRouting = () => {
+    const path = window.location.pathname;
     const params = new URLSearchParams(window.location.search);
     const refUsername = params.get('ref');
-    const gameCode = params.get('gameCode');
 
-    if (gameCode) {
-      const activeToken = localStorage.getItem('token');
-      if (activeToken) {
-        handleJoinGameRoom(gameCode);
-      } else {
-        sessionStorage.setItem('pendingGameCode', gameCode);
-        setCurrentPage('login');
-        showToast('Please log in to join the game room! 🔐');
-      }
-      // Clean up URL parameters
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-
-    // Track share link visit (any page with ?ref=username)
+    // Handle referral track
     if (refUsername) {
-      const activeToken = localStorage.getItem('token');
-      const page = params.get('page');
-      const contentId = params.get('id') || params.get('post') || null;
+      const activeToken = localStorage.getItem('token') || token;
       let contentType = null;
-      if (page === 'episode-detail' && contentId) contentType = 'episode';
-      else if (page === 'community' && contentId) contentType = 'community_post';
+      let contentId = null;
+      
+      const epMatch = path.match(/^\/episodes\/(\d+)/);
+      const postMatch = path.match(/^\/post\/(\d+)/);
+      if (epMatch) {
+        contentType = 'episode';
+        contentId = parseInt(epMatch[1]);
+      } else if (postMatch) {
+        contentType = 'community_post';
+        contentId = parseInt(postMatch[1]);
+      } else {
+        const page = params.get('page');
+        const cid = params.get('id') || params.get('post');
+        if (page === 'episode-detail' && cid) {
+          contentType = 'episode';
+          contentId = parseInt(cid);
+        } else if (page === 'community' && cid) {
+          contentType = 'community_post';
+          contentId = parseInt(cid);
+        }
+      }
+
       fetch(`${API_BASE}/api/share/visit`, {
         method: 'POST',
         headers: { 
@@ -284,7 +314,7 @@ function App() {
         body: JSON.stringify({ 
           referrer: refUsername,
           content_type: contentType,
-          content_id: contentId ? parseInt(contentId) : null
+          content_id: contentId ? parseInt(contentId as any) : null
         })
       })
       .then(res => res.json())
@@ -295,10 +325,116 @@ function App() {
       })
       .catch(err => console.error('Error tracking share visit:', err));
 
-      // Clean up URL parameters
-      window.history.replaceState({}, document.title, window.location.pathname);
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
     }
-  }, []);
+
+    // Path parsing
+    if (path === '/' || path === '') {
+      _setCurrentPage('home');
+    } else if (path === '/chat') {
+      _setCurrentPage('community');
+      setCommunityTab('chat');
+    } else if (path === '/episodes') {
+      _setCurrentPage('episodes');
+    } else if (path.startsWith('/episodes/')) {
+      const idStr = path.substring('/episodes/'.length);
+      const id = parseInt(idStr);
+      if (!isNaN(id)) {
+        setSelectedEpisodeId(id);
+        _setCurrentPage('episode-detail');
+        setEpisodeDetailLoading(true);
+        fetchEpisodeDetail(id);
+      } else {
+        _setCurrentPage('episodes');
+      }
+    } else if (path.startsWith('/post/')) {
+      const idStr = path.substring('/post/'.length);
+      const id = parseInt(idStr);
+      if (!isNaN(id)) {
+        _setCurrentPage('home'); // Feed is home
+      } else {
+        _setCurrentPage('home');
+      }
+    } else if (path === '/games') {
+      _setCurrentPage('games');
+    } else if (path.startsWith('/game/')) {
+      const roomCode = path.substring('/game/'.length).toUpperCase();
+      const activeToken = localStorage.getItem('token') || token;
+      if (activeToken) {
+        if (activeGameRoom && activeGameRoom.code === roomCode) {
+          _setCurrentPage('play-game');
+        } else {
+          handleJoinGameRoom(roomCode);
+        }
+      } else {
+        sessionStorage.setItem('pendingGameCode', roomCode);
+        _setCurrentPage('login');
+        showToast('Please log in to join the game room! 🔐');
+      }
+    } else if (path === '/leaderboard') {
+      _setCurrentPage('leaderboard');
+    } else if (path === '/rewards') {
+      _setCurrentPage('rewards');
+    } else if (path === '/profile') {
+      _setCurrentPage('profile');
+    } else if (path === '/login') {
+      _setCurrentPage('login');
+    } else if (path === '/register') {
+      _setCurrentPage('register');
+    } else if (path === '/confirm') {
+      _setCurrentPage('confirm');
+    } else if (path === '/forgot-password') {
+      _setCurrentPage('forgot-password');
+    } else if (path === '/reset-password') {
+      _setCurrentPage('reset-password');
+    } else if (path === '/admin') {
+      _setCurrentPage('admin');
+    } else {
+      _setCurrentPage('home');
+    }
+  };
+
+  // Initial Fetching & Routing Setup
+  useEffect(() => {
+    fetchEpisodes();
+    fetchCommunityPosts();
+    fetchLeaderboard();
+    fetchPublicSuggestions();
+    fetchFrames();
+    fetchXpSettings();
+
+    handleUrlRouting();
+    const onPopState = () => {
+      handleUrlRouting();
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, [token]);
+
+  // Highlight and scroll to a shared community post if the URL path targets one
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/post/') && communityPosts.length > 0) {
+      const idStr = path.substring('/post/'.length);
+      const id = parseInt(idStr);
+      if (!isNaN(id)) {
+        setTimeout(() => {
+          const el = document.getElementById(`post-${id}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.style.border = '2px solid var(--orange)';
+            setTimeout(() => {
+              el.style.transition = 'border 1.5s ease-out';
+              el.style.border = '1px solid var(--card-border)';
+            }, 3000);
+          }
+        }, 400);
+      }
+    }
+  }, [communityPosts]);
 
   // Fetch chat messages on mount/page focus
   useEffect(() => {
@@ -344,36 +480,65 @@ function App() {
     if (currentPage === 'leaderboard') fetchLeaderboard();
   }, [currentPage, leaderboardTab]);
 
+  // Real-time Socket.io updates for multiplayer game rooms
   useEffect(() => {
-    let interval: any;
     if (activeGameRoom && currentPage === 'play-game') {
-      interval = setInterval(async () => {
+      // 1. Emit join_game event
+      socket.emit('join_game', { roomCode: activeGameRoom.code, username: user?.username });
+
+      // 2. Handle room state update events
+      const handleGameUpdate = (data: any) => {
+        setActiveGameRoom((prev: any) => {
+          if (prev) {
+            if (prev.status === 'waiting' && data.status === 'playing') {
+              playChatSound('start');
+            }
+            if (prev.status === 'playing' && data.status === 'finished') {
+              playChatSound('win');
+            }
+          }
+          return data;
+        });
+      };
+
+      const handleGameDeleted = (data: any) => {
+        setActiveGameRoom(null);
+        setCurrentPage('games');
+        if (data && data.message) {
+          showToast(data.message);
+        }
+      };
+
+      socket.on('game_update', handleGameUpdate);
+      socket.on('game_deleted', handleGameDeleted);
+
+      // Fetch initial game state once to sync up (acts as fallback/initial load)
+      const fetchInitialStatus = async () => {
         try {
           const res = await fetch(`${API_BASE}/api/games/status/${activeGameRoom.code}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (res.ok) {
             const data = await res.json();
-            if (activeGameRoom.status === 'waiting' && data.status === 'playing') {
-              playChatSound('start');
-            }
-            if (activeGameRoom.status === 'playing' && data.status === 'finished') {
-              playChatSound('win');
-            }
-            setActiveGameRoom(data);
+            handleGameUpdate(data);
           } else {
             setActiveGameRoom(null);
             setCurrentPage('games');
           }
         } catch (err) {
-          console.error(err);
+          console.error('Initial game fetch failed:', err);
         }
-      }, 1500);
+      };
+      
+      fetchInitialStatus();
+
+      return () => {
+        socket.emit('leave_game', { roomCode: activeGameRoom.code, username: user?.username });
+        socket.off('game_update', handleGameUpdate);
+        socket.off('game_deleted', handleGameDeleted);
+      };
     }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [activeGameRoom, currentPage]);
+  }, [activeGameRoom?.code, currentPage, token, user?.username]);
 
   const showAlert = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setCustomModal({
@@ -649,14 +814,14 @@ function App() {
 
   const handleShareEpisode = async (episodeId: number) => {
     const ref = user ? user.username : '';
-    const shareLink = `${window.location.origin}/?page=episode-detail&id=${episodeId}${ref ? '&ref=' + ref : ''}`;
+    const shareLink = `${window.location.origin}/episodes/${episodeId}${ref ? '?ref=' + ref : ''}`;
     copyToClipboard(shareLink).catch(() => {});
     showToast('Episode link copied to clipboard! 🔗');
   };
 
   const handleShareCommunityPost = async (postId: number) => {
     const ref = user ? user.username : '';
-    const shareLink = `${window.location.origin}/?page=community&post=${postId}${ref ? '&ref=' + ref : ''}`;
+    const shareLink = `${window.location.origin}/post/${postId}${ref ? '?ref=' + ref : ''}`;
     copyToClipboard(shareLink).catch(() => {});
     showToast('Post link copied to clipboard! 🔗');
   };
@@ -957,7 +1122,7 @@ function App() {
       const data = await res.json();
       if (res.ok) {
         setActiveGameRoom(data);
-        setCurrentPage('play-game');
+        changePage('play-game', { roomCode: data.code });
       } else {
         setGameError(data.error);
       }
@@ -982,7 +1147,7 @@ function App() {
       const data = await res.json();
       if (res.ok) {
         setActiveGameRoom(data);
-        setCurrentPage('play-game');
+        changePage('play-game', { roomCode: data.code });
         setGameRoomCodeInput('');
       } else {
         setGameError(data.error);
@@ -1268,7 +1433,7 @@ function App() {
 
   const navigateToEpisode = (id: number) => {
     setSelectedEpisodeId(id);
-    setCurrentPage('episode-detail');
+    changePage('episode-detail', { id });
     setEpisodeDetailLoading(true);
     fetchEpisodeDetail(id);
   };

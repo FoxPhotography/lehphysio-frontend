@@ -146,7 +146,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
               className="cinematic-action-btn" 
               onClick={() => {
                 const ref = user ? user.username : '';
-                const shareLink = `${window.location.origin}/?page=episode-detail&id=${episode.id}${ref ? '&ref=' + ref : ''}`;
+                const shareLink = `${window.location.origin}/episodes/${episode.id}${ref ? '?ref=' + ref : ''}`;
                 copyToClipboard(shareLink);
                 showToast('Your share link has been copied! Share it to earn XP when others join 🔗');
               }}
