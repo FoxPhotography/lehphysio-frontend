@@ -175,6 +175,125 @@ function App() {
   const [moderationAction, setModerationAction] = useState('mute');
   const [moderationDuration, setModerationDuration] = useState('1d');
 
+  // PWA Install & Push Notification States
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+
+  // Catch PWA beforeinstallprompt
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  // Sync Push subscription state on mount/auth change
+  useEffect(() => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.ready.then((reg) => {
+        reg.pushManager.getSubscription().then((sub) => {
+          setIsSubscribed(!!sub);
+        });
+      });
+    }
+  }, [token]);
+
+  const handleInstallPWA = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      console.log('User accepted the PWA install prompt');
+      setShowInstallBanner(false);
+      setDeferredPrompt(null);
+    }
+  };
+
+  const handleTogglePushNotifications = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      showToast('الإشعارات غير مدعومة على هذا الجهاز أو المتصفح.');
+      return;
+    }
+
+    setPushLoading(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const existingSub = await reg.pushManager.getSubscription();
+
+      if (existingSub) {
+        // Unsubscribe
+        await existingSub.unsubscribe();
+        // Remove from DB
+        await fetch(`${API_BASE}/api/notifications/unsubscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: existingSub.endpoint })
+        });
+        setIsSubscribed(false);
+        showToast('تم إلغاء تفعيل الإشعارات.');
+      } else {
+        // Ask permission
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          showToast('يرجى تفعيل صلاحية الإشعارات من إعدادات المتصفح.');
+          setPushLoading(false);
+          return;
+        }
+
+        // Get VAPID public key
+        const keyRes = await fetch(`${API_BASE}/api/notifications/vapid-key`);
+        const keyData = await keyRes.json();
+        
+        // base64 to uint8 helper
+        const urlBase64ToUint8Array = (base64String: string) => {
+          const padding = '='.repeat((4 - base64String.length % 4) % 4);
+          const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+          const rawData = window.atob(base64);
+          const outputArray = new Uint8Array(rawData.length);
+          for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+          }
+          return outputArray;
+        };
+
+        const convertedKey = urlBase64ToUint8Array(keyData.publicKey);
+
+        // Subscribe browser
+        const newSub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: convertedKey
+        });
+
+        // Register in backend
+        const devType = /iPad|iPhone|iPod/.test(navigator.userAgent) ? 'ios' : (/Android/.test(navigator.userAgent) ? 'android' : 'desktop');
+        await fetch(`${API_BASE}/api/notifications/subscribe`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            subscription: newSub,
+            device_type: devType
+          })
+        });
+
+        setIsSubscribed(true);
+        showToast('تم تفعيل الإشعارات بنجاح! 🔔');
+      }
+    } catch (err) {
+      console.error('Error toggling push notifications:', err);
+      showToast('حدث خطأ أثناء تفعيل الإشعارات.');
+    } finally {
+      setPushLoading(false);
+    }
+  };
+
   // References
   const chatMessagesRef = useRef(chatMessages);
   const userRef = useRef(user);
@@ -2712,6 +2831,9 @@ function App() {
         handleLogout={handleLogout}
         handleUpdateProfile={handleUpdateProfile}
         handleUploadImage={handleUploadImage}
+        isSubscribed={isSubscribed}
+        pushLoading={pushLoading}
+        onTogglePushNotifications={handleTogglePushNotifications}
       />
     );
   };
@@ -2904,6 +3026,52 @@ function App() {
 
       {/* Moderation Overlay Dialog */}
       {renderModerationModal()}
+
+      {/* PWA Install Banner */}
+      <AnimatePresence>
+        {showInstallBanner && deferredPrompt && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 30, scale: 0.95 }}
+            className="fixed bottom-20 md:bottom-6 right-4 left-4 md:left-auto md:w-96 z-[9999] rounded-2xl border border-brand-orange/20 bg-zinc-950/90 backdrop-blur-xl p-5 shadow-2xl flex flex-col gap-3.5"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex gap-3 text-left">
+                <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/25 flex items-center justify-center text-[20px]">
+                  📱
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-xs font-black text-white uppercase tracking-wider">تثبيت تطبيق Leh Physio</h4>
+                  <p className="text-[11px] text-zinc-400 font-medium leading-relaxed mt-0.5">
+                    ثبّت المنصة كـ تطبيق على جهازك واستمتع بتجربة سريعة وتنبيهات فورية!
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowInstallBanner(false)}
+                className="text-zinc-500 hover:text-white cursor-pointer transition-colors p-1"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={handleInstallPWA}
+                className="flex-1 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs py-2.5 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow"
+              >
+                تثبيت الآن 📥
+              </button>
+              <button 
+                onClick={() => setShowInstallBanner(false)}
+                className="flex-1 border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-xs py-2.5 rounded-xl cursor-pointer transition-all active:scale-95"
+              >
+                ليس الآن
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Toast Notification element */}
       <Toast message={toastMessage} />

@@ -47,6 +47,9 @@ interface ProfileProps {
   handleLogout: () => void;
   handleUpdateProfile: (batch?: string, avatarUrl?: string, equippedFrameVal?: string, equippedTitleVal?: string) => void;
   handleUploadImage: (file: File) => Promise<string | null>;
+  isSubscribed: boolean;
+  pushLoading: boolean;
+  onTogglePushNotifications: () => void;
 }
 
 // ─── Batch options ─────────────────────────────────────────────────────────────
@@ -115,6 +118,9 @@ export const Profile: React.FC<ProfileProps> = ({
   handleLogout,
   handleUpdateProfile,
   handleUploadImage,
+  isSubscribed,
+  pushLoading,
+  onTogglePushNotifications,
 }) => {
   if (!user) return null;
 
@@ -490,6 +496,26 @@ export const Profile: React.FC<ProfileProps> = ({
 
         {/* ── Actions ──────────────────────────────────────────────── */}
         <div className="flex flex-col gap-2.5">
+          {/* Web Push Notifications Settings */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            disabled={pushLoading}
+            onClick={onTogglePushNotifications}
+            className={`w-full flex items-center justify-center gap-2.5 py-2.5 rounded-xl border font-bold text-[13px] transition-all cursor-pointer ${
+              isSubscribed
+                ? 'border-green-500/20 bg-green-500/5 text-green-400 hover:bg-green-500/10'
+                : 'border-blue-500/20 bg-blue-500/5 text-blue-400 hover:bg-blue-500/10'
+            }`}
+          >
+            {pushLoading ? (
+              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            ) : (
+              <span className="text-[14px]">🔔</span>
+            )}
+            {isSubscribed ? 'إلغاء تفعيل الإشعارات' : 'تفعيل الإشعارات التلقائية'}
+          </motion.button>
+
           {(user.role === 'admin' || user.role === 'owner') && (
             <motion.button
               whileHover={{ scale: 1.02 }}

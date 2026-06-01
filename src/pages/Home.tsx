@@ -407,7 +407,7 @@ export const Home: React.FC<HomeProps> = ({
   };
 
   return (
-    <div className="space-y-10 py-6 max-w-4xl mx-auto px-4 pb-20">
+    <div className="space-y-10 pt-20 md:pt-6 pb-20 max-w-4xl mx-auto px-4">
       {/* Banner alerts */}
       {loginReward && loginReward.daily_login && (
         <motion.div 
