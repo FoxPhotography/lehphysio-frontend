@@ -134,3 +134,10 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
+// Listen for SKIP_WAITING message to trigger hot activation
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});

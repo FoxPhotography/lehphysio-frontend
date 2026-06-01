@@ -180,6 +180,8 @@ function App() {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
+  const [showUpdateBanner, setShowUpdateBanner] = useState(false);
+  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
 
   // Catch PWA beforeinstallprompt
   useEffect(() => {
@@ -192,8 +194,46 @@ function App() {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
-  // Sync Push subscription state on mount/auth change
+  // Sync Push subscription state and handle Service Worker updates on mount
   useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      // Register Service Worker with state-change listeners
+      navigator.serviceWorker.register('/sw.js').then((reg) => {
+        console.log('PWA Service Worker registered with scope:', reg.scope);
+
+        // Check if there is already a waiting worker on load
+        if (reg.waiting) {
+          setWaitingWorker(reg.waiting);
+          setShowUpdateBanner(true);
+        }
+
+        // Listen for new workers installing
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New worker is waiting to activate
+                setWaitingWorker(newWorker);
+                setShowUpdateBanner(true);
+              }
+            });
+          }
+        });
+      }).catch(err => {
+        console.error('Service Worker registration failed:', err);
+      });
+
+      // Listen for controller changes (reload page when new service worker takes over)
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
+    }
+
     if ('serviceWorker' in navigator && 'PushManager' in window) {
       navigator.serviceWorker.ready.then((reg) => {
         reg.pushManager.getSubscription().then((sub) => {
@@ -212,6 +252,13 @@ function App() {
       setShowInstallBanner(false);
       setDeferredPrompt(null);
     }
+  };
+
+  const handleUpdateApp = () => {
+    if (waitingWorker) {
+      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+    }
+    setShowUpdateBanner(false);
   };
 
   const handleTogglePushNotifications = async () => {
@@ -247,6 +294,12 @@ function App() {
 
         // Get VAPID public key
         const keyRes = await fetch(`${API_BASE}/api/notifications/vapid-key`);
+        if (!keyRes.ok) {
+          const errData = await keyRes.json().catch(() => ({}));
+          showToast(errData.error || 'فشل تشغيل الإشعارات: يرجى إعادة تشغيل السيرفر (Backend Server) لقراءة مفاتيح الإشعارات الجديدة.');
+          setPushLoading(false);
+          return;
+        }
         const keyData = await keyRes.json();
         
         // base64 to uint8 helper
@@ -3064,6 +3117,52 @@ function App() {
               </button>
               <button 
                 onClick={() => setShowInstallBanner(false)}
+                className="flex-1 border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-xs py-2.5 rounded-xl cursor-pointer transition-all active:scale-95"
+              >
+                ليس الآن
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* PWA Update Banner */}
+      <AnimatePresence>
+        {showUpdateBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 30, scale: 0.95 }}
+            className="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-6 md:right-auto md:w-96 z-[9999] rounded-2xl border border-blue-500/20 bg-zinc-950/90 backdrop-blur-xl p-5 shadow-2xl flex flex-col gap-3.5"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex gap-3 text-left">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/25 flex items-center justify-center text-[20px]">
+                  🚀
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-xs font-black text-white uppercase tracking-wider">تحديث جديد متاح!</h4>
+                  <p className="text-[11px] text-zinc-400 font-medium leading-relaxed mt-0.5">
+                    يتوفر إصدار جديد من المنصة. قم بالتحديث الآن للاستمتاع بآخر الميزات والسرعة الفائقة!
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowUpdateBanner(false)}
+                className="text-zinc-500 hover:text-white cursor-pointer transition-colors p-1"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={handleUpdateApp}
+                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-black text-xs py-2.5 rounded-xl cursor-pointer hover:shadow-blue-intense active:scale-95 transition-all shadow-blue-glow"
+              >
+                تحديث الآن 🔄
+              </button>
+              <button 
+                onClick={() => setShowUpdateBanner(false)}
                 className="flex-1 border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-xs py-2.5 rounded-xl cursor-pointer transition-all active:scale-95"
               >
                 ليس الآن

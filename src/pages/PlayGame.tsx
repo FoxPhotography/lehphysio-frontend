@@ -203,9 +203,26 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   const timerPct = room.roundDuration > 0 ? (timeLeft / room.roundDuration) * 100 : 0;
   const inviteUrl = `${window.location.origin}/game/${room.code}`;
 
-  const handleCopyInviteUrl = () => {
-    navigator.clipboard.writeText(inviteUrl);
-    showToast('Invite link copied! Share it with your colleagues.');
+  const handleCopyInviteUrl = async () => {
+    const shareData = {
+      title: 'Anatomy Online Challenge 🧠',
+      text: `تعال انضم لتحدي التشريح المباشر معي في Leh Physio! كود الغرفة: ${room.code} ⚡`,
+      url: inviteUrl
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        showToast('تم فتح قائمة المشاركة بنجاح! 🎉');
+      } catch (err) {
+        // Fallback if share sheet fails or is dismissed
+        navigator.clipboard.writeText(inviteUrl);
+        showToast('Invite link copied! Share it with your colleagues.');
+      }
+    } else {
+      navigator.clipboard.writeText(inviteUrl);
+      showToast('Invite link copied! Share it with your colleagues.');
+    }
     playChatSound('success');
   };
 

@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { playChatSound, setFramesCache } from '../utils/helpers';
+import { UserAvatar } from '../components/UserAvatar';
 
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
@@ -344,12 +345,12 @@ export const Rewards: React.FC<RewardsProps> = ({
               );
             } else {
               previewContent = (
-                <div
-                  className={`${item.previewClass} w-12 h-12 rounded-full flex items-center justify-center text-[18px] font-black`}
-                  style={{ background: 'rgba(255,106,0,0.12)', color: item.color }}
-                >
-                  {user?.username?.[0]?.toUpperCase() || 'A'}
-                </div>
+                <UserAvatar
+                  username={user?.username || 'A'}
+                  avatarUrl={user?.avatar_url}
+                  equippedFrame={item.id}
+                  size={48}
+                />
               );
             }
 
@@ -374,17 +375,12 @@ export const Rewards: React.FC<RewardsProps> = ({
             const isBuying = buyingFrameId === String(f._id);
 
             const previewContent = (
-              <div className="relative w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-orange-500/10">
-                <span className="text-[18px] font-black text-orange-400">
-                  {user?.username?.[0]?.toUpperCase() || 'A'}
-                </span>
-                <img
-                  src={f.image_url}
-                  alt={f.name}
-                  className="absolute inset-0 w-full h-full pointer-events-none"
-                  style={{ objectFit: 'fill' }}
-                />
-              </div>
+              <UserAvatar
+                username={user?.username || 'A'}
+                avatarUrl={user?.avatar_url}
+                equippedFrame={String(f._id)}
+                size={48}
+              />
             );
 
             return (

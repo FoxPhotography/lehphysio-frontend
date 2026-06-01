@@ -584,9 +584,12 @@ export const Profile: React.FC<ProfileProps> = ({
                     equipped={equippedFrame === 'none'}
                     onClick={() => handleEquipFrame('none')}
                   >
-                    <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center text-[18px] font-black text-white">
-                      {user.username[0].toUpperCase()}
-                    </div>
+                    <UserAvatar
+                      username={user.username}
+                      avatarUrl={user.avatar_url}
+                      equippedFrame="none"
+                      size={48}
+                    />
                   </FrameOption>
 
                   {/* Gold Glow */}
@@ -597,9 +600,12 @@ export const Profile: React.FC<ProfileProps> = ({
                     onClick={() => handleEquipFrame('gold-glow')}
                     accent="yellow"
                   >
-                    <div className="avatar-frame-gold-glow w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center text-[18px] font-black text-amber-400">
-                      {user.username[0].toUpperCase()}
-                    </div>
+                    <UserAvatar
+                      username={user.username}
+                      avatarUrl={user.avatar_url}
+                      equippedFrame="gold-glow"
+                      size={48}
+                    />
                   </FrameOption>
 
                   {/* Neon Ring */}
@@ -610,9 +616,12 @@ export const Profile: React.FC<ProfileProps> = ({
                     onClick={() => handleEquipFrame('neon-ring')}
                     accent="cyan"
                   >
-                    <div className="avatar-frame-neon-ring w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center text-[18px] font-black text-cyan-400">
-                      {user.username[0].toUpperCase()}
-                    </div>
+                    <UserAvatar
+                      username={user.username}
+                      avatarUrl={user.avatar_url}
+                      equippedFrame="neon-ring"
+                      size={48}
+                    />
                   </FrameOption>
 
                   {/* Database frames */}
@@ -627,23 +636,12 @@ export const Profile: React.FC<ProfileProps> = ({
                         locked={!unlocked}
                         onClick={() => unlocked && handleEquipFrame(String(f._id))}
                       >
-                        <div className="relative w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-orange-500/10">
-                          {unlocked ? (
-                            <>
-                              <span className="text-[18px] font-black text-orange-400">
-                                {user.username[0].toUpperCase()}
-                              </span>
-                              <img
-                                src={f.image_url}
-                                alt={f.name}
-                                className="absolute inset-0 w-full h-full pointer-events-none"
-                                style={{ objectFit: 'fill' }}
-                              />
-                            </>
-                          ) : (
-                            <Lock className="w-5 h-5 text-zinc-700" />
-                          )}
-                        </div>
+                        <UserAvatar
+                          username={user.username}
+                          avatarUrl={user.avatar_url}
+                          equippedFrame={unlocked ? String(f._id) : 'none'}
+                          size={48}
+                        />
                       </FrameOption>
                     );
                   })}
