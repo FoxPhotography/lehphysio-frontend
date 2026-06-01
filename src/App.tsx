@@ -40,7 +40,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || (
 
 const socket = io(API_BASE || window.location.origin);
 
-const CLIENT_VERSION = '1.0.0';
+
 
 function App() {
   // Navigation State
@@ -189,15 +189,35 @@ function App() {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
-  const [showUpdateBanner, setShowUpdateBanner] = useState(false);
-  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  // Detect if already running as installed PWA (standalone)
+  useEffect(() => {
+    const standalone = window.matchMedia('(display-mode: standalone)').matches
+      || (window.navigator as any).standalone === true;
+    setIsStandalone(standalone);
+  }, []);
 
   // Catch PWA beforeinstallprompt
   useEffect(() => {
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowInstallBanner(true);
+
+      // Check if user dismissed recently (7-day cooldown)
+      const dismissedAt = localStorage.getItem('pwa_install_dismissed');
+      if (dismissedAt) {
+        const daysSince = (Date.now() - Number(dismissedAt)) / (1000 * 60 * 60 * 24);
+        if (daysSince < 7) return; // Don't show again within 7 days
+      }
+
+      // Don't show if already running as PWA
+      const standalone = window.matchMedia('(display-mode: standalone)').matches
+        || (window.navigator as any).standalone === true;
+      if (standalone) return;
+
+      // Delay showing banner for a smooth experience (3 seconds after page load)
+      setTimeout(() => setShowInstallBanner(true), 3000);
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -206,40 +226,10 @@ function App() {
   // Sync Push subscription state and handle Service Worker updates on mount
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      // Register Service Worker with state-change listeners
       navigator.serviceWorker.register('/sw.js').then((reg) => {
         console.log('PWA Service Worker registered with scope:', reg.scope);
-
-        // Check if there is already a waiting worker on load
-        if (reg.waiting) {
-          setWaitingWorker(reg.waiting);
-          setShowUpdateBanner(true);
-        }
-
-        // Listen for new workers installing
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New worker is waiting to activate
-                setWaitingWorker(newWorker);
-                setShowUpdateBanner(true);
-              }
-            });
-          }
-        });
       }).catch(err => {
         console.error('Service Worker registration failed:', err);
-      });
-
-      // Listen for controller changes (reload page when new service worker takes over)
-      let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-          refreshing = true;
-          window.location.reload();
-        }
       });
     }
 
@@ -252,18 +242,7 @@ function App() {
     }
   }, [token]);
 
-  // Check App Version against Server to trigger PWA updates
-  useEffect(() => {
-    fetch(`${API_BASE}/api/app-version`)
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.version && data.version !== CLIENT_VERSION) {
-          console.log(`PWA Update detected. Client version: ${CLIENT_VERSION}, Server version: ${data.version}`);
-          setShowUpdateBanner(true);
-        }
-      })
-      .catch(err => console.error('Failed to fetch app version from server:', err));
-  }, [token]);
+
 
   const handleInstallPWA = async () => {
     if (!deferredPrompt) return;
@@ -273,15 +252,16 @@ function App() {
       console.log('User accepted the PWA install prompt');
       setShowInstallBanner(false);
       setDeferredPrompt(null);
+      localStorage.removeItem('pwa_install_dismissed');
     }
   };
 
-  const handleUpdateApp = () => {
-    if (waitingWorker) {
-      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
-    }
-    setShowUpdateBanner(false);
+  const dismissInstallBanner = () => {
+    setShowInstallBanner(false);
+    localStorage.setItem('pwa_install_dismissed', Date.now().toString());
   };
+
+
 
   const handleTogglePushNotifications = async () => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -3227,95 +3207,59 @@ function App() {
 
       {/* PWA Install Banner */}
       <AnimatePresence>
-        {showInstallBanner && deferredPrompt && (
+        {showInstallBanner && deferredPrompt && !isStandalone && (
           <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            initial={{ opacity: 0, y: 60, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 30, scale: 0.95 }}
-            className="fixed bottom-20 md:bottom-6 right-4 left-4 md:left-auto md:w-96 z-[9999] rounded-2xl border border-brand-orange/20 bg-zinc-950/90 backdrop-blur-xl p-5 shadow-2xl flex flex-col gap-3.5"
+            exit={{ opacity: 0, y: 40, scale: 0.9 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 200 }}
+            className="fixed bottom-20 md:bottom-6 right-4 left-4 md:left-auto md:w-[400px] z-[9999] rounded-2xl border border-brand-orange/25 bg-zinc-950/95 backdrop-blur-2xl p-5 shadow-[0_8px_40px_rgba(242,101,34,0.15)] flex flex-col gap-4 overflow-hidden"
           >
-            <div className="flex items-start justify-between">
-              <div className="flex gap-3 text-left">
-                <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/25 flex items-center justify-center text-[20px]">
-                  📱
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-xs font-black text-white uppercase tracking-wider">تثبيت تطبيق Leh Physio</h4>
-                  <p className="text-[11px] text-zinc-400 font-medium leading-relaxed mt-0.5">
-                    ثبّت المنصة كـ تطبيق على جهازك واستمتع بتجربة سريعة وتنبيهات فورية!
-                  </p>
-                </div>
+            {/* Subtle shimmer overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-orange/[0.03] to-transparent animate-shimmer pointer-events-none" />
+
+            <div className="flex items-start gap-3.5 relative z-10">
+              {/* App Icon */}
+              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-brand-orange/30 shadow-lg shadow-brand-orange/10 shrink-0 bg-brand-orange">
+                <img src="/favicon.svg" alt="Leh Physio" className="w-full h-full object-cover" />
               </div>
-              <button 
-                onClick={() => setShowInstallBanner(false)}
-                className="text-zinc-500 hover:text-white cursor-pointer transition-colors p-1"
-              >
-                <X className="w-4.5 h-4.5" />
-              </button>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-black text-white leading-tight">Leh Physio League</h4>
+                  <button 
+                    onClick={dismissInstallBanner}
+                    className="text-zinc-600 hover:text-zinc-300 cursor-pointer transition-colors p-0.5 -mt-1 -mr-1 shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-[11px] text-zinc-400 font-medium leading-relaxed mt-1">
+                  ثبّت التطبيق على جهازك للوصول السريع والتنبيهات الفورية
+                </p>
+              </div>
             </div>
-            <div className="flex gap-2">
+
+            <div className="flex gap-2.5 relative z-10">
               <button 
                 onClick={handleInstallPWA}
-                className="flex-1 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs py-2.5 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow"
+                className="flex-1 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs py-3 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-[0.97] transition-all shadow-orange-glow flex items-center justify-center gap-2"
               >
-                تثبيت الآن 📥
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>تثبيت التطبيق</span>
               </button>
               <button 
-                onClick={() => setShowInstallBanner(false)}
-                className="flex-1 border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-xs py-2.5 rounded-xl cursor-pointer transition-all active:scale-95"
+                onClick={dismissInstallBanner}
+                className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/60 text-zinc-400 font-bold text-xs py-3 px-5 rounded-xl cursor-pointer transition-all active:scale-[0.97]"
               >
-                ليس الآن
+                لاحقاً
               </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* PWA Update Banner */}
-      <AnimatePresence>
-        {showUpdateBanner && (
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 30, scale: 0.95 }}
-            className="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-6 md:right-auto md:w-96 z-[9999] rounded-2xl border border-blue-500/20 bg-zinc-950/90 backdrop-blur-xl p-5 shadow-2xl flex flex-col gap-3.5"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex gap-3 text-left">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/25 flex items-center justify-center text-[20px]">
-                  🚀
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-xs font-black text-white uppercase tracking-wider">تحديث جديد متاح!</h4>
-                  <p className="text-[11px] text-zinc-400 font-medium leading-relaxed mt-0.5">
-                    يتوفر إصدار جديد من المنصة. قم بالتحديث الآن للاستمتاع بآخر الميزات والسرعة الفائقة!
-                  </p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowUpdateBanner(false)}
-                className="text-zinc-500 hover:text-white cursor-pointer transition-colors p-1"
-              >
-                <X className="w-4.5 h-4.5" />
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <button 
-                onClick={handleUpdateApp}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-black text-xs py-2.5 rounded-xl cursor-pointer hover:shadow-blue-intense active:scale-95 transition-all shadow-blue-glow"
-              >
-                تحديث الآن 🔄
-              </button>
-              <button 
-                onClick={() => setShowUpdateBanner(false)}
-                className="flex-1 border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-xs py-2.5 rounded-xl cursor-pointer transition-all active:scale-95"
-              >
-                ليس الآن
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
       {/* Toast Notification element */}
       <Toast message={toastMessage} />

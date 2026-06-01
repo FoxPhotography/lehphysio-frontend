@@ -514,7 +514,7 @@ export const News: React.FC<NewsProps> = ({
               ) : (
                 <div 
                   className="mt-4 text-zinc-100 text-xs md:text-sm font-semibold leading-relaxed break-words relative cursor-pointer"
-                  onDoubleClick={() => handleDoubleTapLike(post.id)}
+                  onDoubleClick={() => { handleLikePost(post.id); const hid = ++heartIdCounter.current; setFloatingHearts(prev => [...prev, { id: hid, postId: post.id }]); setTimeout(() => setFloatingHearts(prev => prev.filter(h => h.id !== hid)), 800); }}
                 >
                   {/* Floating hearts container */}
                   <AnimatePresence>
@@ -538,6 +538,7 @@ export const News: React.FC<NewsProps> = ({
                   {post.image_url && (
                     <div 
                       className="mt-4 rounded-xl overflow-hidden border border-zinc-900/60 max-h-[380px] bg-zinc-950 cursor-pointer relative group"
+                      onDoubleClick={(e) => e.stopPropagation()}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleImageClickCoord(post.id, post.image_url);

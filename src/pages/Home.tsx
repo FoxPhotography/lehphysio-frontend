@@ -1150,7 +1150,7 @@ export const Home: React.FC<HomeProps> = ({
                   </div>
                 ) : (
                   <div
-                    onTouchEnd={() => handleDoubleTapLike(post.id)}
+                    onDoubleClick={() => { handleLikePost(post.id); const hid = ++heartIdCounter.current; setFloatingHearts(prev => [...prev, { id: hid, postId: post.id }]); setTimeout(() => setFloatingHearts(prev => prev.filter(h => h.id !== hid)), 800); }}
                     className="relative cursor-pointer select-none"
                   >
                     {post.title && (
@@ -1166,6 +1166,7 @@ export const Home: React.FC<HomeProps> = ({
                     {post.image_url && (
                       <div 
                         className="mt-4 rounded-xl overflow-hidden border border-zinc-900 bg-zinc-900/40 max-h-[300px] cursor-pointer relative group"
+                        onDoubleClick={(e) => e.stopPropagation()}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleImageClickCoord(post.id, post.image_url);

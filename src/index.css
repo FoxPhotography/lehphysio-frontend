@@ -76,6 +76,11 @@
   100% { transform: translateY(-80px) scale(0.3); opacity: 0; }
 }
 
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
 @utility avatar-frame-gold-glow {
   background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%) !important;
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
@@ -104,6 +109,10 @@
 
 @utility animate-float {
   animation: floatParticle 3s ease-out infinite;
+}
+
+@utility animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
 }
 
 /* Glassmorphism Presets */
