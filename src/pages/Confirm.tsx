@@ -1,5 +1,13 @@
 import React from 'react';
+import { ShieldCheck } from 'lucide-react';
 import { OtpInput } from '../components/OtpInput';
+import {
+  AuthLayout,
+  AuthError,
+  AuthSuccess,
+  AuthSubmitButton,
+  AuthLink,
+} from '../components/AuthComponents';
 
 interface ConfirmProps {
   confirmCode: string;
@@ -14,29 +22,34 @@ export const Confirm: React.FC<ConfirmProps> = ({
   setConfirmCode,
   authError,
   authSuccess,
-  handleConfirm
-}) => {
-  return (
-    <div className="auth-panel animate-fade-in" style={{ maxWidth: '400px', margin: '4rem auto' }}>
-      <div className="glass-card" style={{ padding: '2rem' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 900, textAlign: 'center', marginBottom: '0.25rem' }}>Verify Account</h2>
-        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '2rem' }}>Enter the 6-digit verification code sent to your email</p>
-        {authError && <div className="pl-form-error">{authError}</div>}
-        {authSuccess && <div className="pl-form-success">{authSuccess}</div>}
-        <form id="verify-form" onSubmit={handleConfirm}>
-          <OtpInput
-            value={confirmCode}
-            onChange={setConfirmCode}
-            onComplete={() => {
-              setTimeout(() => {
-                const form = document.getElementById('verify-form') as HTMLFormElement;
-                if (form) form.requestSubmit();
-              }, 50);
-            }}
-          />
-          <button type="submit" className="btn-primary" style={{ width: '100%' }}>Verify Account</button>
-        </form>
+  handleConfirm,
+}) => (
+  <AuthLayout
+    title="Verify Account"
+    subtitle="Enter the 6-digit code sent to your email"
+  >
+    <form id="verify-form" onSubmit={handleConfirm} className="space-y-5">
+      <AuthError message={authError} />
+      <AuthSuccess message={authSuccess} />
+
+      <div className="flex justify-center">
+        <div className="w-14 h-14 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-2">
+          <ShieldCheck className="w-7 h-7 text-orange-400" />
+        </div>
       </div>
-    </div>
-  );
-};
+
+      <OtpInput
+        value={confirmCode}
+        onChange={setConfirmCode}
+        onComplete={() => {
+          setTimeout(() => {
+            const form = document.getElementById('verify-form') as HTMLFormElement;
+            if (form) form.requestSubmit();
+          }, 50);
+        }}
+      />
+
+      <AuthSubmitButton label="Verify Account" />
+    </form>
+  </AuthLayout>
+);

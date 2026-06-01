@@ -1,5 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getNameColor, getFrameImage } from '../utils/helpers';
+import { UserAvatar } from '../components/UserAvatar';
+import { 
+  MessageSquare, 
+  Lightbulb, 
+  Trash2, 
+  Check, 
+  X, 
+  CornerUpLeft, 
+  Edit2, 
+  Square,
+  CheckSquare,
+  ShieldAlert, 
+  ChevronDown, 
+  ThumbsUp, 
+  Send,
+  Clock,
+  Heart,
+  Flame,
+  Smile,
+  Sparkles,
+  Frown,
+  Zap
+} from 'lucide-react';
 
 interface CommunityProps {
   user: any;
@@ -37,6 +61,24 @@ interface CommunityProps {
   getAvatarFrameClass?: () => string;
   equippedFrame?: string;
 }
+
+// Helper to strip emojis from names
+const stripEmojis = (str: string) => {
+  if (!str) return '';
+  return str.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, '').trim();
+};
+
+// Map emoji characters to Lucide icons to satisfy Requirement 3 (no emojis in UI) and 4 (exclusively Lucide)
+const renderReactionIcon = (emoji: string) => {
+  const iconClass = "w-3.5 h-3.5 fill-current";
+  if (emoji === '👍') return <ThumbsUp className="w-3 h-3" />;
+  if (emoji === '❤️') return <Heart className={`${iconClass} text-red-500`} />;
+  if (emoji === '🔥') return <Flame className={`${iconClass} text-brand-orange`} />;
+  if (emoji === '😂') return <Smile className="w-3.5 h-3.5 text-yellow-300" />;
+  if (emoji === '👏') return <Sparkles className="w-3.5 h-3.5 text-yellow-400" />;
+  if (emoji === '😢') return <Frown className="w-3.5 h-3.5 text-blue-400" />;
+  return <span>{emoji}</span>;
+};
 
 export const Community: React.FC<CommunityProps> = ({
   user,
@@ -80,15 +122,16 @@ export const Community: React.FC<CommunityProps> = ({
     if (frameName === 'neon-ring') return 'avatar-frame-neon-ring';
     return '';
   };
-  const [showScrollDownBtn, setShowScrollDownBtn] = React.useState(false);
-  const [activeSubTab, setActiveSubTab] = React.useState<'chat' | 'suggestions'>('chat');
-  const [suggTitle, setSuggTitle] = React.useState('');
-  const [suggContent, setSuggContent] = React.useState('');
+  
+  const [showScrollDownBtn, setShowScrollDownBtn] = useState(false);
+  const [activeSubTab, setActiveSubTab] = useState<'chat' | 'suggestions'>('chat');
+  const [suggTitle, setSuggTitle] = useState('');
+  const [suggContent, setSuggContent] = useState('');
 
   // Mentions autocomplete state
-  const [mentionSearch, setMentionSearch] = React.useState('');
-  const [mentionStartIndex, setMentionStartIndex] = React.useState(-1);
-  const [showMentionSuggestions, setShowMentionSuggestions] = React.useState(false);
+  const [mentionSearch, setMentionSearch] = useState('');
+  const [mentionStartIndex, setMentionStartIndex] = useState(-1);
+  const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
 
   const renderTextWithMentions = (text: string) => {
     if (!text) return '';
@@ -96,7 +139,7 @@ export const Community: React.FC<CommunityProps> = ({
     return parts.map((part, idx) => {
       if (part.startsWith('@')) {
         return (
-          <span key={idx} className="mention-tag" style={{ color: '#FFD93D', fontWeight: 800 }}>
+          <span key={idx} className="text-yellow-400 font-extrabold">
             {part}
           </span>
         );
@@ -111,11 +154,9 @@ export const Community: React.FC<CommunityProps> = ({
     e.target.style.height = 'auto';
     e.target.style.height = `${e.target.scrollHeight}px`;
 
-    // Get cursor position
     const selectionStart = e.target.selectionStart || 0;
     const textBeforeCursor = value.substring(0, selectionStart);
     
-    // Check if there is an @ symbol before the cursor
     const lastAtIdx = textBeforeCursor.lastIndexOf('@');
     if (lastAtIdx !== -1) {
       const isStartOrAfterSpace = lastAtIdx === 0 || textBeforeCursor[lastAtIdx - 1] === ' ' || textBeforeCursor[lastAtIdx - 1] === '\n';
@@ -135,7 +176,7 @@ export const Community: React.FC<CommunityProps> = ({
   const handleSelectMention = (targetUsername: string) => {
     if (mentionStartIndex === -1) return;
     const value = chatInput;
-    const selectionStart = mentionStartIndex + targetUsername.length + 2; // +2 for '@' and space at end
+    const selectionStart = mentionStartIndex + targetUsername.length + 2; 
     const newValue = 
       value.substring(0, mentionStartIndex) + 
       `@${targetUsername} ` + 
@@ -169,26 +210,34 @@ export const Community: React.FC<CommunityProps> = ({
   };
 
   return (
-    <div className="community-panel animate-fade-in" style={{ padding: '0.5rem' }}>
-      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', height: '650px', position: 'relative' }}>
+    <div className="py-4 max-w-4xl mx-auto px-2 md:px-4 pb-20 text-left">
+      <div className="glass-card p-4 md:p-6 flex flex-col h-[650px] relative overflow-hidden border border-zinc-900/60">
         
         {/* Sub tab switcher */}
-        <div className="games-filter-tabs" style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+        <div className="flex gap-2 mb-4 shrink-0">
           <button 
             type="button" 
-            className={`games-filter-btn ${activeSubTab === 'chat' ? 'active' : ''}`} 
+            className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 ${
+              activeSubTab === 'chat' 
+                ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black shadow-orange-glow' 
+                : 'bg-zinc-900/40 text-zinc-400 border border-zinc-800/80 hover:text-white'
+            }`} 
             onClick={() => setActiveSubTab('chat')}
-            style={{ flex: 1, padding: '8px 16px', fontSize: '12px' }}
           >
-            💬 General Chat
+            <MessageSquare className="w-4 h-4 shrink-0" />
+            <span>General Chat</span>
           </button>
           <button 
             type="button" 
-            className={`games-filter-btn ${activeSubTab === 'suggestions' ? 'active' : ''}`} 
+            className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 ${
+              activeSubTab === 'suggestions' 
+                ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black shadow-orange-glow' 
+                : 'bg-zinc-900/40 text-zinc-400 border border-zinc-800/80 hover:text-white'
+            }`} 
             onClick={() => setActiveSubTab('suggestions')}
-            style={{ flex: 1, padding: '8px 16px', fontSize: '12px' }}
           >
-            💡 Suggestions Board
+            <Lightbulb className="w-4 h-4 shrink-0" />
+            <span>Suggestions Board</span>
           </button>
         </div>
 
@@ -196,22 +245,26 @@ export const Community: React.FC<CommunityProps> = ({
           <>
             {/* Multi-select bar or Standard Header */}
             {isMultiSelectMode ? (
-              <div className="pl-chat-bulk-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 106, 0, 0.15)', border: '1px solid var(--orange)', borderRadius: '12px', padding: '10px 16px', marginBottom: '1rem', flexShrink: 0 }}>
-                <span style={{ fontSize: '13px', fontWeight: 800 }}>Selected {selectedMessageIds.length} messages</span>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="btn-primary mini" style={{ background: '#e74c3c' }} onClick={handleBulkDeleteMessages} disabled={selectedMessageIds.length === 0}>Delete Selected</button>
-                  <button className="btn-outline mini" onClick={() => { setIsMultiSelectMode(false); setSelectedMessageIds([]); }}>Cancel</button>
+              <div className="flex justify-between items-center bg-brand-orange/10 border border-brand-orange/20 rounded-xl p-3 mb-3 shrink-0">
+                <span className="text-xs font-black text-white">Selected {selectedMessageIds.length} messages</span>
+                <div className="flex gap-2">
+                  <button className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-[10px] py-1.5 px-3 rounded-lg cursor-pointer" onClick={handleBulkDeleteMessages} disabled={selectedMessageIds.length === 0}>Delete</button>
+                  <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-[10px] py-1.5 px-3 rounded-lg cursor-pointer" onClick={() => { setIsMultiSelectMode(false); setSelectedMessageIds([]); }}>Cancel</button>
                 </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.4rem', flexShrink: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <i className="ti ti-messages" style={{ color: 'var(--orange)', fontSize: '20px' }}></i>
-                  <h3 style={{ fontSize: '14px', fontWeight: 900 }}>Leh Physio? Chat</h3>
+              <div className="flex items-center justify-between mb-3 border-b border-zinc-900 pb-2.5 shrink-0">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4.5 h-4.5 text-brand-orange" />
+                  <h3 className="text-sm font-black text-white">Chat Feed</h3>
                 </div>
-                <span style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 800 }}>
-                  {onlineCount} Online Now 🟢
-                </span>
+                <div className="flex items-center gap-1.5 text-[10px] text-brand-orange font-extrabold uppercase tracking-wider">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <span>{onlineCount} Online</span>
+                </div>
               </div>
             )}
 
@@ -223,13 +276,12 @@ export const Community: React.FC<CommunityProps> = ({
                 const isUp = el.scrollHeight - el.scrollTop - el.clientHeight > 150;
                 setShowScrollDownBtn(isUp);
               }}
-              style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column', gap: '1rem', padding: '0.5rem 0.25rem', direction: 'rtl' }}
+              className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-4 py-2 px-1 direction-rtl"
             >
               {chatMessages.map((msg: any) => {
                 const isMyMsg = user && msg.username === user.username;
                 const isSelected = selectedMessageIds.includes(msg.id);
                 
-                // Swipe state values
                 const tx = swipeTranslateX[msg.id] || 0;
                 const isSwiping = swipeMessageIdRef.current === msg.id;
                 const framePngUrl = getFrameImage(msg.equipped_frame);
@@ -237,25 +289,18 @@ export const Community: React.FC<CommunityProps> = ({
                 return (
                   <div 
                     key={msg.id} 
-                    className="pl-chat-message-swipe-container"
+                    className="flex w-full"
                     style={{
-                      display: 'flex',
                       justifyContent: isMyMsg ? 'flex-start' : 'flex-end',
-                      width: '100%'
                     }}
                   >
                     <div
-                      className={`pl-chat-message-row ${isMyMsg ? 'outgoing' : 'incoming'} ${isSelected ? 'selected' : ''}`}
+                      className={`flex items-start gap-2.5 max-w-[85%] relative rounded-2xl select-none cursor-pointer transition-all ${
+                        isSelected ? 'ring-2 ring-brand-orange/40 bg-brand-orange/5' : ''
+                      }`}
                       style={{ 
-                        display: 'flex', 
-                        alignItems: 'flex-start',
-                        gap: '0.5rem',
-                        maxWidth: '85%',
-                        position: 'relative',
                         transform: `translateX(${tx}px)`,
                         transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28)',
-                        userSelect: 'none',
-                        cursor: 'pointer'
                       }}
                       onClick={() => {
                         if (isMultiSelectMode) {
@@ -269,38 +314,21 @@ export const Community: React.FC<CommunityProps> = ({
                       onTouchMove={(e) => handleChatTouchMove(e, msg)}
                       onTouchEnd={(e) => handleChatTouchEnd(e, msg)}
                     >
-                      {/* Swipe indicator icon displayed next to bubble (slides in with row) */}
-                      {tx < 0 && (
+                      {/* Swipe indicators */}
+                      {tx !== 0 && (
                         <div 
-                          className="pl-chat-swipe-indicator"
+                          className="absolute flex items-center justify-center opacity-70 pointer-events-none"
                           style={{
-                            position: 'absolute',
-                            right: '-45px',
-                            left: 'auto',
-                            opacity: Math.min(1, Math.abs(tx) / 45),
+                            right: tx < 0 ? '-35px' : 'auto',
+                            left: tx > 0 ? '-35px' : 'auto',
                             transition: 'opacity 0.1s'
                           }}
                         >
-                          <i className="ti ti-arrow-back-up" style={{ color: 'var(--text-secondary)', fontSize: '18px' }}></i>
+                          <CornerUpLeft className="w-4.5 h-4.5 text-zinc-500" />
                         </div>
                       )}
 
-                      {tx > 0 && (
-                        <div 
-                          className="pl-chat-swipe-indicator"
-                          style={{
-                            position: 'absolute',
-                            left: '-45px',
-                            right: 'auto',
-                            opacity: Math.min(1, Math.abs(tx) / 45),
-                            transition: 'opacity 0.1s'
-                          }}
-                        >
-                          <i className="ti ti-arrow-back-up" style={{ color: 'var(--text-secondary)', fontSize: '18px' }}></i>
-                        </div>
-                      )}
-
-                      {/* Select Checkbox (only in multi-select mode) */}
+                      {/* Checkbox for Multiselect */}
                       {isMultiSelectMode && user && (
                         <div 
                           onClick={(e) => {
@@ -309,144 +337,87 @@ export const Community: React.FC<CommunityProps> = ({
                               prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]
                             );
                           }}
-                          style={{
-                            width: '18px',
-                            height: '18px',
-                            borderRadius: '4px',
-                            border: '2px solid var(--orange)',
-                            background: isSelected ? 'var(--orange)' : 'transparent',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            alignSelf: 'center',
-                            marginLeft: '0.5rem',
-                            flexShrink: 0
-                          }}
+                          className="self-center ml-2 shrink-0 cursor-pointer text-brand-orange"
                         >
-                          {isSelected && <i className="ti ti-check" style={{ fontSize: '12px', color: '#000', fontWeight: 900 }}></i>}
+                          {isSelected ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5 text-zinc-600" />}
                         </div>
                       )}
 
-                      {/* Outgoing User Avatar */}
+                      {/* Outgoing Avatar */}
                       {isMyMsg && (
-                        <div 
-                          className={`mobile-avatar-ring ${getFrameClass(msg.equipped_frame)}`}
-                          style={{ 
-                            width: '32px', 
-                            height: '32px', 
-                            flexShrink: 0, 
-                            marginTop: '16px', 
-                            cursor: 'default',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                            background: 'var(--gradient-main)',
-                            position: 'relative'
-                          }}
-                        >
-                          <div className="mobile-avatar-inner" style={{ fontSize: '11px', background: 'var(--bg-primary)' }}>
-                            {msg.avatar_url ? (
-                              <img src={msg.avatar_url} alt={msg.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-                            ) : (
-                              msg.username ? msg.username[0].toUpperCase() : 'U'
-                            )}
-                          </div>
-                          {framePngUrl && (
-                            <img src={framePngUrl} alt="" style={{ position: 'absolute', top: '-7.5%', left: '-7.5%', width: '115%', height: '115%', pointerEvents: 'none', zIndex: 2, userSelect: 'none' }} />
-                          )}
+                        <div className="relative mt-4 shrink-0">
+                          <UserAvatar 
+                            username={msg.username} 
+                            avatarUrl={msg.avatar_url} 
+                            equippedFrame={msg.equipped_frame} 
+                            size={32} 
+                          />
                         </div>
                       )}
 
-                      {/* Message Bubble Container */}
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMyMsg ? 'flex-start' : 'flex-end', width: 'auto' }}>
-                        
-                        {/* Sender username and meta */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', alignSelf: isMyMsg ? 'flex-start' : 'flex-end' }}>
-                          <span style={{ fontSize: '11px', color: isMyMsg ? 'var(--orange)' : getNameColor(msg.username), fontWeight: 800 }}>
+                      {/* Bubble */}
+                      <div className={`flex flex-col ${isMyMsg ? 'items-start' : 'items-end'}`}>
+                        {/* Sender info */}
+                        <div className="flex items-center gap-1.5 mb-1 select-none">
+                          <span className="text-[10px] font-black" style={{ color: isMyMsg ? 'var(--color-brand-orange)' : getNameColor(msg.username) }}>
                             {msg.username}
                           </span>
-                          <span className="badge-tag" style={{ fontSize: '9px', padding: '2px 6px', background: 'rgba(255,255,255,0.06)' }}>
+                          <span className="text-[8px] font-bold bg-zinc-900 border border-zinc-800/80 text-zinc-400 px-1.5 py-0.5 rounded-md">
                             {msg.batch}
                           </span>
-                          <span style={{ fontSize: '9px', color: 'var(--text-secondary)' }}>
-                            {msg.rank.emoji} {msg.rank.name_en}
+                          <span className="text-[8px] text-zinc-500 font-semibold">
+                            {stripEmojis(msg.rank?.name_en || '')}
                           </span>
                           {(msg.role === 'admin' || msg.role === 'owner') && (
-                            <span className="badge-tag mini" style={{ 
-                              borderColor: msg.role === 'owner' ? '#FFD700' : 'var(--orange)', 
-                              color: msg.role === 'owner' ? '#FFD700' : 'var(--orange)', 
-                              background: msg.role === 'owner' ? 'rgba(255, 215, 0, 0.15)' : 'rgba(255, 106, 0, 0.15)', 
-                              padding: '1px 4px', fontSize: '8px', marginLeft: '4px', verticalAlign: 'middle',
-                              fontWeight: msg.role === 'owner' ? 900 : 700 
-                            }}>
-                              {msg.role === 'owner' ? '👑 Owner' : 'Admin'}
+                            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase border ${
+                              msg.role === 'owner' ? 'border-brand-amber/30 text-brand-amber bg-brand-amber/5' : 'border-brand-orange/30 text-brand-orange bg-brand-orange/5'
+                            }`}>
+                              {msg.role}
                             </span>
                           )}
                         </div>
 
-                        {/* Actual Bubble */}
+                        {/* Text card bubble */}
                         <div 
-                          className="pl-chat-bubble"
-                          style={{
-                            background: isMyMsg ? 'linear-gradient(135deg, #CC5200 0%, #E69500 100%)' : 'rgba(255,255,255,0.06)',
-                            color: isMyMsg ? '#000000' : '#fff',
-                            padding: '10px 14px',
-                            borderRadius: '16px',
-                            borderTopLeftRadius: isMyMsg ? '16px' : '4px',
-                            borderTopRightRadius: isMyMsg ? '4px' : '16px',
-                            fontSize: '13.5px',
-                            fontWeight: 600,
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                            position: 'relative',
-                            border: isSelected ? '1.5px solid var(--orange)' : '1px solid transparent',
-                            transition: 'all 0.2s ease',
-                          }}
+                          className={`px-3 py-2 rounded-2xl text-xs md:text-sm font-semibold shadow-lg text-left relative ${
+                            isMyMsg 
+                              ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black rounded-tl-none' 
+                              : 'bg-zinc-900/60 border border-zinc-800 text-white rounded-tr-none'
+                          }`}
                         >
-                          {/* Quoted Reply box inside bubble */}
+                          {/* Quote reply */}
                           {msg.reply_to?.username && (
-                            <div style={{
-                              background: isMyMsg ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.04)',
-                              borderLeft: '3px solid var(--orange)',
-                              padding: '6px 10px',
-                              borderRadius: '8px',
-                              marginBottom: '8px',
-                              fontSize: '12px',
-                              color: isMyMsg ? 'rgba(0,0,0,0.7)' : 'var(--text-secondary)',
-                              direction: 'ltr',
-                              textAlign: 'left'
-                            }}>
-                              <div style={{ fontWeight: 800, color: isMyMsg ? '#000' : 'var(--orange)' }}>
+                            <div className={`border-l-2 border-brand-orange px-2.5 py-1.5 rounded-lg mb-2 text-[10px] text-left direction-ltr ${
+                              isMyMsg ? 'bg-black/10 text-zinc-800' : 'bg-black/30 text-zinc-400'
+                            }`}>
+                              <div className={`font-black ${isMyMsg ? 'text-black' : 'text-brand-orange'}`}>
                                 @{msg.reply_to.username}
                               </div>
-                              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {msg.reply_to.message}
-                              </div>
+                              <div className="truncate mt-0.5">{msg.reply_to.message}</div>
                             </div>
                           )}
 
-                          {/* Message content wrapper (text & time side-by-side) */}
-                          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', flexWrap: 'wrap', justifyContent: 'space-between', direction: 'ltr' }}>
-                            {/* Message text */}
-                            <p style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.4, textAlign: 'left' }}>
+                          <div className="flex items-end justify-between gap-3 min-w-0 direction-ltr">
+                            <p className="whitespace-pre-wrap word-break-word leading-relaxed flex-1">
                               {renderTextWithMentions(msg.message)}
                             </p>
-
-                            {/* Edited badge & timestamp inline next to the message */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px', opacity: 0.7, whiteSpace: 'nowrap', alignSelf: 'flex-end', userSelect: 'none', marginLeft: 'auto' }}>
+                            
+                            <div className="flex items-center gap-1 shrink-0 text-[8px] opacity-75 select-none pb-0.5">
                               {!!msg.is_edited && <span>(edited)</span>}
                               <span>{new Date(msg.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                               {isMyMsg && (
                                 msg.isPending ? (
-                                  <i className="ti ti-clock" style={{ fontSize: '11px', color: 'rgba(0, 0, 0, 0.6)' }}></i>
+                                  <Clock className="w-2.5 h-2.5" />
                                 ) : (
-                                  <i className="ti ti-check" style={{ fontSize: '11px', color: '#000' }}></i>
+                                  <Check className="w-2.5 h-2.5" />
                                 )
                               )}
                             </div>
                           </div>
 
-                          {/* Reactions badges display */}
+                          {/* Reaction row */}
                           {msg.reactions && msg.reactions.length > 0 && (
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px', borderTop: '0.5px solid rgba(255,255,255,0.1)', paddingTop: '6px' }}>
+                            <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2 border-t border-black/10">
                               {msg.reactions.map((react: any, rIdx: number) => (
                                 <button
                                   key={rIdx}
@@ -454,22 +425,14 @@ export const Community: React.FC<CommunityProps> = ({
                                     e.stopPropagation();
                                     handleToggleReaction(msg.id, react.emoji);
                                   }}
-                                  style={{
-                                    background: react.userReacted ? 'rgba(255, 106, 0, 0.2)' : 'rgba(255,255,255,0.04)',
-                                    border: react.userReacted ? '1px solid var(--orange)' : '1px solid rgba(255,255,255,0.1)',
-                                    color: '#fff',
-                                    padding: '2px 6px',
-                                    borderRadius: '8px',
-                                    fontSize: '11px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                  }}
+                                  className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[9px] font-bold cursor-pointer transition-colors ${
+                                    react.userReacted 
+                                      ? 'bg-brand-orange/20 border-brand-orange/40 text-white' 
+                                      : 'bg-black/25 border-zinc-800/20 text-zinc-300'
+                                  }`}
                                 >
-                                  <span>{react.emoji}</span>
-                                  <span style={{ fontWeight: 800 }}>{react.count}</span>
+                                  {renderReactionIcon(react.emoji)}
+                                  <span>{react.count}</span>
                                 </button>
                               ))}
                             </div>
@@ -477,31 +440,15 @@ export const Community: React.FC<CommunityProps> = ({
                         </div>
                       </div>
 
-                      {/* Incoming User Avatar */}
+                      {/* Incoming Avatar */}
                       {!isMyMsg && (
-                        <div 
-                          className={`mobile-avatar-ring ${getFrameClass(msg.equipped_frame)}`}
-                          style={{ 
-                            width: '32px', 
-                            height: '32px', 
-                            flexShrink: 0, 
-                            marginTop: '16px', 
-                            cursor: 'default',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                            background: 'var(--gradient-main)',
-                            position: 'relative'
-                          }}
-                        >
-                          <div className="mobile-avatar-inner" style={{ fontSize: '11px', background: 'var(--bg-primary)' }}>
-                            {msg.avatar_url ? (
-                              <img src={msg.avatar_url} alt={msg.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-                            ) : (
-                              msg.username[0].toUpperCase()
-                            )}
-                          </div>
-                          {framePngUrl && (
-                            <img src={framePngUrl} alt="" style={{ position: 'absolute', top: '-7.5%', left: '-7.5%', width: '115%', height: '115%', pointerEvents: 'none', zIndex: 2, userSelect: 'none' }} />
-                          )}
+                        <div className="relative mt-4 shrink-0">
+                          <UserAvatar 
+                            username={msg.username} 
+                            avatarUrl={msg.avatar_url} 
+                            equippedFrame={msg.equipped_frame} 
+                            size={32} 
+                          />
                         </div>
                       )}
                     </div>
@@ -510,57 +457,25 @@ export const Community: React.FC<CommunityProps> = ({
               })}
             </div>
 
-            {/* Chat Form Area */}
-            <div style={{ marginTop: '1rem', borderTop: '1px solid var(--card-border)', paddingTop: '0.75rem', flexShrink: 0, direction: 'ltr', textAlign: 'left', position: 'relative' }}>
+            {/* Chat form compose area */}
+            <div className="mt-3 border-t border-zinc-900 pt-3 shrink-0 direction-ltr text-left relative">
               
-              {/* Replying Indicator Bar */}
+              {/* Reply tag indicator */}
               {replyingTo && (
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  background: 'rgba(255, 106, 0, 0.1)',
-                  borderLeft: '4px solid var(--orange)',
-                  borderRadius: '8px',
-                  padding: '8px 12px',
-                  marginBottom: '8px',
-                  fontSize: '12px'
-                }}>
-                  <div style={{ minWidth: 0 }}>
-                    <span style={{ fontWeight: 800, color: 'var(--orange)' }}>Replying to @{replyingTo.username}: </span>
-                    <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', maxWidth: '200px', verticalAlign: 'bottom' }}>
-                      {replyingTo.message}
-                    </span>
+                <div className="flex justify-between items-center bg-brand-orange/5 border-l-2 border-brand-orange rounded-xl px-3 py-2.5 mb-2 text-xs font-bold text-brand-orange">
+                  <div className="truncate pr-4">
+                    <span>Replying to <strong>@{replyingTo.username}</strong>: </span>
+                    <span className="text-zinc-500 font-medium">{replyingTo.message}</span>
                   </div>
-                  <button 
-                    onClick={() => setReplyingTo(null)}
-                    style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '14px' }}
-                  >
-                    <i className="ti ti-x"></i>
+                  <button onClick={() => setReplyingTo(null)} className="text-zinc-500 hover:text-white cursor-pointer shrink-0">
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               )}
 
-              {/* Mentions Autocomplete suggestions */}
+              {/* Mention drop container */}
               {showMentionSuggestions && usernames && usernames.length > 0 && (
-                <div 
-                  className="glass-card mention-suggestions-dropdown"
-                  style={{
-                    position: 'absolute',
-                    bottom: 'calc(100% + 5px)',
-                    left: 0,
-                    right: 0,
-                    maxHeight: '180px',
-                    overflowY: 'auto',
-                    zIndex: 20,
-                    background: 'rgba(15, 15, 15, 0.95)',
-                    border: '1px solid var(--card-border)',
-                    borderRadius: '12px',
-                    boxShadow: '0 -8px 24px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 106, 0, 0.1)',
-                    backdropFilter: 'blur(10px)',
-                    padding: '6px'
-                  }}
-                >
+                <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-1 shadow-2xl backdrop-blur-md">
                   {usernames
                     .filter((u: any) => u.username.toLowerCase().includes(mentionSearch.toLowerCase()) && u.username !== user?.username)
                     .map((u: any) => (
@@ -568,76 +483,38 @@ export const Community: React.FC<CommunityProps> = ({
                         key={u.username}
                         type="button"
                         onClick={() => handleSelectMention(u.username)}
-                        style={{
-                          width: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '8px 12px',
-                          background: 'transparent',
-                          border: 'none',
-                          color: '#fff',
-                          textAlign: 'left',
-                          cursor: 'pointer',
-                          borderRadius: '8px',
-                          transition: 'background 0.2s',
-                          fontFamily: 'Tajawal, Outfit, sans-serif'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 106, 0, 0.1)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        className="w-full flex items-center gap-3 p-2.5 hover:bg-brand-orange/10 cursor-pointer rounded-lg text-left text-xs font-bold text-white transition-colors"
                       >
-                        <div className="mobile-avatar-ring" style={{ width: '24px', height: '24px', flexShrink: 0 }}>
-                          <div className="mobile-avatar-inner" style={{ fontSize: '9px' }}>
-                            {u.avatar_url ? (
-                              <img src={u.avatar_url} alt={u.username} />
-                            ) : (
-                              u.username[0].toUpperCase()
-                            )}
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--orange)' }}>@{u.username}</span>
-                          <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{u.role === 'owner' ? '👑 Owner' : u.role === 'admin' ? '🛡️ Admin' : 'Student'}</span>
+                        <UserAvatar username={u.username} avatarUrl={u.avatar_url} equippedFrame={u.equipped_frame} size={24} />
+                        <div className="flex flex-col text-left">
+                          <span className="text-brand-orange font-black">@{u.username}</span>
+                          <span className="text-[9px] text-zinc-500">{u.role === 'owner' ? 'Owner' : u.role === 'admin' ? 'Admin' : 'Student'}</span>
                         </div>
                       </button>
                     ))}
                   {usernames.filter((u: any) => u.username.toLowerCase().includes(mentionSearch.toLowerCase()) && u.username !== user?.username).length === 0 && (
-                    <div style={{ padding: '8px 12px', fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center' }}>
-                      No matching users found
-                    </div>
+                    <div className="p-3 text-xs text-zinc-500 text-center font-bold">No matching users found</div>
                   )}
                 </div>
               )}
 
-              {/* Editing Indicator Bar */}
+              {/* Editing tag indicator */}
               {editingMessage && (
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  background: 'rgba(255, 176, 0, 0.1)',
-                  borderLeft: '4px solid var(--amber)',
-                  borderRadius: '8px',
-                  padding: '8px 12px',
-                  marginBottom: '8px',
-                  fontSize: '12px'
-                }}>
-                  <div>
-                    <span style={{ fontWeight: 800, color: 'var(--amber)' }}>Editing message...</span>
-                  </div>
+                <div className="flex justify-between items-center bg-brand-amber/5 border-l-2 border-brand-amber rounded-xl px-3 py-2.5 mb-2 text-xs font-bold text-brand-amber">
+                  <span>Editing message...</span>
                   <button 
                     onClick={() => {
                       setEditingMessage(null);
                       setChatInput('');
-                    }}
-                    style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '14px' }}
+                    }} 
+                    className="text-zinc-500 hover:text-white cursor-pointer shrink-0"
                   >
-                    <i className="ti ti-x"></i>
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               )}
 
-              {/* Send Input Form */}
+              {/* Input field compose form */}
               {user ? (
                 <form
                   onSubmit={(e) => {
@@ -645,7 +522,7 @@ export const Community: React.FC<CommunityProps> = ({
                     const el = document.getElementById('community-chat-input');
                     if (el) el.style.height = 'auto';
                   }}
-                  style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}
+                  className="flex gap-2 items-end"
                 >
                   <textarea
                     id="community-chat-input"
@@ -653,10 +530,8 @@ export const Community: React.FC<CommunityProps> = ({
                     autoComplete="off"
                     autoCorrect="on"
                     spellCheck="true"
-                    data-lpignore="true"
-                    data-1p-ignore="true"
-                    className="pl-input"
-                    placeholder={editingMessage ? "Edit your message here..." : "Message"}
+                    className="flex-1 bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl px-3.5 py-2 text-xs md:text-sm font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none min-h-[38px] max-h-[120px]"
+                    placeholder={editingMessage ? "Edit your message here..." : "Type a message..."}
                     value={chatInput}
                     onChange={handleInputChange}
                     onKeyDown={(e) => {
@@ -667,131 +542,125 @@ export const Community: React.FC<CommunityProps> = ({
                       }
                     }}
                     rows={1}
-                    style={{ flex: 1, resize: 'none', minHeight: '38px', maxHeight: '120px', fontFamily: 'inherit', fontSize: '13px' }}
                   />
-                  <button type="submit" className="pl-chat-send-btn" onMouseDown={(e) => e.preventDefault()}>
-                    <i className={`ti ${editingMessage ? 'ti-check' : 'ti-send'}`} style={{ transform: editingMessage ? 'none' : 'scaleX(-1)' }}></i>
+                  <button 
+                    type="submit" 
+                    className="w-9 h-9 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black flex items-center justify-center hover:scale-102 active:scale-95 cursor-pointer shadow-md shrink-0 transition-transform"
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    {editingMessage ? <Check className="w-4 h-4 stroke-[3]" /> : <Send className="w-4 h-4 stroke-[3] translate-x-0.5 rotate-0" />}
                   </button>
                 </form>
               ) : (
-                <div style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--text-secondary)', fontSize: '13px' }}>
-                  Please <button onClick={() => setCurrentPage('login')} style={{ background: 'transparent', border: 'none', color: 'var(--orange)', fontWeight: 800, cursor: 'pointer', textDecoration: 'underline' }}>Login</button> to participate in the live chat.
+                <div className="text-zinc-500 text-xs font-bold text-center py-2 uppercase tracking-wide">
+                  Please <button onClick={() => setCurrentPage('login')} className="text-brand-orange hover:text-brand-amber font-black cursor-pointer underline">Login</button> to participate in the live chat.
                 </div>
               )}
             </div>
 
-            {/* Scroll Down Floating Button */}
-            {showScrollDownBtn && (
-              <button
-                onClick={handleScrollToBottom}
-                className="pl-chat-scroll-down-btn animate-fade-in"
-                style={{
-                  position: 'absolute',
-                  left: '20px',
-                  bottom: '80px',
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  background: 'rgba(10, 10, 10, 0.8)',
-                  border: '1px solid var(--orange)',
-                  boxShadow: '0 0 10px rgba(255, 106, 0, 0.3)',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  zIndex: 10,
-                  transition: 'all 0.2s ease',
-                }}
-                title="Scroll to new messages"
-              >
-                <i className="ti ti-chevron-down" style={{ fontSize: '18px' }}></i>
-              </button>
-            )}
+            {/* Scroll bottom btn */}
+            <AnimatePresence>
+              {showScrollDownBtn && (
+                <motion.button
+                  initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.8 }}
+                  onClick={handleScrollToBottom}
+                  className="absolute left-6 bottom-20 w-9 h-9 rounded-full bg-zinc-950 border border-brand-orange flex items-center justify-center text-white cursor-pointer z-20 shadow-orange-glow transition-all active:scale-90"
+                  title="Scroll to bottom"
+                >
+                  <ChevronDown className="w-4 h-4 animate-bounce" />
+                </motion.button>
+              )}
+            </AnimatePresence>
           </>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+          <div className="flex flex-col flex-1 overflow-hidden">
             {user ? (
-              <form onSubmit={submitSuggestion} className="community-composer-card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--card-border)', borderRadius: '12px', flexShrink: 0 }}>
-                <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'var(--orange)' }}>💡 Submit a Suggestion or Feedback</h4>
+              <form onSubmit={submitSuggestion} className="glass-card p-4 flex flex-col gap-3 mb-4 border border-zinc-900/60 shrink-0 text-left">
+                <h4 className="text-xs font-black text-brand-orange flex items-center gap-1.5">
+                  <Lightbulb className="w-4.5 h-4.5" />
+                  <span>Submit a Suggestion or Feedback</span>
+                </h4>
                 <input 
                   type="text" 
                   placeholder="Brief Title (e.g. Add dark mode toggle)" 
-                  className="pl-input"
+                  className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl px-3 py-2 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200"
                   value={suggTitle}
                   onChange={(e) => setSuggTitle(e.target.value)}
                   required
-                  style={{ fontSize: '12px' }}
                 />
                 <textarea 
                   placeholder="Explain your idea or feedback in detail..." 
-                  className="pl-input"
+                  className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl p-3 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none"
                   value={suggContent}
                   onChange={(e) => setSuggContent(e.target.value)}
                   required
                   rows={2}
-                  style={{ fontSize: '12px', resize: 'none' }}
                 />
-                <button type="submit" className="btn-primary mini" style={{ alignSelf: 'flex-start' }}>
-                  Submit Idea +50 XP ⚡
+                <button 
+                  type="submit" 
+                  className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-xs py-2 px-4 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow self-start flex items-center gap-1.5"
+                >
+                  <Zap className="w-3.5 h-3.5 fill-current" />
+                  <span>Submit Idea +50 XP</span>
                 </button>
               </form>
             ) : (
-              <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-secondary)', fontSize: '13px', border: '1px dashed var(--card-border)', borderRadius: '12px', marginBottom: '1rem', flexShrink: 0 }}>
-                Please <button onClick={() => setCurrentPage('login')} style={{ background: 'transparent', border: 'none', color: 'var(--orange)', fontWeight: 800, cursor: 'pointer', textDecoration: 'underline' }}>Login</button> to submit suggestions.
+              <div className="text-zinc-500 text-xs font-bold text-center py-6 border border-dashed border-zinc-800 rounded-xl mb-4 uppercase tracking-wide shrink-0">
+                Please <button onClick={() => setCurrentPage('login')} className="text-brand-orange hover:text-brand-amber font-black cursor-pointer underline">Login</button> to submit suggestions.
               </div>
             )}
 
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingRight: '4px' }}>
+            <div className="flex-1 overflow-y-auto flex flex-col gap-3.5 pr-1">
               {suggestions.length === 0 ? (
-                <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem 0', fontSize: '13px' }}>
-                  No suggestions submitted yet. Be the first to suggest!
-                </div>
+                <div className="text-zinc-500 text-xs font-bold text-center py-10">No suggestions submitted yet. Be the first!</div>
               ) : (
                 suggestions.map((s: any) => {
-                  let statusColor = 'var(--text-secondary)';
-                  let statusBg = 'rgba(255,255,255,0.06)';
+                  let statusColor = 'text-zinc-500';
+                  let statusBg = 'bg-zinc-900/40 border-zinc-800';
                   if (s.status === 'approved') {
-                    statusColor = '#2ecc71';
-                    statusBg = 'rgba(46, 204, 113, 0.15)';
+                    statusColor = 'text-green-400';
+                    statusBg = 'bg-green-500/10 border-green-500/20';
                   } else if (s.status === 'rejected') {
-                    statusColor = '#e74c3c';
-                    statusBg = 'rgba(231, 76, 60, 0.15)';
+                    statusColor = 'text-red-400';
+                    statusBg = 'bg-red-500/10 border-red-500/20';
                   }
 
                   return (
-                    <div key={s.id} className="glass-card animate-fade-in" style={{ padding: '1rem', border: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.01)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                    <div key={s.id} className="glass-card p-4 border border-zinc-900/60 flex flex-col gap-2.5 text-left">
+                      <div className="flex justify-between items-start gap-4">
                         <div>
-                          <h4 style={{ fontSize: '13.5px', fontWeight: 800, color: '#fff' }}>{s.title}</h4>
-                          <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                          <h4 className="text-xs font-black text-white">{s.title}</h4>
+                          <span className="text-[10px] text-zinc-500 font-semibold block mt-0.5">
                             By @{s.username} · {new Date(s.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                           </span>
                         </div>
-                        <span className="badge-tag" style={{ color: statusColor, borderColor: statusColor, background: statusBg, fontSize: '9px', textTransform: 'capitalize' }}>
+                        <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase border ${statusColor} ${statusBg}`}>
                           {s.status}
                         </span>
                       </div>
-                      <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '0.75rem', lineHeight: '1.4' }}>
+                      <p className="text-xs text-zinc-400 font-medium leading-relaxed">
                         {s.content}
                       </p>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      
+                      <div className="flex justify-between items-center pt-2 border-t border-zinc-900/40">
                         <button 
                           type="button" 
-                          className={`feed-action-btn ${s.isUpvoted ? 'active' : ''}`} 
+                          className={`flex items-center gap-1 text-[10px] font-bold transition-colors cursor-pointer ${s.isUpvoted ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`} 
                           onClick={() => handleUpvoteSuggestion(s.id)}
-                          style={{ fontSize: '11px', display: 'flex', gap: '4px', alignItems: 'center' }}
                         >
-                          <i className={s.isUpvoted ? "ti ti-thumb-up-filled" : "ti ti-thumb-up"}></i> {s.upvotes || 0} Upvotes
+                          <ThumbsUp className={`w-3.5 h-3.5 ${s.isUpvoted ? 'fill-current' : ''}`} /> 
+                          <span>{s.upvotes || 0} Upvotes</span>
                         </button>
                         {user && (user.role === 'admin' || user.role === 'owner') && (
                           <button 
                             type="button" 
-                            className="feed-action-btn" 
+                            className="flex items-center gap-1 text-[10px] font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer" 
                             onClick={() => handleDeleteSuggestion(s.id)}
-                            style={{ fontSize: '11px', display: 'flex', gap: '4px', alignItems: 'center', color: '#ff4d4d' }}
                           >
-                            <i className="ti ti-trash"></i> Delete
+                            <Trash2 className="w-3.5 h-3.5" /> 
+                            <span>Delete</span>
                           </button>
                         )}
                       </div>
@@ -804,104 +673,113 @@ export const Community: React.FC<CommunityProps> = ({
         )}
       </div>
 
-      {/* Custom Context Menu Overlay */}
-      {activeContextMenu && (
-        <div 
-          className="pl-context-overlay"
-          onClick={() => setActiveContextMenu(null)}
-          onContextMenu={(e) => { e.preventDefault(); setActiveContextMenu(null); }}
-        >
+      {/* Context Menu Overlay */}
+      <AnimatePresence>
+        {activeContextMenu && (
           <div 
-            className="pl-context-menu"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: 'absolute',
-              top: Math.min(activeContextMenu.y, window.innerHeight - 280),
-              left: Math.max(10, Math.min(activeContextMenu.x - 105, window.innerWidth - 220))
-            }}
+            className="fixed inset-0 z-[100] cursor-default"
+            onClick={() => setActiveContextMenu(null)}
+            onContextMenu={(e) => { e.preventDefault(); setActiveContextMenu(null); }}
           >
-            {/* Reactions bar */}
-            <div className="context-menu-emoji-bar">
-              {['👍', '❤️', '🔥', '😂', '👏', '😢'].map((emoji) => (
-                <button
-                  key={emoji}
-                  className="context-menu-emoji-btn"
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="absolute bg-zinc-950 border border-zinc-800 rounded-2xl p-1.5 flex flex-col gap-1 min-w-[150px] shadow-2xl z-[1000] text-left"
+              style={{
+                top: Math.min(activeContextMenu.y, window.innerHeight - 280),
+                left: Math.max(10, Math.min(activeContextMenu.x - 105, window.innerWidth - 220))
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Reactions Emoji Bar */}
+              <div className="flex justify-around items-center bg-zinc-900 border border-zinc-800/80 rounded-xl p-1 mb-1 gap-1">
+                {['👍', '❤️', '🔥', '😂', '👏', '😢'].map((emoji) => (
+                  <button
+                    key={emoji}
+                    className="p-1 text-xs hover:scale-12ability hover:bg-zinc-800 rounded-lg cursor-pointer transition-transform"
+                    onClick={() => {
+                      handleToggleReaction(activeContextMenu.messageId, emoji);
+                      setActiveContextMenu(null);
+                    }}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+
+              {/* Action buttons */}
+              <button 
+                className="w-full flex items-center gap-2.5 p-2 font-bold text-xs text-white rounded-lg cursor-pointer hover:bg-zinc-900/60 transition-colors"
+                onClick={() => {
+                  setReplyingTo({
+                    id: activeContextMenu.msg.id,
+                    username: activeContextMenu.msg.username,
+                    message: activeContextMenu.msg.message
+                  });
+                  setActiveContextMenu(null);
+                }}
+              >
+                <CornerUpLeft className="w-3.5 h-3.5 text-zinc-500" /> 
+                <span>Reply</span>
+              </button>
+
+              {user && activeContextMenu.msg.username === user.username && (
+                <button 
+                  className="w-full flex items-center gap-2.5 p-2 font-bold text-xs text-white rounded-lg cursor-pointer hover:bg-zinc-900/60 transition-colors"
                   onClick={() => {
-                    handleToggleReaction(activeContextMenu.messageId, emoji);
+                    setEditingMessage(activeContextMenu.msg);
+                    setChatInput(activeContextMenu.msg.message);
+                    setReplyingTo(null);
                     setActiveContextMenu(null);
                   }}
                 >
-                  {emoji}
+                  <Edit2 className="w-3.5 h-3.5 text-zinc-500" /> 
+                  <span>Edit</span>
                 </button>
-              ))}
-            </div>
+              )}
 
-            {/* Actions */}
-            <button 
-              className="context-menu-item"
-              onClick={() => {
-                setReplyingTo({
-                  id: activeContextMenu.msg.id,
-                  username: activeContextMenu.msg.username,
-                  message: activeContextMenu.msg.message
-                });
-                setActiveContextMenu(null);
-              }}
-            >
-              <i className="ti ti-arrow-back-up"></i> Reply
-            </button>
-
-            {user && activeContextMenu.msg.username === user.username && (
               <button 
-                className="context-menu-item"
+                className="w-full flex items-center gap-2.5 p-2 font-bold text-xs text-white rounded-lg cursor-pointer hover:bg-zinc-900/60 transition-colors"
                 onClick={() => {
-                  setEditingMessage(activeContextMenu.msg);
-                  setChatInput(activeContextMenu.msg.message);
-                  setReplyingTo(null);
+                  setIsMultiSelectMode(true);
+                  setSelectedMessageIds([activeContextMenu.messageId]);
                   setActiveContextMenu(null);
                 }}
               >
-                <i className="ti ti-edit"></i> Edit
+                <CheckSquare className="w-3.5 h-3.5 text-zinc-500" /> 
+                <span>Select</span>
               </button>
-            )}
 
-            <button 
-              className="context-menu-item"
-              onClick={() => {
-                setIsMultiSelectMode(true);
-                setSelectedMessageIds([activeContextMenu.messageId]);
-                setActiveContextMenu(null);
-              }}
-            >
-              <i className="ti ti-select"></i> Select
-            </button>
-
-            {user && (activeContextMenu.msg.username === user.username || user.role === 'admin' || user.role === 'owner') && (
-              <button 
-                className="context-menu-item delete"
-                onClick={() => {
-                  handleDeleteMessage(activeContextMenu.messageId);
-                  setActiveContextMenu(null);
-                }}
-              >
-                <i className="ti ti-trash"></i> Delete
-              </button>
-            )}
-            {user && (user.role === 'admin' || user.role === 'owner') && activeContextMenu.msg.username !== user.username && (
-              <button 
-                className="context-menu-item moderate"
-                onClick={() => {
-                  handleOpenModerationModal(activeContextMenu.msg.username, activeContextMenu.msg.user_id);
-                  setActiveContextMenu(null);
-                }}
-                style={{ color: '#e67e22' }}
-              >
-                <i className="ti ti-shield"></i> Moderate User
-              </button>
-            )}
+              {user && (activeContextMenu.msg.username === user.username || user.role === 'admin' || user.role === 'owner') && (
+                <button 
+                  className="w-full flex items-center gap-2.5 p-2 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 transition-colors"
+                  onClick={() => {
+                    handleDeleteMessage(activeContextMenu.messageId);
+                    setActiveContextMenu(null);
+                  }}
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-500" /> 
+                  <span>Delete</span>
+                </button>
+              )}
+              {user && (user.role === 'admin' || user.role === 'owner') && activeContextMenu.msg.username !== user.username && (
+                <button 
+                  className="w-full flex items-center gap-2.5 p-2 font-bold text-xs text-brand-orange rounded-lg cursor-pointer hover:bg-zinc-900/60 transition-colors"
+                  onClick={() => {
+                    handleOpenModerationModal(activeContextMenu.msg.username, activeContextMenu.msg.user_id);
+                    setActiveContextMenu(null);
+                  }}
+                >
+                  <ShieldAlert className="w-3.5 h-3.5 text-brand-orange" /> 
+                  <span>Moderate User</span>
+                </button>
+              )}
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };

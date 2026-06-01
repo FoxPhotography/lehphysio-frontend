@@ -46,44 +46,28 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 
   return (
     <div 
-      className={`mobile-avatar-ring ${!hasPngFrame ? frameClass : ''} ${className}`}
+      className={`relative flex items-center justify-center shrink-0 rounded-full select-none ${!hasPngFrame ? frameClass : ''} ${className}`}
       onClick={onClick}
       style={{ 
         width: sizePx, 
         height: sizePx, 
-        flexShrink: 0,
-        boxShadow: hasPngFrame ? '0 2px 10px rgba(0,0,0,0.4)' : '0 2px 10px rgba(0,0,0,0.4)',
         cursor: onClick ? 'pointer' : 'default',
-        borderRadius: '50%',
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--bg-secondary)',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.4)',
+        background: frameClass ? undefined : 'var(--color-bg-darker)',
         ...style
       }}
     >
       <div 
-        className="mobile-avatar-inner" 
+        className="w-full h-full rounded-full flex items-center justify-center overflow-hidden font-extrabold text-brand-orange bg-brand-orange/10"
         style={{ 
-          width: '100%', 
-          height: '100%', 
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          fontWeight: 800,
           fontSize: typeof size === 'number' ? `${Math.max(10, Math.floor(size * 0.38))}px` : '12px',
-          color: 'var(--orange)',
-          background: 'rgba(255, 106, 0, 0.12)'
         }}
       >
         {avatarUrl ? (
           <img 
             src={avatarUrl} 
             alt={username} 
-            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} 
+            className="w-full h-full object-cover rounded-full" 
           />
         ) : (
           getInitials(username)
@@ -95,16 +79,13 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
         <img
           src={frameImageUrl}
           alt="Avatar frame"
-          className="avatar-frame-overlay"
+          className="absolute pointer-events-none z-10 select-none"
           style={{
-            position: 'absolute',
             top: '-7.5%',
             left: '-7.5%',
             width: '115%',
             height: '115%',
-            pointerEvents: 'none',
-            zIndex: 2,
-            userSelect: 'none'
+            maxWidth: 'none'
           }}
         />
       )}

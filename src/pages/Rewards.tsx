@@ -1,11 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  ShoppingBag,
+  Gift,
+  Key,
+  CheckCircle,
+  Lock,
+  Loader2,
+  PackageOpen,
+  Clock,
+  Sparkles,
+} from 'lucide-react';
 import { playChatSound, setFramesCache } from '../utils/helpers';
 
-const API_BASE = import.meta.env.VITE_API_BASE || (
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') 
-    ? `http://${window.location.hostname}:5000` 
-    : ''
-);
+const API_BASE =
+  import.meta.env.VITE_API_BASE ||
+  (window.location.hostname === 'localhost' ||
+   window.location.hostname === '127.0.0.1' ||
+   window.location.hostname.startsWith('192.168.')
+    ? `http://${window.location.hostname}:5000`
+    : '');
 
 interface RewardsProps {
   user: any;
@@ -24,6 +38,106 @@ interface RewardsProps {
   handleBuyFrame?: (frameId: string, price: number) => Promise<boolean>;
 }
 
+// ─── Static cosmetic items ─────────────────────────────────────────────────────
+const STATIC_ITEMS = [
+  {
+    id: 'gold-glow',
+    name: 'Golden Glowing Frame',
+    cost: 500,
+    description: 'A radiant gold glow that surrounds your avatar.',
+    previewClass: 'avatar-frame-gold-glow',
+    color: '#FFD700',
+  },
+  {
+    id: 'neon-ring',
+    name: 'Neon Blue Ring',
+    cost: 800,
+    description: 'Electric neon ring for a futuristic look.',
+    previewClass: 'avatar-frame-neon-ring',
+    color: '#00ffff',
+  },
+  {
+    id: 'neuro-specialist',
+    name: 'Title: Neuro Specialist',
+    cost: 1500,
+    description: 'Display the Neuro Specialist title on your profile.',
+    previewClass: '',
+    color: '#a78bfa',
+    isTitle: true,
+  },
+  {
+    id: 'diagnosis-legend',
+    name: 'Title: Diagnosis Legend',
+    cost: 2000,
+    description: 'Showcase the Diagnosis Legend title across the app.',
+    previewClass: '',
+    color: '#f59e0b',
+    isTitle: true,
+  },
+];
+
+// ─── Shop Item Card ────────────────────────────────────────────────────────────
+const ShopCard: React.FC<{
+  name: string;
+  cost: number;
+  color?: string;
+  owned: boolean;
+  canAfford: boolean;
+  buying?: boolean;
+  previewContent: React.ReactNode;
+  onBuy: () => void;
+}> = ({ name, cost, color, owned, canAfford, buying, previewContent, onBuy }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    whileHover={{ y: -2 }}
+    className={`rounded-2xl border p-4 flex flex-col items-center gap-3 transition-colors ${
+      owned
+        ? 'border-emerald-500/25 bg-emerald-500/5'
+        : 'border-white/8 bg-zinc-900/60 hover:border-white/15'
+    }`}
+  >
+    {/* Preview */}
+    <div className="w-16 h-16 rounded-2xl bg-black/40 border border-white/8 flex items-center justify-center overflow-hidden">
+      {previewContent}
+    </div>
+
+    {/* Name */}
+    <div className="text-center">
+      <p className="text-[13px] font-bold text-white leading-tight">{name}</p>
+      <p className="text-[12px] font-black mt-0.5" style={{ color: color || '#f97316' }}>
+        {cost.toLocaleString()} XP
+      </p>
+    </div>
+
+    {/* Buy Button */}
+    <motion.button
+      whileHover={{ scale: owned || buying ? 1 : 1.04 }}
+      whileTap={{ scale: owned || buying ? 1 : 0.96 }}
+      onClick={onBuy}
+      disabled={owned || buying || !canAfford}
+      className={`w-full py-2 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 transition-all ${
+        owned
+          ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 cursor-default'
+          : !canAfford
+          ? 'bg-white/5 border border-white/8 text-zinc-600 cursor-not-allowed'
+          : 'bg-orange-500 text-black hover:bg-orange-400'
+      }`}
+    >
+      {buying ? (
+        <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Buying...</>
+      ) : owned ? (
+        <><CheckCircle className="w-3.5 h-3.5" /> Owned</>
+      ) : !canAfford ? (
+        <><Lock className="w-3.5 h-3.5" /> Not enough XP</>
+      ) : (
+        'Buy'
+      )}
+    </motion.button>
+  </motion.div>
+);
+
+// ─── Main Component ────────────────────────────────────────────────────────────
 export const Rewards: React.FC<RewardsProps> = ({
   user,
   redeemError,
@@ -38,14 +152,14 @@ export const Rewards: React.FC<RewardsProps> = ({
   handleShopPurchase,
   hasOpenedBoxToday,
   handleClaimSurpriseBox,
-  handleBuyFrame
+  handleBuyFrame,
 }) => {
   const [shopFrames, setShopFrames] = useState<any[]>([]);
   const [buyingFrameId, setBuyingFrameId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/frames`)
-      .then(res => res.json())
+      .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) {
           setShopFrames(data);
@@ -55,9 +169,8 @@ export const Rewards: React.FC<RewardsProps> = ({
       .catch(() => {});
   }, []);
 
-  const isFrameOwned = (frameId: number) => {
-    return user?.unlocked_frames?.includes(frameId) || false;
-  };
+  const isFrameOwned = (frameId: number) =>
+    user?.unlocked_frames?.includes(frameId) || false;
 
   const handleFrameBuy = async (frameId: string) => {
     if (buyingFrameId) return;
@@ -66,7 +179,7 @@ export const Rewards: React.FC<RewardsProps> = ({
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE}/api/frames/buy/${frameId}`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (res.ok) {
@@ -75,140 +188,220 @@ export const Rewards: React.FC<RewardsProps> = ({
       } else {
         showToast(data.error || 'Failed to purchase frame.');
       }
-    } catch (e) {
+    } catch {
       showToast('An error occurred.');
     }
     setBuyingFrameId(null);
   };
+
   return (
-    <div className="rewards-panel animate-fade-in">
-      <div className="pl-section-h2">
-        <span className="title-text"><i className="ti ti-building-store"></i> XP Shop & Reward Center</span>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full max-w-2xl mx-auto px-4 py-6 space-y-8"
+    >
+      {/* Page Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-500/20 border border-orange-500/30 flex items-center justify-center">
+          <ShoppingBag className="w-5 h-5 text-orange-400" />
+        </div>
+        <div>
+          <h1 className="text-xl font-black text-white leading-tight">XP Shop</h1>
+          <p className="text-[12px] text-zinc-500">Rewards &amp; Cosmetic Center</p>
+        </div>
+        {user && (
+          <div className="ml-auto px-3 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20">
+            <span className="text-[12px] font-black text-orange-400">{user.total_xp?.toLocaleString() || 0} XP</span>
+          </div>
+        )}
       </div>
 
-      <section className="stats-badge-grid" style={{ gridTemplateColumns: '1fr' }}>
-        {/* Secret Code Input */}
-        <div className="glass-card">
-          <h3 style={{ fontSize: '16px', fontWeight: 800, marginBottom: '0.5rem' }}>🔑 Redeem Secret XP Code</h3>
-          <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '1rem' }}>Enter codes from social media or episodes to get instant points.</p>
-          {redeemError && <div className="pl-form-error">{redeemError}</div>}
-          {redeemSuccess && <div className="pl-form-success">{redeemSuccess}</div>}
-          <form onSubmit={handleRedeem} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <input
-              type="text"
-              className="pl-input"
-              placeholder="Enter reward code here"
-              value={secretCode}
-              onChange={(e) => setSecretCode(e.target.value)}
-            />
-            <button type="submit" className="btn-primary" style={{ width: '100%' }}>Redeem Code</button>
-          </form>
+      {/* ── Secret Code Redemption ──────────────────────────────────── */}
+      <section className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Key className="w-4 h-4 text-orange-400" />
+          <h2 className="text-[15px] font-black text-white">Redeem Secret XP Code</h2>
+        </div>
+        <p className="text-[12px] text-zinc-500 mb-4">
+          Enter codes from social media or episodes to earn instant XP.
+        </p>
+
+        <AnimatePresence>
+          {redeemError && (
+            <motion.div
+              key="err"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-3 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[12px] font-medium"
+            >
+              {redeemError}
+            </motion.div>
+          )}
+          {redeemSuccess && (
+            <motion.div
+              key="suc"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-3 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[12px] font-medium"
+            >
+              {redeemSuccess}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <form onSubmit={handleRedeem} className="flex flex-col gap-3 sm:flex-row">
+          <input
+            type="text"
+            className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 text-[13px] focus:outline-none focus:border-orange-500/60 transition-colors"
+            placeholder="Enter reward code here..."
+            value={secretCode}
+            onChange={(e) => setSecretCode(e.target.value)}
+          />
+          <motion.button
+            type="submit"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-bold text-[13px] hover:from-orange-400 hover:to-amber-400 transition-colors flex-shrink-0"
+          >
+            Redeem Code
+          </motion.button>
+        </form>
+      </section>
+
+      {/* ── Daily Surprise Box ──────────────────────────────────────── */}
+      <section className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Gift className="w-4 h-4 text-violet-400" />
+          <h2 className="text-[15px] font-black text-white">Daily Surprise Box</h2>
+          {hasOpenedBoxToday && (
+            <span className="ml-auto flex items-center gap-1 text-[11px] text-zinc-500">
+              <Clock className="w-3.5 h-3.5" /> Resets at 12:00 AM
+            </span>
+          )}
         </div>
 
-        {/* Daily chest rewards box */}
-        <div className="glass-card mystery-chest-panel" style={{ opacity: hasOpenedBoxToday ? 0.7 : 1 }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 800 }}>📦 Daily Surprise Box</h3>
-          <div 
-            className={`chest-box-visual ${hasOpenedBoxToday ? 'opened' : ''}`} 
+        <div className="flex flex-col sm:flex-row items-center gap-5">
+          {/* Box Visual */}
+          <motion.button
             onClick={hasOpenedBoxToday ? undefined : handleClaimSurpriseBox}
-            style={{ 
-              cursor: hasOpenedBoxToday ? 'not-allowed' : 'pointer', 
-              fontSize: '48px', 
-              textAlign: 'center', 
-              margin: '1rem 0',
-              filter: hasOpenedBoxToday ? 'grayscale(0.6)' : 'none'
-            }}
+            whileHover={hasOpenedBoxToday ? {} : { scale: 1.05, rotate: 2 }}
+            whileTap={hasOpenedBoxToday ? {} : { scale: 0.95 }}
+            disabled={hasOpenedBoxToday}
+            className={`relative w-24 h-24 rounded-2xl flex items-center justify-center flex-shrink-0 border transition-all ${
+              hasOpenedBoxToday
+                ? 'bg-white/3 border-white/8 opacity-50 cursor-not-allowed'
+                : 'bg-gradient-to-br from-violet-500/20 to-purple-500/10 border-violet-500/30 cursor-pointer hover:border-violet-400/50 shadow-lg shadow-violet-500/10'
+            }`}
           >
-            {hasOpenedBoxToday ? '🔓' : '📦'}
+            {hasOpenedBoxToday ? (
+              <PackageOpen className="w-10 h-10 text-zinc-600" />
+            ) : (
+              <Gift className="w-10 h-10 text-violet-400" />
+            )}
+          </motion.button>
+
+          <div className="flex-1 text-center sm:text-left">
+            {hasOpenedBoxToday ? (
+              <>
+                <p className="text-[14px] font-bold text-zinc-400">Already opened today</p>
+                <p className="text-[12px] text-zinc-600 mt-1">
+                  Come back after midnight for your next surprise box.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-[14px] font-bold text-white">Click the box to open it!</p>
+                <p className="text-[12px] text-zinc-500 mt-1">
+                  Receive a random daily XP bonus. One box per day.
+                </p>
+              </>
+            )}
           </div>
-          <p style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-            {hasOpenedBoxToday ? 'You have already opened your surprise box today. Resets at 12:00 AM.' : 'Click the box to open it and receive a random daily bonus!'}
-          </p>
         </div>
       </section>
 
-      {/* XP Shop Grid */}
-      <section style={{ marginTop: '2.5rem' }}>
-        <h3 className="pl-section-h2"><span className="title-text"><i className="ti ti-shopping-cart"></i> Cosmetics Shop (XP Shop)</span></h3>
-        <div className="rewards-shop-grid">
-          <div className="shop-item-card glass-card">
-            <div className="shop-item-preview-box avatar-frame-gold-glow">🌟</div>
-            <h4 className="shop-item-title">Golden Glowing Frame</h4>
-            <span className="shop-item-cost">500 XP</span>
-            <button
-              className="btn-primary mini"
-              onClick={() => handleShopPurchase('gold-glow', 500)}
-              disabled={unlockedCosmetics.includes('gold-glow')}
-            >
-              {unlockedCosmetics.includes('gold-glow') ? 'Purchased' : 'Buy Item'}
-            </button>
-          </div>
+      {/* ── Cosmetics Shop ─────────────────────────────────────────── */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles className="w-4 h-4 text-orange-400" />
+          <h2 className="text-[15px] font-black text-white">Cosmetics Shop</h2>
+        </div>
 
-          <div className="shop-item-card glass-card">
-            <div className="shop-item-preview-box avatar-frame-neon-ring">🩵</div>
-            <h4 className="shop-item-title">Neon Blue Ring</h4>
-            <span className="shop-item-cost">800 XP</span>
-            <button
-              className="btn-primary mini"
-              onClick={() => handleShopPurchase('neon-ring', 800)}
-              disabled={unlockedCosmetics.includes('neon-ring')}
-            >
-              {unlockedCosmetics.includes('neon-ring') ? 'Purchased' : 'Buy Item'}
-            </button>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {/* Static cosmetic items */}
+          {STATIC_ITEMS.map((item) => {
+            const owned = unlockedCosmetics.includes(item.id);
+            const canAfford = user && user.total_xp >= item.cost;
 
-          <div className="shop-item-card glass-card">
-            <div className="shop-item-preview-box">🧠</div>
-            <h4 className="shop-item-title">Title: "Neuro Specialist"</h4>
-            <span className="shop-item-cost">1,500 XP</span>
-            <button
-              className="btn-primary mini"
-              onClick={() => handleShopPurchase('neuro-specialist', 1500)}
-              disabled={unlockedCosmetics.includes('neuro-specialist')}
-            >
-              {unlockedCosmetics.includes('neuro-specialist') ? 'Purchased' : 'Buy Item'}
-            </button>
-          </div>
+            let previewContent: React.ReactNode;
+            if (item.isTitle) {
+              previewContent = (
+                <span className="text-[10px] font-black text-center leading-tight px-1" style={{ color: item.color }}>
+                  {item.name.replace('Title: ', '')}
+                </span>
+              );
+            } else {
+              previewContent = (
+                <div
+                  className={`${item.previewClass} w-12 h-12 rounded-full flex items-center justify-center text-[18px] font-black`}
+                  style={{ background: 'rgba(255,106,0,0.12)', color: item.color }}
+                >
+                  {user?.username?.[0]?.toUpperCase() || 'A'}
+                </div>
+              );
+            }
 
-          <div className="shop-item-card glass-card">
-            <div className="shop-item-preview-box">👑</div>
-            <h4 className="shop-item-title">Title: "Diagnosis Legend"</h4>
-            <span className="shop-item-cost">2,000 XP</span>
-            <button
-              className="btn-primary mini"
-              onClick={() => handleShopPurchase('diagnosis-legend', 2000)}
-              disabled={unlockedCosmetics.includes('diagnosis-legend')}
-            >
-              {unlockedCosmetics.includes('diagnosis-legend') ? 'Purchased' : 'Buy Item'}
-            </button>
-          </div>
+            return (
+              <ShopCard
+                key={item.id}
+                name={item.name}
+                cost={item.cost}
+                color={item.color}
+                owned={owned}
+                canAfford={!!canAfford}
+                previewContent={previewContent}
+                onBuy={() => !owned && handleShopPurchase(item.id, item.cost)}
+              />
+            );
+          })}
 
-          {/* Dynamic frame shop items */}
+          {/* Dynamic frame items */}
           {shopFrames.map((f: any) => {
             const owned = isFrameOwned(f._id);
             const canAfford = user && user.total_xp >= f.price;
-            return (
-              <div key={f._id} className="shop-item-card glass-card">
-                <div className="shop-item-preview-box" style={{ position: 'relative', width: '72px', height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-secondary)', borderRadius: '50%' }}>
-                  <div style={{ width: '64px', height: '64px', borderRadius: '50%', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,106,0,0.12)' }}>
-                    <span style={{ fontSize: '22px', fontWeight: 800, color: 'var(--orange)' }}>A</span>
-                    <img src={f.image_url} alt={f.name} style={{ position: 'absolute', top: '-7.5%', left: '-7.5%', width: '115%', height: '115%', objectFit: 'fill', pointerEvents: 'none' }} />
-                  </div>
-                </div>
-                <h4 className="shop-item-title">{f.name}</h4>
-                <span className="shop-item-cost">{f.price.toLocaleString()} XP</span>
-                <button
-                  className={`btn-primary mini ${buyingFrameId === String(f._id) ? 'loading' : ''}`}
-                  onClick={() => handleFrameBuy(String(f._id))}
-                  disabled={owned || buyingFrameId !== null}
-                >
-                  {buyingFrameId === String(f._id) ? 'Buying...' : owned ? 'Owned' : canAfford ? 'Buy' : 'Not enough XP'}
-                </button>
+            const isBuying = buyingFrameId === String(f._id);
+
+            const previewContent = (
+              <div className="relative w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-orange-500/10">
+                <span className="text-[18px] font-black text-orange-400">
+                  {user?.username?.[0]?.toUpperCase() || 'A'}
+                </span>
+                <img
+                  src={f.image_url}
+                  alt={f.name}
+                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  style={{ objectFit: 'fill' }}
+                />
               </div>
+            );
+
+            return (
+              <ShopCard
+                key={f._id}
+                name={f.name}
+                cost={f.price}
+                owned={owned}
+                canAfford={!!canAfford}
+                buying={isBuying}
+                previewContent={previewContent}
+                onBuy={() => !owned && !buyingFrameId && handleFrameBuy(String(f._id))}
+              />
             );
           })}
         </div>
       </section>
-    </div>
+    </motion.div>
   );
 };

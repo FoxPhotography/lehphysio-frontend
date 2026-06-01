@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { playChatSound, getNameColor, getYoutubeEmbedUrl, getLocalDateString, setFramesCache, copyToClipboard } from './utils/helpers';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShieldAlert, X } from 'lucide-react';
 
 // Pages
 import { Home } from './pages/Home';
@@ -2327,95 +2329,90 @@ function App() {
   };
 
   const renderModerationModal = () => {
-    if (!moderationUser) return null;
     return (
-      <div 
-        className="pl-context-overlay" 
-        style={{ 
-          zIndex: 11000, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center' 
-        }} 
-        onClick={() => setModerationUser(null)}
-      >
-        <div 
-          className="glass-card" 
-          onClick={(e) => e.stopPropagation()} 
-          style={{ 
-            width: '90%', 
-            maxWidth: '400px', 
-            background: 'rgba(15, 15, 15, 0.95)', 
-            border: '1px solid var(--orange)', 
-            boxShadow: 'var(--shadow-orange-intense)',
-            padding: '2rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.25rem',
-            direction: 'ltr',
-            textAlign: 'left'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--orange)' }}>
-              🛡️ Moderation: @{moderationUser.username}
-            </h3>
-            <button 
-              onClick={() => setModerationUser(null)}
-              style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '18px' }}
+      <AnimatePresence>
+        {moderationUser && (
+          <div 
+            className="fixed inset-0 z-[11000] bg-black/85 backdrop-blur-xs flex items-center justify-center p-4"
+            onClick={() => setModerationUser(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="w-full max-w-sm rounded-2xl border border-white/8 bg-zinc-950/95 p-6 shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
             >
-              <i className="ti ti-x"></i>
-            </button>
-          </div>
+              {/* Header */}
+              <div className="flex items-center justify-between mb-5 pb-3 border-b border-zinc-900">
+                <div className="flex items-center gap-2 text-brand-orange">
+                  <ShieldAlert className="w-5 h-5 shrink-0" />
+                  <h3 className="text-sm font-black uppercase tracking-wider">
+                    Moderation: @{moderationUser.username}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setModerationUser(null)}
+                  className="text-zinc-500 hover:text-white cursor-pointer transition-colors p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-          <div className="pl-form-group">
-            <label style={{ fontSize: '12px', fontWeight: 800, marginBottom: '6px', display: 'block' }}>Select Action</label>
-            <select 
-              className="pl-input"
-              value={moderationAction}
-              onChange={(e) => setModerationAction(e.target.value)}
-            >
-              <option value="mute">Mute User (Chat & Comments)</option>
-              <option value="unmute">Unmute User</option>
-              <option value="ban">Ban User (Login Restriction)</option>
-              <option value="unban">Unban User</option>
-            </select>
-          </div>
+              <div className="space-y-4">
+                {/* Action Select */}
+                <div className="flex flex-col gap-1.5 text-left">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Select Action</label>
+                  <select
+                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl px-3.5 py-2.5 text-xs font-bold outline-none transition-all cursor-pointer"
+                    value={moderationAction}
+                    onChange={(e) => setModerationAction(e.target.value)}
+                  >
+                    <option value="mute">Mute User (Chat & Comments)</option>
+                    <option value="unmute">Unmute User</option>
+                    <option value="ban">Ban User (Login Restriction)</option>
+                    <option value="unban">Unban User</option>
+                  </select>
+                </div>
 
-          {(moderationAction === 'mute' || moderationAction === 'ban') && (
-            <div className="pl-form-group">
-              <label style={{ fontSize: '12px', fontWeight: 800, marginBottom: '6px', display: 'block' }}>Duration</label>
-              <select 
-                className="pl-input"
-                value={moderationDuration}
-                onChange={(e) => setModerationDuration(e.target.value)}
-              >
-                <option value="1h">1 Hour</option>
-                <option value="1d">1 Day</option>
-                <option value="1w">1 Week</option>
-                <option value="permanent">Permanent</option>
-              </select>
-            </div>
-          )}
+                {/* Duration Select */}
+                {(moderationAction === 'mute' || moderationAction === 'ban') && (
+                  <div className="flex flex-col gap-1.5 text-left">
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Duration</label>
+                    <select
+                      className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl px-3.5 py-2.5 text-xs font-bold outline-none transition-all cursor-pointer"
+                      value={moderationDuration}
+                      onChange={(e) => setModerationDuration(e.target.value)}
+                    >
+                      <option value="1h">1 Hour</option>
+                      <option value="1d">1 Day</option>
+                      <option value="1w">1 Week</option>
+                      <option value="permanent">Permanent</option>
+                    </select>
+                  </div>
+                )}
+              </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-            <button 
-              className="btn-primary" 
-              style={{ flex: 1 }} 
-              onClick={handleAdminModerateUser}
-            >
-              Apply Action
-            </button>
-            <button 
-              className="btn-outline" 
-              style={{ flex: 1 }} 
-              onClick={() => setModerationUser(null)}
-            >
-              Cancel
-            </button>
+              {/* Action Buttons */}
+              <div className="flex gap-3 mt-6">
+                <button
+                  className="flex-1 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs py-3 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow"
+                  onClick={handleAdminModerateUser}
+                >
+                  Apply Action
+                </button>
+                <button
+                  className="flex-1 border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-xs py-3 rounded-xl cursor-pointer transition-all active:scale-95"
+                  onClick={() => setModerationUser(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      </div>
+        )}
+      </AnimatePresence>
     );
   };
 

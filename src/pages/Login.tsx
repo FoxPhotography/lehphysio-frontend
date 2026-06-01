@@ -1,4 +1,13 @@
 import React from 'react';
+import { User, Lock } from 'lucide-react';
+import {
+  AuthLayout,
+  FormField,
+  AuthError,
+  AuthInput,
+  AuthSubmitButton,
+  AuthLink,
+} from '../components/AuthComponents';
 
 interface LoginProps {
   loginForm: any;
@@ -13,44 +22,48 @@ export const Login: React.FC<LoginProps> = ({
   setLoginForm,
   authError,
   handleLogin,
-  setCurrentPage
-}) => {
-  return (
-    <div className="auth-panel animate-fade-in" style={{ maxWidth: '400px', margin: '4rem auto' }}>
-      <div className="glass-card" style={{ padding: '2rem' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 900, textAlign: 'center', marginBottom: '0.25rem' }}>Login</h2>
-        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '2rem' }}>Welcome back to Leh Physio? family</p>
-        {authError && <div className="pl-form-error">{authError}</div>}
-        <form onSubmit={handleLogin}>
-          <div className="pl-form-group">
-            <label>Username</label>
-            <input
-              type="text"
-              className="pl-input"
-              value={loginForm.username}
-              onChange={(e) => setLoginForm(prev => ({ ...prev, username: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="pl-form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              className="pl-input"
-              value={loginForm.password}
-              onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
-              required
-            />
-          </div>
-          <div style={{ textAlign: 'right', marginTop: '0.5rem' }}>
-            <button type="button" onClick={() => setCurrentPage('forgot-password')} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer' }}>Forgot Password?</button>
-          </div>
-          <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Login</button>
-        </form>
-        <div style={{ textAlign: 'center', fontSize: '13px', marginTop: '1.5rem', color: 'var(--text-secondary)' }}>
-          Don't have an account? <button onClick={() => setCurrentPage('register')} style={{ background: 'transparent', border: 'none', color: 'var(--orange)', fontWeight: 800, cursor: 'pointer' }}>Register</button>
-        </div>
+  setCurrentPage,
+}) => (
+  <AuthLayout title="Welcome Back" subtitle="Sign in to your Leh Physio? account">
+    <form onSubmit={handleLogin} className="space-y-4">
+      <AuthError message={authError} />
+
+      <FormField label="Username" icon={<User className="w-3 h-3" />}>
+        <AuthInput
+          type="text"
+          icon={<User className="w-4 h-4" />}
+          placeholder="Your username"
+          value={loginForm.username}
+          onChange={(e) => setLoginForm((prev: any) => ({ ...prev, username: e.target.value }))}
+          required
+          autoComplete="username"
+        />
+      </FormField>
+
+      <FormField label="Password" icon={<Lock className="w-3 h-3" />}>
+        <AuthInput
+          type="password"
+          icon={<Lock className="w-4 h-4" />}
+          placeholder="Your password"
+          value={loginForm.password}
+          onChange={(e) => setLoginForm((prev: any) => ({ ...prev, password: e.target.value }))}
+          required
+          autoComplete="current-password"
+        />
+      </FormField>
+
+      <div className="text-right -mt-1">
+        <AuthLink onClick={() => setCurrentPage('forgot-password')}>
+          Forgot Password?
+        </AuthLink>
       </div>
-    </div>
-  );
-};
+
+      <AuthSubmitButton label="Login" />
+    </form>
+
+    <p className="text-center text-[13px] text-zinc-500 mt-5">
+      Don't have an account?{' '}
+      <AuthLink onClick={() => setCurrentPage('register')}>Register</AuthLink>
+    </p>
+  </AuthLayout>
+);

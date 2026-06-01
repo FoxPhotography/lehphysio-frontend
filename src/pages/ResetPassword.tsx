@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
+import { Lock } from 'lucide-react';
 import { OtpInput } from '../components/OtpInput';
+import {
+  AuthLayout,
+  FormField,
+  AuthError,
+  AuthSuccess,
+  AuthInput,
+  AuthSubmitButton,
+  AuthLink,
+} from '../components/AuthComponents';
 
 interface ResetPasswordProps {
   email: string;
@@ -14,7 +24,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
   authError,
   authSuccess,
   onSubmit,
-  setCurrentPage
+  setCurrentPage,
 }) => {
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -25,50 +35,55 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
   };
 
   return (
-    <div className="auth-panel animate-fade-in" style={{ maxWidth: '400px', margin: '4rem auto' }}>
-      <div className="glass-card" style={{ padding: '2rem' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 900, textAlign: 'center', marginBottom: '0.25rem' }}>Reset Password</h2>
-        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '2rem' }}>
-          Reset code sent to <strong style={{ color: 'var(--orange)' }}>{email}</strong>
-        </p>
-        {authError && <div className="pl-form-error">{authError}</div>}
-        {authSuccess && <div className="pl-form-success">{authSuccess}</div>}
-        <form id="reset-password-form" onSubmit={handleSubmit}>
-          <div className="pl-form-group" style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '8px', textAlign: 'center' }}>6-Digit Code</label>
-            <OtpInput
-              value={code}
-              onChange={setCode}
-              onComplete={() => {
-                setTimeout(() => {
-                  const passInput = document.getElementById('new-password-input') as HTMLInputElement;
-                  if (passInput && !passInput.value) {
-                    passInput.focus();
-                  } else {
-                    const form = document.getElementById('reset-password-form') as HTMLFormElement;
-                    if (form) form.requestSubmit();
-                  }
-                }, 50);
-              }}
-            />
-          </div>
-          <div className="pl-form-group">
-            <label>New Password</label>
-            <input
-              id="new-password-input"
-              type="password"
-              className="pl-input"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Update Password</button>
-        </form>
-        <div style={{ textAlign: 'center', fontSize: '13px', marginTop: '1.5rem', color: 'var(--text-secondary)' }}>
-          Remember your password? <button onClick={() => setCurrentPage('login')} style={{ background: 'transparent', border: 'none', color: 'var(--orange)', fontWeight: 800, cursor: 'pointer' }}>Login</button>
+    <AuthLayout
+      title="Reset Password"
+      subtitle={`Code sent to ${email}`}
+    >
+      <form id="reset-password-form" onSubmit={handleSubmit} className="space-y-5">
+        <AuthError message={authError} />
+        <AuthSuccess message={authSuccess} />
+
+        <div className="space-y-1.5">
+          <label className="text-[12px] font-bold text-zinc-400 uppercase tracking-wider text-center block">
+            6-Digit Code
+          </label>
+          <OtpInput
+            value={code}
+            onChange={setCode}
+            onComplete={() => {
+              setTimeout(() => {
+                const passInput = document.getElementById('new-password-input') as HTMLInputElement;
+                if (passInput && !passInput.value) {
+                  passInput.focus();
+                } else {
+                  const form = document.getElementById('reset-password-form') as HTMLFormElement;
+                  if (form) form.requestSubmit();
+                }
+              }, 50);
+            }}
+          />
         </div>
-      </div>
-    </div>
+
+        <FormField label="New Password" icon={<Lock className="w-3 h-3" />}>
+          <AuthInput
+            id="new-password-input"
+            type="password"
+            icon={<Lock className="w-4 h-4" />}
+            placeholder="Your new password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            required
+            autoComplete="new-password"
+          />
+        </FormField>
+
+        <AuthSubmitButton label="Update Password" />
+      </form>
+
+      <p className="text-center text-[13px] text-zinc-500 mt-5">
+        Remember your password?{' '}
+        <AuthLink onClick={() => setCurrentPage('login')}>Login</AuthLink>
+      </p>
+    </AuthLayout>
   );
 };

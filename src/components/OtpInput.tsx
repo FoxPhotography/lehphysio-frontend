@@ -92,7 +92,7 @@ export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange, onComplete 
   };
 
   return (
-    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '1.5rem', direction: 'ltr' }}>
+    <div className="flex gap-2.5 justify-center mb-6 direction-ltr">
       {codeArray.map((digit, idx) => (
         <input
           key={idx}
@@ -104,25 +104,10 @@ export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange, onComplete 
           onChange={(e) => handleChange(e, idx)}
           onKeyDown={(e) => handleKeyDown(e, idx)}
           onPaste={handlePaste}
-          className="pl-otp-box"
-          style={{
-            width: '46px',
-            height: '52px',
-            borderRadius: '10px',
-            border: '2px solid var(--card-border)',
-            background: 'rgba(255, 255, 255, 0.04)',
-            color: '#fff',
-            fontSize: '22px',
-            fontWeight: '900',
-            textAlign: 'center',
-            outline: 'none',
-            transition: 'all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-            boxShadow: '0 4px 10px rgba(0, 0, 0, 0.15)'
-          }}
+          className="w-11 h-13 md:w-12 md:h-14 bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl text-xl font-black text-center outline-none transition-all duration-200 shadow-md"
           required
         />
       ))}
     </div>
   );
 };
-

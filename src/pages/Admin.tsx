@@ -1,12 +1,38 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Video,
+  Key,
+  Users,
+  Lightbulb,
+  Frame,
+  Settings,
+  ShieldCheck,
+  Pencil,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  ThumbsUp,
+  Upload,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+  Save,
+  ImagePlus,
+  Plus,
+  ChevronDown,
+} from 'lucide-react';
 import { setFramesCache } from '../utils/helpers';
 
-const API_BASE = import.meta.env.VITE_API_BASE || (
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') 
-    ? `http://${window.location.hostname}:5000` 
-    : ''
-);
+const API_BASE =
+  import.meta.env.VITE_API_BASE ||
+  (window.location.hostname === 'localhost' ||
+   window.location.hostname === '127.0.0.1' ||
+   window.location.hostname.startsWith('192.168.')
+    ? `http://${window.location.hostname}:5000`
+    : '');
 
+// ─── Types ─────────────────────────────────────────────────────────────────────
 interface AdminProps {
   adminSection: string;
   setAdminSection: (val: string) => void;
@@ -32,9 +58,122 @@ interface AdminProps {
   fetchXpSettings?: () => void;
   episodes?: any[];
   fetchEpisodes?: () => void;
-  showConfirm?: (title: string, message: string, onConfirm: () => void, onCancel?: () => void, confirmText?: string, cancelText?: string, type?: 'danger' | 'info' | 'success' | 'warning') => void;
+  showConfirm?: (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    onCancel?: () => void,
+    confirmText?: string,
+    cancelText?: string,
+    type?: 'danger' | 'info' | 'success' | 'warning'
+  ) => void;
 }
 
+// ─── Shared sub-components ─────────────────────────────────────────────────────
+const SectionCard: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children, className = ''
+}) => (
+  <div className={`rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-5 ${className}`}>
+    {children}
+  </div>
+);
+
+const SectionTitle: React.FC<{ icon: React.ReactNode; label: string; count?: number }> = ({
+  icon, label, count
+}) => (
+  <div className="flex items-center gap-2 mb-5 pb-3 border-b border-white/8">
+    <div className="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/20 flex items-center justify-center text-orange-400">
+      {icon}
+    </div>
+    <h3 className="text-[15px] font-black text-white">
+      {label}
+      {count !== undefined && (
+        <span className="ml-2 px-1.5 py-0.5 rounded-md bg-orange-500/15 text-orange-400 text-[11px] font-bold">
+          {count}
+        </span>
+      )}
+    </h3>
+  </div>
+);
+
+const AdminInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label?: string }> = ({
+  label, className, ...props
+}) => (
+  <div className="space-y-1.5">
+    {label && <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">{label}</label>}
+    <input
+      {...props}
+      className={`w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 text-[13px] focus:outline-none focus:border-orange-500/60 transition-colors ${className || ''}`}
+    />
+  </div>
+);
+
+const AdminSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label?: string }> = ({
+  label, children, className, ...props
+}) => (
+  <div className="space-y-1.5">
+    {label && <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">{label}</label>}
+    <div className="relative">
+      <select
+        {...props}
+        className={`w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-[13px] focus:outline-none focus:border-orange-500/60 appearance-none transition-colors ${className || ''}`}
+      >
+        {children}
+      </select>
+      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 pointer-events-none" />
+    </div>
+  </div>
+);
+
+const AdminTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string }> = ({
+  label, className, ...props
+}) => (
+  <div className="space-y-1.5">
+    {label && <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">{label}</label>}
+    <textarea
+      {...props}
+      className={`w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 text-[13px] focus:outline-none focus:border-orange-500/60 resize-none transition-colors ${className || ''}`}
+    />
+  </div>
+);
+
+const AdminBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: 'primary' | 'danger' | 'ghost' | 'success';
+  size?: 'sm' | 'md';
+}> = ({ variant = 'primary', size = 'md', className, children, ...props }) => {
+  const variants = {
+    primary: 'bg-gradient-to-r from-orange-500 to-amber-500 text-black hover:from-orange-400 hover:to-amber-400',
+    danger: 'border border-red-500/25 text-red-400 hover:bg-red-500/10',
+    ghost: 'border border-white/10 text-zinc-400 hover:text-white hover:border-white/20',
+    success: 'bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/25',
+  };
+  const sizes = {
+    sm: 'px-3 py-1.5 text-[11px]',
+    md: 'px-4 py-2.5 text-[13px]',
+  };
+  return (
+    <motion.button
+      whileHover={{ scale: props.disabled ? 1 : 1.02 }}
+      whileTap={{ scale: props.disabled ? 1 : 0.98 }}
+      className={`rounded-xl font-bold transition-all flex items-center gap-1.5 ${variants[variant]} ${sizes[size]} disabled:opacity-50 disabled:cursor-not-allowed ${className || ''}`}
+      {...(props as any)}
+    >
+      {children}
+    </motion.button>
+  );
+};
+
+// ─── Tab Definitions ───────────────────────────────────────────────────────────
+const TABS = [
+  { id: 'episodes',   label: 'Episodes',    icon: <Video    className="w-3.5 h-3.5" /> },
+  { id: 'codes',      label: 'XP Codes',    icon: <Key      className="w-3.5 h-3.5" /> },
+  { id: 'users',      label: 'Users',       icon: <Users    className="w-3.5 h-3.5" /> },
+  { id: 'suggestions',label: 'Suggestions', icon: <Lightbulb className="w-3.5 h-3.5" /> },
+  { id: 'frames',     label: 'Frames',      icon: <Frame    className="w-3.5 h-3.5" /> },
+  { id: 'xp_settings',label: 'XP Settings', icon: <Settings className="w-3.5 h-3.5" /> },
+];
+
+// ─── Main Admin Component ──────────────────────────────────────────────────────
 export const Admin: React.FC<AdminProps> = ({
   adminSection,
   setAdminSection,
@@ -60,18 +199,28 @@ export const Admin: React.FC<AdminProps> = ({
   fetchXpSettings,
   episodes = [],
   fetchEpisodes,
-  showConfirm
+  showConfirm,
 }) => {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailUploading, setThumbnailUploading] = useState(false);
   const [editingEpisodeId, setEditingEpisodeId] = useState<number | null>(null);
   const [editingLoading, setEditingLoading] = useState(false);
 
+  const token = localStorage.getItem('token');
+
+  const EMPTY_EPISODE = {
+    title_ar: '', title_en: '', description: '', thumbnail_url: '',
+    youtube_url: '', quiz_question: '', quiz_options: ['', '', '', ''],
+    quiz_correct: 0, code: '', code_max_uses: 200, code_expiry: ''
+  };
+
+  // ── Episode Submit ──────────────────────────────────────────────────────────
   const handleEpisodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAdminSubmitting(true);
     setAdminMessage('');
     let thumbnailUrl = adminEpisodeForm.thumbnail_url;
+
     if (thumbnailFile) {
       setThumbnailUploading(true);
       try {
@@ -79,8 +228,8 @@ export const Admin: React.FC<AdminProps> = ({
         formData.append('image', thumbnailFile);
         const uploadRes = await fetch(`${API_BASE}/api/upload/image`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` },
-          body: formData
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
         });
         const uploadData = await uploadRes.json();
         if (uploadRes.ok) {
@@ -99,38 +248,43 @@ export const Admin: React.FC<AdminProps> = ({
       }
       setThumbnailUploading(false);
     }
-    // Build body with updated thumbnail
+
     const body: any = {
       title_ar: adminEpisodeForm.title_ar,
       title_en: adminEpisodeForm.title_en,
       description: adminEpisodeForm.description,
       thumbnail_url: thumbnailUrl,
-      youtube_url: adminEpisodeForm.youtube_url
+      youtube_url: adminEpisodeForm.youtube_url,
     };
     if (adminEpisodeForm.quiz_question) {
       body.quiz = {
         question: adminEpisodeForm.quiz_question,
         options: adminEpisodeForm.quiz_options.filter((o: string) => o.trim()),
-        correct_option_index: adminEpisodeForm.quiz_correct
+        correct_option_index: adminEpisodeForm.quiz_correct,
       };
     }
     if (adminEpisodeForm.code) {
-      body.xp_code = { code: adminEpisodeForm.code, max_uses: adminEpisodeForm.code_max_uses, expiry_date: adminEpisodeForm.code_expiry || null };
+      body.xp_code = {
+        code: adminEpisodeForm.code,
+        max_uses: adminEpisodeForm.code_max_uses,
+        expiry_date: adminEpisodeForm.code_expiry || null,
+      };
     }
+
     try {
-      const url = editingEpisodeId 
-        ? `${API_BASE}/api/admin/episodes/${editingEpisodeId}` 
+      const url = editingEpisodeId
+        ? `${API_BASE}/api/admin/episodes/${editingEpisodeId}`
         : `${API_BASE}/api/admin/episode`;
       const method = editingEpisodeId ? 'PUT' : 'POST';
       const res = await fetch(url, {
-        method: method,
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(body)
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       setAdminMessage(data.message || data.error);
       if (res.ok) {
-        setAdminEpisodeForm({ title_ar: '', title_en: '', description: '', thumbnail_url: '', youtube_url: '', quiz_question: '', quiz_options: ['', '', '', ''], quiz_correct: 0, code: '', code_max_uses: 200, code_expiry: '' });
+        setAdminEpisodeForm(EMPTY_EPISODE);
         setThumbnailFile(null);
         setEditingEpisodeId(null);
         if (fetchEpisodes) fetchEpisodes();
@@ -146,7 +300,7 @@ export const Admin: React.FC<AdminProps> = ({
     setAdminMessage('');
     try {
       const res = await fetch(`${API_BASE}/api/admin/episodes/${episodeId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (res.ok) {
@@ -162,7 +316,7 @@ export const Admin: React.FC<AdminProps> = ({
           quiz_correct: data.quiz ? data.quiz.correct_option_index : 0,
           code: data.xp_code ? data.xp_code.code : '',
           code_max_uses: data.xp_code ? data.xp_code.max_uses : 200,
-          code_expiry: data.xp_code && data.xp_code.expiry_date ? data.xp_code.expiry_date.split('T')[0] : ''
+          code_expiry: data.xp_code?.expiry_date ? data.xp_code.expiry_date.split('T')[0] : '',
         });
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
@@ -170,31 +324,28 @@ export const Admin: React.FC<AdminProps> = ({
       }
     } catch {
       setAdminMessage('Failed to connect to server.');
-    } finally {
-      setEditingLoading(false);
     }
+    setEditingLoading(false);
   };
 
   const handleCancelEditEpisode = () => {
     setEditingEpisodeId(null);
-    setAdminEpisodeForm({ title_ar: '', title_en: '', description: '', thumbnail_url: '', youtube_url: '', quiz_question: '', quiz_options: ['', '', '', ''], quiz_correct: 0, code: '', code_max_uses: 200, code_expiry: '' });
+    setAdminEpisodeForm(EMPTY_EPISODE);
     setThumbnailFile(null);
     setAdminMessage('');
   };
 
-  const handleDeleteEpisode = async (episodeId: number, title: string) => {
+  const handleDeleteEpisode = (episodeId: number, title: string) => {
     const proceed = async () => {
       setAdminMessage('');
       try {
         const res = await fetch(`${API_BASE}/api/admin/episodes/${episodeId}`, {
           method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
         setAdminMessage(data.message || data.error);
-        if (res.ok) {
-          if (fetchEpisodes) fetchEpisodes();
-        }
+        if (res.ok && fetchEpisodes) fetchEpisodes();
       } catch {
         setAdminMessage('Failed to delete episode.');
       }
@@ -203,29 +354,25 @@ export const Admin: React.FC<AdminProps> = ({
     if (showConfirm) {
       showConfirm(
         'Delete Episode',
-        `Are you sure you want to delete "${title}"? This will permanently delete the episode, quiz, and any associated XP codes/submissions.`,
+        `Are you sure you want to delete "${title}"? This will permanently delete the episode and all associated data.`,
         proceed,
         undefined,
         'Delete permanently',
         'Cancel',
         'danger'
       );
-    } else {
-      if (confirm(`Are you sure you want to delete "${title}"?`)) {
-        proceed();
-      }
+    } else if (confirm(`Delete "${title}"?`)) {
+      proceed();
     }
   };
 
-  // Frames management state
+  // ── Frames Management ───────────────────────────────────────────────────────
   const [adminFrames, setAdminFrames] = useState<any[]>([]);
   const [frameName, setFrameName] = useState('');
   const [framePrice, setFramePrice] = useState(0);
   const [frameFile, setFrameFile] = useState<File | null>(null);
   const [frameUploading, setFrameUploading] = useState(false);
   const [frameError, setFrameError] = useState('');
-
-  const token = localStorage.getItem('token');
 
   const fetchAdminFrames = async () => {
     try {
@@ -235,15 +382,11 @@ export const Admin: React.FC<AdminProps> = ({
         setAdminFrames(data);
         setFramesCache(data);
       }
-    } catch (e) {
-      console.error(e);
-    }
+    } catch { /* silent */ }
   };
 
   useEffect(() => {
-    if (adminSection === 'frames') {
-      fetchAdminFrames();
-    }
+    if (adminSection === 'frames') fetchAdminFrames();
   }, [adminSection]);
 
   const handleFrameUpload = async () => {
@@ -254,13 +397,12 @@ export const Admin: React.FC<AdminProps> = ({
     setFrameUploading(true);
     setFrameError('');
     try {
-      // Upload image first
       const formData = new FormData();
       formData.append('image', frameFile);
       const uploadRes = await fetch(`${API_BASE}/api/upload/image`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
       const uploadData = await uploadRes.json();
       if (!uploadRes.ok) {
@@ -268,11 +410,10 @@ export const Admin: React.FC<AdminProps> = ({
         setFrameUploading(false);
         return;
       }
-      // Create frame with returned image_url
       const createRes = await fetch(`${API_BASE}/api/admin/frames`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ name: frameName.trim(), image_url: uploadData.url, price: framePrice })
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: frameName.trim(), image_url: uploadData.url, price: framePrice }),
       });
       const createData = await createRes.json();
       if (!createRes.ok) {
@@ -289,721 +430,629 @@ export const Admin: React.FC<AdminProps> = ({
     setFrameUploading(false);
   };
 
-  const handleDeleteFrame = async (frameId: string) => {
+  const handleDeleteFrame = (frameId: string) => {
     const proceed = async () => {
       try {
         const res = await fetch(`${API_BASE}/api/admin/frames/${frameId}`, {
           method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
-        if (res.ok) {
-          fetchAdminFrames();
-        }
-      } catch (e) {
-        console.error(e);
-      }
+        if (res.ok) fetchAdminFrames();
+      } catch { /* silent */ }
     };
-
     if (showConfirm) {
       showConfirm(
-        'Delete Cosmetic Frame',
-        'Are you sure you want to delete this avatar frame? This action cannot be undone.',
+        'Delete Frame',
+        'Are you sure you want to delete this avatar frame? This cannot be undone.',
         proceed,
         undefined,
         'Delete Frame',
         'Cancel',
         'danger'
       );
-    } else {
-      if (confirm('Delete this frame?')) {
-        proceed();
-      }
+    } else if (confirm('Delete this frame?')) {
+      proceed();
     }
   };
+
+  // ─── FILE UPLOAD UI helper ─────────────────────────────────────────────────
+  const FileUploadBox: React.FC<{
+    file: File | null;
+    onChange: (file: File | null) => void;
+    accept?: string;
+    aspectRatio?: '16/9' | '1/1';
+    existingUrl?: string;
+    label?: string;
+  }> = ({ file, onChange, accept = 'image/*', aspectRatio = '16/9', existingUrl, label }) => (
+    <div className="space-y-1.5">
+      {label && <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">{label}</p>}
+      <label className="block cursor-pointer">
+        <input
+          type="file"
+          accept={accept}
+          className="hidden"
+          onChange={(e) => onChange(e.target.files?.[0] || null)}
+        />
+        <div className={`rounded-xl border-2 border-dashed border-white/15 bg-white/2 hover:border-orange-500/40 hover:bg-orange-500/3 transition-all text-center p-5 flex flex-col items-center gap-2 ${aspectRatio === '16/9' ? '' : ''}`}>
+          {file ? (
+            <>
+              <div className={`${aspectRatio === '16/9' ? 'aspect-video' : 'aspect-square'} w-full max-w-[200px] overflow-hidden rounded-lg`}>
+                <img src={URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-cover" />
+              </div>
+              <p className="text-[12px] font-bold text-white">{file.name}</p>
+              <p className="text-[10px] text-zinc-500">Click to change</p>
+            </>
+          ) : existingUrl ? (
+            <>
+              <div className={`${aspectRatio === '16/9' ? 'aspect-video' : 'aspect-square'} w-full max-w-[200px] overflow-hidden rounded-lg`}>
+                <img src={existingUrl} alt="Current" className="w-full h-full object-cover" />
+              </div>
+              <p className="text-[10px] text-zinc-500">Current image — click to replace</p>
+            </>
+          ) : (
+            <>
+              <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+                <ImagePlus className="w-6 h-6 text-orange-400" />
+              </div>
+              <p className="text-[13px] font-bold text-white">Upload Image</p>
+              <p className="text-[11px] text-zinc-500">Click or drag &amp; drop</p>
+            </>
+          )}
+        </div>
+      </label>
+    </div>
+  );
+
   return (
-    <div className="admin-panel animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '3rem' }}>
-      <h2 className="pl-section-h2" style={{ marginBottom: '1.5rem' }}>
-        <span><i className="ti ti-shield-lock"></i> Admin Dashboard</span>
-      </h2>
-      
-      {/* Tab Navigation */}
-      <div className="games-filter-tabs admin-tabs-mobile" style={{ marginBottom: '1.5rem' }}>
-        <button 
-          className={`games-filter-btn ${adminSection === 'episodes' ? 'active' : ''}`} 
-          onClick={() => setAdminSection('episodes')}
-          style={{ whiteSpace: 'nowrap' }}
-        >
-          📹 New Episode
-        </button>
-        <button 
-          className={`games-filter-btn ${adminSection === 'codes' ? 'active' : ''}`} 
-          onClick={() => setAdminSection('codes')}
-          style={{ whiteSpace: 'nowrap' }}
-        >
-          🔑 XP Codes
-        </button>
-        <button 
-          className={`games-filter-btn ${adminSection === 'users' ? 'active' : ''}`} 
-          onClick={() => setAdminSection('users')}
-          style={{ whiteSpace: 'nowrap' }}
-        >
-          👥 Users Management
-        </button>
-        <button 
-          className={`games-filter-btn ${adminSection === 'suggestions' ? 'active' : ''}`} 
-          onClick={() => setAdminSection('suggestions')}
-          style={{ whiteSpace: 'nowrap' }}
-        >
-          💡 Suggestions
-        </button>
-        <button 
-          className={`games-filter-btn ${adminSection === 'frames' ? 'active' : ''}`} 
-          onClick={() => setAdminSection('frames')}
-          style={{ whiteSpace: 'nowrap' }}
-        >
-          🖼️ Frames
-        </button>
-        <button 
-          className={`games-filter-btn ${adminSection === 'xp_settings' ? 'active' : ''}`} 
-          onClick={() => setAdminSection('xp_settings')}
-          style={{ whiteSpace: 'nowrap' }}
-        >
-          ⚙️ XP Settings
-        </button>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full max-w-3xl mx-auto px-4 py-6 space-y-5 pb-16"
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-500/10 border border-orange-500/25 flex items-center justify-center">
+          <ShieldCheck className="w-5 h-5 text-orange-400" />
+        </div>
+        <div>
+          <h1 className="text-xl font-black text-white leading-tight">Admin Dashboard</h1>
+          <p className="text-[12px] text-zinc-500">
+            {user?.role === 'owner' ? 'Owner' : 'Admin'} Panel
+          </p>
+        </div>
       </div>
 
-      {adminMessage && (
-        <div className="pl-form-success" style={{ marginBottom: '1rem', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--orange)', background: 'rgba(255, 106, 0, 0.15)', color: '#fff', fontSize: '13px' }}>
-          {adminMessage}
-        </div>
-      )}
+      {/* Tabs */}
+      <div className="flex gap-1.5 flex-wrap">
+        {TABS.map((tab) => (
+          <motion.button
+            key={tab.id}
+            onClick={() => setAdminSection(tab.id)}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold transition-all ${
+              adminSection === tab.id
+                ? 'bg-orange-500 text-black shadow-md shadow-orange-500/20'
+                : 'bg-white/5 border border-white/8 text-zinc-400 hover:text-white hover:border-white/15'
+            }`}
+          >
+            {tab.icon}
+            {tab.label}
+          </motion.button>
+        ))}
+      </div>
 
-      {/* 1. EPISODES MANAGEMENT */}
+      {/* Admin Message Banner */}
+      <AnimatePresence>
+        {adminMessage && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex items-start gap-2 px-4 py-3 rounded-xl bg-orange-500/10 border border-orange-500/25 text-[13px] text-white"
+          >
+            <AlertCircle className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
+            {adminMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── 1. EPISODES ─────────────────────────────────────────────────── */}
       {adminSection === 'episodes' && (
-        <form onSubmit={handleEpisodeSubmit} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '2rem' }}>
-          <h3 style={{ fontSize: '15px', fontWeight: 900, borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem', color: 'var(--orange)' }}>
-            {editingEpisodeId ? `✏️ Edit Episode: ${adminEpisodeForm.title_en}` : 'Publish a New Podcast Episode'}
-          </h3>
-          
-          <div className="pl-form-group">
-            <label style={{ fontSize: '12px', fontWeight: 800 }}>Title (Arabic)</label>
-            <input 
-              type="text" 
-              className="pl-input" 
-              value={adminEpisodeForm.title_ar} 
-              onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, title_ar: e.target.value }))} 
-              required 
+        <div className="space-y-5">
+          <SectionCard>
+            <SectionTitle
+              icon={<Video className="w-4 h-4" />}
+              label={editingEpisodeId ? `Edit Episode: ${adminEpisodeForm.title_en}` : 'Publish New Episode'}
             />
-          </div>
-
-          <div className="pl-form-group">
-            <label style={{ fontSize: '12px', fontWeight: 800 }}>Title (English)</label>
-            <input 
-              type="text" 
-              className="pl-input" 
-              value={adminEpisodeForm.title_en} 
-              onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, title_en: e.target.value }))} 
-              required 
-            />
-          </div>
-
-          <div className="pl-form-group">
-            <label style={{ fontSize: '12px', fontWeight: 800 }}>Description</label>
-            <textarea 
-              className="pl-input" 
-              rows={3}
-              value={adminEpisodeForm.description} 
-              onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, description: e.target.value }))}
-            ></textarea>
-          </div>
-
-          <div className="pl-form-group">
-            <label style={{ fontSize: '12px', fontWeight: 800 }}>Thumbnail Image (16:9 recommended)</label>
-            <div className="pl-file-upload-container">
-              <label className="pl-file-upload-label">
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={(e) => setThumbnailFile(e.target.files?.[0] || null)} 
+            <form onSubmit={handleEpisodeSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <AdminInput
+                  label="Title (Arabic)"
+                  placeholder="العنوان بالعربي"
+                  value={adminEpisodeForm.title_ar}
+                  onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, title_ar: e.target.value }))}
+                  required
                 />
-                {thumbnailFile ? (
-                  <>
-                    <div className="pl-file-preview-16-9">
-                      <img 
-                        src={URL.createObjectURL(thumbnailFile)} 
-                        alt="Preview" 
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                      />
-                    </div>
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{thumbnailFile.name}</span>
-                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Click or drag to change image</span>
-                  </>
-                ) : (
-                  <>
-                    <i className="ti ti-photo-plus pl-file-upload-icon"></i>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Upload Episode Thumbnail</span>
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>Drag & drop or browse (16:9 ratio recommended)</span>
-                  </>
-                )}
-              </label>
-            </div>
-            {adminEpisodeForm.thumbnail_url && !thumbnailFile && (
-              <div style={{ marginTop: '0.5rem', fontSize: '11px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <img src={adminEpisodeForm.thumbnail_url} alt="Current" style={{ width: '60px', height: '34px', borderRadius: '4px', objectFit: 'cover' }} />
-                <span>Current thumbnail (or uploaded)</span>
+                <AdminInput
+                  label="Title (English)"
+                  placeholder="Episode title in English"
+                  value={adminEpisodeForm.title_en}
+                  onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, title_en: e.target.value }))}
+                  required
+                />
               </div>
-            )}
-          </div>
 
-          <div className="pl-form-group">
-            <label style={{ fontSize: '12px', fontWeight: 800 }}>YouTube URL</label>
-            <input 
-              type="url" 
-              className="pl-input" 
-              placeholder="https://www.youtube.com/watch?v=..."
-              value={adminEpisodeForm.youtube_url} 
-              onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, youtube_url: e.target.value }))} 
-            />
-          </div>
-
-          {/* QUIZ CONFIGURATION */}
-          <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--card-border)', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
-            <h4 style={{ fontSize: '13px', fontWeight: 900, color: 'var(--orange)' }}>📝 Interactive Episode Quiz (Optional)</h4>
-            
-            <div className="pl-form-group">
-              <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Quiz Question</label>
-              <input 
-                type="text" 
-                className="pl-input" 
-                placeholder="What is the first line of defense for...?"
-                value={adminEpisodeForm.quiz_question || ''} 
-                onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, quiz_question: e.target.value }))} 
+              <AdminTextarea
+                label="Description"
+                placeholder="Brief description of the episode..."
+                rows={3}
+                value={adminEpisodeForm.description}
+                onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, description: e.target.value }))}
               />
-            </div>
 
-            <div className="pl-form-group">
-              <label style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Quiz Options</label>
-              {[0, 1, 2, 3].map((idx) => (
-                <input
-                  key={idx}
-                  type="text"
-                  className="pl-input"
-                  placeholder={`Option ${idx + 1}`}
-                  value={adminEpisodeForm.quiz_options[idx] || ''}
-                  onChange={(e) => {
-                    const nextOpts = [...adminEpisodeForm.quiz_options];
-                    nextOpts[idx] = e.target.value;
-                    setAdminEpisodeForm((p: any) => ({ ...p, quiz_options: nextOpts }));
-                  }}
-                  required={!!adminEpisodeForm.quiz_question}
-                  style={{ marginBottom: '6px' }}
-                />
-              ))}
-            </div>
-
-            <div className="pl-form-group">
-              <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Correct Answer Option</label>
-              <select 
-                className="pl-input"
-                value={adminEpisodeForm.quiz_correct}
-                onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, quiz_correct: Number(e.target.value) }))}
-              >
-                <option value={0}>Option 1</option>
-                <option value={1}>Option 2</option>
-                <option value={2}>Option 3</option>
-                <option value={3}>Option 4</option>
-              </select>
-            </div>
-          </div>
-
-          {/* EPISODE SECRET CODE */}
-          <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--card-border)', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <h4 style={{ fontSize: '13px', fontWeight: 900, color: 'var(--orange)' }}>🔑 Episode Secret Code (Optional)</h4>
-            
-            <div className="pl-form-group">
-              <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Secret Code Name</label>
-              <input 
-                type="text" 
-                className="pl-input" 
-                placeholder="EPXX_SECRET"
-                value={adminEpisodeForm.code || ''} 
-                onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code: e.target.value }))} 
+              <FileUploadBox
+                label="Thumbnail (16:9 recommended)"
+                file={thumbnailFile}
+                onChange={setThumbnailFile}
+                aspectRatio="16/9"
+                existingUrl={adminEpisodeForm.thumbnail_url}
               />
-            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <div className="pl-form-group">
-                <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Max Uses</label>
-                <input 
-                  type="number" 
-                  className="pl-input" 
-                  value={adminEpisodeForm.code_max_uses || 200} 
-                  onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code_max_uses: Number(e.target.value) }))} 
+              <AdminInput
+                label="YouTube URL"
+                type="url"
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={adminEpisodeForm.youtube_url}
+                onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, youtube_url: e.target.value }))}
+              />
+
+              {/* Quiz Section */}
+              <div className="rounded-xl border border-dashed border-white/15 bg-white/2 p-4 space-y-3">
+                <p className="text-[12px] font-black text-orange-400 flex items-center gap-1.5">
+                  <CheckCircle className="w-4 h-4" /> Interactive Quiz (Optional)
+                </p>
+                <AdminInput
+                  label="Quiz Question"
+                  placeholder="What is the first line of defense for...?"
+                  value={adminEpisodeForm.quiz_question || ''}
+                  onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, quiz_question: e.target.value }))}
                 />
-              </div>
-
-              <div className="pl-form-group">
-                <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Expiry Date</label>
-                <input 
-                  type="date" 
-                  className="pl-input" 
-                  value={adminEpisodeForm.code_expiry || ''} 
-                  onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code_expiry: e.target.value }))} 
-                />
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-            <button type="submit" className="btn-primary" disabled={adminSubmitting} style={{ flex: 1 }}>
-              {adminSubmitting 
-                ? (editingEpisodeId ? 'Saving Changes...' : 'Uploading Episode...') 
-                : (editingEpisodeId ? 'Save Episode Changes' : 'Publish Episode & Enable Quiz')}
-            </button>
-            {editingEpisodeId && (
-              <button type="button" className="btn-outline" onClick={handleCancelEditEpisode} style={{ flex: 1 }}>
-                Cancel Edit
-              </button>
-            )}
-          </div>
-        </form>
-      )}
-
-      {/* List of existing episodes for editing/deleting */}
-      {adminSection === 'episodes' && (
-        <div className="glass-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 900, color: 'var(--orange)', marginBottom: '1rem' }}>
-            Manage Existing Episodes ({episodes.length})
-          </h3>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {episodes.length === 0 ? (
-              <div style={{ color: 'var(--text-secondary)', fontSize: '12px', textAlign: 'center', padding: '1rem 0' }}>
-                No episodes published yet.
-              </div>
-            ) : (
-              episodes.map((ep: any) => (
-                <div key={ep.id} className="admin-episode-row">
-                  <div className="admin-episode-info">
-                    {ep.thumbnail_url && (
-                      <img 
-                        src={ep.thumbnail_url} 
-                        alt={ep.title_en} 
-                        className="admin-episode-thumbnail"
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Options</p>
+                  {[0, 1, 2, 3].map((idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0 ${
+                        adminEpisodeForm.quiz_correct === idx ? 'bg-emerald-500 text-black' : 'bg-white/8 text-zinc-500'
+                      }`}>
+                        {idx + 1}
+                      </span>
+                      <input
+                        type="text"
+                        className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 text-[13px] focus:outline-none focus:border-orange-500/60 transition-colors"
+                        placeholder={`Option ${idx + 1}`}
+                        value={adminEpisodeForm.quiz_options[idx] || ''}
+                        onChange={(e) => {
+                          const nextOpts = [...adminEpisodeForm.quiz_options];
+                          nextOpts[idx] = e.target.value;
+                          setAdminEpisodeForm((p: any) => ({ ...p, quiz_options: nextOpts }));
+                        }}
                       />
-                    )}
-                    <div className="admin-episode-details">
-                      <h4 style={{ fontSize: '13px', fontWeight: 800, margin: 0, color: '#fff' }}>{ep.title_en}</h4>
-                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>{ep.description ? ep.description.substring(0, 80) + '...' : 'No description'}</p>
+                      <button
+                        type="button"
+                        onClick={() => setAdminEpisodeForm((p: any) => ({ ...p, quiz_correct: idx }))}
+                        className={`w-7 h-7 rounded-lg border text-[10px] font-black flex-shrink-0 transition-colors ${
+                          adminEpisodeForm.quiz_correct === idx
+                            ? 'bg-emerald-500 border-emerald-500 text-black'
+                            : 'border-white/15 text-zinc-600 hover:border-emerald-500/50'
+                        }`}
+                        title="Mark as correct"
+                      >
+                        {adminEpisodeForm.quiz_correct === idx ? <CheckCircle className="w-3 h-3 mx-auto" /> : <span>?</span>}
+                      </button>
                     </div>
-                  </div>
-                  <div className="admin-episode-actions">
-                    <button 
-                      type="button"
-                      onClick={() => handleStartEditEpisode(ep.id)}
-                      className="btn-outline mini"
-                      disabled={editingLoading}
-                      style={{ fontSize: '11px', padding: '6px 12px' }}
-                    >
-                      {editingEpisodeId === ep.id ? 'Editing...' : '✏️ Edit'}
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => handleDeleteEpisode(ep.id, ep.title_en)}
-                      className="btn-outline mini"
-                      style={{ fontSize: '11px', padding: '6px 12px', color: '#ff4d4d', borderColor: 'rgba(255,77,77,0.2)' }}
-                    >
-                      🗑️ Delete
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              ))
+              </div>
+
+              {/* Secret Code Section */}
+              <div className="rounded-xl border border-dashed border-white/15 bg-white/2 p-4 space-y-3">
+                <p className="text-[12px] font-black text-orange-400 flex items-center gap-1.5">
+                  <Key className="w-4 h-4" /> Episode Secret Code (Optional)
+                </p>
+                <AdminInput
+                  label="Code Name"
+                  placeholder="EPXX_SECRET"
+                  value={adminEpisodeForm.code || ''}
+                  onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code: e.target.value }))}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <AdminInput
+                    label="Max Uses"
+                    type="number"
+                    value={adminEpisodeForm.code_max_uses || 200}
+                    onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code_max_uses: Number(e.target.value) }))}
+                  />
+                  <AdminInput
+                    label="Expiry Date"
+                    type="date"
+                    value={adminEpisodeForm.code_expiry || ''}
+                    onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code_expiry: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <AdminBtn type="submit" disabled={adminSubmitting} className="flex-1 justify-center">
+                  {adminSubmitting ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> {editingEpisodeId ? 'Saving...' : 'Publishing...'}</>
+                  ) : (
+                    <><Upload className="w-4 h-4" /> {editingEpisodeId ? 'Save Changes' : 'Publish Episode'}</>
+                  )}
+                </AdminBtn>
+                {editingEpisodeId && (
+                  <AdminBtn type="button" variant="ghost" onClick={handleCancelEditEpisode}>
+                    Cancel
+                  </AdminBtn>
+                )}
+              </div>
+            </form>
+          </SectionCard>
+
+          {/* Existing Episodes List */}
+          <SectionCard>
+            <SectionTitle icon={<Video className="w-4 h-4" />} label="Manage Episodes" count={episodes.length} />
+            {episodes.length === 0 ? (
+              <p className="text-center text-zinc-600 text-[13px] py-6">No episodes published yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {episodes.map((ep: any) => (
+                  <div key={ep.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/3 border border-white/8 hover:border-white/12 transition-colors">
+                    {ep.thumbnail_url && (
+                      <img src={ep.thumbnail_url} alt={ep.title_en} className="w-14 h-8 rounded-lg object-cover flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-bold text-white truncate">{ep.title_en}</p>
+                      <p className="text-[11px] text-zinc-500 truncate">
+                        {ep.description ? ep.description.substring(0, 70) + '...' : 'No description'}
+                      </p>
+                    </div>
+                    <div className="flex gap-1.5 flex-shrink-0">
+                      <AdminBtn
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleStartEditEpisode(ep.id)}
+                        disabled={editingLoading}
+                      >
+                        <Pencil className="w-3 h-3" />
+                        {editingEpisodeId === ep.id ? 'Editing...' : 'Edit'}
+                      </AdminBtn>
+                      <AdminBtn
+                        size="sm"
+                        variant="danger"
+                        onClick={() => handleDeleteEpisode(ep.id, ep.title_en)}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Del
+                      </AdminBtn>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
-          </div>
+          </SectionCard>
         </div>
       )}
 
-      {/* 2. STANDALONE XP CODES */}
+      {/* ── 2. XP CODES ───────────────────────────────────────────────────── */}
       {adminSection === 'codes' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          {/* Create Code Form */}
-          <form onSubmit={handleAdminCreateCode} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 900, color: 'var(--orange)', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem' }}>
-              Create Standalone XP / Promo Code
-            </h3>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="pl-form-group">
-                <label style={{ fontSize: '11px', fontWeight: 800 }}>Code Name (Uppercase)</label>
-                <input 
-                  type="text" 
-                  className="pl-input" 
-                  placeholder="e.g. FACEBOOK50"
-                  value={adminCodeForm.code} 
-                  onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, code: e.target.value }))} 
-                  required 
+        <div className="space-y-5">
+          <SectionCard>
+            <SectionTitle icon={<Key className="w-4 h-4" />} label="Create XP Code" />
+            <form onSubmit={handleAdminCreateCode} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <AdminInput
+                  label="Code Name"
+                  placeholder="FACEBOOK50"
+                  value={adminCodeForm.code}
+                  onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, code: e.target.value }))}
+                  required
+                />
+                <AdminInput
+                  label="XP Amount"
+                  type="number"
+                  value={adminCodeForm.xp_reward}
+                  onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, xp_reward: Number(e.target.value) }))}
+                  required
                 />
               </div>
-
-              <div className="pl-form-group">
-                <label style={{ fontSize: '11px', fontWeight: 800 }}>XP Reward Amount</label>
-                <input 
-                  type="number" 
-                  className="pl-input" 
-                  value={adminCodeForm.xp_reward} 
-                  onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, xp_reward: Number(e.target.value) }))} 
-                  required 
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-              <div className="pl-form-group">
-                <label style={{ fontSize: '11px', fontWeight: 800 }}>Type</label>
-                <select 
-                  className="pl-input"
+              <div className="grid grid-cols-3 gap-3">
+                <AdminSelect
+                  label="Type"
                   value={adminCodeForm.type}
                   onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, type: e.target.value }))}
                 >
-                  <option value="social">Social Media Code</option>
-                  <option value="episode">Episode Code</option>
-                </select>
-              </div>
-
-              <div className="pl-form-group">
-                <label style={{ fontSize: '11px', fontWeight: 800 }}>Max Uses</label>
-                <input 
-                  type="number" 
-                  className="pl-input" 
-                  value={adminCodeForm.max_uses} 
-                  onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, max_uses: Number(e.target.value) }))} 
-                  required 
+                  <option value="social" className="bg-zinc-900">Social Media</option>
+                  <option value="episode" className="bg-zinc-900">Episode</option>
+                </AdminSelect>
+                <AdminInput
+                  label="Max Uses"
+                  type="number"
+                  value={adminCodeForm.max_uses}
+                  onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, max_uses: Number(e.target.value) }))}
+                  required
+                />
+                <AdminInput
+                  label="Expiry Date"
+                  type="date"
+                  value={adminCodeForm.expiry_date}
+                  onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, expiry_date: e.target.value }))}
                 />
               </div>
+              <AdminBtn type="submit" disabled={adminSubmitting} className="w-full justify-center">
+                <Plus className="w-4 h-4" /> Create Code
+              </AdminBtn>
+            </form>
+          </SectionCard>
 
-              <div className="pl-form-group">
-                <label style={{ fontSize: '11px', fontWeight: 800 }}>Expiry Date</label>
-                <input 
-                  type="date" 
-                  className="pl-input" 
-                  value={adminCodeForm.expiry_date} 
-                  onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, expiry_date: e.target.value }))} 
-                />
-              </div>
-            </div>
-
-            <button type="submit" className="btn-primary" disabled={adminSubmitting} style={{ marginTop: '0.5rem' }}>
-              Create Standalone Code
-            </button>
-          </form>
-
-          {/* XP Codes Table */}
-          <div className="glass-card" style={{ padding: '1.5rem', overflowX: 'auto' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 900, color: 'var(--orange)', marginBottom: '1rem' }}>
-              Existing XP Codes ({adminCodes.length})
-            </h3>
-            
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '500px' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--card-border)', textAlign: 'left', opacity: 0.7 }}>
-                  <th style={{ padding: '8px 12px' }}>Code</th>
-                  <th style={{ padding: '8px 12px' }}>XP</th>
-                  <th style={{ padding: '8px 12px' }}>Type</th>
-                  <th style={{ padding: '8px 12px' }}>Uses</th>
-                  <th style={{ padding: '8px 12px' }}>Expiry</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {adminCodes.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                      No XP codes registered.
-                    </td>
+          <SectionCard>
+            <SectionTitle icon={<Key className="w-4 h-4" />} label="All XP Codes" count={adminCodes.length} />
+            <div className="overflow-x-auto">
+              <table className="w-full text-[12px] min-w-[520px]">
+                <thead>
+                  <tr className="border-b border-white/8 text-left text-zinc-500">
+                    <th className="pb-2 pr-3 font-bold">Code</th>
+                    <th className="pb-2 pr-3 font-bold">XP</th>
+                    <th className="pb-2 pr-3 font-bold">Type</th>
+                    <th className="pb-2 pr-3 font-bold">Uses</th>
+                    <th className="pb-2 pr-3 font-bold">Expires</th>
+                    <th className="pb-2 font-bold text-center">Action</th>
                   </tr>
-                ) : (
-                  adminCodes.map((c: any) => {
+                </thead>
+                <tbody>
+                  {adminCodes.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-6 text-zinc-600">No XP codes yet.</td>
+                    </tr>
+                  ) : adminCodes.map((c: any) => {
                     const isExpired = c.expiry_date && new Date(c.expiry_date) < new Date();
                     return (
-                      <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                        <td style={{ padding: '8px 12px', fontWeight: 800, color: '#fff' }}>{c.code}</td>
-                        <td style={{ padding: '8px 12px', color: 'var(--orange)' }}>+{c.xp_reward} XP</td>
-                        <td style={{ padding: '8px 12px', textTransform: 'capitalize' }}>{c.type}</td>
-                        <td style={{ padding: '8px 12px' }}>{c.current_uses} / {c.max_uses}</td>
-                        <td style={{ padding: '8px 12px', color: isExpired ? '#e74c3c' : 'inherit' }}>
-                          {c.expiry_date ? new Date(c.expiry_date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Never'}
+                      <tr key={c.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
+                        <td className="py-2.5 pr-3 font-bold text-white">{c.code}</td>
+                        <td className="py-2.5 pr-3 text-orange-400 font-bold">+{c.xp_reward}</td>
+                        <td className="py-2.5 pr-3 capitalize text-zinc-400">{c.type}</td>
+                        <td className="py-2.5 pr-3 text-zinc-400">{c.current_uses}/{c.max_uses}</td>
+                        <td className={`py-2.5 pr-3 ${isExpired ? 'text-red-400' : 'text-zinc-400'}`}>
+                          {c.expiry_date ? new Date(c.expiry_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Never'}
                           {isExpired && ' (Expired)'}
                         </td>
-                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                          <button
-                            onClick={() => handleAdminDeleteCode(c.id, c.code)}
-                            className="btn-outline mini"
-                            style={{ fontSize: '10px', padding: '4px 8px', color: '#ff4d4d', borderColor: 'rgba(255,77,77,0.2)' }}
-                          >
-                            Delete
-                          </button>
+                        <td className="py-2.5 text-center">
+                          <AdminBtn size="sm" variant="danger" onClick={() => handleAdminDeleteCode(c.id, c.code)}>
+                            <Trash2 className="w-3 h-3" />
+                          </AdminBtn>
                         </td>
                       </tr>
                     );
-                  })
-                )}
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </SectionCard>
+        </div>
+      )}
+
+      {/* ── 3. USERS ───────────────────────────────────────────────────────── */}
+      {adminSection === 'users' && (
+        <SectionCard>
+          <SectionTitle icon={<Users className="w-4 h-4" />} label="Registered Members" count={adminUsers.length} />
+          <div className="overflow-x-auto">
+            <table className="w-full text-[12px] min-w-[600px]">
+              <thead>
+                <tr className="border-b border-white/8 text-left text-zinc-500">
+                  <th className="pb-2 pr-3 font-bold">User</th>
+                  <th className="pb-2 pr-3 font-bold">Email</th>
+                  <th className="pb-2 pr-3 font-bold">Batch</th>
+                  <th className="pb-2 pr-3 font-bold">XP</th>
+                  <th className="pb-2 pr-3 font-bold">Role</th>
+                  <th className="pb-2 font-bold text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {adminUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-6 text-zinc-600">No users in database.</td>
+                  </tr>
+                ) : adminUsers.map((u: any) => (
+                  <tr key={u.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
+                    <td className="py-2.5 pr-3 font-bold text-white">@{u.username}</td>
+                    <td className="py-2.5 pr-3 text-zinc-500">{u.email}</td>
+                    <td className="py-2.5 pr-3 text-zinc-400">{u.batch}</td>
+                    <td className="py-2.5 pr-3 text-orange-400 font-bold">{u.total_xp?.toLocaleString()}</td>
+                    <td className="py-2.5 pr-3">
+                      <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase ${
+                        u.role === 'owner' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/25' :
+                        u.role === 'admin' ? 'bg-orange-500/15 text-orange-400 border border-orange-500/25' :
+                        'bg-white/5 text-zinc-500 border border-white/10'
+                      }`}>
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="py-2.5 text-center">
+                      <div className="flex gap-1 justify-center">
+                        {user?.role === 'owner' && u.role !== 'owner' && (
+                          <AdminBtn size="sm" variant="ghost" onClick={() => handleAdminToggleUserRole(u.id, u.role)}>
+                            <RefreshCw className="w-3 h-3" /> Role
+                          </AdminBtn>
+                        )}
+                        <AdminBtn size="sm" onClick={() => handleOpenModerationModal(u.username, u.id)}
+                          className="bg-amber-500/10 border border-amber-500/25 text-amber-400 hover:bg-amber-500/20"
+                        >
+                          Moderate
+                        </AdminBtn>
+                        {user?.role === 'owner' && u.role !== 'owner' && (
+                          <AdminBtn size="sm" variant="danger" onClick={() => handleAdminDeleteUser(u.id, u.username)}>
+                            <Trash2 className="w-3 h-3" />
+                          </AdminBtn>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
-        </div>
+        </SectionCard>
       )}
 
-      {/* 3. USERS MANAGEMENT */}
-      {adminSection === 'users' && (
-        <div className="glass-card" style={{ padding: '1.5rem', overflowX: 'auto' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 900, color: 'var(--orange)', marginBottom: '1rem' }}>
-            Registered Members List ({adminUsers.length})
-          </h3>
-          
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '600px' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--card-border)', textAlign: 'left', opacity: 0.7 }}>
-                <th style={{ padding: '8px 12px' }}>User</th>
-                <th style={{ padding: '8px 12px' }}>Email</th>
-                <th style={{ padding: '8px 12px' }}>Batch</th>
-                <th style={{ padding: '8px 12px' }}>Total XP</th>
-                <th style={{ padding: '8px 12px' }}>Role</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {adminUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                    No users registered in the database.
-                  </td>
-                </tr>
-              ) : (
-                adminUsers.map((u: any) => (
-                  <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                    <td style={{ padding: '8px 12px', fontWeight: 800, color: '#fff' }}>@{u.username}</td>
-                    <td style={{ padding: '8px 12px', color: 'var(--text-secondary)' }}>{u.email}</td>
-                    <td style={{ padding: '8px 12px' }}>{u.batch}</td>
-                    <td style={{ padding: '8px 12px', color: 'var(--orange)', fontWeight: 700 }}>{u.total_xp.toLocaleString()}</td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <span className="badge-tag mini" style={{ 
-                        borderColor: u.role === 'owner' ? '#FFD700' : u.role === 'admin' ? 'var(--orange)' : 'var(--text-secondary)',
-                        color: u.role === 'owner' ? '#FFD700' : u.role === 'admin' ? 'var(--orange)' : 'var(--text-secondary)',
-                        background: u.role === 'owner' ? 'rgba(255, 215, 0, 0.15)' : u.role === 'admin' ? 'rgba(255, 106, 0, 0.15)' : 'transparent',
-                        textTransform: 'uppercase',
-                        fontWeight: u.role === 'owner' ? 900 : 700
-                      }}>
-                        {u.role === 'owner' ? '👑 OWNER' : u.role}
-                      </span>
-                    </td>
-                    <td style={{ padding: '8px 12px', textAlign: 'center', display: 'flex', gap: '0.25rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                      {user?.role === 'owner' && u.role !== 'owner' && (
-                        <button 
-                          onClick={() => handleAdminToggleUserRole(u.id, u.role)}
-                          className="btn-outline mini" 
-                          style={{ fontSize: '10px', padding: '4px 8px' }}
-                        >
-                          Toggle Role
-                        </button>
-                      )}
-                      <button 
-                        onClick={() => handleOpenModerationModal(u.username, u.id)}
-                        className="btn-outline mini" 
-                        style={{ fontSize: '10px', padding: '4px 8px', color: '#e67e22', borderColor: 'rgba(230,126,34,0.3)' }}
-                      >
-                        Moderate
-                      </button>
-                      {user?.role === 'owner' && u.role !== 'owner' && (
-                        <button 
-                          onClick={() => handleAdminDeleteUser(u.id, u.username)}
-                          className="btn-outline mini" 
-                          style={{ fontSize: '10px', padding: '4px 8px', color: '#ff4d4d', borderColor: 'rgba(255,77,77,0.3)' }}
-                        >
-                          🗑️ Delete
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* 5. FRAMES MANAGEMENT */}
-      {adminSection === 'frames' && (
-        <div className="glass-card" style={{ padding: '1.5rem' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 900, color: 'var(--orange)', marginBottom: '1rem' }}>
-            🖼️ Avatar Frames Management
-          </h3>
-
-          {frameError && (
-            <div style={{ color: '#ff4d4d', fontSize: '12px', marginBottom: '1rem', padding: '8px 12px', background: 'rgba(255,77,77,0.1)', borderRadius: '8px' }}>
-              {frameError}
+      {/* ── 4. SUGGESTIONS ─────────────────────────────────────────────────── */}
+      {adminSection === 'suggestions' && (
+        <SectionCard>
+          <SectionTitle icon={<Lightbulb className="w-4 h-4" />} label="Suggestions Feed" count={adminSuggestions.length} />
+          {adminSuggestions.length === 0 ? (
+            <p className="text-center text-zinc-600 text-[13px] py-8">No suggestions submitted yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {adminSuggestions.map((s: any) => (
+                <div key={s.id} className={`rounded-xl border p-4 space-y-2 ${
+                  s.status === 'approved' ? 'border-emerald-500/20 bg-emerald-500/3' :
+                  s.status === 'rejected' ? 'border-red-500/20 bg-red-500/3' :
+                  'border-white/8 bg-white/2'
+                }`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="text-[14px] font-bold text-white">{s.title}</h4>
+                      <p className="text-[11px] text-zinc-500">
+                        @{s.username} · {new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase flex-shrink-0 ${
+                      s.status === 'approved' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25' :
+                      s.status === 'rejected' ? 'bg-red-500/15 text-red-400 border border-red-500/25' :
+                      'bg-white/8 text-zinc-400 border border-white/15'
+                    }`}>
+                      {s.status}
+                    </span>
+                  </div>
+                  <p className="text-[12px] text-zinc-400 leading-relaxed">{s.content}</p>
+                  <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                    <div className="flex items-center gap-1 text-[11px] text-orange-400">
+                      <ThumbsUp className="w-3.5 h-3.5" />
+                      {s.upvotes || 0} upvotes
+                    </div>
+                    {s.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <AdminBtn size="sm" variant="success" onClick={() => handleAdminUpdateSuggestionStatus(s.id, 'approved')}>
+                          <CheckCircle className="w-3 h-3" /> Approve
+                        </AdminBtn>
+                        <AdminBtn size="sm" variant="danger" onClick={() => handleAdminUpdateSuggestionStatus(s.id, 'rejected')}>
+                          <XCircle className="w-3 h-3" /> Reject
+                        </AdminBtn>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
+        </SectionCard>
+      )}
 
-          {/* Upload form */}
-          <div className="admin-frames-upload">
-            <h4 style={{ fontSize: '13px', fontWeight: 800 }}>Upload New Frame</h4>
-            <div className="pl-form-group">
-              <label>Frame Name</label>
-              <input type="text" value={frameName} onChange={e => setFrameName(e.target.value)} placeholder="e.g. Legendary Flame" />
-            </div>
-            <div className="pl-form-group">
-              <label>XP Price</label>
-              <input type="number" value={framePrice} onChange={e => setFramePrice(Math.max(0, Number(e.target.value)))} placeholder="e.g. 500" min={0} />
-            </div>
-            <div className="pl-form-group">
-              <label>Frame Image (PNG with transparent background)</label>
-              <div className="pl-file-upload-container">
-                <label className="pl-file-upload-label">
-                  <input 
-                    type="file" 
-                    accept="image/png,image/webp,image/gif" 
-                    onChange={e => setFrameFile(e.target.files?.[0] || null)} 
-                  />
-                  {frameFile ? (
-                    <>
-                      <div className="pl-file-preview-square">
-                        <img 
-                          src={URL.createObjectURL(frameFile)} 
-                          alt="Preview" 
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                        />
-                      </div>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{frameFile.name}</span>
-                      <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Click or drag to change image</span>
-                    </>
-                  ) : (
-                    <>
-                      <i className="ti ti-photo-plus pl-file-upload-icon"></i>
-                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Upload Frame PNG</span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>Transparent PNG format</span>
-                    </>
-                  )}
-                </label>
+      {/* ── 5. FRAMES ──────────────────────────────────────────────────────── */}
+      {adminSection === 'frames' && (
+        <div className="space-y-5">
+          <SectionCard>
+            <SectionTitle icon={<Frame className="w-4 h-4" />} label="Upload New Frame" />
+            {frameError && (
+              <div className="mb-3 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[12px]">
+                {frameError}
               </div>
+            )}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <AdminInput
+                  label="Frame Name"
+                  placeholder="Legendary Flame"
+                  value={frameName}
+                  onChange={(e) => setFrameName(e.target.value)}
+                />
+                <AdminInput
+                  label="XP Price"
+                  type="number"
+                  placeholder="500"
+                  value={framePrice || ''}
+                  onChange={(e) => setFramePrice(Math.max(0, Number(e.target.value)))}
+                  min={0}
+                />
+              </div>
+              <FileUploadBox
+                label="Frame PNG (transparent background)"
+                file={frameFile}
+                onChange={setFrameFile}
+                accept="image/png,image/webp,image/gif"
+                aspectRatio="1/1"
+              />
+              <AdminBtn
+                onClick={handleFrameUpload}
+                disabled={frameUploading}
+                className="w-full justify-center"
+              >
+                {frameUploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</> : <><Upload className="w-4 h-4" /> Upload Frame</>}
+              </AdminBtn>
             </div>
-            <button onClick={handleFrameUpload} disabled={frameUploading} className="btn-primary" style={{ alignSelf: 'flex-start', fontSize: '12px' }}>
-              {frameUploading ? 'Uploading...' : 'Upload Frame'}
-            </button>
-          </div>
+          </SectionCard>
 
-          {/* Frames grid */}
-          <h4 style={{ fontSize: '13px', fontWeight: 800, marginBottom: '1rem' }}>Existing Frames ({adminFrames.length})</h4>
-          <div className="admin-frames-grid">
+          <SectionCard>
+            <SectionTitle icon={<Frame className="w-4 h-4" />} label="Existing Frames" count={adminFrames.length} />
             {adminFrames.length === 0 ? (
-              <div style={{ color: 'var(--text-secondary)', fontSize: '12px', padding: '2rem 0', width: '100%', textAlign: 'center' }}>
-                No frames uploaded yet.
-              </div>
+              <p className="text-center text-zinc-600 text-[13px] py-8">No frames uploaded yet.</p>
             ) : (
-              adminFrames.map((f: any) => (
-                <div key={f._id} className="admin-frame-card">
-                  <div className="admin-frame-preview">
-                    <img src={f.image_url} alt={f.name} />
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                {adminFrames.map((f: any) => (
+                  <div key={f._id} className="rounded-xl border border-white/8 bg-white/2 p-3 flex flex-col items-center gap-2 text-center">
+                    <div className="w-14 h-14 rounded-xl bg-black/30 overflow-hidden flex items-center justify-center">
+                      <img src={f.image_url} alt={f.name} className="w-full h-full object-contain" />
+                    </div>
+                    <p className="text-[11px] font-bold text-white leading-tight">{f.name}</p>
+                    <p className="text-[10px] text-orange-400 font-bold">{f.price.toLocaleString()} XP</p>
+                    <AdminBtn size="sm" variant="danger" onClick={() => handleDeleteFrame(f._id)} className="w-full justify-center">
+                      <Trash2 className="w-3 h-3" />
+                    </AdminBtn>
                   </div>
-                  <span className="admin-frame-name">{f.name}</span>
-                  <span className="admin-frame-price">{f.price.toLocaleString()} XP</span>
-                  <button onClick={() => handleDeleteFrame(f._id)} className="btn-outline mini" style={{ fontSize: '10px', padding: '3px 8px', color: '#ff4d4d', borderColor: 'rgba(255,77,77,0.2)' }}>
-                    Delete
-                  </button>
-                </div>
-              ))
+                ))}
+              </div>
             )}
-          </div>
+          </SectionCard>
         </div>
       )}
 
-      {/* 4. SUGGESTIONS MODERATION */}
-      {adminSection === 'suggestions' && (
-        <div className="glass-card" style={{ padding: '1.5rem' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 900, color: 'var(--orange)', marginBottom: '1rem' }}>
-            Suggestions Moderation Feed ({adminSuggestions.length})
-          </h3>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {adminSuggestions.length === 0 ? (
-              <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem 0' }}>
-                No suggestions have been submitted yet.
-              </div>
-            ) : (
-              adminSuggestions.map((s: any) => {
-                let statusColor = 'var(--text-secondary)';
-                let statusBg = 'rgba(255,255,255,0.06)';
-                if (s.status === 'approved') {
-                  statusColor = '#2ecc71';
-                  statusBg = 'rgba(46, 204, 113, 0.15)';
-                } else if (s.status === 'rejected') {
-                  statusColor = '#e74c3c';
-                  statusBg = 'rgba(231, 76, 60, 0.15)';
-                }
-
-                return (
-                  <div key={s.id} className="glass-card" style={{ padding: '1.25rem', border: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.01)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <h4 style={{ fontSize: '14.5px', fontWeight: 800, color: '#fff' }}>{s.title}</h4>
-                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                          Submitted by @{s.username} · {new Date(s.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                        </span>
-                      </div>
-                      <span className="badge-tag" style={{ color: statusColor, borderColor: statusColor, background: statusBg, fontSize: '9px', textTransform: 'capitalize' }}>
-                        {s.status}
-                      </span>
-                    </div>
-
-                    <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: '1.5', margin: '0.25rem 0 0.5rem 0' }}>
-                      {s.content}
-                    </p>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
-                      <span style={{ fontSize: '11px', color: 'var(--orange)' }}>
-                        👍 {s.upvotes || 0} Upvotes
-                      </span>
-                      
-                      {s.status === 'pending' && (
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button 
-                            onClick={() => handleAdminUpdateSuggestionStatus(s.id, 'approved')}
-                            className="btn-primary mini" 
-                            style={{ background: '#2ecc71', fontSize: '10px' }}
-                          >
-                            Approve
-                          </button>
-                          <button 
-                            onClick={() => handleAdminUpdateSuggestionStatus(s.id, 'rejected')}
-                            className="btn-outline mini" 
-                            style={{ borderColor: '#e74c3c', color: '#e74c3c', fontSize: '10px' }}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* 6. XP SETTINGS CONFIGURATION */}
+      {/* ── 6. XP SETTINGS ─────────────────────────────────────────────────── */}
       {adminSection === 'xp_settings' && (
-        <XpSettingsManager 
-          token={token} 
-          apiBase={API_BASE} 
-          fetchXpSettings={fetchXpSettings || (() => {})} 
-          setAdminMessage={setAdminMessage} 
+        <XpSettingsManager
+          token={token}
+          apiBase={API_BASE}
+          fetchXpSettings={fetchXpSettings || (() => {})}
+          setAdminMessage={setAdminMessage}
         />
       )}
-    </div>
+    </motion.div>
   );
 };
 
-// Sub-component to manage dynamic XP reward values
+// ─── XP Settings Manager Sub-Component ────────────────────────────────────────
+const XP_SETTING_METADATA: Record<string, { label: string; desc: string; icon: React.ReactNode }> = {
+  like:          { label: 'Episode / Post Like',  desc: 'XP awarded for liking an episode or community post.',           icon: <ThumbsUp  className="w-4 h-4" /> },
+  comment:       { label: 'Comment Made',         desc: 'XP awarded for adding a comment on an episode or post.',        icon: <Settings  className="w-4 h-4" /> },
+  share:         { label: 'Share Link Created',   desc: 'XP awarded to user when they generate a share link.',           icon: <Settings  className="w-4 h-4" /> },
+  comment_like:  { label: 'Comment Liked',        desc: 'XP awarded for liking someone else\'s comment.',               icon: <ThumbsUp  className="w-4 h-4" /> },
+  daily_login:   { label: 'Daily Login Reward',   desc: 'XP awarded for logging in each day.',                          icon: <CheckCircle className="w-4 h-4" /> },
+  streak_bonus:  { label: '7-Day Streak Bonus',   desc: 'Extra XP awarded when user reaches a 7-day login streak.',     icon: <Settings  className="w-4 h-4" /> },
+  game_play:     { label: 'Memory Game Play',     desc: 'XP awarded for completing the single-player match game.',       icon: <Settings  className="w-4 h-4" /> },
+  referral:      { label: 'Shared Link Visit',    desc: 'XP awarded when a visitor visits user\'s shared link.',        icon: <Users     className="w-4 h-4" /> },
+  surprise_box:  { label: 'Surprise Box Claim',   desc: 'XP awarded when opening the daily surprise box.',              icon: <Settings  className="w-4 h-4" /> },
+  poll_vote:     { label: 'Daily Poll Vote',      desc: 'XP awarded for voting in the daily dashboard poll.',            icon: <CheckCircle className="w-4 h-4" /> },
+  quiz_solve:    { label: 'Quiz Solved',          desc: 'Fallback XP for solving an episode quiz.',                     icon: <CheckCircle className="w-4 h-4" /> },
+};
+
 const XpSettingsManager: React.FC<{
   token: string | null;
   apiBase: string;
@@ -1011,17 +1060,9 @@ const XpSettingsManager: React.FC<{
   setAdminMessage: (msg: string) => void;
 }> = ({ token, apiBase, fetchXpSettings, setAdminMessage }) => {
   const [localSettings, setLocalSettings] = useState<any>({
-    like: 5,
-    comment: 15,
-    share: 25,
-    comment_like: 2,
-    daily_login: 10,
-    streak_bonus: 70,
-    game_play: 50,
-    referral: 25,
-    surprise_box: 50,
-    poll_vote: 30,
-    quiz_solve: 150
+    like: 5, comment: 15, share: 25, comment_like: 2, daily_login: 10,
+    streak_bonus: 70, game_play: 50, referral: 25, surprise_box: 50,
+    poll_vote: 30, quiz_solve: 150,
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1032,24 +1073,18 @@ const XpSettingsManager: React.FC<{
     setError('');
     try {
       const res = await fetch(`${apiBase}/api/admin/xp-settings`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (res.ok) {
-        setLocalSettings(data);
-      } else {
-        setError(data.error || 'Failed to fetch XP settings.');
-      }
-    } catch (err) {
+      if (res.ok) setLocalSettings(data);
+      else setError(data.error || 'Failed to fetch XP settings.');
+    } catch {
       setError('Connection to server failed.');
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
+  useEffect(() => { fetchSettings(); }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1059,103 +1094,88 @@ const XpSettingsManager: React.FC<{
     try {
       const res = await fetch(`${apiBase}/api/admin/xp-settings`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(localSettings)
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(localSettings),
       });
       const data = await res.json();
       if (res.ok) {
-        setAdminMessage('XP settings updated successfully! 🎉');
-        fetchXpSettings(); // Update global cache in App.tsx
+        setAdminMessage('XP settings updated successfully!');
+        fetchXpSettings();
       } else {
         setError(data.error || 'Failed to update XP settings.');
       }
-    } catch (err) {
+    } catch {
       setError('Connection to server failed.');
-    } finally {
-      setSaving(false);
     }
-  };
-
-  const handleInputChange = (key: string, value: string) => {
-    const val = parseInt(value, 10) || 0;
-    setLocalSettings((prev: any) => ({
-      ...prev,
-      [key]: val >= 0 ? val : 0
-    }));
+    setSaving(false);
   };
 
   if (loading) {
     return (
-      <div className="glass-card" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-        <p>Loading XP Configuration... ⚙️</p>
+      <div className="rounded-2xl border border-white/8 bg-zinc-900/60 p-8 text-center">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-400 mx-auto mb-2" />
+        <p className="text-zinc-500 text-[13px]">Loading XP Configuration...</p>
       </div>
     );
   }
 
-  // Readable labels and descriptions for keys
-  const settingMetadata: { [key: string]: { label: string; desc: string; icon: string } } = {
-    like: { label: 'Episode/Post Like', desc: 'XP awarded for liking an episode or community post.', icon: 'ti-thumb-up' },
-    comment: { label: 'Comment Made', desc: 'XP awarded for adding a comment on an episode or post.', icon: 'ti-message' },
-    share: { label: 'Share Link Created', desc: 'XP awarded to user when they generate a share link.', icon: 'ti-share' },
-    comment_like: { label: 'Comment Liked', desc: 'XP awarded for liking someone else\'s comment.', icon: 'ti-heart' },
-    daily_login: { label: 'Daily Login Reward', desc: 'XP awarded for logging in each day.', icon: 'ti-gift' },
-    streak_bonus: { label: '7-Day Streak Bonus', desc: 'Extra XP awarded when user reaches a 7-day login streak.', icon: 'ti-flame' },
-    game_play: { label: 'Memory Game Play', desc: 'XP awarded for completing the single-player match game.', icon: 'ti-device-gamepad-2' },
-    referral: { label: 'Shared Link Visit', desc: 'XP awarded when a unique visitor visits user\'s shared link.', icon: 'ti-user-plus' },
-    surprise_box: { label: 'Surprise Box claim', desc: 'XP awarded when opening the daily surprise box.', icon: 'ti-package' },
-    poll_vote: { label: 'Daily Poll Vote', desc: 'XP awarded for voting in the daily dashboard interactive poll.', icon: 'ti-checkbox' },
-    quiz_solve: { label: 'Quiz Solved Fallback', desc: 'Fallback XP for solving an episode quiz if not overridden by the quiz itself.', icon: 'ti-school' }
-  };
-
   return (
-    <form onSubmit={handleSave} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '2rem' }}>
-      <h3 style={{ fontSize: '15px', fontWeight: 900, borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem', color: 'var(--orange)' }}>
-        ⚙️ Manage Global XP Reward Settings
-      </h3>
+    <div className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-5">
+      <div className="flex items-center gap-2 mb-5 pb-3 border-b border-white/8">
+        <div className="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/20 flex items-center justify-center text-orange-400">
+          <Settings className="w-4 h-4" />
+        </div>
+        <h3 className="text-[15px] font-black text-white">Global XP Reward Settings</h3>
+      </div>
 
       {error && (
-        <div style={{ color: '#ff4d4d', fontSize: '12px', padding: '8px 12px', background: 'rgba(255,77,77,0.1)', borderRadius: '8px' }}>
+        <div className="mb-4 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[12px]">
           {error}
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }} className="xp-settings-grid">
+      <form onSubmit={handleSave} className="space-y-2">
         {Object.entries(localSettings).map(([key, val]: [string, any]) => {
-          const meta = settingMetadata[key] || { label: key, desc: 'XP reward for this activity.', icon: 'ti-settings' };
+          const meta = XP_SETTING_METADATA[key] || { label: key, desc: '', icon: <Settings className="w-4 h-4" /> };
           return (
-            <div key={key} className="xp-setting-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--card-border)', borderRadius: '12px', gap: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
-                <div style={{ fontSize: '18px', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(255,106,0,0.1)' }}>
-                  <i className={`ti ${meta.icon}`}></i>
-                </div>
-                <div>
-                  <h4 style={{ fontSize: '13px', fontWeight: 800, margin: 0, color: '#fff' }}>{meta.label}</h4>
-                  <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>{meta.desc}</p>
-                </div>
+            <div key={key} className="flex items-center gap-3 px-3.5 py-3 rounded-xl bg-white/2 border border-white/6 hover:border-white/10 transition-colors">
+              <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/15 flex items-center justify-center text-orange-400 flex-shrink-0">
+                {meta.icon}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-bold text-white">{meta.label}</p>
+                <p className="text-[10px] text-zinc-600 leading-tight">{meta.desc}</p>
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
                 <input
                   type="number"
-                  className="pl-input"
                   value={val}
-                  onChange={(e) => handleInputChange(key, e.target.value)}
-                  style={{ width: '80px', textAlign: 'center', fontWeight: 700 }}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10) || 0;
+                    setLocalSettings((prev: any) => ({ ...prev, [key]: n >= 0 ? n : 0 }));
+                  }}
+                  className="w-16 text-center px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-[13px] font-bold focus:outline-none focus:border-orange-500/60 transition-colors"
                   min={0}
                   required
                 />
-                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 700 }}>XP</span>
+                <span className="text-[10px] text-zinc-600 font-bold">XP</span>
               </div>
             </div>
           );
         })}
-      </div>
 
-      <button type="submit" className="btn-primary" disabled={saving}>
-        {saving ? 'Saving Settings...' : 'Save XP Settings'}
-      </button>
-    </form>
+        <div className="pt-2">
+          <motion.button
+            type="submit"
+            disabled={saving}
+            whileHover={{ scale: saving ? 1 : 1.02 }}
+            whileTap={{ scale: saving ? 1 : 0.98 }}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-black text-[14px] hover:from-orange-400 hover:to-amber-400 transition-colors disabled:opacity-60"
+          >
+            {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : <><Save className="w-4 h-4" /> Save XP Settings</>}
+          </motion.button>
+        </div>
+      </form>
+    </div>
   );
 };

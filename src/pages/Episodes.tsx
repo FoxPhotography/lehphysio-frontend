@@ -1,4 +1,6 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { Tv, Heart, MessageCircle, Share2, Key } from 'lucide-react';
 
 interface EpisodesProps {
   episodes: any[];
@@ -16,65 +18,81 @@ export const Episodes: React.FC<EpisodesProps> = ({
   user
 }) => {
   return (
-    <div className="episodes-panel animate-fade-in">
-      <div className="pl-section-h2">
-        <span className="title-text"><i className="ti ti-video"></i> Podcast Episodes</span>
+    <div className="space-y-6 py-6 max-w-4xl mx-auto px-4 pb-20 text-left">
+      <div className="flex items-center gap-2.5">
+        <Tv className="w-6 h-6 text-brand-orange" />
+        <h2 className="text-xl md:text-2xl font-black text-white">Podcast Episodes</h2>
       </div>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '14px' }}>
+      <p className="text-zinc-400 text-sm font-medium leading-relaxed max-w-2xl">
         Watch the episodes to find the hidden secret code and solve the quiz to get +250 XP total per episode!
       </p>
       
-      <div className="game-card-grid">
+      <motion.div 
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+          }
+        }}
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+      >
         {episodes.map((ep: any) => (
-          <div key={ep.id} className="game-widget-card glass-card" onClick={() => navigateToEpisode(ep.id)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column' }}>
-            <div className="continue-thumb" style={{ backgroundImage: `url(${ep.thumbnail_url || 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop'})`, borderRadius: '12px' }}>
-              <span className="game-tag-badge" style={{ position: 'absolute', top: '10px', right: '10px' }}>Episode {ep.id}</span>
+          <motion.div 
+            key={ep.id}
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              show: { opacity: 1, y: 0 }
+            }}
+            onClick={() => navigateToEpisode(ep.id)} 
+            className="glass-card p-4 hover:border-brand-orange/30 flex flex-col gap-3.5 cursor-pointer group"
+          >
+            <div 
+              className="w-full aspect-[16/9] rounded-xl bg-zinc-900 bg-cover bg-center relative overflow-hidden border border-zinc-800/40" 
+              style={{ backgroundImage: `url(${ep.thumbnail_url || 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop'})` }}
+            >
+              <div className="absolute inset-0 bg-black/20" />
+              <span className="absolute top-3 right-3 text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10">
+                Episode {ep.id}
+              </span>
             </div>
-            <h3 className="game-card-title" style={{ marginTop: '0.5rem', flexGrow: 1 }}>{ep.title_ar}</h3>
-            <p className="game-card-desc">{ep.description}</p>
-            <div className="game-card-footer" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
-              <span className="game-card-reward">🔑 Secret Code + Quiz</span>
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+            
+            <div className="flex-1 space-y-2">
+              <h3 className="text-base font-black text-white leading-snug group-hover:text-brand-orange transition-colors duration-200">
+                {ep.title_ar}
+              </h3>
+              <p className="text-zinc-400 text-xs font-semibold leading-relaxed line-clamp-2">
+                {ep.description}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-zinc-900/60 text-[10px]">
+              <span className="flex items-center gap-1.5 font-extrabold text-brand-amber">
+                <Key className="w-3.5 h-3.5 fill-current" />
+                <span>Secret Code + Quiz</span>
+              </span>
+              <span className="text-zinc-500 font-semibold">
                 {new Date(ep.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
               </span>
             </div>
 
             {/* Social action feedback row */}
-            <div className="episode-card-social-actions" style={{ display: 'flex', gap: '1rem', justifyContent: 'space-around', alignItems: 'center' }}>
+            <div className="flex justify-around items-center pt-3 border-t border-zinc-900/60">
               <button 
-                className={`feed-action-btn ${ep.isLiked ? 'liked' : ''}`}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: ep.isLiked ? 'var(--orange)' : 'var(--text-secondary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  cursor: 'pointer',
-                  fontSize: '12.5px',
-                  fontWeight: 800
-                }}
+                className={`flex items-center gap-1.5 text-xs font-extrabold transition-colors cursor-pointer ${ep.isLiked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleLikeEpisode(ep.id);
                 }}
               >
-                <i className={ep.isLiked ? 'ti ti-heart-filled' : 'ti ti-heart'}></i> {ep.likes_count || 0}
+                <Heart className={`w-4 h-4 ${ep.isLiked ? 'fill-current' : ''}`} /> 
+                <span>{ep.likes_count || 0}</span>
               </button>
 
               <button 
-                className="feed-action-btn"
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  cursor: 'pointer',
-                  fontSize: '12.5px',
-                  fontWeight: 800
-                }}
+                className="flex items-center gap-1.5 text-xs font-extrabold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   navigateToEpisode(ep.id);
@@ -84,33 +102,24 @@ export const Episodes: React.FC<EpisodesProps> = ({
                   }, 150);
                 }}
               >
-                <i className="ti ti-message-circle"></i> {ep.comments_count || 0}
+                <MessageCircle className="w-4 h-4" /> 
+                <span>{ep.comments_count || 0}</span>
               </button>
 
               <button 
-                className="feed-action-btn"
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  cursor: 'pointer',
-                  fontSize: '12.5px',
-                  fontWeight: 800
-                }}
+                className="flex items-center gap-1.5 text-xs font-extrabold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleShareEpisode(ep.id);
                 }}
               >
-                <i className="ti ti-share"></i> {ep.shares_count || 0}
+                <Share2 className="w-4 h-4" /> 
+                <span>{ep.shares_count || 0}</span>
               </button>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 };
