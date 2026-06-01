@@ -39,6 +39,8 @@ const API_BASE = import.meta.env.VITE_API_BASE || (
 
 const socket = io(API_BASE || window.location.origin);
 
+const CLIENT_VERSION = '1.0.0';
+
 function App() {
   // Navigation State
   const [currentPage, _setCurrentPage] = useState('home'); // home, episodes, community, games, leaderboard, profile, rewards, episode-detail, play-game, login, register, confirm, admin
@@ -241,6 +243,19 @@ function App() {
         });
       });
     }
+  }, [token]);
+
+  // Check App Version against Server to trigger PWA updates
+  useEffect(() => {
+    fetch(`${API_BASE}/api/app-version`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.version && data.version !== CLIENT_VERSION) {
+          console.log(`PWA Update detected. Client version: ${CLIENT_VERSION}, Server version: ${data.version}`);
+          setShowUpdateBanner(true);
+        }
+      })
+      .catch(err => console.error('Failed to fetch app version from server:', err));
   }, [token]);
 
   const handleInstallPWA = async () => {
