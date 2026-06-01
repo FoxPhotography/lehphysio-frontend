@@ -2523,6 +2523,7 @@ function App() {
       if (res.ok) {
         showToast(data.message || 'Post updated successfully!');
         fetchCommunityPosts();
+        fetchNewsPosts();
       } else {
         showToast(data.error || 'Failed to update post.');
       }
@@ -2849,6 +2850,7 @@ function App() {
         handleDeletePost={handleDeletePost}
         handleSharePost={handleShareCommunityPost}
         handleUploadImage={handleUploadImage}
+        handleEditPost={handleEditPost}
         setCurrentPage={setCurrentPage}
         showToast={showToast}
         equippedFrame={equippedFrame}

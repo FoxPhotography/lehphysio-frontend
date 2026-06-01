@@ -137,6 +137,51 @@ export const Home: React.FC<HomeProps> = ({
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editCommentText, setEditCommentText] = useState('');
 
+  // Lightbox & image zoom state
+  const [activeLightboxImg, setActiveLightboxImg] = useState<string | null>(null);
+
+  // Click coordinator to avoid conflict between single tap (zoom) and double tap (like)
+  const clickTimeoutRef = useRef<{[key: number]: any}>({});
+  const lastClickTimeRef = useRef<{ [key: number]: number }>({});
+
+  const handleImageClickCoord = (postId: number, imageUrl: string) => {
+    const now = Date.now();
+    const lastClick = lastClickTimeRef.current[postId] || 0;
+    
+    if (now - lastClick < 300) {
+      // Double tap/click detected!
+      lastClickTimeRef.current[postId] = 0; // Reset
+      if (clickTimeoutRef.current[postId]) {
+        clearTimeout(clickTimeoutRef.current[postId]);
+        delete clickTimeoutRef.current[postId];
+      }
+      
+      // Perform Like
+      handleLikePost(postId);
+      
+      // Heart animation
+      const hid = ++heartIdCounter.current;
+      setFloatingHearts(prev => [...prev, { id: hid, postId }]);
+      setTimeout(() => {
+        setFloatingHearts(prev => prev.filter(h => h.id !== hid));
+      }, 800);
+    } else {
+      // First tap/click
+      lastClickTimeRef.current[postId] = now;
+      
+      // Clear any existing timeout for this post
+      if (clickTimeoutRef.current[postId]) {
+        clearTimeout(clickTimeoutRef.current[postId]);
+      }
+      
+      clickTimeoutRef.current[postId] = setTimeout(() => {
+        delete clickTimeoutRef.current[postId];
+        // Perform Single tap action (expand/lightbox)
+        setActiveLightboxImg(imageUrl);
+      }, 250); // 250ms window
+    }
+  };
+
   useEffect(() => {
     if (contextMenu) {
       const close = () => setContextMenu(null);
@@ -1119,8 +1164,19 @@ export const Home: React.FC<HomeProps> = ({
                     </p>
 
                     {post.image_url && (
-                      <div className="mt-4 rounded-xl overflow-hidden border border-zinc-900 bg-zinc-900/40 max-h-[300px]">
-                        <img src={post.image_url} alt="Post content" className="w-full h-full object-contain max-h-[300px]" />
+                      <div 
+                        className="mt-4 rounded-xl overflow-hidden border border-zinc-900 bg-zinc-900/40 max-h-[300px] cursor-pointer relative group"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleImageClickCoord(post.id, post.image_url);
+                        }}
+                      >
+                        <img 
+                          src={post.image_url} 
+                          alt="Post content" 
+                          className="w-full h-full object-contain max-h-[300px] group-hover:scale-[1.01] transition-transform duration-300" 
+                        />
+
                       </div>
                     )}
 
@@ -1487,6 +1543,37 @@ export const Home: React.FC<HomeProps> = ({
             >
               Save
             </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Immersive Lightbox Modal */}
+      <AnimatePresence>
+        {activeLightboxImg && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setActiveLightboxImg(null)}
+            className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[99999] flex items-center justify-center p-4 cursor-zoom-out"
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setActiveLightboxImg(null)}
+              className="absolute top-6 right-6 w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 text-white flex items-center justify-center cursor-pointer transition-all hover:scale-105 hover:bg-zinc-800 active:scale-95 z-[999999]"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <motion.img
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              src={activeLightboxImg}
+              alt="Expanded preview"
+              className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-zinc-800/40"
+              onClick={(e) => e.stopPropagation()} // Stop closing on image click
+            />
           </motion.div>
         )}
       </AnimatePresence>

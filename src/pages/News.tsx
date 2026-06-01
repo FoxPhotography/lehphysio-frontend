@@ -33,6 +33,7 @@ interface NewsProps {
   handleDeletePost: (id: number) => void;
   handleSharePost: (id: number) => void;
   handleUploadImage: (file: File) => Promise<string | null>;
+  handleEditPost: (id: number, content: string, imageUrl: string) => Promise<void>;
   setCurrentPage: (page: string) => void;
   showToast: (msg: string) => void;
   equippedFrame?: string;
@@ -50,6 +51,7 @@ export const News: React.FC<NewsProps> = ({
   handleDeletePost,
   handleSharePost,
   handleUploadImage,
+  handleEditPost,
   setCurrentPage,
   showToast,
   equippedFrame
@@ -59,6 +61,12 @@ export const News: React.FC<NewsProps> = ({
   const [uploadedImageUrl, setUploadedImageUrl] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+
+  // Post editing states
+  const [editingPostId, setEditingPostId] = useState<number | null>(null);
+  const [editPostContent, setEditPostContent] = useState('');
+  const [editPostImageUrl, setEditPostImageUrl] = useState('');
+  const [isUploadingEditImage, setIsUploadingEditImage] = useState(false);
 
   // 3-dot post options menu
   const [openPostMenu, setOpenPostMenu] = useState<number | null>(null);
@@ -72,6 +80,51 @@ export const News: React.FC<NewsProps> = ({
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; commentId: number; content: string; postId: number; parentId?: number } | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editCommentText, setEditCommentText] = useState('');
+
+  // Lightbox & image zoom state
+  const [activeLightboxImg, setActiveLightboxImg] = useState<string | null>(null);
+
+  // Click coordinator to avoid conflict between single tap (zoom) and double tap (like)
+  const clickTimeoutRef = useRef<{[key: number]: any}>({});
+  const lastClickTimeRef = useRef<{ [key: number]: number }>({});
+
+  const handleImageClickCoord = (postId: number, imageUrl: string) => {
+    const now = Date.now();
+    const lastClick = lastClickTimeRef.current[postId] || 0;
+    
+    if (now - lastClick < 300) {
+      // Double tap/click detected!
+      lastClickTimeRef.current[postId] = 0; // Reset
+      if (clickTimeoutRef.current[postId]) {
+        clearTimeout(clickTimeoutRef.current[postId]);
+        delete clickTimeoutRef.current[postId];
+      }
+      
+      // Perform Like
+      handleLikePost(postId);
+      
+      // Heart animation
+      const hid = ++heartIdCounter.current;
+      setFloatingHearts(prev => [...prev, { id: hid, postId }]);
+      setTimeout(() => {
+        setFloatingHearts(prev => prev.filter(h => h.id !== hid));
+      }, 800);
+    } else {
+      // First tap/click
+      lastClickTimeRef.current[postId] = now;
+      
+      // Clear any existing timeout for this post
+      if (clickTimeoutRef.current[postId]) {
+        clearTimeout(clickTimeoutRef.current[postId]);
+      }
+      
+      clickTimeoutRef.current[postId] = setTimeout(() => {
+        delete clickTimeoutRef.current[postId];
+        // Perform Single tap action (expand/lightbox)
+        setActiveLightboxImg(imageUrl);
+      }, 250); // 250ms window
+    }
+  };
 
   // Double-tap to like
   const lastTapRef = useRef<{postId: number; time: number} | null>(null);
@@ -366,6 +419,19 @@ export const News: React.FC<NewsProps> = ({
                         >
                           <button
                             onClick={() => {
+                              setEditingPostId(post.id);
+                              setEditPostContent(post.content);
+                              setEditPostImageUrl(post.image_url || '');
+                              setOpenPostMenu(null);
+                            }}
+                            className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-brand-amber rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span>Edit</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => {
                               handleDeletePost(post.id);
                               setOpenPostMenu(null);
                             }}
@@ -382,35 +448,111 @@ export const News: React.FC<NewsProps> = ({
               </div>
 
               {/* Main Content Area */}
-              <div 
-                className="mt-4 text-zinc-100 text-xs md:text-sm font-semibold leading-relaxed break-words relative cursor-pointer"
-                onDoubleClick={() => handleDoubleTapLike(post.id)}
-              >
-                {/* Floating hearts container */}
-                <AnimatePresence>
-                  {floatingHearts.filter(h => h.postId === post.id).map(h => (
-                    <motion.div
-                      key={h.id}
-                      initial={{ opacity: 1, scale: 0, y: 0 }}
-                      animate={{ opacity: 0, scale: 2.2, y: -60 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.8, ease: 'easeOut' }}
-                      className="absolute inset-0 m-auto w-12 h-12 flex items-center justify-center pointer-events-none z-10"
-                    >
-                      <Heart className="w-12 h-12 fill-red-500 text-red-500 drop-shadow-heart shrink-0" />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+              {editingPostId === post.id ? (
+                <div className="mt-4 space-y-3">
+                  <textarea
+                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl p-3.5 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none min-h-[90px]"
+                    value={editPostContent}
+                    onChange={(e) => setEditPostContent(e.target.value)}
+                  />
 
-                {post.title && <h3 className="text-zinc-100 font-extrabold text-sm md:text-base mb-2">{post.title}</h3>}
-                <p className="whitespace-pre-wrap">{post.content}</p>
+                  {editPostImageUrl && (
+                    <div className="relative rounded-xl overflow-hidden max-w-[200px] border border-zinc-800">
+                      <img src={editPostImageUrl} alt="Edit preview" className="w-full max-h-[140px] object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setEditPostImageUrl('')}
+                        className="absolute top-2 right-2 bg-black/80 hover:bg-black/90 text-white border-none rounded-full w-6 h-6 flex items-center justify-center cursor-pointer transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
 
-                {post.image_url && (
-                  <div className="mt-4 rounded-xl overflow-hidden border border-zinc-900/60 max-h-[380px] bg-zinc-950">
-                    <img src={post.image_url} alt="News attachment" className="w-full h-full object-contain max-h-[380px]" />
+                  <div className="flex flex-row items-center justify-between w-full gap-4">
+                    <label className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-[10px] py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5 shrink-0">
+                      <ImageIcon className="w-3.5 h-3.5 shrink-0" />
+                      <span>{isUploadingEditImage ? 'Uploading...' : 'Change Image'}</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={async (e) => {
+                          if (!e.target.files || e.target.files.length === 0) return;
+                          setIsUploadingEditImage(true);
+                          const url = await handleUploadImage(e.target.files[0]);
+                          setIsUploadingEditImage(false);
+                          if (url) {
+                            setEditPostImageUrl(url);
+                          }
+                        }} 
+                        className="hidden" 
+                        disabled={isUploadingEditImage} 
+                      />
+                    </label>
+
+                    <div className="flex gap-2">
+                      <button 
+                        className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-[10px] py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all" 
+                        onClick={() => setEditingPostId(null)}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-xs py-2 px-4 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow" 
+                        onClick={async () => {
+                          if (!editPostContent.trim()) return;
+                          await handleEditPost(post.id, editPostContent, editPostImageUrl);
+                          setEditingPostId(null);
+                        }}
+                        disabled={!editPostContent.trim() || isUploadingEditImage}
+                      >
+                        Save
+                      </button>
+                    </div>
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div 
+                  className="mt-4 text-zinc-100 text-xs md:text-sm font-semibold leading-relaxed break-words relative cursor-pointer"
+                  onDoubleClick={() => handleDoubleTapLike(post.id)}
+                >
+                  {/* Floating hearts container */}
+                  <AnimatePresence>
+                    {floatingHearts.filter(h => h.postId === post.id).map(h => (
+                      <motion.div
+                        key={h.id}
+                        initial={{ opacity: 1, scale: 0, y: 0 }}
+                        animate={{ opacity: 0, scale: 2.2, y: -60 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                        className="absolute inset-0 m-auto w-12 h-12 flex items-center justify-center pointer-events-none z-10"
+                      >
+                        <Heart className="w-12 h-12 fill-red-500 text-red-500 drop-shadow-heart shrink-0" />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+
+                  {post.title && <h3 className="text-zinc-100 font-extrabold text-sm md:text-base mb-2">{post.title}</h3>}
+                  <p className="whitespace-pre-wrap">{post.content}</p>
+
+                  {post.image_url && (
+                    <div 
+                      className="mt-4 rounded-xl overflow-hidden border border-zinc-900/60 max-h-[380px] bg-zinc-950 cursor-pointer relative group"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleImageClickCoord(post.id, post.image_url);
+                      }}
+                    >
+                      <img 
+                        src={post.image_url} 
+                        alt="News attachment" 
+                        className="w-full h-full object-contain max-h-[380px] group-hover:scale-[1.01] transition-transform duration-300" 
+                      />
+
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Interaction Panel */}
               <div className="flex gap-6 items-center mt-5 pt-3.5 border-t border-zinc-900/60">
@@ -534,6 +676,38 @@ export const News: React.FC<NewsProps> = ({
           ))
         )}
       </div>
+
+      {/* Immersive Lightbox Modal */}
+      <AnimatePresence>
+        {activeLightboxImg && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setActiveLightboxImg(null)}
+            className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[99999] flex items-center justify-center p-4 cursor-zoom-out"
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setActiveLightboxImg(null)}
+              className="absolute top-6 right-6 w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 text-white flex items-center justify-center cursor-pointer transition-all hover:scale-105 hover:bg-zinc-800 active:scale-95 z-[999999]"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <motion.img
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              src={activeLightboxImg}
+              alt="Expanded preview"
+              className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-zinc-800/40"
+              onClick={(e) => e.stopPropagation()} // Stop closing on image click
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
