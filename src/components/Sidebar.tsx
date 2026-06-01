@@ -68,10 +68,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Logo */}
       <a 
         href="#" 
-        className="flex items-center justify-center w-full my-[-20px] hover:opacity-90 transition-opacity" 
+        className="flex items-center justify-center w-full mb-6 hover:opacity-90 transition-opacity" 
         onClick={(e) => { e.preventDefault(); setCurrentPage('home'); }}
+        style={{ overflow: 'hidden', height: '72px' }}
       >
-        <img src={logo} alt="Leh Physio Logo" className="h-32 w-auto object-contain max-w-[110%] scale-125" />
+        <img 
+          src={logo} 
+          alt="Leh Physio Logo" 
+          style={{ 
+            width: '280px', 
+            height: '280px', 
+            objectFit: 'none',
+            objectPosition: 'center center',
+            marginTop: '-104px',
+            marginBottom: '-104px',
+            flexShrink: 0
+          }} 
+        />
       </a>
 
       {/* Navigation List */}

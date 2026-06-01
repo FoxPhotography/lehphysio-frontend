@@ -14,13 +14,26 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   user
 }) => {
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-zinc-950/90 border-b border-zinc-900/60 z-40 flex items-center justify-between px-6 lg:hidden backdrop-blur-md">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-zinc-950/90 border-b border-zinc-900/60 z-[100] flex items-center justify-between px-6 lg:hidden backdrop-blur-md">
       <a 
         href="#" 
-        className="flex items-center justify-center h-full py-1 hover:opacity-90 transition-opacity" 
+        className="flex items-center justify-center hover:opacity-90 transition-opacity" 
         onClick={(e) => { e.preventDefault(); setCurrentPage('home'); }}
+        style={{ overflow: 'hidden', height: '48px', width: '180px' }}
       >
-        <img src={logo} alt="Leh Physio Logo" className="h-16 w-auto object-contain scale-150 transform origin-center" />
+        <img 
+          src={logo} 
+          alt="Leh Physio Logo" 
+          style={{ 
+            width: '180px', 
+            height: '180px', 
+            objectFit: 'none',
+            objectPosition: 'center center',
+            marginTop: '-66px',
+            marginBottom: '-66px',
+            flexShrink: 0
+          }} 
+        />
       </a>
       
       <div className="flex items-center gap-3">

@@ -127,11 +127,73 @@ export const Community: React.FC<CommunityProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<'chat' | 'suggestions'>('chat');
   const [suggTitle, setSuggTitle] = useState('');
   const [suggContent, setSuggContent] = useState('');
+  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   // Mentions autocomplete state
   const [mentionSearch, setMentionSearch] = useState('');
   const [mentionStartIndex, setMentionStartIndex] = useState(-1);
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
+
+  // Track exact visual viewport height to support mobile virtual keyboards
+  useEffect(() => {
+    if (!window.visualViewport) return undefined;
+
+    const handleResize = () => {
+      if (window.visualViewport) {
+        setViewportHeight(window.visualViewport.height);
+      }
+    };
+
+    window.visualViewport.addEventListener('resize', handleResize);
+    window.visualViewport.addEventListener('scroll', handleResize);
+    
+    // Set initial height
+    setViewportHeight(window.visualViewport.height);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('scroll', handleResize);
+    };
+  }, []);
+
+  // Manage keyboard-open body class to hide bottom navigation globally
+  useEffect(() => {
+    if (isInputFocused && window.innerWidth < 768) {
+      document.body.classList.add('keyboard-open');
+    } else {
+      document.body.classList.remove('keyboard-open');
+    }
+    return () => {
+      document.body.classList.remove('keyboard-open');
+    };
+  }, [isInputFocused]);
+
+  // Lock body scroll on mobile for community page to prevent overscroll bounce/chaining
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      const origHtmlOverflow = document.documentElement.style.overflow;
+      const origBodyOverflow = document.body.style.overflow;
+      const origBodyPosition = document.body.style.position;
+      const origBodyWidth = document.body.style.width;
+      const origBodyHeight = document.body.style.height;
+
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+
+      return () => {
+        document.documentElement.style.overflow = origHtmlOverflow;
+        document.body.style.overflow = origBodyOverflow;
+        document.body.style.position = origBodyPosition;
+        document.body.style.width = origBodyWidth;
+        document.body.style.height = origBodyHeight;
+      };
+    }
+    return undefined;
+  }, []);
 
   const renderTextWithMentions = (text: string) => {
     if (!text) return '';
@@ -210,34 +272,41 @@ export const Community: React.FC<CommunityProps> = ({
   };
 
   return (
-    <div className="py-4 max-w-4xl mx-auto px-2 md:px-4 pb-20 text-left">
-      <div className="glass-card p-4 md:p-6 flex flex-col h-[650px] relative overflow-hidden border border-zinc-900/60">
+    <div className="w-full max-w-4xl mx-auto px-0 md:px-4 pt-16 md:pt-4 pb-0 md:pb-20 text-left md:h-auto"
+      style={{
+        height: window.innerWidth < 768
+          ? `${viewportHeight - (isInputFocused ? 0 : 72)}px`
+          : undefined
+      }}>
+      <div className="glass-card p-0 md:p-6 flex flex-col h-full md:h-[650px] relative overflow-hidden border-0 md:border border-zinc-900/60 rounded-none md:rounded-2xl">
         
         {/* Sub tab switcher */}
-        <div className="flex gap-2 mb-4 shrink-0">
+        <div className="flex gap-2 mb-3 p-3 md:p-0 shrink-0">
           <button 
             type="button" 
-            className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 ${
+            className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 ${
               activeSubTab === 'chat' 
                 ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black shadow-orange-glow' 
                 : 'bg-zinc-900/40 text-zinc-400 border border-zinc-800/80 hover:text-white'
             }`} 
             onClick={() => setActiveSubTab('chat')}
           >
-            <MessageSquare className="w-4 h-4 shrink-0" />
-            <span>General Chat</span>
+            <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline">General Chat</span>
+            <span className="sm:hidden">Chat</span>
           </button>
           <button 
             type="button" 
-            className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 ${
+            className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 ${
               activeSubTab === 'suggestions' 
                 ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black shadow-orange-glow' 
                 : 'bg-zinc-900/40 text-zinc-400 border border-zinc-800/80 hover:text-white'
             }`} 
             onClick={() => setActiveSubTab('suggestions')}
           >
-            <Lightbulb className="w-4 h-4 shrink-0" />
-            <span>Suggestions Board</span>
+            <Lightbulb className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline">Suggestions Board</span>
+            <span className="sm:hidden">Suggestions</span>
           </button>
         </div>
 
@@ -245,7 +314,7 @@ export const Community: React.FC<CommunityProps> = ({
           <>
             {/* Multi-select bar or Standard Header */}
             {isMultiSelectMode ? (
-              <div className="flex justify-between items-center bg-brand-orange/10 border border-brand-orange/20 rounded-xl p-3 mb-3 shrink-0">
+              <div className="flex justify-between items-center bg-brand-orange/10 border border-brand-orange/20 rounded-xl p-3 mb-3 mx-3 md:mx-0 shrink-0">
                 <span className="text-xs font-black text-white">Selected {selectedMessageIds.length} messages</span>
                 <div className="flex gap-2">
                   <button className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-[10px] py-1.5 px-3 rounded-lg cursor-pointer" onClick={handleBulkDeleteMessages} disabled={selectedMessageIds.length === 0}>Delete</button>
@@ -253,9 +322,9 @@ export const Community: React.FC<CommunityProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between mb-3 border-b border-zinc-900 pb-2.5 shrink-0">
+              <div className="flex items-center justify-between mb-2 border-b border-zinc-900 pb-2 mx-3 md:mx-0 shrink-0">
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="w-4.5 h-4.5 text-brand-orange" />
+                  <MessageSquare className="w-4 h-4 text-brand-orange" />
                   <h3 className="text-sm font-black text-white">Chat Feed</h3>
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-brand-orange font-extrabold uppercase tracking-wider">
@@ -276,7 +345,11 @@ export const Community: React.FC<CommunityProps> = ({
                 const isUp = el.scrollHeight - el.scrollTop - el.clientHeight > 150;
                 setShowScrollDownBtn(isUp);
               }}
-              className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-4 py-2 px-1 direction-rtl"
+              className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-4 py-2 px-3 md:px-1 pb-2 direction-rtl"
+              style={{ 
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehavior: 'contain'
+              }}
             >
               {chatMessages.map((msg: any) => {
                 const isMyMsg = user && msg.username === user.username;
@@ -291,7 +364,7 @@ export const Community: React.FC<CommunityProps> = ({
                     key={msg.id} 
                     className="flex w-full"
                     style={{
-                      justifyContent: isMyMsg ? 'flex-start' : 'flex-end',
+                      justifyContent: isMyMsg ? 'flex-end' : 'flex-start',
                     }}
                   >
                     <div
@@ -343,8 +416,8 @@ export const Community: React.FC<CommunityProps> = ({
                         </div>
                       )}
 
-                      {/* Outgoing Avatar */}
-                      {isMyMsg && (
+                      {/* Outgoing Avatar (Other User) */}
+                      {!isMyMsg && (
                         <div className="relative mt-4 shrink-0">
                           <UserAvatar 
                             username={msg.username} 
@@ -356,7 +429,7 @@ export const Community: React.FC<CommunityProps> = ({
                       )}
 
                       {/* Bubble */}
-                      <div className={`flex flex-col ${isMyMsg ? 'items-start' : 'items-end'}`}>
+                      <div className={`flex flex-col ${isMyMsg ? 'items-end' : 'items-start'}`}>
                         {/* Sender info */}
                         <div className="flex items-center gap-1.5 mb-1 select-none">
                           <span className="text-[10px] font-black" style={{ color: isMyMsg ? 'var(--color-brand-orange)' : getNameColor(msg.username) }}>
@@ -381,8 +454,8 @@ export const Community: React.FC<CommunityProps> = ({
                         <div 
                           className={`px-3 py-2 rounded-2xl text-xs md:text-sm font-semibold shadow-lg text-left relative ${
                             isMyMsg 
-                              ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black rounded-tl-none' 
-                              : 'bg-zinc-900/60 border border-zinc-800 text-white rounded-tr-none'
+                              ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black rounded-tr-none' 
+                              : 'bg-zinc-900/60 border border-zinc-800 text-white rounded-tl-none'
                           }`}
                         >
                           {/* Quote reply */}
@@ -440,8 +513,8 @@ export const Community: React.FC<CommunityProps> = ({
                         </div>
                       </div>
 
-                      {/* Incoming Avatar */}
-                      {!isMyMsg && (
+                      {/* Incoming Avatar (Me) */}
+                      {isMyMsg && (
                         <div className="relative mt-4 shrink-0">
                           <UserAvatar 
                             username={msg.username} 
@@ -458,7 +531,9 @@ export const Community: React.FC<CommunityProps> = ({
             </div>
 
             {/* Chat form compose area */}
-            <div className="mt-3 border-t border-zinc-900 pt-3 shrink-0 direction-ltr text-left relative">
+            <div 
+              className="border-t border-zinc-900/80 pt-2.5 bg-zinc-950/90 backdrop-blur-md px-3 md:px-0 shrink-0 direction-ltr text-left relative"
+            >
               
               {/* Reply tag indicator */}
               {replyingTo && (
@@ -475,7 +550,7 @@ export const Community: React.FC<CommunityProps> = ({
 
               {/* Mention drop container */}
               {showMentionSuggestions && usernames && usernames.length > 0 && (
-                <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-1 shadow-2xl backdrop-blur-md">
+                <div className="absolute bottom-[calc(100%+8px)] left-3 right-3 md:left-0 md:right-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-1 shadow-2xl backdrop-blur-md">
                   {usernames
                     .filter((u: any) => u.username.toLowerCase().includes(mentionSearch.toLowerCase()) && u.username !== user?.username)
                     .map((u: any) => (
@@ -487,8 +562,8 @@ export const Community: React.FC<CommunityProps> = ({
                       >
                         <UserAvatar username={u.username} avatarUrl={u.avatar_url} equippedFrame={u.equipped_frame} size={24} />
                         <div className="flex flex-col text-left">
-                          <span className="text-brand-orange font-black">@{u.username}</span>
-                          <span className="text-[9px] text-zinc-500">{u.role === 'owner' ? 'Owner' : u.role === 'admin' ? 'Admin' : 'Student'}</span>
+                           <span className="text-brand-orange font-black">@{u.username}</span>
+                           <span className="text-[9px] text-zinc-500">{u.role === 'owner' ? 'Owner' : u.role === 'admin' ? 'Admin' : 'Student'}</span>
                         </div>
                       </button>
                     ))}
@@ -522,33 +597,37 @@ export const Community: React.FC<CommunityProps> = ({
                     const el = document.getElementById('community-chat-input');
                     if (el) el.style.height = 'auto';
                   }}
-                  className="flex gap-2 items-end"
+                  className="flex gap-2.5 items-end py-2"
                 >
-                  <textarea
-                    id="community-chat-input"
-                    name="chatMessage"
-                    autoComplete="off"
-                    autoCorrect="on"
-                    spellCheck="true"
-                    className="flex-1 bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl px-3.5 py-2 text-xs md:text-sm font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none min-h-[38px] max-h-[120px]"
-                    placeholder={editingMessage ? "Edit your message here..." : "Type a message..."}
-                    value={chatInput}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        const form = e.currentTarget.form;
-                        if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-                      }
-                    }}
-                    rows={1}
-                  />
+                  <div className="flex-1 relative flex items-end bg-zinc-900/40 border border-zinc-800/80 focus-within:border-brand-orange/60 focus-within:ring-1 focus-within:ring-brand-orange/20 rounded-2xl transition-all duration-200 px-3.5">
+                    <textarea
+                      id="community-chat-input"
+                      name="chatMessage"
+                      autoComplete="off"
+                      autoCorrect="on"
+                      spellCheck="true"
+                      className="w-full bg-transparent text-white py-2.5 text-xs md:text-sm font-semibold placeholder-zinc-500 outline-none resize-none min-h-[40px] max-h-[140px] leading-relaxed"
+                      placeholder={editingMessage ? "Edit your message here..." : "Type a message..."}
+                      value={chatInput}
+                      onChange={handleInputChange}
+                      onFocus={() => setIsInputFocused(true)}
+                      onBlur={() => setIsInputFocused(false)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          const form = e.currentTarget.form;
+                          if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                        }
+                      }}
+                      rows={1}
+                    />
+                  </div>
                   <button 
                     type="submit" 
-                    className="w-9 h-9 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black flex items-center justify-center hover:scale-102 active:scale-95 cursor-pointer shadow-md shrink-0 transition-transform"
+                    className="w-10 h-10 rounded-2xl bg-gradient-to-r from-brand-orange to-brand-amber text-black flex items-center justify-center hover:scale-105 active:scale-95 cursor-pointer shadow-md hover:shadow-brand-orange/20 shrink-0 transition-all duration-200"
                     onMouseDown={(e) => e.preventDefault()}
                   >
-                    {editingMessage ? <Check className="w-4 h-4 stroke-[3]" /> : <Send className="w-4 h-4 stroke-[3] translate-x-0.5 rotate-0" />}
+                    {editingMessage ? <Check className="w-5 h-5 stroke-[2.5]" /> : <Send className="w-4.5 h-4.5 stroke-[2.5] translate-x-0.5" />}
                   </button>
                 </form>
               ) : (
@@ -566,7 +645,7 @@ export const Community: React.FC<CommunityProps> = ({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.8 }}
                   onClick={handleScrollToBottom}
-                  className="absolute left-6 bottom-20 w-9 h-9 rounded-full bg-zinc-950 border border-brand-orange flex items-center justify-center text-white cursor-pointer z-20 shadow-orange-glow transition-all active:scale-90"
+                  className="absolute left-6 w-9 h-9 rounded-full bg-zinc-950/90 border border-brand-orange flex items-center justify-center text-white cursor-pointer z-[25] shadow-orange-glow transition-all active:scale-90 bottom-[68px]"
                   title="Scroll to bottom"
                 >
                   <ChevronDown className="w-4 h-4 animate-bounce" />
@@ -577,7 +656,10 @@ export const Community: React.FC<CommunityProps> = ({
         ) : (
           <div className="flex flex-col flex-1 overflow-hidden">
             {user ? (
-              <form onSubmit={submitSuggestion} className="glass-card p-4 flex flex-col gap-3 mb-4 border border-zinc-900/60 shrink-0 text-left">
+              <form 
+                onSubmit={submitSuggestion} 
+                className="glass-card p-4 flex flex-col gap-3 mb-3 border border-zinc-900/60 shrink-0 text-left"
+              >
                 <h4 className="text-xs font-black text-brand-orange flex items-center gap-1.5">
                   <Lightbulb className="w-4.5 h-4.5" />
                   <span>Submit a Suggestion or Feedback</span>
@@ -588,6 +670,8 @@ export const Community: React.FC<CommunityProps> = ({
                   className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl px-3 py-2 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200"
                   value={suggTitle}
                   onChange={(e) => setSuggTitle(e.target.value)}
+                  onFocus={() => setIsInputFocused(true)}
+                  onBlur={() => setIsInputFocused(false)}
                   required
                 />
                 <textarea 
@@ -595,6 +679,8 @@ export const Community: React.FC<CommunityProps> = ({
                   className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl p-3 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none"
                   value={suggContent}
                   onChange={(e) => setSuggContent(e.target.value)}
+                  onFocus={() => setIsInputFocused(true)}
+                  onBlur={() => setIsInputFocused(false)}
                   required
                   rows={2}
                 />
@@ -607,12 +693,14 @@ export const Community: React.FC<CommunityProps> = ({
                 </button>
               </form>
             ) : (
-              <div className="text-zinc-500 text-xs font-bold text-center py-6 border border-dashed border-zinc-800 rounded-xl mb-4 uppercase tracking-wide shrink-0">
+              <div 
+                className="text-zinc-500 text-xs font-bold text-center py-6 border border-dashed border-zinc-800 rounded-xl mb-4 uppercase tracking-wide shrink-0 bg-[#0a0a0a]"
+              >
                 Please <button onClick={() => setCurrentPage('login')} className="text-brand-orange hover:text-brand-amber font-black cursor-pointer underline">Login</button> to submit suggestions.
               </div>
             )}
 
-            <div className="flex-1 overflow-y-auto flex flex-col gap-3.5 pr-1">
+            <div className="flex-1 overflow-y-auto flex flex-col gap-3.5 px-3 md:px-0 pr-3 md:pr-1 pb-4 md:pb-0">
               {suggestions.length === 0 ? (
                 <div className="text-zinc-500 text-xs font-bold text-center py-10">No suggestions submitted yet. Be the first!</div>
               ) : (
