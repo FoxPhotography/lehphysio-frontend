@@ -19,6 +19,7 @@ import { Confirm } from './pages/Confirm';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
 import { Admin } from './pages/Admin';
+import { News } from './pages/News';
 
 // Components
 import { Sidebar } from './components/Sidebar';
@@ -56,6 +57,9 @@ function App() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [leaderboardTab, setLeaderboardTab] = useState('all-time'); // all-time, weekly, batch
   const [communityPosts, setCommunityPosts] = useState<any[]>([]);
+  const [newsPosts, setNewsPosts] = useState<any[]>([]);
+  const [isLoadingOlderPosts, setIsLoadingOlderPosts] = useState(false);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
   
   // Forms
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
@@ -88,6 +92,9 @@ function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [onlineCount, setOnlineCount] = useState(1);
   const [usernamesDirectory, setUsernamesDirectory] = useState<any[]>([]);
+  const [isLoadingOlderChat, setIsLoadingOlderChat] = useState(false);
+  const [hasMoreChat, setHasMoreChat] = useState(true);
+  const shouldScrollToBottomRef = useRef(false);
 
   // Polls Mock State
   const [pollVotes, setPollVotes] = useState<number[]>([42, 12, 8, 25]);
@@ -588,6 +595,7 @@ function App() {
   useEffect(() => {
     fetchEpisodes();
     fetchCommunityPosts();
+    fetchNewsPosts();
     fetchLeaderboard();
     fetchPublicSuggestions();
     fetchFrames();
@@ -601,6 +609,16 @@ function App() {
     return () => {
       window.removeEventListener('popstate', onPopState);
     };
+  }, [token]);
+
+  // Listener for news published event to live-refresh feeds
+  useEffect(() => {
+    const handleNewsPublished = () => {
+      fetchNewsPosts();
+      fetchCommunityPosts();
+    };
+    window.addEventListener('news_published', handleNewsPublished);
+    return () => window.removeEventListener('news_published', handleNewsPublished);
   }, [token]);
 
   // Highlight and scroll to a shared community post if the URL path targets one
@@ -628,6 +646,7 @@ function App() {
   // Fetch chat messages on mount/page focus
   useEffect(() => {
     if (communityTab === 'chat' && currentPage === 'community') {
+      shouldScrollToBottomRef.current = true;
       fetchChatMessages();
     }
   }, [communityTab, currentPage]);
@@ -656,8 +675,11 @@ function App() {
         const sentByMe = lastMsg && user && lastMsg.username === user.username;
         const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
 
-        if (isPageChange || (hasNewMessages && (sentByMe || isNearBottom))) {
+        if (isPageChange || shouldScrollToBottomRef.current || (hasNewMessages && (sentByMe || isNearBottom))) {
           el.scrollTop = el.scrollHeight;
+          if (chatMessages.length > 0) {
+            shouldScrollToBottomRef.current = false;
+          }
         }
       }
     }
@@ -698,8 +720,18 @@ function App() {
         }
       };
 
+      const handlePlayerKicked = (data: any) => {
+        if (data && data.username === user?.username) {
+          setActiveGameRoom(null);
+          setCurrentPage('games');
+          showToast('لقد تم طردك من الغرفة بواسطة المضيف! 🚨');
+          playChatSound('error');
+        }
+      };
+
       socket.on('game_update', handleGameUpdate);
       socket.on('game_deleted', handleGameDeleted);
+      socket.on('player_kicked', handlePlayerKicked);
 
       // Fetch initial game state once to sync up (acts as fallback/initial load)
       const fetchInitialStatus = async () => {
@@ -725,6 +757,7 @@ function App() {
         socket.emit('leave_game', { roomCode: activeGameRoom.code, username: user?.username });
         socket.off('game_update', handleGameUpdate);
         socket.off('game_deleted', handleGameDeleted);
+        socket.off('player_kicked', handlePlayerKicked);
       };
     }
   }, [activeGameRoom?.code, currentPage, token, user?.username]);
@@ -1253,46 +1286,114 @@ function App() {
     }
   }, [currentPage, user, token]);
 
-  const fetchChatMessages = async () => {
+  const fetchChatMessages = async (beforeId?: string) => {
     try {
       const headers: any = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(`${API_BASE}/api/chat`, { headers });
+      let url = `${API_BASE}/api/chat?limit=30`;
+      if (beforeId) {
+        url += `&before=${beforeId}`;
+        setIsLoadingOlderChat(true);
+      }
+      const res = await fetch(url, { headers });
       const data = await res.json();
       if (res.ok) {
-        if (chatMessagesRef.current && chatMessagesRef.current.length > 0 && data.length > chatMessagesRef.current.length) {
-          const currentIds = new Set(chatMessagesRef.current.map((m: any) => m.id));
-          const hasNewIncoming = data.some((m: any) => !currentIds.has(m.id) && (!userRef.current || m.username !== userRef.current.username));
-          if (hasNewIncoming) {
-            playChatSound('receive');
+        if (beforeId) {
+          if (data.length < 30) {
+            setHasMoreChat(false);
           }
-        }
-        
-        // Preserve any pending (optimistic) messages that are still sending
-        const pendingMessages = chatMessagesRef.current.filter((m: any) => m.isPending);
-        // Exclude pending messages that have now been confirmed in the server response
-        const serverIds = new Set(data.map((m: any) => m.id));
-        const filteredPending = pendingMessages.filter((pm: any) => !serverIds.has(pm.id));
-        
-        setChatMessages([...data, ...filteredPending]);
+          if (data.length > 0) {
+            const el = document.getElementById('pl-chat-feed');
+            const prevScrollHeight = el ? el.scrollHeight : 0;
+            const prevScrollTop = el ? el.scrollTop : 0;
 
-        const onlineHeader = res.headers.get('X-Online-Count');
-        if (onlineHeader) {
-          setOnlineCount(parseInt(onlineHeader, 10));
+            setChatMessages(prev => {
+              const prevIds = new Set(prev.map((m: any) => m.id));
+              const filteredNew = data.filter((m: any) => !prevIds.has(m.id));
+              return [...filteredNew, ...prev];
+            });
+
+            setTimeout(() => {
+              if (el) {
+                el.scrollTop = el.scrollHeight - prevScrollHeight + prevScrollTop;
+              }
+            }, 30);
+          }
+        } else {
+          setHasMoreChat(true);
+          if (chatMessagesRef.current && chatMessagesRef.current.length > 0 && data.length > chatMessagesRef.current.length) {
+            const currentIds = new Set(chatMessagesRef.current.map((m: any) => m.id));
+            const hasNewIncoming = data.some((m: any) => !currentIds.has(m.id) && (!userRef.current || m.username !== userRef.current.username));
+            if (hasNewIncoming) {
+              playChatSound('receive');
+            }
+          }
+          
+          // Preserve any pending (optimistic) messages that are still sending
+          const pendingMessages = chatMessagesRef.current.filter((m: any) => m.isPending);
+          // Exclude pending messages that have now been confirmed in the server response
+          const serverIds = new Set(data.map((m: any) => m.id));
+          const filteredPending = pendingMessages.filter((pm: any) => !serverIds.has(pm.id));
+          
+          setChatMessages([...data, ...filteredPending]);
+
+          const onlineHeader = res.headers.get('X-Online-Count');
+          if (onlineHeader) {
+            setOnlineCount(parseInt(onlineHeader, 10));
+          }
         }
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      if (beforeId) {
+        setIsLoadingOlderChat(false);
+      }
     }
   };
 
-  const fetchCommunityPosts = async () => {
+  const fetchCommunityPosts = async (beforeId?: string) => {
+    if (beforeId) {
+      setIsLoadingOlderPosts(true);
+    }
     try {
       const headers: any = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(`${API_BASE}/api/community/posts`, { headers });
+      let url = `${API_BASE}/api/community/posts?limit=10`;
+      if (beforeId) url += `&before=${beforeId}`;
+      const res = await fetch(url, { headers });
       const data = await res.json();
-      if (res.ok) setCommunityPosts(data);
+      if (res.ok) {
+        if (beforeId) {
+          setCommunityPosts(prev => {
+            const existingIds = new Set(prev.map(p => p.id));
+            const newPosts = data.filter((p: any) => !existingIds.has(p.id));
+            if (newPosts.length === 0) {
+              setHasMorePosts(false);
+            }
+            return [...prev, ...newPosts];
+          });
+        } else {
+          setCommunityPosts(data);
+          setHasMorePosts(data.length >= 10);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoadingOlderPosts(false);
+    }
+  };
+
+  const fetchNewsPosts = async () => {
+    try {
+      const headers: any = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}/api/community/posts?limit=20&news=true`, { headers });
+      const data = await res.json();
+      if (res.ok) {
+        setNewsPosts(data);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -1790,13 +1891,13 @@ function App() {
   };
 
   // Community Feed Interaction API calls
-  const handleCreatePost = async (title: string, content: string, imageUrl: string) => {
+  const handleCreatePost = async (title: string, content: string, imageUrl: string, isNews: boolean = false) => {
     if (!content.trim() || !token) return;
     try {
       const res = await fetch(`${API_BASE}/api/community/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ title, content, image_url: imageUrl })
+        body: JSON.stringify({ title, content, image_url: imageUrl, is_news: isNews })
       });
       const data = await res.json();
       if (res.ok) {
@@ -1804,6 +1905,9 @@ function App() {
         playChatSound('send');
         triggerXpPopup(data.xp_reward);
         fetchCommunityPosts();
+        if (isNews) {
+          fetchNewsPosts();
+        }
         fetchUserProfile();
       } else {
         showToast(data.error || 'Failed to publish post.');
@@ -2728,6 +2832,26 @@ function App() {
         episodes={episodes}
         triggerXpPopup={triggerXpPopup}
         xpSettings={xpSettings}
+        newsPosts={newsPosts}
+        loadOlderPosts={fetchCommunityPosts}
+        isLoadingOlderPosts={isLoadingOlderPosts}
+        hasMorePosts={hasMorePosts}
+      />
+    );
+  };
+
+  const renderNewsPage = () => {
+    return (
+      <News
+        user={user}
+        newsPosts={newsPosts}
+        handleLikePost={handleLikePost}
+        handleDeletePost={handleDeletePost}
+        handleSharePost={handleShareCommunityPost}
+        handleUploadImage={handleUploadImage}
+        setCurrentPage={setCurrentPage}
+        showToast={showToast}
+        equippedFrame={equippedFrame}
       />
     );
   };
@@ -2813,6 +2937,9 @@ function App() {
         usernames={usernamesDirectory}
         getAvatarFrameClass={getAvatarFrameClass}
         equippedFrame={equippedFrame}
+        loadOlderMessages={fetchChatMessages}
+        isLoadingOlder={isLoadingOlderChat}
+        hasMoreChat={hasMoreChat}
       />
     );
   };
@@ -3063,6 +3190,7 @@ function App() {
         {/* Main Content Router */}
         <main className="app-main">
           {currentPage === 'home' && renderHome()}
+          {currentPage === 'news' && renderNewsPage()}
           {currentPage === 'episodes' && renderEpisodesPage()}
           {currentPage === 'episode-detail' && renderEpisodeDetailPage()}
           {currentPage === 'community' && renderCommunityPage()}

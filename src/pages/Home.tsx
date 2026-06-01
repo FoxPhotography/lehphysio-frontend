@@ -62,8 +62,11 @@ interface HomeProps {
   leaderboard?: any[];
   equippedFrame?: string;
   episodes?: any[];
-  triggerXpPopup: (amount: number) => void;
   xpSettings?: any;
+  newsPosts: any[];
+  loadOlderPosts?: (beforeId: string) => void;
+  isLoadingOlderPosts?: boolean;
+  hasMorePosts?: boolean;
 }
 
 // Helper to strip emojis from text
@@ -97,7 +100,11 @@ export const Home: React.FC<HomeProps> = ({
   equippedFrame,
   episodes = [],
   triggerXpPopup,
-  xpSettings = {}
+  xpSettings = {},
+  newsPosts = [],
+  loadOlderPosts,
+  isLoadingOlderPosts = false,
+  hasMorePosts = true
 }) => {
   const activeStreak = user?.streak_count || 0;
   const first = leaderboard[0];
@@ -108,6 +115,7 @@ export const Home: React.FC<HomeProps> = ({
   const [uploadedImageUrl, setUploadedImageUrl] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+  const [isNewsPost, setIsNewsPost] = useState(false);
 
   // Post editing states
   const [editingPostId, setEditingPostId] = useState<number | null>(null);
@@ -140,8 +148,26 @@ export const Home: React.FC<HomeProps> = ({
         document.removeEventListener('keydown', onKey);
       };
     }
-    return undefined;
   }, [contextMenu]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop >=
+        document.documentElement.offsetHeight - 200
+      ) {
+        if (!isLoadingOlderPosts && hasMorePosts && loadOlderPosts) {
+          const oldestPost = communityPosts[communityPosts.length - 1];
+          if (oldestPost) {
+            loadOlderPosts(oldestPost.id);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [communityPosts, isLoadingOlderPosts, hasMorePosts, loadOlderPosts]);
 
   // Double-tap to like
   const lastTapRef = useRef<{postId: number; time: number} | null>(null);
@@ -743,6 +769,70 @@ export const Home: React.FC<HomeProps> = ({
             </div>
           ))}
         </div>
+      </section>
+
+      {/* Official News & Announcements Section */}
+      <section className="space-y-4">
+        <div className="flex flex-row items-center justify-between w-full gap-2">
+          <span className="flex items-center gap-2 text-sm sm:text-lg font-black text-white shrink">
+            <Sparkles className="w-4 h-4 sm:w-5 h-5 text-brand-orange animate-pulse shrink-0" />
+            <span className="truncate">Official News & Announcements</span>
+          </span>
+          <button 
+            onClick={() => setCurrentPage('news')} 
+            className="text-[10px] sm:text-xs font-black text-brand-orange hover:text-brand-amber transition-colors flex items-center gap-1 cursor-pointer bg-brand-orange/5 px-2.5 py-1.5 rounded-xl border border-brand-orange/15 hover:border-brand-orange/30 shrink-0 whitespace-nowrap"
+          >
+            View All
+          </button>
+        </div>
+        
+        {newsPosts.length === 0 ? (
+          <div className="glass-card p-6 text-center text-zinc-500 text-xs font-bold border border-dashed border-zinc-800">
+            No official announcements yet. Stay tuned! 📢
+          </div>
+        ) : (
+          <div className="flex gap-4 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory">
+            {newsPosts.slice(0, 3).map((post: any) => (
+              <div 
+                key={post.id} 
+                className="min-w-[280px] max-w-[280px] snap-start glass-card p-4 hover:border-brand-orange/30 group flex flex-col justify-between gap-3 cursor-pointer relative overflow-hidden"
+                onClick={() => setCurrentPage('news')}
+              >
+                {/* Visual Glow */}
+                <div className="absolute top-0 right-0 w-24 h-24 bg-brand-orange/5 blur-2xl rounded-full" />
+                
+                <div className="space-y-2 text-left relative z-10">
+                  <div className="flex items-center justify-between text-[9px] font-black text-brand-orange uppercase tracking-wider">
+                    <span>LehPhysio Official</span>
+                    <span>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  </div>
+                  <h4 className="text-xs font-extrabold text-white leading-relaxed line-clamp-2">
+                    {post.title || post.content.substring(0, 40) + '...'}
+                  </h4>
+                  <p className="text-[11px] text-zinc-400 font-medium leading-relaxed line-clamp-3">
+                    {post.content}
+                  </p>
+                </div>
+                
+                {post.image_url && (
+                  <div className="w-full aspect-[2/1] rounded-lg overflow-hidden border border-zinc-800/40 relative shrink-0">
+                    <img src={post.image_url} alt="News thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  </div>
+                )}
+                
+                <div className="flex items-center justify-between border-t border-white/5 pt-2 shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-5 h-5 rounded-full overflow-hidden border border-white/10 shrink-0">
+                      <img src={post.avatar_url || '/icons/icon-192x192.png'} alt="LehPhysio" className="w-full h-full object-cover" />
+                    </div>
+                    <span className="text-[10px] font-black text-zinc-300 truncate max-w-[120px]">@{post.username}</span>
+                  </div>
+                  <span className="text-[10px] font-extrabold text-brand-orange group-hover:translate-x-1 transition-transform">Read Details →</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Community Feed */}

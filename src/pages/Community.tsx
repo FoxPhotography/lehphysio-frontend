@@ -60,6 +60,9 @@ interface CommunityProps {
   usernames?: any[];
   getAvatarFrameClass?: () => string;
   equippedFrame?: string;
+  loadOlderMessages?: (beforeId: string) => void;
+  isLoadingOlder?: boolean;
+  hasMoreChat?: boolean;
 }
 
 // Helper to strip emojis from names
@@ -114,7 +117,10 @@ export const Community: React.FC<CommunityProps> = ({
   handleDeleteSuggestion,
   usernames = [],
   getAvatarFrameClass,
-  equippedFrame
+  equippedFrame,
+  loadOlderMessages,
+  isLoadingOlder = false,
+  hasMoreChat = true,
 }) => {
 
   const getFrameClass = (frameName: string) => {
@@ -344,6 +350,14 @@ export const Community: React.FC<CommunityProps> = ({
                 const el = e.currentTarget;
                 const isUp = el.scrollHeight - el.scrollTop - el.clientHeight > 150;
                 setShowScrollDownBtn(isUp);
+
+                // Infinite scroll up
+                if (el.scrollTop === 0 && !isLoadingOlder && hasMoreChat && loadOlderMessages) {
+                  const oldestMsg = chatMessages[0];
+                  if (oldestMsg && oldestMsg.id) {
+                    loadOlderMessages(oldestMsg.id);
+                  }
+                }
               }}
               className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-4 py-2 px-3 md:px-1 pb-2 direction-rtl"
               style={{ 
@@ -351,6 +365,13 @@ export const Community: React.FC<CommunityProps> = ({
                 overscrollBehavior: 'contain'
               }}
             >
+              {isLoadingOlder && (
+                <div className="flex items-center justify-center py-2 text-zinc-500 text-xs font-bold gap-2 shrink-0 direction-ltr">
+                  <div className="w-4 h-4 border-2 border-brand-orange border-t-transparent rounded-full animate-spin"></div>
+                  <span>جاري تحميل الرسائل السابقة...</span>
+                </div>
+              )}
+
               {chatMessages.map((msg: any) => {
                 const isMyMsg = user && msg.username === user.username;
                 const isSelected = selectedMessageIds.includes(msg.id);

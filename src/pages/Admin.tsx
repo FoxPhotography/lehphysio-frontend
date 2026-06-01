@@ -21,6 +21,7 @@ import {
   ImagePlus,
   Plus,
   ChevronDown,
+  User,
 } from 'lucide-react';
 import { setFramesCache } from '../utils/helpers';
 
@@ -171,6 +172,7 @@ const TABS = [
   { id: 'suggestions',label: 'Suggestions', icon: <Lightbulb className="w-3.5 h-3.5" /> },
   { id: 'frames',     label: 'Frames',      icon: <Frame    className="w-3.5 h-3.5" /> },
   { id: 'xp_settings',label: 'XP Settings', icon: <Settings className="w-3.5 h-3.5" /> },
+  { id: 'system_profile', label: 'News Profile', icon: <User className="w-3.5 h-3.5" /> },
 ];
 
 // ─── Main Admin Component ──────────────────────────────────────────────────────
@@ -1034,6 +1036,16 @@ export const Admin: React.FC<AdminProps> = ({
           setAdminMessage={setAdminMessage}
         />
       )}
+
+      {/* ── 7. SYSTEM PROFILE SETTINGS ─────────────────────────────────────── */}
+      {adminSection === 'system_profile' && (
+        <SystemProfileConfig
+          token={token}
+          apiBase={API_BASE}
+          setAdminMessage={setAdminMessage}
+          showConfirm={showConfirm}
+        />
+      )}
     </motion.div>
   );
 };
@@ -1177,5 +1189,164 @@ const XpSettingsManager: React.FC<{
         </div>
       </form>
     </div>
+  );
+};
+
+// ─── System Profile Config Sub-Component ─────────────────────────────────────
+const SystemProfileConfig: React.FC<{
+  token: string | null;
+  apiBase: string;
+  setAdminMessage: (msg: string) => void;
+  showConfirm: any;
+}> = ({ token, apiBase, setAdminMessage, showConfirm }) => {
+  const [name, setName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const fetchProfile = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${apiBase}/api/admin/system-profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setName(data.name || '');
+        setAvatarUrl(data.avatar || '');
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      setAdminMessage('Name is required.');
+      return;
+    }
+    setSaving(true);
+    setAdminMessage('');
+    let finalAvatar = avatarUrl;
+
+    try {
+      if (avatarFile) {
+        const formData = new FormData();
+        formData.append('image', avatarFile);
+        const uploadRes = await fetch(`${apiBase}/api/upload/image`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        const uploadData = await uploadRes.json();
+        if (uploadRes.ok) {
+          finalAvatar = uploadData.url;
+          setAvatarUrl(uploadData.url);
+          setAvatarFile(null);
+        } else {
+          setAdminMessage(uploadData.error || 'Failed to upload profile image.');
+          setSaving(false);
+          return;
+        }
+      }
+
+      const res = await fetch(`${apiBase}/api/admin/system-profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ name: name.trim(), avatar: finalAvatar })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAdminMessage('Official system profile updated successfully! 🎉');
+      } else {
+        setAdminMessage(data.error || 'Failed to update profile settings.');
+      }
+    } catch (err) {
+      console.error(err);
+      setAdminMessage('Connection failed.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+      </div>
+    );
+  }
+
+  return (
+    <SectionCard>
+      <SectionTitle icon={<ShieldCheck className="w-4 h-4 text-orange-400" />} label="Configure Official LehPhysio Profile" />
+      <p className="text-[12px] text-zinc-500 mb-4 leading-relaxed">
+        This profile name and avatar image will be automatically used when publishing news posts to the official feed. Only admins can publish these posts.
+      </p>
+      <form onSubmit={handleSave} className="space-y-4 text-left">
+        <AdminInput
+          label="Official Display Name"
+          placeholder="e.g. LehPhysio"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+        
+        <div className="space-y-1.5">
+          <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Official Avatar Image</p>
+          <label className="block cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+            />
+            <div className="rounded-xl border-2 border-dashed border-white/15 bg-white/2 hover:border-orange-500/40 hover:bg-orange-500/3 transition-all text-center p-5 flex flex-col items-center gap-2">
+              {avatarFile ? (
+                <>
+                  <div className="w-16 h-16 rounded-full overflow-hidden border border-white/10">
+                    <img src={URL.createObjectURL(avatarFile)} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                  <p className="text-[12px] font-bold text-white">{avatarFile.name}</p>
+                </>
+              ) : avatarUrl ? (
+                <>
+                  <div className="w-16 h-16 rounded-full overflow-hidden border border-white/10">
+                    <img src={avatarUrl} alt="LehPhysio" className="w-full h-full object-cover" />
+                  </div>
+                  <p className="text-[10px] text-zinc-500">Official avatar — click to replace</p>
+                </>
+              ) : (
+                <>
+                  <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+                    <ImagePlus className="w-6 h-6 text-orange-400" />
+                  </div>
+                  <p className="text-[13px] font-bold text-white">Upload Profile Photo</p>
+                </>
+              )}
+            </div>
+          </label>
+        </div>
+
+        <AdminBtn type="submit" disabled={saving} className="w-full justify-center">
+          {saving ? (
+            <><Loader2 className="w-4 h-4 animate-spin" /> Saving Changes...</>
+          ) : (
+            <><Save className="w-4 h-4" /> Save System Profile</>
+          )}
+        </AdminBtn>
+      </form>
+    </SectionCard>
   );
 };

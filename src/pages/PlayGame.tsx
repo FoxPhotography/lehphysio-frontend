@@ -19,6 +19,7 @@ import {
   RotateCcw,
   Loader2,
   Zap,
+  UserMinus,
 } from 'lucide-react';
 import { playChatSound } from '../utils/helpers';
 
@@ -279,6 +280,31 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     }
   };
 
+  const handleKickPlayer = async (targetUsername: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${apiBase}/api/games/kick`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ roomCode: room.code, targetUsername }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setActiveGameRoom(data);
+        showToast(`تم طرد اللاعب @${targetUsername} بنجاح 🚨`);
+        playChatSound('error');
+      } else {
+        showToast(data.error || 'Failed to kick player.');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('خطأ في الاتصال بالخادم.');
+    }
+  };
+
   // ─── Chat Box ─────────────────────────────────────────────────────────────────
   const renderChatBox = (maxH = '160px') => (
     <div className="mt-4 rounded-xl border border-white/8 bg-black/40 p-3">
@@ -414,8 +440,18 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                     <span className="text-[10px] font-black text-orange-400">{p.username[0].toUpperCase()}</span>
                   </div>
                   <span className="text-[12px] font-bold text-white">{p.username}</span>
-                  {p.username === room.host && (
+                  {p.username === room.host ? (
                     <span className="px-1.5 py-0.5 rounded bg-orange-500 text-black text-[9px] font-black">HOST</span>
+                  ) : (
+                    isHost && (
+                      <button
+                        onClick={() => handleKickPlayer(p.username)}
+                        title="Kick Player"
+                        className="p-1 hover:bg-red-500/10 text-red-500 hover:text-red-400 rounded-lg cursor-pointer transition-colors"
+                      >
+                        <UserMinus className="w-3.5 h-3.5" />
+                      </button>
+                    )
                   )}
                 </motion.div>
               ))}
