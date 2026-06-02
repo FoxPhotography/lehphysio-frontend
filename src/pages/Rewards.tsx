@@ -199,7 +199,7 @@ export const Rewards: React.FC<RewardsProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-2xl mx-auto px-4 py-6 space-y-8"
+      className="w-full max-w-2xl mx-auto px-4 pt-20 md:pt-6 pb-24 md:pb-6 space-y-8"
     >
       {/* Page Header */}
       <div className="flex items-center gap-3">
@@ -285,23 +285,54 @@ export const Rewards: React.FC<RewardsProps> = ({
 
         <div className="flex flex-col sm:flex-row items-center gap-5">
           {/* Box Visual */}
-          <motion.button
-            onClick={hasOpenedBoxToday ? undefined : handleClaimSurpriseBox}
-            whileHover={hasOpenedBoxToday ? {} : { scale: 1.05, rotate: 2 }}
-            whileTap={hasOpenedBoxToday ? {} : { scale: 0.95 }}
-            disabled={hasOpenedBoxToday}
-            className={`relative w-24 h-24 rounded-2xl flex items-center justify-center flex-shrink-0 border transition-all ${
-              hasOpenedBoxToday
-                ? 'bg-white/3 border-white/8 opacity-50 cursor-not-allowed'
-                : 'bg-gradient-to-br from-violet-500/20 to-purple-500/10 border-violet-500/30 cursor-pointer hover:border-violet-400/50 shadow-lg shadow-violet-500/10'
-            }`}
-          >
-            {hasOpenedBoxToday ? (
-              <PackageOpen className="w-10 h-10 text-zinc-600" />
-            ) : (
-              <Gift className="w-10 h-10 text-violet-400" />
+          <div className="relative group select-none">
+            {!hasOpenedBoxToday && (
+              <>
+                <span className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 opacity-30 blur-md group-hover:opacity-75 transition duration-500 animate-pulse" />
+                <span className="absolute -top-1.5 -right-1.5 z-20 bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider animate-bounce shadow-lg shadow-red-500/40">
+                  Ready
+                </span>
+              </>
             )}
-          </motion.button>
+            
+            <motion.button
+              onClick={hasOpenedBoxToday ? undefined : handleClaimSurpriseBox}
+              animate={hasOpenedBoxToday ? {} : { 
+                y: [0, -6, 0] 
+              }}
+              transition={hasOpenedBoxToday ? {} : {
+                y: {
+                  repeat: Infinity,
+                  duration: 3,
+                  ease: "easeInOut"
+                }
+              }}
+              whileHover={hasOpenedBoxToday ? {} : { 
+                scale: 1.08,
+                rotate: [0, -3, 3, -3, 3, 0],
+                transition: {
+                  rotate: {
+                    repeat: Infinity,
+                    duration: 0.4,
+                    ease: "easeInOut"
+                  }
+                }
+              }}
+              whileTap={hasOpenedBoxToday ? {} : { scale: 0.95 }}
+              disabled={hasOpenedBoxToday}
+              className={`relative w-24 h-24 rounded-2xl flex items-center justify-center flex-shrink-0 border transition-all ${
+                hasOpenedBoxToday
+                  ? 'bg-white/3 border-white/8 opacity-50 cursor-not-allowed'
+                  : 'bg-gradient-to-br from-violet-500/20 to-purple-500/10 border-violet-500/30 cursor-pointer hover:border-violet-400/50 shadow-lg shadow-violet-500/20'
+              }`}
+            >
+              {hasOpenedBoxToday ? (
+                <PackageOpen className="w-10 h-10 text-zinc-600" />
+              ) : (
+                <Gift className="w-10 h-10 text-violet-400 filter drop-shadow-[0_0_8px_rgba(167,139,250,0.5)] animate-pulse" />
+              )}
+            </motion.button>
+          </div>
 
           <div className="flex-1 text-center sm:text-left">
             {hasOpenedBoxToday ? (

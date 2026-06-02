@@ -464,17 +464,91 @@ export const Profile: React.FC<ProfileProps> = ({
         {/* ── Stats Badges ──────────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-3 mb-5">
           <div className="rounded-xl border border-white/8 bg-black/30 p-3.5 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-orange-500/15 border border-orange-500/20 flex items-center justify-center flex-shrink-0">
-              <Zap className="w-4.5 h-4.5 text-orange-400" />
-            </div>
+            <motion.div 
+              animate={{ 
+                scale: [1, 1.08, 0.95, 1.08, 1],
+                filter: [
+                  "drop-shadow(0 0 2px rgba(249,115,22,0.4))",
+                  "drop-shadow(0 0 8px rgba(249,115,22,0.7))",
+                  "drop-shadow(0 0 2px rgba(249,115,22,0.4))"
+                ]
+              }}
+              transition={{ 
+                duration: 2.2, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
+              className="w-9 h-9 rounded-lg bg-orange-500/15 border border-orange-500/20 flex items-center justify-center flex-shrink-0"
+            >
+              <Zap className="w-4.5 h-4.5 text-orange-400 fill-orange-400" />
+            </motion.div>
             <div className="min-w-0">
               <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Total XP</p>
               <p className="text-[18px] font-black text-white leading-tight">{user.total_xp?.toLocaleString()}</p>
             </div>
           </div>
           <div className="rounded-xl border border-white/8 bg-black/30 p-3.5 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-red-500/15 border border-red-500/20 flex items-center justify-center flex-shrink-0">
-              <Flame className="w-4.5 h-4.5 text-red-400" />
+            <div className="w-9 h-9 rounded-lg bg-red-500/15 border border-red-500/20 flex items-center justify-center flex-shrink-0 relative overflow-visible">
+              <svg viewBox="0 0 100 100" className="w-8 h-8 filter drop-shadow-[0_0_12px_rgba(239,68,68,0.7)] select-none">
+                <defs>
+                  <linearGradient id="profileOuterFlame" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#d90429" stopOpacity="0.9" />
+                    <stop offset="60%" stopColor="#f77f00" stopOpacity="0.8" />
+                    <stop offset="100%" stopColor="#fcbf49" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="profileMidFlame" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#f77f00" stopOpacity="0.95" />
+                    <stop offset="50%" stopColor="#fcbf49" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="#eae2b7" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="profileInnerFlame" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#fcbf49" stopOpacity="1" />
+                    <stop offset="50%" stopColor="#ffffff" stopOpacity="0.9" />
+                    <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+
+                {/* 1. Outer Flame */}
+                <motion.path
+                  d="M50,95 C70,95 85,80 82,58 C80,38 65,30 50,2 C35,30 20,38 18,58 C15,80 30,95 50,95 Z"
+                  fill="url(#profileOuterFlame)"
+                  animate={{
+                    scaleY: [1, 1.08, 0.96, 1.05, 1],
+                    scaleX: [1, 0.95, 1.05, 0.98, 1],
+                    skewX: [0, -3, 3, -2, 0],
+                    y: [0, -4, 2, -3, 0]
+                  }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ transformOrigin: "50px 95px" }}
+                />
+
+                {/* 2. Middle Flame */}
+                <motion.path
+                  d="M50,90 C65,90 75,78 72,58 C70,40 60,32 50,15 C40,32 30,40 28,58 C25,78 35,90 50,90 Z"
+                  fill="url(#profileMidFlame)"
+                  animate={{
+                    scaleY: [1, 0.93, 1.1, 0.97, 1],
+                    scaleX: [1, 1.08, 0.92, 1.03, 1],
+                    skewX: [0, 4, -4, 2, 0],
+                    y: [0, 3, -5, 2, 0]
+                  }}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ transformOrigin: "50px 90px" }}
+                />
+
+                {/* 3. Inner Flame */}
+                <motion.path
+                  d="M50,85 C60,85 68,75 66,58 C64,42 58,35 50,28 C42,35 36,42 34,58 C32,75 40,85 50,85 Z"
+                  fill="url(#profileInnerFlame)"
+                  animate={{
+                    scaleY: [1, 1.12, 0.9, 1.08, 1],
+                    scaleX: [1, 0.9, 1.1, 0.95, 1],
+                    y: [0, -2, 1, -1, 0]
+                  }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ transformOrigin: "50px 85px" }}
+                />
+              </svg>
             </div>
             <div className="min-w-0">
               <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Streak</p>

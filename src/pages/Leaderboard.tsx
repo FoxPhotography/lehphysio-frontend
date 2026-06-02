@@ -131,7 +131,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-2xl mx-auto px-4 py-6"
+      className="w-full max-w-2xl mx-auto px-4 pt-20 md:pt-6 pb-24 md:pb-6"
     >
       {/* Page Header */}
       <div className="flex items-center gap-3 mb-6">

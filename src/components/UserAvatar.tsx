@@ -44,6 +44,17 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   const frameImageUrl = getFrameImage(equippedFrame);
   const hasPngFrame = !!frameImageUrl;
 
+  const isValidUrl = (url: string | null | undefined): boolean => {
+    if (!url) return false;
+    const cleanUrl = url.trim();
+    // Class lists or corrupt text won't start with these typical image URL patterns
+    return cleanUrl.startsWith('http://') || 
+           cleanUrl.startsWith('https://') || 
+           cleanUrl.startsWith('/') || 
+           cleanUrl.startsWith('data:') || 
+           cleanUrl.includes('.');
+  };
+
   return (
     <div 
       className={`relative flex items-center justify-center shrink-0 rounded-full select-none ${!hasPngFrame ? frameClass : ''} ${className}`}
@@ -63,9 +74,9 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
           fontSize: typeof size === 'number' ? `${Math.max(10, Math.floor(size * 0.38))}px` : '12px',
         }}
       >
-        {avatarUrl ? (
+        {isValidUrl(avatarUrl) ? (
           <img 
-            src={avatarUrl} 
+            src={avatarUrl!} 
             alt={username} 
             className="w-full h-full object-cover rounded-full" 
           />

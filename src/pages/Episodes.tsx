@@ -18,7 +18,7 @@ export const Episodes: React.FC<EpisodesProps> = ({
   user
 }) => {
   return (
-    <div className="space-y-6 py-6 max-w-4xl mx-auto px-4 pb-20 text-left">
+    <div className="space-y-6 pt-20 md:pt-6 max-w-4xl mx-auto px-4 pb-20 text-left">
       <div className="flex items-center gap-2.5">
         <Tv className="w-6 h-6 text-brand-orange" />
         <h2 className="text-xl md:text-2xl font-black text-white">Podcast Episodes</h2>

@@ -278,7 +278,7 @@ export const Community: React.FC<CommunityProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-0 md:px-4 pt-16 md:pt-4 pb-0 md:pb-20 text-left md:h-auto"
+    <div className="w-full max-w-4xl mx-auto px-0 md:px-4 pt-20 md:pt-4 pb-0 md:pb-20 text-left md:h-auto"
       style={{
         height: window.innerWidth < 768
           ? `${viewportHeight - (isInputFocused ? 0 : 72)}px`

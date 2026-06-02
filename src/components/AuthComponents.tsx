@@ -21,8 +21,8 @@ export const AuthLayout: React.FC<{
     >
       {/* Logo / Brand */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500/25 to-amber-500/15 border border-orange-500/30 mb-4 shadow-lg shadow-orange-500/10">
-          <span className="text-2xl font-black text-orange-400">L</span>
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500/25 to-amber-500/15 border border-orange-500/30 mb-4 shadow-lg shadow-orange-500/10 overflow-hidden">
+          <img src="/favicon.svg" alt="LehPhysio Logo" className="w-9 h-9 object-contain" />
         </div>
         <h1 className="text-[28px] font-black text-white leading-tight">{title}</h1>
         <p className="text-[13px] text-zinc-500 mt-1">{subtitle}</p>

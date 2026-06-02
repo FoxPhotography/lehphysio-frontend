@@ -1,6 +1,6 @@
 {
-  "name": "Leh Physio League",
-  "short_name": "PhysioLeague",
+  "name": "LehPhysio",
+  "short_name": "LehPhysio",
   "description": "المنصة التفاعلية الأولى لطلاب العلاج الطبيعي - Leh Physio",
   "start_url": "/",
   "display": "standalone",

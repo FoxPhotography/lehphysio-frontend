@@ -133,7 +133,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
   const embedUrl = getYoutubeEmbedUrl(episode.youtube_url);
 
   return (
-    <div className="space-y-6 py-6 max-w-4xl mx-auto px-4 pb-20 text-left">
+    <div className="space-y-6 pt-20 md:pt-6 max-w-4xl mx-auto px-4 pb-20 text-left">
       <button 
         className="flex items-center gap-2 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer active:scale-95 transition-all" 
         onClick={() => setCurrentPage('episodes')}

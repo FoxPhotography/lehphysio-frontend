@@ -113,23 +113,25 @@ self.addEventListener('notificationclick', (event) => {
   console.log('[Service Worker] Notification clicked.');
   event.notification.close();
 
-  const targetUrl = event.notification.data && event.notification.data.url 
+  const targetPath = event.notification.data && event.notification.data.url 
     ? event.notification.data.url 
     : '/';
+
+  const absoluteUrl = new URL(targetPath, self.location.origin).href;
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       // If a window is already open, focus and navigate it
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
-        if (client.url.endsWith(targetUrl) || 'focus' in client) {
-          client.navigate(targetUrl);
+        if ('navigate' in client && 'focus' in client) {
+          client.navigate(absoluteUrl);
           return client.focus();
         }
       }
       // If no window is open, open a new one
       if (self.clients.openWindow) {
-        return self.clients.openWindow(targetUrl);
+        return self.clients.openWindow(absoluteUrl);
       }
     })
   );

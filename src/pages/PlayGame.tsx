@@ -21,7 +21,8 @@ import {
   Zap,
   UserMinus,
 } from 'lucide-react';
-import { playChatSound } from '../utils/helpers';
+import { playChatSound, copyToClipboard } from '../utils/helpers';
+import { UserAvatar } from '../components/UserAvatar';
 
 // ─── Confetti Particle System ──────────────────────────────────────────────────
 const ConfettiEffect: React.FC<{ active: boolean; onComplete: () => void }> = ({
@@ -205,26 +206,23 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   const inviteUrl = `${window.location.origin}/game/${room.code}`;
 
   const handleCopyInviteUrl = async () => {
-    const shareData = {
-      title: 'Anatomy Online Challenge 🧠',
-      text: `تعال انضم لتحدي التشريح المباشر معي في Leh Physio! كود الغرفة: ${room.code} ⚡`,
-      url: inviteUrl
-    };
+    try {
+      await copyToClipboard(inviteUrl);
+      showToast('تم نسخ رابط الدعوة بنجاح! 📋');
+      playChatSound('success');
+      
+      const shareData = {
+        title: 'Anatomy Online Challenge 🧠',
+        text: `تعال انضم لتحدي التشريح المباشر معي في Leh Physio! كود الغرفة: ${room.code} ⚡`,
+        url: inviteUrl
+      };
 
-    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-      try {
-        await navigator.share(shareData);
-        showToast('تم فتح قائمة المشاركة بنجاح! 🎉');
-      } catch (err) {
-        // Fallback if share sheet fails or is dismissed
-        navigator.clipboard.writeText(inviteUrl);
-        showToast('Invite link copied! Share it with your colleagues.');
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData).catch(() => {});
       }
-    } else {
-      navigator.clipboard.writeText(inviteUrl);
-      showToast('Invite link copied! Share it with your colleagues.');
+    } catch (err) {
+      showToast('فشل النسخ تلقائياً.');
     }
-    playChatSound('success');
   };
 
   // Auto-scroll chat
@@ -393,9 +391,9 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => {
-                navigator.clipboard.writeText(room.code);
-                showToast(`Room code copied: ${room.code}`);
+              onClick={async () => {
+                await copyToClipboard(room.code);
+                showToast(`تم نسخ كود الغرفة: ${room.code} 📋`);
                 playChatSound('success');
               }}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-white/15 hover:border-orange-500/50 hover:bg-orange-500/5 transition-all"
@@ -436,9 +434,12 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                   animate={{ opacity: 1, scale: 1 }}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/8"
                 >
-                  <div className="w-6 h-6 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center">
-                    <span className="text-[10px] font-black text-orange-400">{p.username[0].toUpperCase()}</span>
-                  </div>
+                  <UserAvatar 
+                    username={p.username} 
+                    avatarUrl={p.avatar_url} 
+                    equippedFrame={p.equipped_frame} 
+                    size={28} 
+                  />
                   <span className="text-[12px] font-bold text-white">{p.username}</span>
                   {p.username === room.host ? (
                     <span className="px-1.5 py-0.5 rounded bg-orange-500 text-black text-[9px] font-black">HOST</span>
@@ -657,7 +658,13 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           {/* Players Scores Row */}
           <div className="flex flex-wrap gap-1.5 mb-3">
             {room.players.map((p: any) => (
-              <div key={p.username} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8">
+              <div key={p.username} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/8">
+                <UserAvatar 
+                  username={p.username} 
+                  avatarUrl={p.avatar_url} 
+                  equippedFrame={p.equipped_frame} 
+                  size={18} 
+                />
                 <span className="text-[11px] font-bold text-zinc-300">{p.username}</span>
                 <span className="text-[11px] font-black text-orange-400">{p.score}</span>
               </div>
@@ -733,6 +740,12 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                 }`}>
                   {idx === 0 ? <Crown className="w-3.5 h-3.5" /> : idx + 1}
                 </span>
+                <UserAvatar 
+                  username={p.username} 
+                  avatarUrl={p.avatar_url} 
+                  equippedFrame={p.equipped_frame} 
+                  size={24} 
+                />
                 <span className="flex-1 text-[13px] font-bold text-white">{p.username}</span>
                 <span className="text-[13px] font-black text-orange-400">{p.score} pts</span>
               </motion.div>

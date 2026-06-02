@@ -85,7 +85,7 @@ export const Games: React.FC<GamesProps> = ({
   }, [gameTab]);
 
   return (
-    <div className="space-y-6 py-6 max-w-4xl mx-auto px-4 pb-20 text-left">
+    <div className="space-y-6 pt-20 md:pt-6 max-w-4xl mx-auto px-4 pb-24 md:pb-6 text-left">
       {/* Page Header */}
       <div className="flex items-center gap-2.5">
         <Gamepad2 className="w-6 h-6 text-brand-orange" />
@@ -207,7 +207,7 @@ export const Games: React.FC<GamesProps> = ({
                     
                     <div className="w-64 h-64 md:w-80 md:h-80 rounded-full border-4 border-zinc-900 bg-zinc-950 shadow-2xl relative overflow-hidden flex items-center justify-center">
                       <svg 
-                        className="w-full h-full transition-transform duration-[5000ms] ease-out select-none" 
+                        className="w-full h-full select-none" 
                         viewBox="0 0 100 100" 
                         style={{ transform: `rotate(${wheelRotation}deg)` }}
                       >
