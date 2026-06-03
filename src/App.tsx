@@ -43,6 +43,27 @@ const getClientRank = (xp: number) => {
   return { name_ar: 'طالب تشريح', name_en: 'Anatomy Rookie', emoji: '🧪', tier: 1 };
 };
 
+const mergePendingAndFresh = (pendingPosts: any[], freshData: any[]): any[] => {
+  const remainingPending = pendingPosts.filter(pp => {
+    return !freshData.some(fd => {
+      if (String(pp.id) === String(fd.id)) return true;
+      if (String(pp.id).startsWith('temp-') &&
+          String(pp.user_id) === String(fd.user_id) &&
+          pp.content === fd.content &&
+          pp.title === fd.title) {
+        return true;
+      }
+      return false;
+    });
+  });
+  
+  const filteredFresh = freshData.filter(fd => {
+    return !remainingPending.some(pp => String(pp.id) === String(fd.id));
+  });
+
+  return [...remainingPending, ...filteredFresh];
+};
+
 function InnerApp() {
   const {
     token,
@@ -63,7 +84,9 @@ function InnerApp() {
     xpSettings,
     setStreakOverlay,
     confirmEmail,
-    setConfirmEmail
+    setConfirmEmail,
+    forgotEmail,
+    setForgotEmail
   } = useAuth();
 
   const socket = useSocket();
@@ -351,6 +374,313 @@ function InnerApp() {
     }
   }, [token]);
 
+  // Socket listeners for real-time feed, news, and episode updates
+  useEffect(() => {
+    if (!socket) return () => {};
+
+    const handlePostCreated = (newPost: any) => {
+      console.log('[Socket] post_created received:', newPost);
+      const userId = getUserId(user, token);
+      setCommunityPosts(prev => {
+        const isMatch = (p: any) => {
+          if (String(p.id) === String(newPost.id)) return true;
+          if (String(p.id).startsWith('temp-') && 
+              String(p.user_id) === String(newPost.user_id) && 
+              p.content === newPost.content && 
+              p.title === newPost.title) {
+            return true;
+          }
+          return false;
+        };
+        const exists = prev.some(isMatch);
+        let updated;
+        if (exists) {
+          updated = prev.map(p => isMatch(p) ? { ...p, ...newPost, pending: false } : p);
+          console.log('[Socket] post_created matched existing post, updated in place.');
+        } else {
+          updated = [newPost, ...prev];
+          console.log('[Socket] post_created did not match, prepended to feed.');
+        }
+        console.log('[Socket] post_created final array:', updated);
+        if (userId) feedCacheService.set(`feed_${userId}`, updated);
+        return updated;
+      });
+    };
+
+    const handlePostUpdated = (updatedPost: any) => {
+      const userId = getUserId(user, token);
+      setCommunityPosts(prev => {
+        const updated = prev.map(p => p.id === updatedPost.id ? { ...p, ...updatedPost } : p);
+        if (userId) feedCacheService.set(`feed_${userId}`, updated);
+        return updated;
+      });
+    };
+
+    const handlePostDeleted = (data: { id: number }) => {
+      const userId = getUserId(user, token);
+      setCommunityPosts(prev => {
+        const updated = prev.filter(p => p.id !== data.id);
+        if (userId) feedCacheService.set(`feed_${userId}`, updated);
+        return updated;
+      });
+    };
+
+    const handleAnnouncementCreated = (newAnn: any) => {
+      console.log('[Socket] announcement_created received:', newAnn);
+      const userId = getUserId(user, token);
+      setNewsPosts(prev => {
+        const isMatch = (p: any) => {
+          if (String(p.id) === String(newAnn.id)) return true;
+          if (String(p.id).startsWith('temp-') && 
+              String(p.user_id) === String(newAnn.user_id) && 
+              p.content === newAnn.content && 
+              p.title === newAnn.title) {
+            return true;
+          }
+          return false;
+        };
+        const exists = prev.some(isMatch);
+        let updated;
+        if (exists) {
+          updated = prev.map(p => isMatch(p) ? { ...p, ...newAnn, pending: false } : p);
+          console.log('[Socket] announcement_created matched existing announcement, updated in-place.');
+        } else {
+          updated = [newAnn, ...prev];
+          console.log('[Socket] announcement_created did not match, prepended to news list.');
+        }
+        console.log('[Socket] announcement_created final array:', updated);
+        if (userId) feedCacheService.set(`news_${userId}`, updated);
+        return updated;
+      });
+    };
+
+    const handleAnnouncementUpdated = (updatedAnn: any) => {
+      const userId = getUserId(user, token);
+      setNewsPosts(prev => {
+        const updated = prev.map(p => p.id === updatedAnn.id ? { ...p, ...updatedAnn } : p);
+        if (userId) feedCacheService.set(`news_${userId}`, updated);
+        return updated;
+      });
+    };
+
+    const handleAnnouncementDeleted = (data: { id: number }) => {
+      const userId = getUserId(user, token);
+      setNewsPosts(prev => {
+        const updated = prev.filter(p => p.id !== data.id);
+        if (userId) feedCacheService.set(`news_${userId}`, updated);
+        return updated;
+      });
+    };
+
+    const handleEpisodeCreated = (newEp: any) => {
+      const userId = getUserId(user, token);
+      setEpisodes(prev => {
+        if (prev.some((e: any) => e.id === newEp.id)) return prev;
+        const updated = [newEp, ...prev];
+        if (userId) feedCacheService.set(`episodes_${userId}`, updated);
+        return updated;
+      });
+    };
+
+    const handleEpisodeUpdated = (updatedEp: any) => {
+      const userId = getUserId(user, token);
+      setEpisodes(prev => {
+        const updated = prev.map((e: any) => e.id === updatedEp.id ? { ...e, ...updatedEp } : e);
+        if (userId) feedCacheService.set(`episodes_${userId}`, updated);
+        return updated;
+      });
+    };
+
+    const handleEpisodeDeleted = (data: { id: number }) => {
+      const userId = getUserId(user, token);
+      setEpisodes(prev => {
+        const updated = prev.filter((e: any) => e.id !== data.id);
+        if (userId) feedCacheService.set(`episodes_${userId}`, updated);
+        return updated;
+      });
+    };
+
+    socket.on('post_created', handlePostCreated);
+    socket.on('post_updated', handlePostUpdated);
+    socket.on('post_deleted', handlePostDeleted);
+    socket.on('announcement_created', handleAnnouncementCreated);
+    socket.on('announcement_updated', handleAnnouncementUpdated);
+    socket.on('announcement_deleted', handleAnnouncementDeleted);
+    socket.on('episode_created', handleEpisodeCreated);
+    socket.on('episode_updated', handleEpisodeUpdated);
+    socket.on('episode_deleted', handleEpisodeDeleted);
+
+    return () => {
+      socket.off('post_created', handlePostCreated);
+      socket.off('post_updated', handlePostUpdated);
+      socket.off('post_deleted', handlePostDeleted);
+      socket.off('announcement_created', handleAnnouncementCreated);
+      socket.off('announcement_updated', handleAnnouncementUpdated);
+      socket.off('announcement_deleted', handleAnnouncementDeleted);
+      socket.off('episode_created', handleEpisodeCreated);
+      socket.off('episode_updated', handleEpisodeUpdated);
+      socket.off('episode_deleted', handleEpisodeDeleted);
+    };
+  }, [socket, user, token]);
+
+  // Socket listeners for real-time hero cards and XP/level/rank updates
+  useEffect(() => {
+    if (!socket || !user) return () => {};
+
+    const handleXpUpdated = (data: { userId: number, total_xp: number, weekly_xp: number, xp_earned?: number }) => {
+      const currentId = getUserId(user, token);
+      if (String(data.userId) === String(currentId)) {
+        setUser((prev: any) => {
+          if (!prev) return null;
+          const updated = {
+            ...prev,
+            total_xp: data.total_xp,
+            weekly_xp: data.weekly_xp,
+            rank: getClientRank(data.total_xp)
+          };
+          feedCacheService.set(`user_profile_${currentId}`, updated);
+          return updated;
+        });
+        if (data.xp_earned) {
+          triggerXpPopup(data.xp_earned);
+        }
+      }
+    };
+
+    const handleLevelUpdated = (data: { userId: number, level: number }) => {
+      const currentId = getUserId(user, token);
+      if (String(data.userId) === String(currentId)) {
+        showToast(`🎉 Level Up! You reached level ${data.level}!`);
+        playChatSound('success');
+      }
+    };
+
+    const handleRankUpdated = (data: { userId: number, rank: any }) => {
+      const currentId = getUserId(user, token);
+      if (String(data.userId) === String(currentId)) {
+        showToast(`🏆 New Rank unlocked: ${data.rank.name_ar} ${data.rank.emoji}!`);
+        playChatSound('success');
+        setUser((prev: any) => {
+          if (!prev) return null;
+          const updated = { ...prev, rank: data.rank };
+          feedCacheService.set(`user_profile_${currentId}`, updated);
+          return updated;
+        });
+      }
+    };
+
+    const handleBadgeUnlocked = (data: { userId: number, badge: string }) => {
+      const currentId = getUserId(user, token);
+      if (String(data.userId) === String(currentId)) {
+        showToast(`🏅 Badge unlocked: ${data.badge}!`);
+        playChatSound('success');
+      }
+    };
+
+    socket.on('xp_updated', handleXpUpdated);
+    socket.on('level_updated', handleLevelUpdated);
+    socket.on('rank_updated', handleRankUpdated);
+    socket.on('badge_unlocked', handleBadgeUnlocked);
+
+    return () => {
+      socket.off('xp_updated', handleXpUpdated);
+      socket.off('level_updated', handleLevelUpdated);
+      socket.off('rank_updated', handleRankUpdated);
+      socket.off('badge_unlocked', handleBadgeUnlocked);
+    };
+  }, [socket, user, token]);
+
+  // Socket listener for real-time leaderboard update
+  useEffect(() => {
+    if (!socket) return () => {};
+
+    const handleLeaderboardUpdated = (data: {
+      userId: number;
+      username: string;
+      batch: string;
+      total_xp: number;
+      weekly_xp: number;
+      streak_count: number;
+      equipped_frame: string;
+      avatar_url: string | null;
+    }) => {
+      const userId = getUserId(user, token);
+      setLeaderboard(prev => {
+        const exists = prev.some((u: any) => u.username === data.username);
+        
+        let updatedList = [...prev];
+        const newXp = leaderboardTab === 'weekly' ? data.weekly_xp : data.total_xp;
+
+        if (leaderboardTab === 'batch' && user?.batch && data.batch !== user.batch) {
+          return prev.filter((u: any) => u.username !== data.username);
+        }
+
+        const updatedUserObj = {
+          username: data.username,
+          batch: data.batch,
+          xp: newXp,
+          streak_count: data.streak_count,
+          rank: getClientRank(data.total_xp),
+          equipped_frame: data.equipped_frame || 'none',
+          avatar_url: data.avatar_url || null
+        };
+
+        if (exists) {
+          updatedList = prev.map((u: any) => u.username === data.username ? { ...u, ...updatedUserObj } : u);
+        } else {
+          if (prev.length < 100 || (prev.length > 0 && newXp > prev[prev.length - 1].xp)) {
+            updatedList.push(updatedUserObj);
+          } else {
+            return prev;
+          }
+        }
+
+        updatedList.sort((a: any, b: any) => {
+          if (b.xp !== a.xp) {
+            return b.xp - a.xp;
+          }
+          return a.username.localeCompare(b.username);
+        });
+
+        if (updatedList.length > 100) {
+          updatedList = updatedList.slice(0, 100);
+        }
+
+        const finalSorted = updatedList.map((u: any, idx) => ({
+          ...u,
+          rank_num: idx + 1
+        }));
+
+        if (userId) {
+          const cacheKey = `leaderboard_${userId}_${leaderboardTab}_${user?.batch || ''}`;
+          feedCacheService.set(cacheKey, finalSorted);
+        }
+
+        return finalSorted;
+      });
+    };
+
+    socket.on('leaderboard_updated', handleLeaderboardUpdated);
+
+    return () => {
+      socket.off('leaderboard_updated', handleLeaderboardUpdated);
+    };
+  }, [socket, user, token, leaderboardTab]);
+
+  // Handle reconnect background validation and safe updates
+  useEffect(() => {
+    const handleReconnectSync = () => {
+      showToast('Real-time connection restored. Syncing...');
+      fetchEpisodes(true);
+      fetchCommunityPosts(undefined, true);
+      fetchNewsPosts(true);
+      fetchLeaderboard(true);
+      fetchPublicSuggestions();
+    };
+    window.addEventListener('socket_reconnect', handleReconnectSync);
+    return () => window.removeEventListener('socket_reconnect', handleReconnectSync);
+  }, [token, user?.batch, leaderboardTab]);
+
   // Scroll to targeted community post
   useEffect(() => {
     const path = window.location.pathname;
@@ -384,7 +714,6 @@ function InnerApp() {
     }
   }, [user]);
 
-  // Background refresh for all home page sections when home page is navigated to
   useEffect(() => {
     if (currentPage === 'home') {
       fetchUserProfile();
@@ -397,6 +726,12 @@ function InnerApp() {
     } else if (currentPage === 'news') {
       fetchNewsPosts();
     }
+  }, [currentPage]);
+
+  // Reset auth errors/success on navigation to prevent carrying over
+  useEffect(() => {
+    setAuthError('');
+    setAuthSuccess('');
   }, [currentPage]);
 
   // Revalidate leaderboard when batch or tab changes
@@ -642,12 +977,25 @@ function InnerApp() {
         const data = await res.json();
         if (res.ok) {
           setCommunityPosts(prev => {
-            const existingIds = new Set(prev.map(p => p.id));
-            const newPosts = data.filter((p: any) => !existingIds.has(p.id));
+            const existingIds = new Set(prev.map(p => String(p.id)));
+            const pendingPosts = prev.filter(p => p.pending);
+            const newPosts = data.filter((p: any) => {
+              if (existingIds.has(String(p.id))) return false;
+              if (pendingPosts.some(pp => 
+                String(pp.user_id) === String(p.user_id) && 
+                pp.content === p.content && 
+                pp.title === p.title
+              )) {
+                return false;
+              }
+              return true;
+            });
             if (newPosts.length === 0) {
               setHasMorePosts(false);
             }
-            return [...prev, ...newPosts];
+            const updated = [...prev, ...newPosts];
+            console.log('[FetchPosts] Loaded older posts count:', newPosts.length, 'total count:', updated.length);
+            return updated;
           });
         }
       } catch (e) {
@@ -668,8 +1016,9 @@ function InnerApp() {
       if (cache && cache.data && cache.data.length > 0) {
         setCommunityPosts(prev => {
           const pendingPosts = prev.filter(p => p.pending);
-          const cachedData = cache.data.filter(cp => !pendingPosts.some(pp => pp.id === cp.id));
-          return [...pendingPosts, ...cachedData];
+          const merged = mergePendingAndFresh(pendingPosts, cache.data);
+          console.log('[FetchPosts] Loaded feed from cache. Count:', merged.length);
+          return merged;
         });
 
         const cacheAge = Date.now() - cache.cachedAt;
@@ -690,14 +1039,9 @@ function InnerApp() {
         const data = await res.json();
         setCommunityPosts(prev => {
           const pendingPosts = prev.filter(p => p.pending);
-          const currentNonPendingPosts = prev.filter(p => !p.pending);
           const freshData = data || [];
-
-          if (JSON.stringify(currentNonPendingPosts) === JSON.stringify(freshData)) {
-            return prev;
-          }
-
-          const merged = [...pendingPosts, ...freshData.filter((fp: any) => !pendingPosts.some(pp => pp.id === fp.id))];
+          const merged = mergePendingAndFresh(pendingPosts, freshData);
+          console.log('[FetchPosts] Fresh feed from API count:', freshData.length, 'merged count:', merged.length);
           if (userId) {
             feedCacheService.set(`feed_${userId}`, merged);
           }
@@ -731,7 +1075,12 @@ function InnerApp() {
       if (userId) {
         const cache = await feedCacheService.get(`news_${userId}`);
         if (cache && cache.data && cache.data.length > 0) {
-          setNewsPosts(cache.data);
+          setNewsPosts(prev => {
+            const pending = prev.filter(p => p.pending);
+            const merged = mergePendingAndFresh(pending, cache.data);
+            console.log('[FetchNews] Loaded news from cache. Count:', merged.length);
+            return merged;
+          });
           const cacheAge = Date.now() - cache.cachedAt;
           const ttl = 5 * 60 * 1000;
           if (cacheAge < ttl && !forceRefresh) {
@@ -744,13 +1093,14 @@ function InnerApp() {
       const data = await res.json();
       if (res.ok) {
         setNewsPosts(prev => {
-          if (JSON.stringify(prev) !== JSON.stringify(data)) {
-            if (userId) {
-              feedCacheService.set(`news_${userId}`, data);
-            }
-            return data;
+          const pending = prev.filter(p => p.pending);
+          const freshData = data || [];
+          const merged = mergePendingAndFresh(pending, freshData);
+          console.log('[FetchNews] Fresh news from API count:', freshData.length, 'merged count:', merged.length);
+          if (userId) {
+            feedCacheService.set(`news_${userId}`, merged);
           }
-          return prev;
+          return merged;
         });
       }
     } catch (e) {
@@ -791,10 +1141,13 @@ function InnerApp() {
   const handleLogin = async (e: any) => {
     e.preventDefault();
     setAuthError('');
+    setAuthSuccess('');
     try {
       const res = await authService.login(loginForm);
       const data = await res.json();
       if (res.ok) {
+        setAuthError('');
+        setAuthSuccess('');
         setToken(data.token);
         setUser(data.user);
         setLoginForm({ username: '', password: '' });
@@ -817,9 +1170,11 @@ function InnerApp() {
           setCurrentPage('home');
         }
       } else {
+        setAuthSuccess('');
         setAuthError(data.error);
       }
     } catch (err) {
+      setAuthSuccess('');
       setAuthError('Connection error occurred.');
     }
   };
@@ -841,6 +1196,7 @@ function InnerApp() {
         });
       }
       if (res.ok) {
+        setAuthError('');
         setAuthSuccess(data.message);
         setConfirmEmail(registerForm.email);
         localStorage.setItem('confirmEmail', registerForm.email);
@@ -855,12 +1211,14 @@ function InnerApp() {
           setAuthSuccess('');
         }, 1500);
       } else {
+        setAuthSuccess('');
         setAuthError(data.error || 'Failed to register.');
       }
     } catch (err) {
       if (import.meta.env.DEV) {
         console.error('handleRegister: Error submitting form', err);
       }
+      setAuthSuccess('');
       setAuthError('Connection error occurred.');
     }
   };
@@ -883,6 +1241,7 @@ function InnerApp() {
       }
       if (res.ok) {
         localStorage.removeItem('confirmEmail');
+        setAuthError('');
         setAuthSuccess(data.message);
         setToken(data.token);
         setUser(data.user);
@@ -910,9 +1269,11 @@ function InnerApp() {
           setAuthSuccess('');
         }, 1500);
       } else {
+        setAuthSuccess('');
         setAuthError(data.error);
       }
     } catch (e) {
+      setAuthSuccess('');
       setAuthError('Failed to activate account.');
     }
   };
@@ -924,6 +1285,7 @@ function InnerApp() {
       const res = await authService.forgotPassword(email);
       const data = await res.json();
       if (res.ok) {
+        setAuthError('');
         setAuthSuccess(data.message);
         setForgotEmail(email);
         setTimeout(() => {
@@ -931,9 +1293,11 @@ function InnerApp() {
           setAuthSuccess('');
         }, 1500);
       } else {
+        setAuthSuccess('');
         setAuthError(data.error);
       }
     } catch (e) {
+      setAuthSuccess('');
       setAuthError('Connection error occurred.');
     }
   };
@@ -945,15 +1309,18 @@ function InnerApp() {
       const res = await authService.resetPassword(forgotEmail, code, newPassword);
       const data = await res.json();
       if (res.ok) {
+        setAuthError('');
         setAuthSuccess(data.message);
         setTimeout(() => {
           setCurrentPage('login');
           setAuthSuccess('');
         }, 2000);
       } else {
+        setAuthSuccess('');
         setAuthError(data.error);
       }
     } catch (e) {
+      setAuthSuccess('');
       setAuthError('Connection error occurred.');
     }
   };
@@ -1206,15 +1573,18 @@ function InnerApp() {
     };
 
     // Insert the post immediately into the current feed and save it to the cache
+    console.log('[CreatePost] Optimistically inserting pending post:', pendingPost);
     if (isNews) {
       setNewsPosts(prev => {
         const updated = [pendingPost, ...prev];
+        console.log('[CreatePost] News posts after optimistic insert count:', updated.length);
         if (userId) feedCacheService.set(`news_${userId}`, updated);
         return updated;
       });
     } else {
       setCommunityPosts(prev => {
         const updated = [pendingPost, ...prev];
+        console.log('[CreatePost] Community posts after optimistic insert count:', updated.length);
         if (userId) feedCacheService.set(`feed_${userId}`, updated);
         return updated;
       });
@@ -1223,6 +1593,7 @@ function InnerApp() {
     try {
       const res = await communityService.createPost(title, content, imageUrl, isNews, token);
       const data = await res.json();
+      console.log('[CreatePost] API response status:', res.status, 'data:', data);
 
       if (res.ok) {
         showToast(data.message || 'Post published! 🎉');
@@ -1242,6 +1613,7 @@ function InnerApp() {
               }
               return p;
             });
+            console.log('[CreatePost] News posts after updating temp ID:', updated);
             if (userId) feedCacheService.set(`news_${userId}`, updated);
             return updated;
           });
@@ -1259,6 +1631,7 @@ function InnerApp() {
               }
               return p;
             });
+            console.log('[CreatePost] Community posts after updating temp ID:', updated);
             if (userId) feedCacheService.set(`feed_${userId}`, updated);
             return updated;
           });

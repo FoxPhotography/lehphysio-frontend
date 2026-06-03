@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useAuth } from './AuthContext';
 import { useSocket } from './SocketContext';
 import { notificationService } from '../services/notificationService';
+import { feedCacheService } from '../services/feedCacheService';
 import { playChatSound } from '../utils/helpers';
 import type { AppNotification, NotificationPreferences, NotificationPagination } from '../types';
 
@@ -75,14 +76,28 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const res = await notificationService.fetchNotifications(page, 20, activeFilter, token);
       if (res.ok) {
         const data = await res.json();
+        const userId = user?.id;
         if (reset) {
           setNotifications(data.notifications || []);
           currentPage.current = 1;
+          if (userId) {
+            feedCacheService.set(`notifications_${userId}_${activeFilter}`, {
+              notifications: data.notifications || [],
+              unreadCount
+            });
+          }
         } else {
           setNotifications(prev => {
             const existingIds = new Set(prev.map(n => n._id));
             const newNotifs = (data.notifications || []).filter((n: AppNotification) => !existingIds.has(n._id));
-            return [...prev, ...newNotifs];
+            const merged = [...prev, ...newNotifs];
+            if (userId) {
+              feedCacheService.set(`notifications_${userId}_${activeFilter}`, {
+                notifications: merged,
+                unreadCount
+              });
+            }
+            return merged;
           });
         }
         setPagination(data.pagination || { page: 1, limit: 20, total: 0, hasMore: false });
@@ -92,7 +107,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       setIsLoading(false);
     }
-  }, [token, activeFilter]);
+  }, [token, activeFilter, user?.id, unreadCount]);
 
   // Load more (infinite scroll)
   const loadMore = useCallback(async () => {
@@ -105,9 +120,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const markAsRead = useCallback(async (id: number) => {
     if (!token) return;
     // Optimistic update
-    setNotifications(prev =>
-      prev.map(n => n._id === id ? { ...n, is_read: true } : n)
-    );
+    setNotifications(prev => {
+      const updated = prev.map(n => n._id === id ? { ...n, is_read: true } : n);
+      const userId = user?.id;
+      if (userId) {
+        feedCacheService.set(`notifications_${userId}_${activeFilter}`, {
+          notifications: updated,
+          unreadCount: Math.max(0, unreadCount - 1)
+        });
+      }
+      return updated;
+    });
     setUnreadCount(prev => Math.max(0, prev - 1));
 
     try {
@@ -115,13 +138,23 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } catch (err) {
       console.error('Error marking notification as read:', err);
     }
-  }, [token]);
+  }, [token, user?.id, activeFilter, unreadCount]);
 
   // Mark all as read
   const markAllAsRead = useCallback(async () => {
     if (!token) return;
     // Optimistic update
-    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    setNotifications(prev => {
+      const updated = prev.map(n => ({ ...n, is_read: true }));
+      const userId = user?.id;
+      if (userId) {
+        feedCacheService.set(`notifications_${userId}_${activeFilter}`, {
+          notifications: updated,
+          unreadCount: 0
+        });
+      }
+      return updated;
+    });
     setUnreadCount(0);
 
     try {
@@ -129,29 +162,51 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } catch (err) {
       console.error('Error marking all as read:', err);
     }
-  }, [token]);
+  }, [token, user?.id, activeFilter]);
 
   // Clear read
   const clearRead = useCallback(async () => {
     if (!token) return;
     // Optimistic update
-    setNotifications(prev => prev.filter(n => !n.is_read));
+    setNotifications(prev => {
+      const updated = prev.filter(n => !n.is_read);
+      const userId = user?.id;
+      if (userId) {
+        feedCacheService.set(`notifications_${userId}_${activeFilter}`, {
+          notifications: updated,
+          unreadCount
+        });
+      }
+      return updated;
+    });
 
     try {
       await notificationService.clearRead(token);
     } catch (err) {
       console.error('Error clearing read notifications:', err);
     }
-  }, [token]);
+  }, [token, user?.id, activeFilter, unreadCount]);
 
   // Soft delete single
   const softDelete = useCallback(async (id: number) => {
     if (!token) return;
     const notif = notifications.find(n => n._id === id);
-    
+    const isUnread = notif && !notif.is_read;
+    const nextUnreadCount = isUnread ? Math.max(0, unreadCount - 1) : unreadCount;
+
     // Optimistic update
-    setNotifications(prev => prev.filter(n => n._id !== id));
-    if (notif && !notif.is_read) {
+    setNotifications(prev => {
+      const updated = prev.filter(n => n._id !== id);
+      const userId = user?.id;
+      if (userId) {
+        feedCacheService.set(`notifications_${userId}_${activeFilter}`, {
+          notifications: updated,
+          unreadCount: nextUnreadCount
+        });
+      }
+      return updated;
+    });
+    if (isUnread) {
       setUnreadCount(prev => Math.max(0, prev - 1));
     }
 
@@ -160,7 +215,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } catch (err) {
       console.error('Error deleting notification:', err);
     }
-  }, [token, notifications]);
+  }, [token, notifications, user?.id, activeFilter, unreadCount]);
 
   // Set filter
   const setFilter = useCallback((filter: 'all' | 'unread' | 'mentions' | 'comments' | 'posts' | 'moderation') => {
@@ -265,11 +320,47 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [changePage, markAsRead]);
 
-  // Initialize: fetch notifications and preferences on token change
+  // Load cached notifications immediately on mount/filter change
+  useEffect(() => {
+    const userId = user?.id;
+    if (userId) {
+      feedCacheService.get(`notifications_${userId}_${activeFilter}`).then(cache => {
+        if (cache && cache.data) {
+          setNotifications(cache.data.notifications || []);
+          setUnreadCount(cache.data.unreadCount || 0);
+        }
+      });
+    } else {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  }, [user?.id, token, activeFilter]);
+
+  // Initialize: fetch notifications, preferences, and unread count on token change
   useEffect(() => {
     if (token) {
       currentPage.current = 1;
       fetchNotifications(true);
+
+      // Fetch unread count
+      notificationService.fetchUnreadCount(token)
+        .then(async (res) => {
+          if (res.ok) {
+            const data = await res.json();
+            setUnreadCount(data.unreadCount || 0);
+            const userId = user?.id;
+            if (userId) {
+              feedCacheService.get(`notifications_${userId}_${activeFilter}`).then(cache => {
+                const notifs = cache ? cache.data.notifications : [];
+                feedCacheService.set(`notifications_${userId}_${activeFilter}`, {
+                  notifications: notifs,
+                  unreadCount: data.unreadCount || 0
+                });
+              });
+            }
+          }
+        })
+        .catch(err => console.error('Error fetching unread count:', err));
 
       // Fetch preferences
       notificationService.getPreferences(token)
@@ -310,47 +401,106 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [activeFilter]);
 
+  // Listen to socket reconnection event to resync
+  useEffect(() => {
+    const handleReconnectSync = () => {
+      fetchNotifications(true);
+      if (token) {
+        notificationService.fetchUnreadCount(token)
+          .then(async (res) => {
+            if (res.ok) {
+              const data = await res.json();
+              setUnreadCount(data.unreadCount || 0);
+            }
+          })
+          .catch(err => console.error(err));
+      }
+    };
+    window.addEventListener('socket_reconnect', handleReconnectSync);
+    return () => window.removeEventListener('socket_reconnect', handleReconnectSync);
+  }, [token, activeFilter, fetchNotifications]);
+
   // Socket listeners for real-time updates
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) return () => {};
 
     const handleNewNotification = (notif: AppNotification) => {
       // Deduplicate: only add if not already in the list
       setNotifications(prev => {
         if (prev.some(n => n._id === notif._id)) return prev;
-        return [notif, ...prev];
+        const updated = [notif, ...prev];
+        const userId = user?.id;
+        if (userId) {
+          feedCacheService.set(`notifications_${userId}_${activeFilter}`, {
+            notifications: updated,
+            unreadCount: unreadCount + 1
+          });
+        }
+        return updated;
       });
+      setUnreadCount(prev => prev + 1);
       // Play sound
       playChatSound('success');
     };
 
     const handleCountUpdate = (data: { unreadCount: number }) => {
       setUnreadCount(data.unreadCount);
+      const userId = user?.id;
+      if (userId) {
+        feedCacheService.get(`notifications_${userId}_${activeFilter}`).then(cache => {
+          const notifs = cache ? cache.data.notifications : [];
+          feedCacheService.set(`notifications_${userId}_${activeFilter}`, {
+            notifications: notifs,
+            unreadCount: data.unreadCount
+          });
+        });
+      }
     };
 
     const handleNotificationRead = (data: { notificationId: number }) => {
-      setNotifications(prev =>
-        prev.map(n => n._id === data.notificationId ? { ...n, is_read: true } : n)
-      );
+      setNotifications(prev => {
+        const updated = prev.map(n => n._id === data.notificationId ? { ...n, is_read: true } : n);
+        const userId = user?.id;
+        if (userId) {
+          feedCacheService.set(`notifications_${userId}_${activeFilter}`, {
+            notifications: updated,
+            unreadCount: Math.max(0, unreadCount - 1)
+          });
+        }
+        return updated;
+      });
+      setUnreadCount(prev => Math.max(0, prev - 1));
     };
 
     const handleAllRead = () => {
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setNotifications(prev => {
+        const updated = prev.map(n => ({ ...n, is_read: true }));
+        const userId = user?.id;
+        if (userId) {
+          feedCacheService.set(`notifications_${userId}_${activeFilter}`, {
+            notifications: updated,
+            unreadCount: 0
+          });
+        }
+        return updated;
+      });
       setUnreadCount(0);
     };
 
     socket.on('new_notification', handleNewNotification);
+    socket.on('notification_created', handleNewNotification);
     socket.on('notification_count_update', handleCountUpdate);
     socket.on('notification_read', handleNotificationRead);
     socket.on('notifications_all_read', handleAllRead);
 
     return () => {
       socket.off('new_notification', handleNewNotification);
+      socket.off('notification_created', handleNewNotification);
       socket.off('notification_count_update', handleCountUpdate);
       socket.off('notification_read', handleNotificationRead);
       socket.off('notifications_all_read', handleAllRead);
     };
-  }, [socket]);
+  }, [socket, user?.id, activeFilter, unreadCount]);
 
   const value: NotificationContextType = {
     notifications,

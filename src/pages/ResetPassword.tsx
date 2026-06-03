@@ -30,9 +30,11 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [localError, setLocalError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setLocalError('');
 
     if (newPassword !== confirmPassword) {
@@ -40,7 +42,12 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
       return;
     }
 
-    onSubmit(code, newPassword);
+    setLoading(true);
+    try {
+      await onSubmit(code, newPassword);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,6 +66,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
           <OtpInput
             value={code}
             onChange={setCode}
+            disabled={loading}
             onComplete={() => {
               setTimeout(() => {
                 const passInput = document.getElementById('new-password-input') as HTMLInputElement;
@@ -80,6 +88,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
             onChange={(e) => setNewPassword(e.target.value)}
             required
             autoComplete="new-password"
+            disabled={loading}
           />
         </FormField>
 
@@ -93,15 +102,16 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             autoComplete="new-password"
+            disabled={loading}
           />
         </FormField>
 
-        <AuthSubmitButton label="Update Password" />
+        <AuthSubmitButton label={loading ? "Updating..." : "Update Password"} disabled={loading} />
       </form>
 
       <p className="text-center text-[13px] text-zinc-500 mt-5">
         Remember your password?{' '}
-        <AuthLink onClick={() => setCurrentPage('login')}>Login</AuthLink>
+        <AuthLink onClick={() => !loading && setCurrentPage('login')}>Login</AuthLink>
       </p>
     </AuthLayout>
   );

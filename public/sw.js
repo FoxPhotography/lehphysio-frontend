@@ -1,4 +1,4 @@
-const CACHE_NAME = 'leh-physio-cache-v1';
+const CACHE_NAME = 'leh-physio-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -37,11 +37,16 @@ self.addEventListener('fetch', (event) => {
   // Only intercept GET requests and exclude API requests/WebSockets/Vite dev server assets
   if (
     event.request.method !== 'GET' || 
-    event.request.url.includes('/api/') || 
+    event.request.url.includes('/api') || 
     event.request.url.includes('socket.io') ||
     event.request.url.includes('/@vite/') ||
     event.request.url.includes('__vite_ping') ||
-    event.request.url.includes('/node_modules/')
+    event.request.url.includes('/node_modules/') ||
+    event.request.url.includes('/src/') ||
+    event.request.url.includes('/@fs/') ||
+    event.request.url.includes('/@id/') ||
+    event.request.url.includes('.ts') ||
+    event.request.url.includes('.tsx')
   ) {
     return;
   }

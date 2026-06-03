@@ -33,6 +33,7 @@ interface AppRouterProps {
   handleLikePost: (id: number) => void;
   handleDeletePost: (id: number) => void;
   handleCancelPostRevision: (id: number) => void;
+  communityPosts: any[];
   episodes: any[];
   handleLikeEpisode: (id: number) => Promise<void>;
   handleShareEpisode: (id: number) => void;

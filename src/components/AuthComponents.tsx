@@ -101,12 +101,16 @@ export const AuthLink: React.FC<{ onClick: () => void; children: React.ReactNode
 export const AuthSubmitButton: React.FC<{
   label: string;
   icon?: React.ReactNode;
-}> = ({ label, icon }) => (
+  disabled?: boolean;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+}> = ({ label, icon, disabled, onClick }) => (
   <motion.button
     type="submit"
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-black text-[14px] hover:from-orange-400 hover:to-amber-400 transition-colors shadow-lg shadow-orange-500/15"
+    disabled={disabled}
+    onClick={onClick}
+    whileHover={disabled ? {} : { scale: 1.02 }}
+    whileTap={disabled ? {} : { scale: 0.98 }}
+    className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-black text-[14px] hover:from-orange-400 hover:to-amber-400 transition-colors shadow-lg shadow-orange-500/15 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
   >
     {label}
     {icon || <ArrowRight className="w-4 h-4" />}

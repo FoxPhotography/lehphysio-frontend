@@ -24,10 +24,17 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
   setCurrentPage,
 }) => {
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(email);
+    if (loading) return;
+    setLoading(true);
+    try {
+      await onSubmit(email);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -48,15 +55,16 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
+            disabled={loading}
           />
         </FormField>
 
-        <AuthSubmitButton label="Send Reset Code" />
+        <AuthSubmitButton label={loading ? "Sending..." : "Send Reset Code"} disabled={loading} />
       </form>
 
       <p className="text-center text-[13px] text-zinc-500 mt-5">
         Remember your password?{' '}
-        <AuthLink onClick={() => setCurrentPage('login')}>Login</AuthLink>
+        <AuthLink onClick={() => !loading && setCurrentPage('login')}>Login</AuthLink>
       </p>
     </AuthLayout>
   );

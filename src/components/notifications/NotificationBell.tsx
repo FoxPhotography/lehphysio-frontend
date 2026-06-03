@@ -13,9 +13,11 @@ export const NotificationBell: React.FC = () => {
     if (unreadCount > prevCount.current) {
       setShouldPulse(true);
       const timer = setTimeout(() => setShouldPulse(false), 2000);
+      prevCount.current = unreadCount;
       return () => clearTimeout(timer);
     }
     prevCount.current = unreadCount;
+    return () => {};
   }, [unreadCount]);
 
   const displayCount = unreadCount > 9 ? '9+' : unreadCount;

@@ -32,6 +32,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           // Invalid token, skip
         }
       }
+      // Notify components to resynchronize
+      window.dispatchEvent(new Event('socket_reconnect'));
     };
 
     socket.on('connect', onReconnect);

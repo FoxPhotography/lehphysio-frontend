@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_BASE } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { gameService } from '../services/gameService';
@@ -99,6 +100,7 @@ export const useGames = () => {
         socket.off('connect', joinRoom);
       };
     }
+    return () => {};
   }, [activeGameRoom?.code, currentPage, token, user?.username, socket]);
 
   const handleCreateGameRoom = async () => {

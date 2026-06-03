@@ -67,6 +67,7 @@ interface HomeProps {
   leaderboard?: any[];
   equippedFrame?: string;
   episodes?: any[];
+  triggerXpPopup?: (amount: number) => void;
   xpSettings?: any;
   newsPosts: any[];
   loadOlderPosts?: (beforeId: string) => void;
@@ -193,16 +194,15 @@ export const Home: React.FC<HomeProps> = ({
   };
 
   useEffect(() => {
-    if (contextMenu) {
-      const close = () => setContextMenu(null);
-      const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
-      document.addEventListener('click', close);
-      document.addEventListener('keydown', onKey);
-      return () => {
-        document.removeEventListener('click', close);
-        document.removeEventListener('keydown', onKey);
-      };
-    }
+    if (!contextMenu) return () => {};
+    const close = () => setContextMenu(null);
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('click', close);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', close);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [contextMenu]);
 
   useEffect(() => {

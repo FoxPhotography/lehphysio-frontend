@@ -15,7 +15,7 @@ export const HighlightWrapper: React.FC<HighlightWrapperProps> = ({
   className = '',
 }) => {
   const [active, setActive] = useState(isHighlighted);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (isHighlighted) {

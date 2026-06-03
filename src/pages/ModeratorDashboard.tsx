@@ -580,8 +580,8 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                         </div>
                       </div>
                       <div className="flex gap-1.5 items-center flex-shrink-0">
-                        {u.is_muted ? <VolumeX className="w-3.5 h-3.5 text-orange-400" title="Muted" /> : null}
-                        {u.is_banned ? <UserX className="w-3.5 h-3.5 text-red-500" title="Banned" /> : null}
+                        {u.is_muted ? <span title="Muted"><VolumeX className="w-3.5 h-3.5 text-orange-400" /></span> : null}
+                        {u.is_banned ? <span title="Banned"><UserX className="w-3.5 h-3.5 text-red-500" /></span> : null}
                       </div>
                     </button>
                   );

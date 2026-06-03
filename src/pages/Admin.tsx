@@ -61,6 +61,8 @@ interface AdminProps {
   handleOpenModerationModal: (username: string, userId: number) => void;
   handleAdminDeleteUser: (userId: number, username: string) => void;
   user: any;
+  token?: string | null;
+  apiBase?: string;
   fetchXpSettings?: () => void;
   episodes?: any[];
   fetchEpisodes?: () => void;

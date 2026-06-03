@@ -66,7 +66,7 @@ export const NotificationCenter: React.FC = () => {
 
   // Close on click outside or escape key
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return () => {};
 
     const handleClickOutside = (e: MouseEvent) => {
       const clickedBell = (e.target as HTMLElement).closest('.notification-bell-btn');
@@ -97,7 +97,7 @@ export const NotificationCenter: React.FC = () => {
 
   // Lock body scroll when open
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return () => {};
 
     const origHtmlOverflow = document.documentElement.style.overflow;
     const origBodyOverflow = document.body.style.overflow;
@@ -113,7 +113,7 @@ export const NotificationCenter: React.FC = () => {
 
   // Infinite scroll observer
   useEffect(() => {
-    if (!sentinelRef.current || !isOpen) return;
+    if (!sentinelRef.current || !isOpen) return () => {};
 
     const observer = new IntersectionObserver(
       (entries) => {

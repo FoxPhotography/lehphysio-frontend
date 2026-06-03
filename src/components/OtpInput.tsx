@@ -4,15 +4,17 @@ interface OtpInputProps {
   value: string;
   onChange: (val: string) => void;
   onComplete?: (code: string) => void;
+  disabled?: boolean;
 }
 
-export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange, onComplete }) => {
+export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange, onComplete, disabled }) => {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
   // Split value into array of 6 digits (padded with empty strings)
   const codeArray = value.split('').concat(Array(6).fill('')).slice(0, 6);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    if (disabled) return;
     const val = e.target.value;
     const numericVal = val.replace(/[^0-9]/g, ''); // Allow only digits
 
@@ -56,6 +58,7 @@ export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange, onComplete 
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (disabled) return;
     if (e.key === 'Backspace') {
       if (!codeArray[index] && index > 0) {
         // Current box is already empty; focus previous and clear it
@@ -77,6 +80,7 @@ export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange, onComplete 
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (disabled) return;
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').trim();
     const digitsOnly = pastedData.replace(/[^0-9]/g, '').slice(0, 6);
@@ -104,7 +108,8 @@ export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange, onComplete 
           onChange={(e) => handleChange(e, idx)}
           onKeyDown={(e) => handleKeyDown(e, idx)}
           onPaste={handlePaste}
-          className="w-11 h-13 md:w-12 md:h-14 bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl text-xl font-black text-center outline-none transition-all duration-200 shadow-md"
+          disabled={disabled}
+          className={`w-11 h-13 md:w-12 md:h-14 bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl text-xl font-black text-center outline-none transition-all duration-200 shadow-md ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           required
         />
       ))}

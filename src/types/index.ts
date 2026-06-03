@@ -11,6 +11,8 @@ export interface User {
   streak_count: number;
   role: 'user' | 'admin' | 'owner';
   last_poll_vote_date?: string;
+  last_spin_wheel_date?: string;
+  last_surprise_box_date?: string;
   global_rank?: number;
   total_users?: number;
 }
