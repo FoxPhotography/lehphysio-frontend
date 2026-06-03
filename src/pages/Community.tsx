@@ -31,6 +31,7 @@ interface CommunityProps {
   user: any;
   onlineCount: number;
   chatMessages: any[];
+  isFindingTargetMessage?: boolean;
   isMultiSelectMode: boolean;
   setIsMultiSelectMode: (val: boolean) => void;
   selectedMessageIds: number[];
@@ -89,6 +90,7 @@ export const Community: React.FC<CommunityProps> = ({
   user,
   onlineCount,
   chatMessages,
+  isFindingTargetMessage,
   isMultiSelectMode,
   setIsMultiSelectMode,
   selectedMessageIds,
@@ -220,12 +222,22 @@ export const Community: React.FC<CommunityProps> = ({
             if (el) {
               el.scrollIntoView({ behavior: 'smooth', block: 'center' });
               if (deepLinkTarget) setDeepLinkTarget(null);
+              // Clear URL hash/query parameters to avoid scroll loops
+              window.history.replaceState({}, '', '/chat');
             }
           }, 100);
         }
       }
     }
   }, [chatMessages, activeSubTab, deepLinkTarget, setDeepLinkTarget]);
+
+  // Select suggestions sub-tab automatically if tab=suggestions is in the URL
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('tab') === 'suggestions') {
+      setActiveSubTab('suggestions');
+    }
+  }, []);
 
   const renderTextWithMentions = (text: string) => {
     if (!text) return '';
@@ -345,7 +357,13 @@ export const Community: React.FC<CommunityProps> = ({
         </div>
 
         {activeSubTab === 'chat' ? (
-          <>
+          isFindingTargetMessage ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 gap-3 min-h-[300px]">
+              <div className="w-8 h-8 border-4 border-brand-orange border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm font-bold font-sans">Loading conversation...</span>
+            </div>
+          ) : (
+            <>
             {/* Multi-select bar or Standard Header */}
             {isMultiSelectMode ? (
               <div className="flex justify-between items-center bg-brand-orange/10 border border-brand-orange/20 rounded-xl p-3 mb-3 mx-3 md:mx-0 shrink-0">
@@ -733,6 +751,7 @@ export const Community: React.FC<CommunityProps> = ({
               )}
             </AnimatePresence>
           </>
+          )
         ) : (
           <div className="flex flex-col flex-1 overflow-hidden">
             {user ? (

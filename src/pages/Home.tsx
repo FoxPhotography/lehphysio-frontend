@@ -57,6 +57,7 @@ interface HomeProps {
   communityPosts: any[];
   handleLikePost: (id: number) => void;
   handleDeletePost: (id: number) => void;
+  handleCancelPostRevision: (id: number) => void;
   handleSharePost: (id: number) => void;
   handleUploadImage: (file: File) => Promise<string | null>;
   usernames?: any[];
@@ -94,6 +95,7 @@ export const Home: React.FC<HomeProps> = ({
   communityPosts,
   handleLikePost,
   handleDeletePost,
+  handleCancelPostRevision,
   handleSharePost,
   handleUploadImage,
   usernames,
@@ -260,6 +262,8 @@ export const Home: React.FC<HomeProps> = ({
               }, 3000);
               // Clear target
               setDeepLinkTarget(null);
+              // Clear URL hash/params to prevent scroll loop
+              window.history.replaceState({}, '', '/');
             }
           }, 300);
         }
@@ -276,6 +280,8 @@ export const Home: React.FC<HomeProps> = ({
               el.classList.remove('notification-highlight');
             }, 3000);
             setDeepLinkTarget(null);
+            // Clear URL hash/params to prevent scroll loop
+            window.history.replaceState({}, '', '/');
           }
         }, 300);
       }
@@ -1087,11 +1093,13 @@ export const Home: React.FC<HomeProps> = ({
           ) : (
             communityPosts.map((post: any) => {
               const isPostHighlighted = deepLinkTarget?.type === 'post' && deepLinkTarget?.postId === post.id;
+              const isAuthor = user && (post.user_id === user.id || post.username === user.username);
+              const hasPendingRevision = isAuthor && post.edit_draft;
               return (
                 <HighlightWrapper key={post.id} isHighlighted={isPostHighlighted} className="rounded-2xl">
                   <div 
                     id={`post-${post.id}`} 
-                    className="glass-card p-5 text-left border border-zinc-900/60 relative"
+                    className={`glass-card p-5 text-left border border-zinc-900/60 relative ${hasPendingRevision ? 'opacity-75' : ''}`}
                   >
                 <div className="flex justify-between items-start">
                   <div className="flex gap-3 items-center">
@@ -1102,11 +1110,16 @@ export const Home: React.FC<HomeProps> = ({
                       size={40}
                     />
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-extrabold text-sm text-white">{post.username}</span>
                         <span className="text-[9px] font-bold bg-brand-orange/15 text-brand-orange px-2 py-0.5 rounded-full">
                           {post.batch}
                         </span>
+                        {hasPendingRevision && (
+                          <span className="text-[9px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/25 px-2 py-0.5 rounded-full">
+                            Pending Review
+                          </span>
+                        )}
                       </div>
                       <span className="text-[10px] text-zinc-500 font-semibold mt-0.5 block">
                         {stripEmojis(post.rank.name_en)} · {new Date(post.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
@@ -1114,53 +1127,66 @@ export const Home: React.FC<HomeProps> = ({
                     </div>
                   </div>
                   
-                  {/* 3-dot post options menu */}
-                  {user && (post.user_id === user.id || post.username === user.username || user.role === 'admin' || user.role === 'owner') && (
-                    <div className="relative">
+                  <div className="flex items-center gap-2">
+                    {hasPendingRevision && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setOpenPostMenu(openPostMenu === post.id ? null : post.id);
+                          handleCancelPostRevision(post.id);
                         }}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-500 hover:text-white hover:bg-zinc-900/40 cursor-pointer transition-all"
+                        className="border border-red-500/25 bg-red-500/5 hover:bg-red-500/10 text-red-400 font-bold text-[10px] py-1.5 px-3 rounded-xl cursor-pointer active:scale-95 transition-all"
                       >
-                        <MoreVertical className="w-4 h-4" />
+                        Cancel Edit
                       </button>
-                      <AnimatePresence>
-                        {openPostMenu === post.id && (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: -5 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                            className="absolute right-0 top-9 z-20 bg-zinc-950 border border-zinc-800 rounded-xl p-1.5 flex flex-col gap-1 min-w-[120px] shadow-2xl"
-                          >
-                            <button
-                              onClick={() => {
-                                setEditingPostId(post.id);
-                                setEditPostContent(post.content);
-                                setEditPostImageUrl(post.image_url || '');
-                                setOpenPostMenu(null);
-                              }}
-                              className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-brand-amber rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                    )}
+                    {/* 3-dot post options menu */}
+                    {user && (post.user_id === user.id || post.username === user.username || user.role === 'admin' || user.role === 'owner') && (
+                      <div className="relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenPostMenu(openPostMenu === post.id ? null : post.id);
+                          }}
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-500 hover:text-white hover:bg-zinc-900/40 cursor-pointer transition-all"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                        <AnimatePresence>
+                          {openPostMenu === post.id && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                              className="absolute right-0 top-9 z-20 bg-zinc-950 border border-zinc-800 rounded-xl p-1.5 flex flex-col gap-1 min-w-[120px] shadow-2xl"
                             >
-                              <Edit2 className="w-3.5 h-3.5" />
-                              <span>Edit</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                handleDeletePost(post.id);
-                                setOpenPostMenu(null);
-                              }}
-                              className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Delete</span>
-                            </button>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  )}
+                              <button
+                                onClick={() => {
+                                  setEditingPostId(post.id);
+                                  setEditPostContent(post.content);
+                                  setEditPostImageUrl(post.image_url || '');
+                                  setOpenPostMenu(null);
+                                }}
+                                className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-brand-amber rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  handleDeletePost(post.id);
+                                  setOpenPostMenu(null);
+                                }}
+                                className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Delete</span>
+                              </button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {editingPostId === post.id ? (

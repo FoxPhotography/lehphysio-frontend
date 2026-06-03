@@ -15,6 +15,7 @@ import { Confirm } from '../pages/Confirm';
 import { ForgotPassword } from '../pages/ForgotPassword';
 import { ResetPassword } from '../pages/ResetPassword';
 import { Admin } from '../pages/Admin';
+import { ModeratorDashboard } from '../pages/ModeratorDashboard';
 import { useAuth } from '../context/AuthContext';
 import { getLocalDateString } from '../utils/helpers';
 
@@ -29,9 +30,9 @@ interface AppRouterProps {
   setNewPostContent: (content: string) => void;
   handleCreatePost: (title: string, content: string, imageUrl: string, isNews?: boolean) => Promise<void>;
   handleEditPost: (id: number, content: string, imageUrl: string, title?: string | null) => Promise<void>;
-  communityPosts: any[];
   handleLikePost: (id: number) => void;
   handleDeletePost: (id: number) => void;
+  handleCancelPostRevision: (id: number) => void;
   episodes: any[];
   handleLikeEpisode: (id: number) => Promise<void>;
   handleShareEpisode: (id: number) => void;
@@ -115,7 +116,7 @@ interface AppRouterProps {
   adminCodeForm: any;
   setAdminCodeForm: React.Dispatch<React.SetStateAction<any>>;
   handleAdminCreateCode: (e: React.FormEvent) => Promise<void>;
-  handleAdminToggleUserRole: (userId: number, currentRole: string) => Promise<void>;
+  handleAdminUpdateUserRole: (userId: number, role: string) => Promise<void>;
   handleAdminUpdateSuggestionStatus: (suggestionId: number, status: 'approved' | 'rejected') => Promise<void>;
   handleAdminDeleteCode: (codeId: number, name: string) => void;
   handleAdminDeleteUser: (userId: number, username: string) => void;
@@ -135,6 +136,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
   communityPosts,
   handleLikePost,
   handleDeletePost,
+  handleCancelPostRevision,
   episodes,
   handleLikeEpisode,
   handleShareEpisode,
@@ -211,7 +213,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
   adminCodeForm,
   setAdminCodeForm,
   handleAdminCreateCode,
-  handleAdminToggleUserRole,
+  handleAdminUpdateUserRole,
   handleAdminUpdateSuggestionStatus,
   handleAdminDeleteCode,
   handleAdminDeleteUser,
@@ -239,6 +241,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           communityPosts={communityPosts}
           handleLikePost={handleLikePost}
           handleDeletePost={handleDeletePost}
+          handleCancelPostRevision={handleCancelPostRevision}
           handleSharePost={(id) => showToast('Post link copied to clipboard! 🔗')}
           handleUploadImage={handleUploadImage}
           usernames={usernamesDirectory}
@@ -319,6 +322,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           user={user}
           onlineCount={chatHook.onlineCount}
           chatMessages={chatHook.chatMessages}
+          isFindingTargetMessage={chatHook.isFindingTargetMessage}
           isMultiSelectMode={chatHook.isMultiSelectMode}
           setIsMultiSelectMode={chatHook.setIsMultiSelectMode}
           selectedMessageIds={chatHook.selectedMessageIds}
@@ -503,7 +507,31 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           setCurrentPage={setCurrentPage}
         />
       );
-    case 'admin':
+    case 'moderator-dashboard': {
+      const ROLE_WEIGHTS = { user: 0, moderator: 1, admin: 2, owner: 3 };
+      const userWeight = user ? (ROLE_WEIGHTS[user.role] || 0) : 0;
+      if (userWeight < 1) {
+        setTimeout(() => setCurrentPage('home'), 0);
+        return null;
+      }
+      return (
+        <ModeratorDashboard
+          user={user}
+          token={token}
+          apiBase={apiBase}
+          showConfirm={showConfirm}
+          handleOpenModerationModal={handleOpenModerationModal}
+          setCurrentPage={setCurrentPage}
+        />
+      );
+    }
+    case 'admin': {
+      const ROLE_WEIGHTS = { user: 0, moderator: 1, admin: 2, owner: 3 };
+      const userWeight = user ? (ROLE_WEIGHTS[user.role] || 0) : 0;
+      if (userWeight < 2) {
+        setTimeout(() => setCurrentPage('home'), 0);
+        return null;
+      }
       return (
         <Admin
           adminSection={adminSection}
@@ -521,7 +549,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           adminCodeForm={adminCodeForm}
           setAdminCodeForm={setAdminCodeForm}
           handleAdminCreateCode={handleAdminCreateCode}
-          handleAdminToggleUserRole={handleAdminToggleUserRole}
+          handleAdminUpdateUserRole={handleAdminUpdateUserRole}
           handleAdminUpdateSuggestionStatus={handleAdminUpdateSuggestionStatus}
           handleAdminDeleteCode={handleAdminDeleteCode}
           handleOpenModerationModal={handleOpenModerationModal}
@@ -535,6 +563,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           showConfirm={showConfirm}
         />
       );
+    }
     default:
       return null;
   }

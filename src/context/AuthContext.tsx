@@ -455,7 +455,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const handleTogglePushNotifications = async () => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
       showToast('الإشعارات غير مدعومة على هذا الجهاز أو المتصفح.');
       return;
     }
@@ -622,6 +622,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     else if (page === 'forgot-password') path = '/forgot-password';
     else if (page === 'reset-password') path = '/reset-password';
     else if (page === 'admin') path = '/admin';
+    else if (page === 'moderator-dashboard') path = '/moderation';
     else if (page === 'news') path = '/news';
     
     if (window.location.pathname !== path) {

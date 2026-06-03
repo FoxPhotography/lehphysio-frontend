@@ -2,9 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   CheckCircle, XCircle, MessageSquare, Reply, AtSign,
-  FileText, Tv, Trash2
+  FileText, Tv, Trash2, Shield, UserPlus, VolumeX, Volume2, Lock, Unlock
 } from 'lucide-react';
 import type { AppNotification, NotificationType } from '../../types';
+import { UserAvatar } from '../UserAvatar';
 
 interface NotificationItemProps {
   notification: AppNotification;
@@ -12,32 +13,48 @@ interface NotificationItemProps {
   onDelete: (id: number) => void;
 }
 
-// Type-to-icon mapping
 const TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
-  post_approved: <CheckCircle className="w-4 h-4 text-green-400" />,
-  post_rejected: <XCircle className="w-4 h-4 text-red-400" />,
-  episode_approved: <CheckCircle className="w-4 h-4 text-green-400" />,
-  episode_rejected: <XCircle className="w-4 h-4 text-red-400" />,
-  new_comment: <MessageSquare className="w-4 h-4 text-blue-400" />,
-  comment_reply: <Reply className="w-4 h-4 text-purple-400" />,
-  mention_comment: <AtSign className="w-4 h-4 text-amber-400" />,
-  mention_chat: <AtSign className="w-4 h-4 text-amber-400" />,
-  new_post: <FileText className="w-4 h-4 text-sky-400" />,
-  new_episode: <Tv className="w-4 h-4 text-brand-orange" style={{ color: 'var(--orange)' }} />,
+  post_approved: <CheckCircle className="w-3 h-3" />,
+  post_rejected: <XCircle className="w-3 h-3" />,
+  post_update_approved: <CheckCircle className="w-3 h-3" />,
+  post_update_rejected: <XCircle className="w-3 h-3" />,
+  episode_approved: <CheckCircle className="w-3 h-3" />,
+  episode_rejected: <XCircle className="w-3 h-3" />,
+  new_comment: <MessageSquare className="w-3 h-3" />,
+  comment_reply: <Reply className="w-3 h-3" />,
+  mention_comment: <AtSign className="w-3 h-3" />,
+  mention_chat: <AtSign className="w-3 h-3" />,
+  new_post: <FileText className="w-3 h-3" />,
+  new_episode: <Tv className="w-3 h-3" />,
+  suggestion_approved: <CheckCircle className="w-3 h-3" />,
+  suggestion_rejected: <XCircle className="w-3 h-3" />,
+  user_muted: <VolumeX className="w-3 h-3" />,
+  user_unmuted: <Volume2 className="w-3 h-3" />,
+  user_banned: <Lock className="w-3 h-3" />,
+  user_unbanned: <Unlock className="w-3 h-3" />,
+  user_role_updated: <UserPlus className="w-3 h-3" />,
 };
 
-// Type-to-accent color mapping
 const TYPE_ACCENT: Record<NotificationType, string> = {
-  post_approved: '#22c55e',
+  post_approved: '#10b981',
   post_rejected: '#ef4444',
-  episode_approved: '#22c55e',
+  post_update_approved: '#10b981',
+  post_update_rejected: '#ef4444',
+  episode_approved: '#10b981',
   episode_rejected: '#ef4444',
   new_comment: '#3b82f6',
-  comment_reply: '#a855f7',
+  comment_reply: '#8b5cf6',
   mention_comment: '#f59e0b',
   mention_chat: '#f59e0b',
   new_post: '#0ea5e9',
   new_episode: '#f26522',
+  suggestion_approved: '#10b981',
+  suggestion_rejected: '#ef4444',
+  user_muted: '#f59e0b',
+  user_unmuted: '#10b981',
+  user_banned: '#ef4444',
+  user_unbanned: '#10b981',
+  user_role_updated: '#f26522',
 };
 
 function timeAgo(dateStr: string): string {
@@ -53,58 +70,74 @@ function timeAgo(dateStr: string): string {
 }
 
 export const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onNavigate, onDelete }) => {
-  const { _id, type, title, body, is_read, created_at } = notification;
-  const accentColor = TYPE_ACCENT[type] || 'var(--orange)';
+  const { _id, type, title, body, is_read, created_at, actor_id } = notification;
+  const accentColor = TYPE_ACCENT[type] || 'var(--color-brand-orange)';
+
+  const actorObj = actor_id && typeof actor_id === 'object' ? actor_id : null;
+  const senderName = actorObj?.username || 'System';
+  const senderAvatar = actorObj?.avatar_url || null;
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 30, height: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }}
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, height: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }}
+      transition={{ duration: 0.18 }}
       onClick={() => onNavigate(notification)}
-      className="relative flex items-start gap-3.5 px-4 py-3.5 cursor-pointer transition-all duration-200 group border-b border-zinc-900/40"
-      style={{
-        background: is_read ? 'transparent' : 'rgba(242, 101, 34, 0.03)',
-        borderLeft: is_read ? '3px solid transparent' : `3px solid ${accentColor}`,
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.035)';
-        (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 0 rgba(255,255,255,0.02), 0 4px 20px rgba(0,0,0,0.15)';
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.background = is_read ? 'transparent' : 'rgba(242, 101, 34, 0.03)';
-        (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-      }}
+      className={`relative flex items-start gap-3.5 px-4 py-3.5 cursor-pointer transition-all duration-200 group border-b border-white/3 select-none ${
+        is_read ? 'bg-transparent hover:bg-white/[0.015]' : 'bg-brand-orange/[0.02] hover:bg-brand-orange/[0.04]'
+      }`}
     >
-      {/* Type Icon */}
-      <div
-        className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-        style={{
-          background: `${accentColor}15`,
-          border: `1px solid ${accentColor}25`,
-        }}
-      >
-        {TYPE_ICONS[type] || <FileText className="w-4 h-4 text-zinc-400" />}
+      {/* Sender Avatar + Type Icon Overlay */}
+      <div className="relative shrink-0 mt-0.5">
+        <UserAvatar
+          username={senderName}
+          avatarUrl={senderAvatar}
+          size={36}
+        />
+        <div
+          className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border shadow-md"
+          style={{
+            background: '#0a0a0a',
+            borderColor: `${accentColor}40`,
+            color: accentColor,
+            boxShadow: `0 2px 6px ${accentColor}15`,
+          }}
+        >
+          {TYPE_ICONS[type] || <Shield className="w-3 h-3" />}
+        </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 space-y-0.5 text-left">
         <div className="flex items-start justify-between gap-2">
-          <p
-            className="text-[13px] font-extrabold leading-tight truncate"
-            style={{ color: is_read ? 'var(--text-secondary)' : 'var(--text-primary)' }}
+          <h4
+            className={`text-[12.5px] leading-tight truncate ${
+              is_read ? 'text-zinc-300 font-bold' : 'text-white font-extrabold'
+            }`}
           >
             {title}
-          </p>
-          <span className="text-[10px] font-bold shrink-0 mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            {timeAgo(created_at)}
-          </span>
+          </h4>
+          <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+            <span className="text-[10px] font-bold text-zinc-500">
+              {timeAgo(created_at)}
+            </span>
+            {!is_read && (
+              <span
+                className="w-1.5 h-1.5 rounded-full shrink-0"
+                style={{
+                  backgroundColor: accentColor,
+                  boxShadow: `0 0 6px ${accentColor}`,
+                }}
+              />
+            )}
+          </div>
         </div>
         <p
-          className="text-[11px] mt-1 leading-relaxed line-clamp-2"
-          style={{ color: 'var(--text-secondary)' }}
+          className={`text-[11px] leading-relaxed line-clamp-2 ${
+            is_read ? 'text-zinc-500' : 'text-zinc-400 font-medium'
+          }`}
         >
           {body}
         </p>
@@ -116,29 +149,11 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
           e.stopPropagation();
           onDelete(_id);
         }}
-        className="absolute top-3 right-3 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer z-20"
-        style={{
-          background: 'rgba(239, 68, 68, 0.1)',
-          color: '#ef4444',
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = 'rgba(239, 68, 68, 0.2)';
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.background = 'rgba(239, 68, 68, 0.1)';
-        }}
+        className="absolute top-3.5 right-3.5 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-150 cursor-pointer z-20 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/10 hover:border-red-500/20 active:scale-95"
         aria-label="Delete notification"
       >
         <Trash2 className="w-3.5 h-3.5" />
       </button>
-
-      {/* Unread dot */}
-      {!is_read && (
-        <div
-          className="absolute top-4 right-4 w-2 h-2 rounded-full group-hover:hidden"
-          style={{ background: accentColor, boxShadow: `0 0 6px ${accentColor}60` }}
-        />
-      )}
     </motion.div>
   );
 };

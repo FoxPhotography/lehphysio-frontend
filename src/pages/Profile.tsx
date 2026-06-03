@@ -590,17 +590,36 @@ export const Profile: React.FC<ProfileProps> = ({
             {isSubscribed ? 'إلغاء تفعيل الإشعارات' : 'تفعيل الإشعارات التلقائية'}
           </motion.button>
 
-          {(user.role === 'admin' || user.role === 'owner') && (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setCurrentPage('admin')}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-violet-500/10 border border-violet-500/25 text-violet-400 font-bold text-[13px] hover:bg-violet-500/18 transition-colors"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              {user.role === 'owner' ? 'Owner Dashboard' : 'Admin Dashboard'}
-            </motion.button>
-          )}
+          {(() => {
+            const ROLE_WEIGHTS = { user: 0, moderator: 1, admin: 2, owner: 3 };
+            const weight = ROLE_WEIGHTS[user.role] || 0;
+            return (
+              <>
+                {weight >= 1 && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setCurrentPage('moderator-dashboard')}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 font-bold text-[13px] hover:bg-emerald-500/18 transition-colors"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    Moderator Dashboard
+                  </motion.button>
+                )}
+                {weight >= 2 && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setCurrentPage('admin')}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-violet-500/10 border border-violet-500/25 text-violet-400 font-bold text-[13px] hover:bg-violet-500/18 transition-colors"
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    {user.role === 'owner' ? 'Owner Dashboard' : 'Admin Dashboard'}
+                  </motion.button>
+                )}
+              </>
+            );
+          })()}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}

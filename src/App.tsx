@@ -218,6 +218,8 @@ function InnerApp() {
       setCurrentPage('reset-password');
     } else if (path === '/admin') {
       setCurrentPage('admin');
+    } else if (path === '/moderation') {
+      setCurrentPage('moderator-dashboard');
     } else {
       setCurrentPage('home');
     }
@@ -277,6 +279,7 @@ function InnerApp() {
               el.style.transition = 'border 1.5s ease-out';
               el.style.border = '1px solid var(--card-border)';
             }, 3000);
+            window.history.replaceState({}, '', '/');
           }
         }, 400);
       }
@@ -377,27 +380,20 @@ function InnerApp() {
     }
   };
 
-  const handleAdminToggleUserRole = async (userId: number, currentRole: string) => {
+  const handleAdminUpdateUserRole = async (userId: number, newRole: string) => {
     if (!token) return;
-    const newRole = currentRole === 'admin' ? 'user' : 'admin';
-    showConfirm(
-      'Change User Role',
-      `Are you sure you want to change this user's role to ${newRole === 'admin' ? 'Admin' : 'Student'}?`,
-      async () => {
-        try {
-          const res = await authService.toggleUserRole(userId, newRole, token);
-          const data = await res.json();
-          if (res.ok) {
-            showToast(data.message || 'User role updated! 🎉');
-            fetchAdminUsers();
-          } else {
-            showToast(data.error || 'Failed to update role.');
-          }
-        } catch (e) {
-          showToast('Connection failed.');
-        }
+    try {
+      const res = await authService.toggleUserRole(userId, newRole, token);
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || 'User role updated! 🎉');
+        fetchAdminUsers();
+      } else {
+        showToast(data.error || 'Failed to update role.');
       }
-    );
+    } catch (e) {
+      showToast('Connection failed.');
+    }
   };
 
   const handleAdminUpdateSuggestionStatus = async (suggestionId: number, status: 'approved' | 'rejected') => {
@@ -955,6 +951,32 @@ function InnerApp() {
     );
   };
 
+  const handleCancelPostRevision = async (postId: number) => {
+    showConfirm(
+      'Cancel Pending Revision',
+      'Are you sure you want to discard your pending edit draft? This will revert the post to the live approved version.',
+      async () => {
+        if (!token) return;
+        try {
+          const res = await fetch(`${API_BASE}/api/community/posts/${postId}/revision`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (res.ok) {
+            showToast(data.message || 'Pending revision discarded.');
+            fetchCommunityPosts();
+          } else {
+            showToast(data.error || 'Failed to cancel revision.');
+          }
+        } catch (err) {
+          showToast('Connection error.');
+        }
+      },
+      undefined, 'Discard', 'Cancel', 'warning'
+    );
+  };
+
   const handleLikePost = async (postId: number) => {
     if (!token) return;
     playChatSound('react');
@@ -1273,6 +1295,7 @@ function InnerApp() {
         communityPosts={communityPosts}
         handleLikePost={handleLikePost}
         handleDeletePost={handleDeletePost}
+        handleCancelPostRevision={handleCancelPostRevision}
         episodes={episodes}
         handleLikeEpisode={handleLikeEpisode}
         handleShareEpisode={handleShareEpisode}
@@ -1349,7 +1372,7 @@ function InnerApp() {
         adminCodeForm={adminCodeForm}
         setAdminCodeForm={setAdminCodeForm}
         handleAdminCreateCode={handleAdminCreateCode}
-        handleAdminToggleUserRole={handleAdminToggleUserRole}
+        handleAdminUpdateUserRole={handleAdminUpdateUserRole}
         handleAdminUpdateSuggestionStatus={handleAdminUpdateSuggestionStatus}
         handleAdminDeleteCode={handleAdminDeleteCode}
         handleAdminDeleteUser={handleAdminDeleteUser}

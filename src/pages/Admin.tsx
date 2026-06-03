@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { RoleSelectModal } from '../components/RoleSelectModal';
 import {
   Video,
   Key,
@@ -8,6 +9,7 @@ import {
   Frame,
   Settings,
   ShieldCheck,
+  ShieldAlert,
   Pencil,
   Trash2,
   CheckCircle,
@@ -22,6 +24,9 @@ import {
   Plus,
   ChevronDown,
   User,
+  Search,
+  Calendar,
+  Clock,
 } from 'lucide-react';
 import { setFramesCache } from '../utils/helpers';
 
@@ -50,7 +55,7 @@ interface AdminProps {
   adminCodeForm: any;
   setAdminCodeForm: React.Dispatch<React.SetStateAction<any>>;
   handleAdminCreateCode: (e: React.FormEvent) => void;
-  handleAdminToggleUserRole: (userId: number, currentRole: string) => void;
+  handleAdminUpdateUserRole: (userId: number, role: string) => Promise<void>;
   handleAdminUpdateSuggestionStatus: (suggestionId: number, status: 'approved' | 'rejected') => void;
   handleAdminDeleteCode: (codeId: number, codeName: string) => void;
   handleOpenModerationModal: (username: string, userId: number) => void;
@@ -164,17 +169,6 @@ const AdminBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
   );
 };
 
-// ─── Tab Definitions ───────────────────────────────────────────────────────────
-const TABS = [
-  { id: 'episodes',   label: 'Episodes',    icon: <Video    className="w-3.5 h-3.5" /> },
-  { id: 'codes',      label: 'XP Codes',    icon: <Key      className="w-3.5 h-3.5" /> },
-  { id: 'users',      label: 'Users',       icon: <Users    className="w-3.5 h-3.5" /> },
-  { id: 'suggestions',label: 'Suggestions', icon: <Lightbulb className="w-3.5 h-3.5" /> },
-  { id: 'frames',     label: 'Frames',      icon: <Frame    className="w-3.5 h-3.5" /> },
-  { id: 'xp_settings',label: 'XP Settings', icon: <Settings className="w-3.5 h-3.5" /> },
-  { id: 'system_profile', label: 'News Profile', icon: <User className="w-3.5 h-3.5" /> },
-];
-
 // ─── Main Admin Component ──────────────────────────────────────────────────────
 export const Admin: React.FC<AdminProps> = ({
   adminSection,
@@ -192,7 +186,7 @@ export const Admin: React.FC<AdminProps> = ({
   adminCodeForm,
   setAdminCodeForm,
   handleAdminCreateCode,
-  handleAdminToggleUserRole,
+  handleAdminUpdateUserRole,
   handleAdminUpdateSuggestionStatus,
   handleAdminDeleteCode,
   handleOpenModerationModal,
@@ -209,6 +203,128 @@ export const Admin: React.FC<AdminProps> = ({
   const [editingLoading, setEditingLoading] = useState(false);
 
   const token = localStorage.getItem('token');
+
+  // Role Select modal state
+  const [selectedRoleUser, setSelectedRoleUser] = useState<{ id: number; username: string; role: string } | null>(null);
+  const [roleLoading, setRoleLoading] = useState(false);
+
+  const handleConfirmRoleChange = async (userId: number, newRole: string) => {
+    setRoleLoading(true);
+    try {
+      await handleAdminUpdateUserRole(userId, newRole);
+      setSelectedRoleUser(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setRoleLoading(false);
+    }
+  };
+
+  // Dynamic Tabs
+  const tabs = [
+    { id: 'episodes',   label: 'Episodes',    icon: <Video    className="w-3.5 h-3.5" /> },
+    { id: 'codes',      label: 'XP Codes',    icon: <Key      className="w-3.5 h-3.5" /> },
+    { id: 'users',      label: 'Users',       icon: <Users    className="w-3.5 h-3.5" /> },
+    { id: 'frames',     label: 'Frames',      icon: <Frame    className="w-3.5 h-3.5" /> },
+    { id: 'xp_settings',label: 'XP Settings', icon: <Settings className="w-3.5 h-3.5" /> },
+    { id: 'system_profile', label: 'News Profile', icon: <User className="w-3.5 h-3.5" /> },
+    ...(user?.role === 'owner' ? [
+      { id: 'audit_logs', label: 'Audit Logs', icon: <ShieldAlert className="w-3.5 h-3.5" /> }
+    ] : [])
+  ];
+
+  // Audit Logs state
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [auditPagination, setAuditPagination] = useState<any>({ page: 1, limit: 30, total: 0, hasMore: false });
+  const [auditFilters, setAuditFilters] = useState({
+    search: '',
+    action: '',
+    targetType: '',
+    dateRange: '30days',
+    startDate: '',
+    endDate: '',
+    page: 1,
+  });
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
+
+  const fetchAuditLogs = async (loadMore = false) => {
+    if (user?.role !== 'owner' || !token) return;
+    setAuditLoading(true);
+    try {
+      const queryParams = new URLSearchParams();
+      const pageToFetch = loadMore ? auditFilters.page + 1 : 1;
+      queryParams.append('page', String(pageToFetch));
+      queryParams.append('limit', '30');
+      
+      if (auditFilters.search.trim()) {
+        queryParams.append('search', auditFilters.search.trim());
+      }
+      if (auditFilters.action) {
+        queryParams.append('action', auditFilters.action);
+      }
+      if (auditFilters.targetType) {
+        queryParams.append('targetType', auditFilters.targetType);
+      }
+      if (auditFilters.dateRange) {
+        queryParams.append('dateRange', auditFilters.dateRange);
+        if (auditFilters.dateRange === 'custom' && auditFilters.startDate && auditFilters.endDate) {
+          queryParams.append('startDate', auditFilters.startDate);
+          queryParams.append('endDate', auditFilters.endDate);
+        }
+      }
+      
+      const res = await fetch(`${API_BASE}/api/admin/audit-logs?${queryParams.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (loadMore) {
+          setAuditLogs(prev => [...prev, ...data.logs]);
+        } else {
+          setAuditLogs(data.logs);
+        }
+        setAuditPagination(data.pagination);
+        setAuditFilters(prev => ({ ...prev, page: pageToFetch }));
+      }
+    } catch (err) {
+      console.error('Error fetching audit logs:', err);
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
+  const handleSoftDeleteLog = async (logId: number) => {
+    showConfirm?.(
+      'Delete Log Entry',
+      'Are you sure you want to delete this log entry? This is a soft delete and will hide it from the dashboard, but the database will preserve it.',
+      async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/audit-logs/${logId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setAdminMessage('Log entry deleted successfully.');
+            setSelectedLog(null);
+            fetchAuditLogs(false);
+          } else {
+            setAdminMessage(data.error || 'Failed to delete log entry.');
+          }
+        } catch (err) {
+          setAdminMessage('Connection failed.');
+        }
+      },
+      undefined, 'Delete', 'Cancel', 'danger'
+    );
+  };
+
+  useEffect(() => {
+    if (adminSection === 'audit_logs') {
+      fetchAuditLogs(false);
+    }
+  }, [adminSection, auditFilters.action, auditFilters.targetType, auditFilters.dateRange, auditFilters.startDate, auditFilters.endDate]);
 
   const EMPTY_EPISODE = {
     title_ar: '', title_en: '', description: '', thumbnail_url: '',
@@ -526,7 +642,7 @@ export const Admin: React.FC<AdminProps> = ({
 
       {/* Tabs */}
       <div className="flex gap-1.5 flex-wrap">
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <motion.button
             key={tab.id}
             onClick={() => setAdminSection(tab.id)}
@@ -871,31 +987,55 @@ export const Admin: React.FC<AdminProps> = ({
                     <td className="py-2.5 pr-3 text-zinc-400">{u.batch}</td>
                     <td className="py-2.5 pr-3 text-orange-400 font-bold">{u.total_xp?.toLocaleString()}</td>
                     <td className="py-2.5 pr-3">
-                      <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase ${
-                        u.role === 'owner' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/25' :
-                        u.role === 'admin' ? 'bg-orange-500/15 text-orange-400 border border-orange-500/25' :
-                        'bg-white/5 text-zinc-500 border border-white/10'
-                      }`}>
-                        {u.role}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase ${
+                          u.role === 'owner' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/25' :
+                          u.role === 'admin' ? 'bg-orange-500/15 text-orange-400 border border-orange-500/25' :
+                          u.role === 'moderator' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25' :
+                          'bg-white/5 text-zinc-500 border border-white/10'
+                        }`}>
+                          {u.role === 'user' ? 'Student' : u.role === 'moderator' ? 'Moderator' : u.role === 'admin' ? 'Admin' : 'Owner'}
+                        </span>
+                        {u.role === 'owner' && (
+                          <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] font-black uppercase tracking-wider animate-pulse">
+                            Protected
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-2.5 text-center">
                       <div className="flex gap-1 justify-center">
-                        {user?.role === 'owner' && u.role !== 'owner' && (
-                          <AdminBtn size="sm" variant="ghost" onClick={() => handleAdminToggleUserRole(u.id, u.role)}>
-                            <RefreshCw className="w-3 h-3" /> Role
-                          </AdminBtn>
-                        )}
-                        <AdminBtn size="sm" onClick={() => handleOpenModerationModal(u.username, u.id)}
-                          className="bg-amber-500/10 border border-amber-500/25 text-amber-400 hover:bg-amber-500/20"
-                        >
-                          Moderate
-                        </AdminBtn>
-                        {user?.role === 'owner' && u.role !== 'owner' && (
-                          <AdminBtn size="sm" variant="danger" onClick={() => handleAdminDeleteUser(u.id, u.username)}>
-                            <Trash2 className="w-3 h-3" />
-                          </AdminBtn>
-                        )}
+                        {(() => {
+                          const ROLE_WEIGHTS = { user: 0, moderator: 1, admin: 2, owner: 3 };
+                          const requesterWeight = ROLE_WEIGHTS[user?.role] || 0;
+                          const targetWeight = ROLE_WEIGHTS[u.role] || 0;
+                          
+                          const canChangeRole = requesterWeight >= 2 && requesterWeight > targetWeight && u.id !== user.id;
+                          const canModerate = requesterWeight > targetWeight && u.role !== 'owner' && u.id !== user.id;
+                          const canDelete = user?.role === 'owner' && u.role !== 'owner' && u.id !== user.id;
+
+                          return (
+                            <>
+                              {canChangeRole && (
+                                <AdminBtn size="sm" variant="ghost" onClick={() => setSelectedRoleUser({ id: u.id, username: u.username, role: u.role })}>
+                                  <RefreshCw className="w-3 h-3" /> Role
+                                </AdminBtn>
+                              )}
+                              {canModerate && (
+                                <AdminBtn size="sm" onClick={() => handleOpenModerationModal(u.username, u.id)}
+                                  className="bg-amber-500/10 border border-amber-500/25 text-amber-400 hover:bg-amber-500/20"
+                                >
+                                  Moderate
+                                </AdminBtn>
+                              )}
+                              {canDelete && (
+                                <AdminBtn size="sm" variant="danger" onClick={() => handleAdminDeleteUser(u.id, u.username)}>
+                                  <Trash2 className="w-3 h-3" />
+                                </AdminBtn>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     </td>
                   </tr>
@@ -906,58 +1046,7 @@ export const Admin: React.FC<AdminProps> = ({
         </SectionCard>
       )}
 
-      {/* ── 4. SUGGESTIONS ─────────────────────────────────────────────────── */}
-      {adminSection === 'suggestions' && (
-        <SectionCard>
-          <SectionTitle icon={<Lightbulb className="w-4 h-4" />} label="Suggestions Feed" count={adminSuggestions.length} />
-          {adminSuggestions.length === 0 ? (
-            <p className="text-center text-zinc-600 text-[13px] py-8">No suggestions submitted yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {adminSuggestions.map((s: any) => (
-                <div key={s.id} className={`rounded-xl border p-4 space-y-2 ${
-                  s.status === 'approved' ? 'border-emerald-500/20 bg-emerald-500/3' :
-                  s.status === 'rejected' ? 'border-red-500/20 bg-red-500/3' :
-                  'border-white/8 bg-white/2'
-                }`}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h4 className="text-[14px] font-bold text-white">{s.title}</h4>
-                      <p className="text-[11px] text-zinc-500">
-                        @{s.username} · {new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </p>
-                    </div>
-                    <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase flex-shrink-0 ${
-                      s.status === 'approved' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25' :
-                      s.status === 'rejected' ? 'bg-red-500/15 text-red-400 border border-red-500/25' :
-                      'bg-white/8 text-zinc-400 border border-white/15'
-                    }`}>
-                      {s.status}
-                    </span>
-                  </div>
-                  <p className="text-[12px] text-zinc-400 leading-relaxed">{s.content}</p>
-                  <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                    <div className="flex items-center gap-1 text-[11px] text-orange-400">
-                      <ThumbsUp className="w-3.5 h-3.5" />
-                      {s.upvotes || 0} upvotes
-                    </div>
-                    {s.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <AdminBtn size="sm" variant="success" onClick={() => handleAdminUpdateSuggestionStatus(s.id, 'approved')}>
-                          <CheckCircle className="w-3 h-3" /> Approve
-                        </AdminBtn>
-                        <AdminBtn size="sm" variant="danger" onClick={() => handleAdminUpdateSuggestionStatus(s.id, 'rejected')}>
-                          <XCircle className="w-3 h-3" /> Reject
-                        </AdminBtn>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </SectionCard>
-      )}
+
 
       {/* ── 5. FRAMES ──────────────────────────────────────────────────────── */}
       {adminSection === 'frames' && (
@@ -1046,6 +1135,310 @@ export const Admin: React.FC<AdminProps> = ({
           showConfirm={showConfirm}
         />
       )}
+
+      {/* ── 8. AUDIT LOGS (OWNER ONLY) ─────────────────────────────────────── */}
+      {adminSection === 'audit_logs' && user?.role === 'owner' && (
+        <div className="space-y-5">
+          {/* Timeline & Filters Header */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Quick Timeline of last 5 entries */}
+            <SectionCard className="lg:col-span-1">
+              <SectionTitle icon={<Clock className="w-4 h-4" />} label="Recent Activity Timeline" />
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                {auditLogs.slice(0, 5).map((log) => (
+                  <div key={log.id} className="relative pl-4 border-l-2 border-orange-500/30 py-0.5 text-left">
+                    <div className="absolute w-2 h-2 rounded-full bg-orange-500 -left-[5px] top-1.5" />
+                    <p className="text-[10px] text-zinc-500 font-bold">
+                      {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {new Date(log.created_at).toLocaleDateString()}
+                    </p>
+                    <p className="text-xs text-white font-bold leading-tight mt-0.5">
+                      @{log.moderator?.username || 'System'}
+                    </p>
+                    <p className="text-[10px] text-zinc-400 leading-normal truncate">
+                      {log.action} on {log.target_type}
+                    </p>
+                  </div>
+                ))}
+                {auditLogs.length === 0 && (
+                  <p className="text-center text-zinc-650 text-xs py-4">No recent activity.</p>
+                )}
+              </div>
+            </SectionCard>
+
+            {/* Filters panel */}
+            <SectionCard className="lg:col-span-2">
+              <SectionTitle icon={<Settings className="w-4 h-4" />} label="Filters & Search" />
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Search username */}
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Search username / reason</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search..."
+                        value={auditFilters.search}
+                        onChange={(e) => setAuditFilters(prev => ({ ...prev, search: e.target.value }))}
+                        className="w-full pl-8 pr-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-650 text-xs focus:outline-none focus:border-orange-500/50"
+                      />
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                    </div>
+                  </div>
+
+                  {/* Action filter */}
+                  <AdminSelect
+                    label="Action Type"
+                    value={auditFilters.action}
+                    onChange={(e) => setAuditFilters(prev => ({ ...prev, action: e.target.value }))}
+                  >
+                    <option value="" className="bg-zinc-900">All Actions</option>
+                    <option value="promote" className="bg-zinc-900">Promote</option>
+                    <option value="demote" className="bg-zinc-900">Demote</option>
+                    <option value="mute" className="bg-zinc-900">Mute</option>
+                    <option value="unmute" className="bg-zinc-900">Unmute</option>
+                    <option value="ban" className="bg-zinc-900">Ban</option>
+                    <option value="unban" className="bg-zinc-900">Unban</option>
+                    <option value="approve_post" className="bg-zinc-900">Approve Post</option>
+                    <option value="reject_post" className="bg-zinc-900">Reject Post</option>
+                    <option value="approve_revision" className="bg-zinc-900">Approve Revision</option>
+                    <option value="reject_revision" className="bg-zinc-900">Reject Revision</option>
+                    <option value="delete_post" className="bg-zinc-900">Delete Post</option>
+                    <option value="approve_suggestion" className="bg-zinc-900">Approve Suggestion</option>
+                    <option value="reject_suggestion" className="bg-zinc-900">Reject Suggestion</option>
+                    <option value="delete_comment" className="bg-zinc-900">Delete Comment</option>
+                    <option value="delete_chat_message" className="bg-zinc-900">Delete Chat Message</option>
+                  </AdminSelect>
+
+                  {/* Date range filter */}
+                  <AdminSelect
+                    label="Date Range"
+                    value={auditFilters.dateRange}
+                    onChange={(e) => setAuditFilters(prev => ({ ...prev, dateRange: e.target.value }))}
+                  >
+                    <option value="today" className="bg-zinc-900">Today</option>
+                    <option value="7days" className="bg-zinc-900">Last 7 Days</option>
+                    <option value="30days" className="bg-zinc-900">Last 30 Days</option>
+                    <option value="custom" className="bg-zinc-900">Custom Range</option>
+                  </AdminSelect>
+                </div>
+
+                {auditFilters.dateRange === 'custom' && (
+                  <div className="grid grid-cols-2 gap-3 text-left">
+                    <AdminInput
+                      label="Start Date"
+                      type="date"
+                      value={auditFilters.startDate}
+                      onChange={(e) => setAuditFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                    />
+                    <AdminInput
+                      label="End Date"
+                      type="date"
+                      value={auditFilters.endDate}
+                      onChange={(e) => setAuditFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                    />
+                  </div>
+                )}
+
+                <div className="flex gap-2 justify-end">
+                  <AdminBtn size="sm" variant="ghost" onClick={() => {
+                    setAuditFilters({
+                      search: '',
+                      action: '',
+                      targetType: '',
+                      dateRange: '30days',
+                      startDate: '',
+                      endDate: '',
+                      page: 1,
+                    });
+                  }}>
+                    Reset Filters
+                  </AdminBtn>
+                  <AdminBtn size="sm" onClick={() => fetchAuditLogs(false)}>
+                    <Search className="w-3 h-3" /> Search Logs
+                  </AdminBtn>
+                </div>
+              </div>
+            </SectionCard>
+          </div>
+
+          {/* Logs Table Card */}
+          <SectionCard>
+            <div className="flex justify-between items-center mb-4 pb-2 border-b border-white/5">
+              <h4 className="text-xs font-black uppercase text-zinc-450 tracking-wider">Audit Log Records ({auditPagination.total})</h4>
+              {auditLoading && <Loader2 className="w-4 h-4 animate-spin text-orange-500" />}
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-[12px] min-w-[650px] text-left">
+                <thead>
+                  <tr className="border-b border-white/8 text-zinc-550">
+                    <th className="pb-2 pr-3 font-bold">Action</th>
+                    <th className="pb-2 pr-3 font-bold">Actor</th>
+                    <th className="pb-2 pr-3 font-bold">Role</th>
+                    <th className="pb-2 pr-3 font-bold">Target</th>
+                    <th className="pb-2 pr-3 font-bold">Date</th>
+                    <th className="pb-2 font-bold text-center">Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {auditLogs.map((log) => {
+                    return (
+                      <tr key={log.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
+                        <td className="py-2.5 pr-3">
+                          <span className="font-extrabold text-white">{log.action}</span>
+                        </td>
+                        <td className="py-2.5 pr-3 text-zinc-300">
+                          @{log.moderator?.username || 'System'}
+                        </td>
+                        <td className="py-2.5 pr-3">
+                          <span className="text-[10px] uppercase font-bold text-orange-400">
+                            {log.actor_role || log.moderator?.role}
+                          </span>
+                        </td>
+                        <td className="py-2.5 pr-3 text-zinc-400 capitalize">
+                          {log.target_type} ({log.target_user ? `@${log.target_user.username}` : log.target_id || 'N/A'})
+                        </td>
+                        <td className="py-2.5 pr-3 text-zinc-500">
+                          {new Date(log.created_at).toLocaleString()}
+                        </td>
+                        <td className="py-2.5 text-center">
+                          <AdminBtn size="sm" variant="ghost" onClick={() => setSelectedLog(log)}>
+                            View
+                          </AdminBtn>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {auditLogs.length === 0 && !auditLoading && (
+                    <tr>
+                      <td colSpan={6} className="text-center py-8 text-zinc-650 font-bold">No log entries found matching filters.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {auditPagination.hasMore && (
+              <div className="pt-4 flex justify-center">
+                <AdminBtn size="sm" variant="ghost" onClick={() => fetchAuditLogs(true)} disabled={auditLoading}>
+                  {auditLoading ? 'Loading...' : 'Load More Logs'}
+                </AdminBtn>
+              </div>
+            )}
+          </SectionCard>
+        </div>
+      )}
+
+      {/* Details Drawer for selected log entry */}
+      <AnimatePresence>
+        {selectedLog && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999] flex justify-end animate-fade-in" onClick={() => setSelectedLog(null)}>
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="w-full max-w-md bg-zinc-950 border-l border-white/8 h-full p-6 overflow-y-auto space-y-6 flex flex-col justify-between"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                  <div className="flex items-center gap-2 text-orange-400">
+                    <ShieldAlert className="w-5 h-5" />
+                    <h3 className="text-sm font-black uppercase tracking-wider">Log Entry Details</h3>
+                  </div>
+                  <button onClick={() => setSelectedLog(null)} className="w-7 h-7 rounded-full flex items-center justify-center bg-white/5 border border-white/8 text-zinc-400 hover:text-white cursor-pointer transition-all">
+                    <XCircle className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-4 text-left">
+                  {/* Action summary */}
+                  <div className="p-4 rounded-xl bg-orange-500/5 border border-orange-500/15">
+                    <p className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">Logged Action</p>
+                    <p className="text-base font-black text-white mt-1">{selectedLog.action}</p>
+                    <p className="text-xs text-zinc-450 mt-1">Status: Success</p>
+                  </div>
+
+                  {/* Actor details */}
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Actor</p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-white">
+                        {(selectedLog.moderator?.username || 'S')[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-white">@{selectedLog.moderator?.username || 'System'}</p>
+                        <p className="text-[10px] text-zinc-500">Role: <span className="uppercase font-bold text-orange-400">{selectedLog.actor_role || selectedLog.moderator?.role}</span></p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Target details */}
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Target Entity</p>
+                    <div className="p-3 bg-white/3 rounded-xl border border-white/5 space-y-1 text-xs">
+                      <p className="text-white"><span className="text-zinc-500">Type:</span> <span className="capitalize font-bold">{selectedLog.target_type}</span></p>
+                      <p className="text-white"><span className="text-zinc-500">ID:</span> {selectedLog.target_id || 'N/A'}</p>
+                      {selectedLog.target_user && (
+                        <p className="text-white"><span className="text-zinc-500">Target User:</span> @{selectedLog.target_user.username} (ID: {selectedLog.target_user.id})</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Reason & details */}
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Moderator Reason</p>
+                    <p className="text-xs text-zinc-300 bg-white/2 p-3 rounded-xl border border-white/5 leading-relaxed whitespace-pre-line">
+                      {selectedLog.reason || 'No reason provided.'}
+                    </p>
+                  </div>
+
+                  {/* Technical Metadata */}
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Additional Metadata</p>
+                    <pre className="text-[10px] text-orange-400/90 font-mono bg-black/60 p-3 rounded-xl border border-white/5 overflow-x-auto max-h-40">
+                      {JSON.stringify(selectedLog.metadata || {}, null, 2)}
+                    </pre>
+                  </div>
+
+                  {/* IP Address & Time */}
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div>
+                      <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">IP Address</p>
+                      <p className="text-xs text-zinc-300 font-mono mt-0.5">{selectedLog.ip_address || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Timestamp</p>
+                      <p className="text-xs text-zinc-300 mt-0.5">{new Date(selectedLog.created_at).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-white/5">
+                <AdminBtn
+                  variant="danger"
+                  className="w-full justify-center"
+                  onClick={() => handleSoftDeleteLog(selectedLog.id)}
+                >
+                  <Trash2 className="w-4 h-4" /> Delete Log Entry (Soft Delete)
+                </AdminBtn>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Role Select Modal */}
+      <RoleSelectModal
+        isOpen={selectedRoleUser !== null}
+        onClose={() => setSelectedRoleUser(null)}
+        targetUser={selectedRoleUser}
+        currentUserRole={user?.role || 'user'}
+        onConfirm={handleConfirmRoleChange}
+        isLoading={roleLoading}
+      />
     </motion.div>
   );
 };

@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
+import { useNotifications } from '../context/NotificationContext';
 import { chatService } from '../services/chatService';
 import { playChatSound } from '../utils/helpers';
 import { ChatMessage } from '../types';
 
 export const useChat = (communityTab: 'feed' | 'chat') => {
-  const { token, user, showToast, showConfirm } = useAuth();
+  const { token, user, showToast, showConfirm, currentPage } = useAuth();
   const socket = useSocket();
+  const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
@@ -22,6 +24,8 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
   const [onlineCount, setOnlineCount] = useState(1);
   const [isLoadingOlderChat, setIsLoadingOlderChat] = useState(false);
   const [hasMoreChat, setHasMoreChat] = useState(true);
+  const [isFindingTargetMessage, setIsFindingTargetMessage] = useState(false);
+  const findAttemptsRef = useRef(0);
 
   const chatMessagesRef = useRef(chatMessages);
   const userRef = useRef(user);
@@ -45,8 +49,77 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     tokenRef.current = token;
   }, [token]);
 
+  // Monitor deepLinkTarget to start the search process
+  useEffect(() => {
+    if (currentPage === 'community' && communityTab === 'chat' && deepLinkTarget?.type === 'chat_message') {
+      setIsFindingTargetMessage(true);
+      findAttemptsRef.current = 0;
+    } else {
+      setIsFindingTargetMessage(false);
+    }
+  }, [currentPage, communityTab, deepLinkTarget]);
+
+  // Robust target message lookup loop
+  useEffect(() => {
+    if (!isFindingTargetMessage || !deepLinkTarget || deepLinkTarget.type !== 'chat_message') return;
+
+    const targetId = Number(deepLinkTarget.messageId);
+
+    // 1. Wait for socket connection if it's not ready yet
+    if (!socket.connected && findAttemptsRef.current === 0) {
+      const checkSocket = setInterval(() => {
+        if (socket.connected) {
+          clearInterval(checkSocket);
+          fetchChatMessages();
+        }
+      }, 100);
+      const socketTimeout = setTimeout(() => {
+        clearInterval(checkSocket);
+        fetchChatMessages();
+      }, 3000);
+      return () => {
+        clearInterval(checkSocket);
+        clearTimeout(socketTimeout);
+      };
+    }
+
+    // 2. If chat messages are not loaded yet, wait for them
+    if (chatMessages.length === 0) {
+      return;
+    }
+
+    // 3. Look for target message in chatMessages
+    const found = chatMessages.some((m: any) => Number(m.id) === targetId);
+    if (found) {
+      setTimeout(() => {
+        const el = document.getElementById(`chat-msg-${targetId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => {
+            setDeepLinkTarget(null);
+            window.history.replaceState({}, '', '/chat');
+          }, 3000);
+        }
+        setIsFindingTargetMessage(false);
+      }, 100);
+      return;
+    }
+
+    // 4. Target message is NOT in loaded messages.
+    // Check if target message could be older.
+    const oldestMessage = chatMessages[0];
+    if (oldestMessage && targetId < Number(oldestMessage.id) && hasMoreChat && findAttemptsRef.current < 5) {
+      findAttemptsRef.current += 1;
+      fetchChatMessages(String(oldestMessage.id));
+    } else {
+      setIsFindingTargetMessage(false);
+      setDeepLinkTarget(null);
+      window.history.replaceState({}, '', '/chat');
+      showToast('Could not locate the message. It might have been deleted.');
+    }
+  }, [isFindingTargetMessage, chatMessages, socket.connected, deepLinkTarget]);
+
   // Mark messages as seen when chat becomes active
-  const { currentPage } = useAuth();
   useEffect(() => {
     if (currentPage === 'community' && communityTab === 'chat' && chatMessages.length > 0) {
       const maxId = Math.max(...chatMessages.map((m: any) => Number(m.id || 0)));
@@ -385,6 +458,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     onlineCount,
     isLoadingOlderChat,
     hasMoreChat,
+    isFindingTargetMessage,
     fetchChatMessages,
     handleChatContextMenu,
     handleChatTouchStart,

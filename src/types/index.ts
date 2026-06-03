@@ -123,18 +123,22 @@ export interface GameRoom {
   correctOption?: number;
 }
 
-// Notification System Types
 export type NotificationType =
   | 'post_approved' | 'post_rejected'
+  | 'post_update_approved' | 'post_update_rejected'
   | 'episode_approved' | 'episode_rejected'
   | 'new_comment' | 'comment_reply'
   | 'mention_comment' | 'mention_chat'
-  | 'new_post' | 'new_episode';
+  | 'new_post' | 'new_episode'
+  | 'suggestion_approved' | 'suggestion_rejected'
+  | 'user_muted' | 'user_unmuted'
+  | 'user_banned' | 'user_unbanned'
+  | 'user_role_updated';
 
 export interface AppNotification {
   _id: number;
   recipient_id: number;
-  actor_id: number | null;
+  actor_id: { id: number; username: string; avatar_url: string | null } | number | null;
   type: NotificationType;
   target_id: number | null;
   target_type: 'post' | 'comment' | 'episode' | 'chat_message' | null;

@@ -10,7 +10,7 @@ interface NotificationContextType {
   unreadCount: number;
   isLoading: boolean;
   hasMore: boolean;
-  activeFilter: 'all' | 'unread';
+  activeFilter: 'all' | 'unread' | 'mentions' | 'comments' | 'posts' | 'moderation';
   preferences: NotificationPreferences;
   isOpen: boolean;
   showPreferences: boolean;
@@ -23,7 +23,7 @@ interface NotificationContextType {
   markAllAsRead: () => Promise<void>;
   clearRead: () => Promise<void>;
   softDelete: (id: number) => Promise<void>;
-  setFilter: (filter: 'all' | 'unread') => void;
+  setFilter: (filter: 'all' | 'unread' | 'mentions' | 'comments' | 'posts' | 'moderation') => void;
   updatePreferences: (prefs: Partial<NotificationPreferences>) => Promise<void>;
   setIsOpen: (open: boolean) => void;
   setShowPreferences: (show: boolean) => void;
@@ -56,7 +56,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     total: 0,
     hasMore: false,
   });
-  const [activeFilter, setActiveFilter] = useState<'all' | 'unread'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'mentions' | 'comments' | 'posts' | 'moderation'>('all');
   const [preferences, setPreferences] = useState<NotificationPreferences>(DEFAULT_PREFERENCES);
   const [isOpen, setIsOpen] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
@@ -163,7 +163,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [token, notifications]);
 
   // Set filter
-  const setFilter = useCallback((filter: 'all' | 'unread') => {
+  const setFilter = useCallback((filter: 'all' | 'unread' | 'mentions' | 'comments' | 'posts' | 'moderation') => {
     setActiveFilter(filter);
     currentPage.current = 1;
   }, []);
@@ -198,7 +198,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     switch (type) {
       case 'new_post':
       case 'post_approved':
-      case 'post_rejected': {
+      case 'post_rejected':
+      case 'post_update_approved':
+      case 'post_update_rejected': {
         const postId = metadata?.postId || target_id;
         if (postId) {
           setDeepLinkTarget({ type: 'post', targetId: postId, postId });
@@ -239,6 +241,23 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           changePage('community');
           window.history.replaceState({}, '', `/chat#message-${messageId}`);
         }
+        break;
+      }
+      case 'suggestion_approved':
+      case 'suggestion_rejected': {
+        const suggestionId = metadata?.suggestionId || target_id;
+        setDeepLinkTarget({ type: 'suggestion', targetId: suggestionId, suggestionId });
+        changePage('community');
+        window.history.replaceState({}, '', `/chat?tab=suggestions`);
+        break;
+      }
+      case 'user_muted':
+      case 'user_unmuted':
+      case 'user_banned':
+      case 'user_unbanned':
+      case 'user_role_updated': {
+        changePage('profile');
+        window.history.replaceState({}, '', `/profile`);
         break;
       }
       default:

@@ -11,7 +11,8 @@ import {
   Trophy, 
   Store, 
   User,
-  ShieldCheck
+  ShieldCheck,
+  LayoutDashboard
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -143,6 +144,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </button>
             </li>
           )}
+          {user && (() => {
+            const ROLE_WEIGHTS = { user: 0, moderator: 1, admin: 2, owner: 3 };
+            const weight = ROLE_WEIGHTS[user.role] || 0;
+            return (
+              <>
+                {weight >= 1 && (
+                  <li>
+                    <button
+                      className={`w-full flex items-center p-3.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer text-right group ${
+                        currentPage === 'moderator-dashboard'
+                          ? 'bg-gradient-to-r from-brand-orange/15 to-transparent text-white border-r-4 border-brand-orange' 
+                          : 'text-zinc-400 hover:text-white hover:bg-zinc-900/40'
+                      }`}
+                      onClick={() => setCurrentPage('moderator-dashboard')}
+                    >
+                      <span className="flex items-center gap-3.5">
+                        <ShieldCheck className={`w-5 h-5 transition-transform duration-200 group-hover:scale-105 ${currentPage === 'moderator-dashboard' ? 'text-brand-orange' : 'text-zinc-400 group-hover:text-white'}`} />
+                        <span>Moderator Panel</span>
+                      </span>
+                    </button>
+                  </li>
+                )}
+                {weight >= 2 && (
+                  <li>
+                    <button
+                      className={`w-full flex items-center p-3.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer text-right group ${
+                        currentPage === 'admin'
+                          ? 'bg-gradient-to-r from-brand-orange/15 to-transparent text-white border-r-4 border-brand-orange' 
+                          : 'text-zinc-400 hover:text-white hover:bg-zinc-900/40'
+                      }`}
+                      onClick={() => setCurrentPage('admin')}
+                    >
+                      <span className="flex items-center gap-3.5">
+                        <LayoutDashboard className={`w-5 h-5 transition-transform duration-200 group-hover:scale-105 ${currentPage === 'admin' ? 'text-brand-orange' : 'text-zinc-400 group-hover:text-white'}`} />
+                        <span>Admin Panel</span>
+                      </span>
+                    </button>
+                  </li>
+                )}
+              </>
+            );
+          })()}
         </ul>
       </nav>
 
