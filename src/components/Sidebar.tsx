@@ -1,6 +1,7 @@
 import React from 'react';
 import { UserAvatar } from './UserAvatar';
 import logo from '../assets/LOGO.svg';
+import { NotificationBell } from './notifications/NotificationBell';
 import { 
   Mic, 
   Home, 
@@ -86,6 +87,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }} 
         />
       </a>
+
+      {user && (
+        <div className="flex items-center justify-between mb-6 px-3.5 py-1.5 bg-zinc-900/20 rounded-xl border border-zinc-900/40 shrink-0">
+          <span className="text-xs font-bold text-zinc-400">Notifications</span>
+          <NotificationBell />
+        </div>
+      )}
 
       {/* Navigation List */}
       <nav className="flex-1">

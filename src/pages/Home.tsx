@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
+import { useNotifications } from '../context/NotificationContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserAvatar } from '../components/UserAvatar';
 import { 
@@ -132,6 +134,8 @@ export const Home: React.FC<HomeProps> = ({
   const [newCommentTexts, setNewCommentTexts] = useState<{[key: number]: string}>({});
   const [commentMentionSearch, setCommentMentionSearch] = useState<{[key: number]: string | null}>({});
   const [replyingToComment, setReplyingToComment] = useState<{[key: number]: any | null}>({});
+  const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
+  const [activeSuggestionIdx, setActiveSuggestionIdx] = useState(0);
   const [commentSubmitting, setCommentSubmitting] = useState<{[key: number]: boolean}>({});
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; commentId: number; content: string; postId: number; parentId?: number } | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
@@ -213,6 +217,70 @@ export const Home: React.FC<HomeProps> = ({
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [communityPosts, isLoadingOlderPosts, hasMorePosts, loadOlderPosts]);
+
+  // URL check on mount for direct page land deep links
+  useEffect(() => {
+    const path = window.location.pathname;
+    const params = new URLSearchParams(window.location.search);
+    const commentIdStr = params.get('comment');
+    const hashCommentMatch = window.location.hash.match(/#comment-(\d+)/);
+    const commentId = commentIdStr ? parseInt(commentIdStr, 10) : (hashCommentMatch ? parseInt(hashCommentMatch[1], 10) : null);
+
+    if ((path.startsWith('/post/') || path.startsWith('/posts/')) && !deepLinkTarget) {
+      const parts = path.split('/');
+      const postIdStr = parts[parts.length - 1];
+      const postId = parseInt(postIdStr, 10);
+      if (!isNaN(postId)) {
+        if (commentId) {
+          setDeepLinkTarget({ type: 'comment', targetId: commentId, postId, commentId });
+        } else {
+          setDeepLinkTarget({ type: 'post', targetId: postId, postId });
+        }
+      }
+    }
+  }, []);
+
+  // Auto-expand and scroll to comment/post from deep link Target
+  useEffect(() => {
+    if (!deepLinkTarget) return;
+
+    if (deepLinkTarget.type === 'comment' && communityPosts.length > 0) {
+      const { postId, commentId } = deepLinkTarget;
+      if (postId && commentId) {
+        if (expandedComments[postId] === undefined) {
+          toggleComments(postId);
+        } else {
+          setTimeout(() => {
+            const el = document.getElementById(`comment-${commentId}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.classList.add('notification-highlight');
+              setTimeout(() => {
+                el.classList.remove('notification-highlight');
+              }, 3000);
+              // Clear target
+              setDeepLinkTarget(null);
+            }
+          }, 300);
+        }
+      }
+    } else if (deepLinkTarget.type === 'post' && communityPosts.length > 0) {
+      const { postId } = deepLinkTarget;
+      if (postId) {
+        setTimeout(() => {
+          const el = document.getElementById(`post-${postId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('notification-highlight');
+            setTimeout(() => {
+              el.classList.remove('notification-highlight');
+            }, 3000);
+            setDeepLinkTarget(null);
+          }
+        }, 300);
+      }
+    }
+  }, [deepLinkTarget, communityPosts, expandedComments]);
 
   // Double-tap to like
   const lastTapRef = useRef<{postId: number; time: number} | null>(null);
@@ -435,6 +503,15 @@ export const Home: React.FC<HomeProps> = ({
     }
   };
 
+  const getFilteredUsernames = (postId: number) => {
+    const query = commentMentionSearch[postId];
+    if (query === null || query === undefined || !usernames) return [];
+    return usernames.filter((u: any) => 
+      u.username.toLowerCase().includes(query.toLowerCase()) && 
+      u.username !== user?.username
+    );
+  };
+
   const handleCommentInputChange = (postId: number, text: string) => {
     setNewCommentTexts(prev => ({ ...prev, [postId]: text }));
     const lastAtIdx = text.lastIndexOf('@');
@@ -443,6 +520,7 @@ export const Home: React.FC<HomeProps> = ({
       const textAfterAt = text.substring(lastAtIdx + 1);
       if (isStartOrAfterSpace && !textAfterAt.includes(' ')) {
         setCommentMentionSearch(prev => ({ ...prev, [postId]: textAfterAt }));
+        setActiveSuggestionIdx(0);
         return;
       }
     }
@@ -1007,12 +1085,14 @@ export const Home: React.FC<HomeProps> = ({
           {communityPosts.length === 0 ? (
             <p className="text-zinc-500 text-xs md:text-sm font-medium py-12 text-center">No posts available at the moment.</p>
           ) : (
-            communityPosts.map((post: any) => (
-              <div 
-                key={post.id} 
-                id={`post-${post.id}`} 
-                className="glass-card p-5 text-left border border-zinc-900/60 relative"
-              >
+            communityPosts.map((post: any) => {
+              const isPostHighlighted = deepLinkTarget?.type === 'post' && deepLinkTarget?.postId === post.id;
+              return (
+                <HighlightWrapper key={post.id} isHighlighted={isPostHighlighted} className="rounded-2xl">
+                  <div 
+                    id={`post-${post.id}`} 
+                    className="glass-card p-5 text-left border border-zinc-900/60 relative"
+                  >
                 <div className="flex justify-between items-start">
                   <div className="flex gap-3 items-center">
                     <UserAvatar
@@ -1243,147 +1323,157 @@ export const Home: React.FC<HomeProps> = ({
                           {expandedComments[post.id].length === 0 ? (
                             <p className="text-zinc-500 text-[11px] font-medium py-3 text-center">No comments yet. Be the first to comment!</p>
                           ) : (
-                            expandedComments[post.id].map((c: any) => (
-                              <div 
-                                key={c.id} 
-                                className="bg-zinc-900/30 rounded-xl p-3.5 border border-zinc-900/40 relative group/comment"
-                                onContextMenu={(e) => {
-                                  if (user && (c.user_id === user.id || user.role === 'admin' || user.role === 'owner')) {
-                                    e.preventDefault();
-                                    setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, postId: post.id });
-                                  }
-                                }}
-                              >
-                                <div className="flex gap-3 items-start">
-                                  <UserAvatar username={c.username} avatarUrl={c.avatar_url} equippedFrame={c.equipped_frame} size={28} />
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-center mb-1">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-xs font-extrabold text-brand-orange">@{c.username}</span>
-                                        <span className="text-[8px] font-bold bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-md">{c.batch}</span>
-                                      </div>
-                                      
-                                      <div className="flex items-center gap-3">
-                                        <span className="text-[9px] text-zinc-500 font-semibold">
-                                          {new Date(c.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                                        </span>
-                                        {user && (c.user_id === user.id || user.role === 'admin' || user.role === 'owner') && (
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, postId: post.id });
-                                            }}
-                                            className="text-zinc-500 hover:text-white cursor-pointer opacity-0 group-hover/comment:opacity-100 transition-opacity"
-                                            title="More Options"
-                                          >
-                                            <MoreVertical className="w-3.5 h-3.5" />
-                                          </button>
+                            expandedComments[post.id].map((c: any) => {
+                              const isCommentHighlighted = deepLinkTarget?.type === 'comment' && deepLinkTarget?.commentId === c.id;
+                              return (
+                                <HighlightWrapper key={c.id} isHighlighted={isCommentHighlighted} className="w-full rounded-xl">
+                                  <div 
+                                    id={`comment-${c.id}`}
+                                    className="bg-zinc-900/30 rounded-xl p-3.5 border border-zinc-900/40 relative group/comment"
+                                    onContextMenu={(e) => {
+                                      if (user && (c.user_id === user.id || user.role === 'admin' || user.role === 'owner')) {
+                                        e.preventDefault();
+                                        setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, postId: post.id });
+                                      }
+                                    }}
+                                  >
+                                    <div className="flex gap-3 items-start">
+                                      <UserAvatar username={c.username} avatarUrl={c.avatar_url} equippedFrame={c.equipped_frame} size={28} />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-center mb-1">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="text-xs font-extrabold text-brand-orange">@{c.username}</span>
+                                            <span className="text-[8px] font-bold bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-md">{c.batch}</span>
+                                          </div>
+                                          
+                                          <div className="flex items-center gap-3">
+                                            <span className="text-[9px] text-zinc-500 font-semibold">
+                                              {new Date(c.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                                            </span>
+                                            {user && (c.user_id === user.id || c.username === user.username || user.role === 'admin' || user.role === 'owner') && (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, postId: post.id });
+                                                }}
+                                                className="text-zinc-500 hover:text-white cursor-pointer opacity-0 group-hover/comment:opacity-100 transition-opacity"
+                                                title="More Options"
+                                              >
+                                                <MoreVertical className="w-3.5 h-3.5" />
+                                              </button>
+                                            )}
+                                          </div>
+                                        </div>
+                                        
+                                        {editingCommentId === c.id ? (
+                                          <div className="my-2 flex flex-col gap-2">
+                                            <textarea
+                                              className="w-full bg-zinc-950 border border-zinc-800 focus:border-brand-orange text-white rounded-lg p-2 text-xs outline-none resize-none"
+                                              value={editCommentText}
+                                              onChange={(e) => setEditCommentText(e.target.value)}
+                                              rows={2}
+                                              autoFocus
+                                            />
+                                            <div className="flex justify-end gap-1.5">
+                                              <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-[9px] py-1.5 px-3 rounded-lg cursor-pointer transition-all" onClick={() => setEditingCommentId(null)}>Cancel</button>
+                                              <button className="bg-brand-orange text-black font-extrabold text-[9px] py-1.5 px-3 rounded-lg cursor-pointer transition-all shadow-md" onClick={() => handleEditCommunityComment(c.id, editCommentText)}>Save</button>
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <p className="text-xs text-zinc-200 font-medium leading-relaxed mb-2 pr-1">{renderTextWithMentions(c.content)}</p>
                                         )}
-                                      </div>
-                                    </div>
-                                    
-                                    {editingCommentId === c.id ? (
-                                      <div className="my-2 flex flex-col gap-2">
-                                        <textarea
-                                          className="w-full bg-zinc-950 border border-zinc-800 focus:border-brand-orange text-white rounded-lg p-2 text-xs outline-none resize-none"
-                                          value={editCommentText}
-                                          onChange={(e) => setEditCommentText(e.target.value)}
-                                          rows={2}
-                                          autoFocus
-                                        />
-                                        <div className="flex justify-end gap-1.5">
-                                          <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-[9px] py-1.5 px-3 rounded-lg cursor-pointer transition-all" onClick={() => setEditingCommentId(null)}>Cancel</button>
-                                          <button className="bg-brand-orange text-black font-extrabold text-[9px] py-1.5 px-3 rounded-lg cursor-pointer transition-all shadow-md" onClick={() => handleEditCommunityComment(c.id, editCommentText)}>Save</button>
+
+                                        <div className="flex gap-4 items-center">
+                                          <button 
+                                            className={`flex items-center gap-1 text-[10px] font-bold cursor-pointer transition-colors ${c.has_liked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                            onClick={() => handleCommentLike(post.id, c.id)}
+                                          >
+                                            <Heart className={`w-3 h-3 ${c.has_liked ? 'fill-current' : ''}`} /> 
+                                            <span>{c.likes_count}</span>
+                                          </button>
+                                          <button 
+                                            className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer" 
+                                            onClick={() => {
+                                              setReplyingToComment(prev => ({ ...prev, [post.id]: c }));
+                                              document.getElementById(`comment-input-${post.id}`)?.focus();
+                                            }}
+                                          >
+                                            <CornerUpLeft className="w-3 h-3" /> 
+                                            <span>Reply</span>
+                                          </button>
                                         </div>
                                       </div>
-                                    ) : (
-                                      <p className="text-xs text-zinc-200 font-medium leading-relaxed mb-2 pr-1">{renderTextWithMentions(c.content)}</p>
-                                    )}
-
-                                    <div className="flex gap-4 items-center">
-                                      <button 
-                                        className={`flex items-center gap-1 text-[10px] font-bold cursor-pointer transition-colors ${c.has_liked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                        onClick={() => handleCommentLike(post.id, c.id)}
-                                      >
-                                        <Heart className={`w-3 h-3 ${c.has_liked ? 'fill-current' : ''}`} /> 
-                                        <span>{c.likes_count}</span>
-                                      </button>
-                                      <button 
-                                        className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer" 
-                                        onClick={() => {
-                                          setReplyingToComment(prev => ({ ...prev, [post.id]: c }));
-                                          document.getElementById(`comment-input-${post.id}`)?.focus();
-                                        }}
-                                      >
-                                        <CornerUpLeft className="w-3 h-3" /> 
-                                        <span>Reply</span>
-                                      </button>
                                     </div>
-                                  </div>
-                                </div>
 
-                                {/* Nested replies */}
-                                {c.replies && c.replies.length > 0 && (
-                                  <div className="border-l-2 border-zinc-800/80 pl-3 ml-3 mt-3.5 space-y-3.5 text-left">
-                                    {c.replies.map((r: any) => (
-                                      <div key={r.id} className="flex gap-2.5 items-start group/reply relative">
-                                        <UserAvatar username={r.username} avatarUrl={r.avatar_url} equippedFrame={r.equipped_frame} size={22} />
-                                        <div className="flex-1 min-w-0">
-                                          <div className="flex justify-between items-center mb-0.5">
-                                            <span className="text-[11px] font-bold text-zinc-400">@{r.username}</span>
-                                            <div className="flex items-center gap-2">
-                                              <span className="text-[8px] text-zinc-600 font-semibold">
-                                                {new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                                              </span>
-                                              {user && (r.user_id === user.id || user.role === 'admin' || user.role === 'owner') && (
-                                                <button
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setContextMenu({ x: e.clientX, y: e.clientY, commentId: r.id, content: r.content, postId: post.id, parentId: c.id });
-                                                  }}
-                                                  className="text-zinc-600 hover:text-white cursor-pointer opacity-0 group-hover/reply:opacity-100 transition-opacity"
-                                                  title="More"
-                                                >
-                                                  <MoreVertical className="w-3 h-3" />
-                                                </button>
-                                              )}
-                                            </div>
-                                          </div>
+                                    {/* Nested replies */}
+                                    {c.replies && c.replies.length > 0 && (
+                                      <div className="border-l-2 border-zinc-800/80 pl-3 ml-3 mt-3.5 space-y-3.5 text-left">
+                                        {c.replies.map((r: any) => {
+                                          const isReplyHighlighted = deepLinkTarget?.type === 'comment' && deepLinkTarget?.commentId === r.id;
+                                          return (
+                                            <HighlightWrapper key={r.id} isHighlighted={isReplyHighlighted} className="w-full rounded-xl">
+                                              <div id={`comment-${r.id}`} className="flex gap-2.5 items-start group/reply relative">
+                                                <UserAvatar username={r.username} avatarUrl={r.avatar_url} equippedFrame={r.equipped_frame} size={22} />
+                                                <div className="flex-1 min-w-0">
+                                                  <div className="flex justify-between items-center mb-0.5">
+                                                    <span className="text-[11px] font-bold text-zinc-400">@{r.username}</span>
+                                                    <div className="flex items-center gap-2">
+                                                      <span className="text-[8px] text-zinc-600 font-semibold">
+                                                        {new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                                                      </span>
+                                                      {user && (r.user_id === user.id || r.username === user.username || user.role === 'admin' || user.role === 'owner') && (
+                                                        <button
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setContextMenu({ x: e.clientX, y: e.clientY, commentId: r.id, content: r.content, postId: post.id, parentId: c.id });
+                                                          }}
+                                                          className="text-zinc-600 hover:text-white cursor-pointer opacity-0 group-hover/reply:opacity-100 transition-opacity"
+                                                          title="More"
+                                                        >
+                                                          <MoreVertical className="w-3.5 h-3.5" />
+                                                        </button>
+                                                      )}
+                                                    </div>
+                                                  </div>
 
-                                          {editingCommentId === r.id ? (
-                                            <div className="my-1.5 flex flex-col gap-1.5">
-                                              <textarea
-                                                className="w-full bg-zinc-950 border border-zinc-800 focus:border-brand-orange text-white rounded-lg p-2 text-[11px] outline-none resize-none"
-                                                value={editCommentText}
-                                                onChange={(e) => setEditCommentText(e.target.value)}
-                                                rows={2}
-                                                autoFocus
-                                              />
-                                              <div className="flex justify-end gap-1.5">
-                                                <button className="border border-zinc-800 text-white text-[8px] py-1 px-2.5 rounded-md cursor-pointer" onClick={() => setEditingCommentId(null)}>Cancel</button>
-                                                <button className="bg-brand-orange text-black font-extrabold text-[8px] py-1 px-2.5 rounded-md cursor-pointer" onClick={() => handleEditCommunityComment(r.id, editCommentText)}>Save</button>
+                                                  {editingCommentId === r.id ? (
+                                                    <div className="my-1.5 flex flex-col gap-1.5">
+                                                      <textarea
+                                                        className="w-full bg-zinc-950 border border-zinc-800 focus:border-brand-orange text-white rounded-lg p-2 text-[11px] outline-none resize-none"
+                                                        value={editCommentText}
+                                                        onChange={(e) => setEditCommentText(e.target.value)}
+                                                        rows={2}
+                                                        autoFocus
+                                                      />
+                                                      <div className="flex justify-end gap-1.5">
+                                                        <button className="border border-zinc-800 text-white text-[8px] py-1 px-2.5 rounded-md cursor-pointer" onClick={() => setEditingCommentId(null)}>Cancel</button>
+                                                        <button className="bg-brand-orange text-black font-extrabold text-[8px] py-1 px-2.5 rounded-md cursor-pointer" onClick={() => handleEditCommunityComment(r.id, editCommentText)}>Save</button>
+                                                      </div>
+                                                    </div>
+                                                  ) : (
+                                                    <p className="text-xs text-zinc-300 font-medium leading-relaxed pr-1 mt-0.5">{renderTextWithMentions(r.content)}</p>
+                                                  )}
+
+                                                  <div className="flex gap-2 items-center mt-1">
+                                                    <button 
+                                                      className={`flex items-center gap-1 text-[9px] font-bold cursor-pointer transition-colors ${r.has_liked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                                      onClick={() => handleCommentLike(post.id, r.id)}
+                                                    >
+                                                      <Heart className={`w-2.5 h-2.5 ${r.has_liked ? 'fill-current' : ''}`} /> 
+                                                      <span>{r.likes_count}</span>
+                                                    </button>
+                                                  </div>
+                                                </div>
                                               </div>
-                                            </div>
-                                          ) : (
-                                            <p className="text-xs text-zinc-300 font-medium leading-relaxed pr-1 mt-0.5">{renderTextWithMentions(r.content)}</p>
-                                          )}
-
-                                          <div className="flex gap-2 items-center mt-1">
-                                            <button 
-                                              className={`flex items-center gap-1 text-[9px] font-bold cursor-pointer transition-colors ${r.has_liked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                              onClick={() => handleCommentLike(post.id, r.id)}
-                                            >
-                                              <Heart className={`w-2.5 h-2.5 ${r.has_liked ? 'fill-current' : ''}`} /> 
-                                              <span>{r.likes_count}</span>
-                                            </button>
-                                          </div>
-                                        </div>
+                                            </HighlightWrapper>
+                                          );
+                                        })}
                                       </div>
-                                    ))}
+                                    )}
                                   </div>
-                                )}
-                              </div>
-                            ))
+                                </HighlightWrapper>
+                              );
+                            })
                           )}
                           
                           {/* Comment composer form */}
@@ -1405,22 +1495,27 @@ export const Home: React.FC<HomeProps> = ({
                               )}
                               
                               {/* Mention suggestions */}
-                              {commentMentionSearch[post.id] && usernames && usernames.length > 0 && (
-                                <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 max-h-[120px] overflow-y-auto z-10 bg-zinc-950 border border-zinc-800 rounded-xl p-1 shadow-2xl backdrop-blur-md">
-                                  {usernames
-                                    .filter((u: any) => u.username.toLowerCase().startsWith(commentMentionSearch[post.id]!.toLowerCase()) && u.username !== user.username)
-                                    .map((u: any) => (
+                              {commentMentionSearch[post.id] !== null && usernames && usernames.length > 0 && (() => {
+                                const suggestionsList = getFilteredUsernames(post.id);
+                                if (suggestionsList.length === 0) return null;
+                                return (
+                                  <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 max-h-[160px] overflow-y-auto z-10 bg-zinc-950 border border-zinc-800 rounded-xl p-1 shadow-2xl backdrop-blur-md">
+                                    {suggestionsList.map((u: any, idx: number) => (
                                       <div
                                         key={u.username}
                                         onClick={() => handleSelectCommentMention(post.id, u.username)}
-                                        className="flex items-center gap-2 p-2 hover:bg-brand-orange/10 cursor-pointer rounded-lg text-left text-xs font-bold text-white transition-colors"
+                                        onMouseEnter={() => setActiveSuggestionIdx(idx)}
+                                        className={`flex items-center gap-2 p-2 cursor-pointer rounded-lg text-left text-xs font-bold transition-colors ${
+                                          idx === activeSuggestionIdx ? 'bg-brand-orange text-black font-extrabold' : 'hover:bg-brand-orange/10 text-white'
+                                        }`}
                                       >
                                         <UserAvatar username={u.username} avatarUrl={u.avatar_url} equippedFrame={u.equipped_frame} size={20} />
                                         <span>@{u.username}</span>
                                       </div>
                                     ))}
-                                </div>
-                              )}
+                                  </div>
+                                );
+                              })()}
 
                               <div className="flex gap-2.5 items-end">
                                 <textarea
@@ -1432,6 +1527,35 @@ export const Home: React.FC<HomeProps> = ({
                                     handleCommentInputChange(post.id, e.target.value);
                                   }}
                                   onKeyDown={(e) => {
+                                    const suggestionsList = getFilteredUsernames(post.id);
+                                    const hasSuggestions = suggestionsList.length > 0;
+
+                                    if (hasSuggestions) {
+                                      if (e.key === 'ArrowDown') {
+                                        e.preventDefault();
+                                        setActiveSuggestionIdx(prev => (prev + 1) % suggestionsList.length);
+                                        return;
+                                      }
+                                      if (e.key === 'ArrowUp') {
+                                        e.preventDefault();
+                                        setActiveSuggestionIdx(prev => (prev - 1 + suggestionsList.length) % suggestionsList.length);
+                                        return;
+                                      }
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        const selectedUser = suggestionsList[activeSuggestionIdx];
+                                        if (selectedUser) {
+                                          handleSelectCommentMention(post.id, selectedUser.username);
+                                        }
+                                        return;
+                                      }
+                                      if (e.key === 'Escape') {
+                                        e.preventDefault();
+                                        setCommentMentionSearch(prev => ({ ...prev, [post.id]: null }));
+                                        return;
+                                      }
+                                    }
+
                                     if (e.key === 'Enter' && !e.shiftKey) {
                                       e.preventDefault();
                                       if (newCommentTexts[post.id]?.trim()) {
@@ -1466,8 +1590,10 @@ export const Home: React.FC<HomeProps> = ({
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
-            ))
+                  </div>
+                </HighlightWrapper>
+              );
+            })
           )}
         </div>
       </section>

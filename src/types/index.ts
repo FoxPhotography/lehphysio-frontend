@@ -122,3 +122,41 @@ export interface GameRoom {
   options?: string[];
   correctOption?: number;
 }
+
+// Notification System Types
+export type NotificationType =
+  | 'post_approved' | 'post_rejected'
+  | 'episode_approved' | 'episode_rejected'
+  | 'new_comment' | 'comment_reply'
+  | 'mention_comment' | 'mention_chat'
+  | 'new_post' | 'new_episode';
+
+export interface AppNotification {
+  _id: number;
+  recipient_id: number;
+  actor_id: number | null;
+  type: NotificationType;
+  target_id: number | null;
+  target_type: 'post' | 'comment' | 'episode' | 'chat_message' | null;
+  title: string;
+  body: string;
+  metadata: Record<string, any>;
+  is_read: boolean;
+  is_deleted: boolean;
+  created_at: string;
+}
+
+export interface NotificationPreferences {
+  comments: boolean;
+  replies: boolean;
+  mentions: boolean;
+  community: boolean;
+  moderation: boolean;
+}
+
+export interface NotificationPagination {
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+}

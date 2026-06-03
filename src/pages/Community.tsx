@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getNameColor, getFrameImage } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
+import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
+import { useNotifications } from '../context/NotificationContext';
 import { 
   MessageSquare, 
   Lightbulb, 
@@ -140,6 +142,8 @@ export const Community: React.FC<CommunityProps> = ({
   const [mentionSearch, setMentionSearch] = useState('');
   const [mentionStartIndex, setMentionStartIndex] = useState(-1);
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
+  const [activeSuggestionIdx, setActiveSuggestionIdx] = useState(0);
+  const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
 
   // Track exact visual viewport height to support mobile virtual keyboards
   useEffect(() => {
@@ -201,6 +205,28 @@ export const Community: React.FC<CommunityProps> = ({
     return undefined;
   }, []);
 
+  // Scroll to and highlight message from URL param ?msg=X or deepLinkTarget
+  useEffect(() => {
+    if (activeSubTab === 'chat' && chatMessages.length > 0) {
+      const searchParams = new URLSearchParams(window.location.search);
+      const msgIdStr = searchParams.get('msg');
+      const msgId = msgIdStr ? parseInt(msgIdStr, 10) : (deepLinkTarget?.type === 'chat_message' ? deepLinkTarget.messageId : null);
+
+      if (msgId) {
+        const exists = chatMessages.some(m => m.id === msgId);
+        if (exists) {
+          setTimeout(() => {
+            const el = document.getElementById(`chat-msg-${msgId}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              if (deepLinkTarget) setDeepLinkTarget(null);
+            }
+          }, 100);
+        }
+      }
+    }
+  }, [chatMessages, activeSubTab, deepLinkTarget, setDeepLinkTarget]);
+
   const renderTextWithMentions = (text: string) => {
     if (!text) return '';
     const parts = text.split(/(@\w+)/g);
@@ -234,6 +260,7 @@ export const Community: React.FC<CommunityProps> = ({
         setMentionSearch(textAfterAt);
         setMentionStartIndex(lastAtIdx);
         setShowMentionSuggestions(true);
+        setActiveSuggestionIdx(0);
         return;
       }
     }
@@ -252,6 +279,7 @@ export const Community: React.FC<CommunityProps> = ({
     
     setChatInput(newValue);
     setShowMentionSuggestions(false);
+    setActiveSuggestionIdx(0);
     
     setTimeout(() => {
       const inputEl = document.getElementById('community-chat-input') as HTMLTextAreaElement;
@@ -383,6 +411,7 @@ export const Community: React.FC<CommunityProps> = ({
                 return (
                   <div 
                     key={msg.id} 
+                    id={`chat-msg-${msg.id}`}
                     className="flex w-full"
                     style={{
                       justifyContent: isMyMsg ? 'flex-end' : 'flex-start',
@@ -472,13 +501,17 @@ export const Community: React.FC<CommunityProps> = ({
                         </div>
 
                         {/* Text card bubble */}
-                        <div 
-                          className={`px-3 py-2 rounded-2xl text-xs md:text-sm font-semibold shadow-lg text-left relative ${
-                            isMyMsg 
-                              ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black rounded-tr-none' 
-                              : 'bg-zinc-900/60 border border-zinc-800 text-white rounded-tl-none'
-                          }`}
+                        <HighlightWrapper
+                          isHighlighted={deepLinkTarget?.type === 'chat_message' && deepLinkTarget?.messageId === msg.id}
+                          className="rounded-2xl"
                         >
+                          <div 
+                            className={`px-3 py-2 rounded-2xl text-xs md:text-sm font-semibold shadow-lg text-left relative ${
+                              isMyMsg 
+                                ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black rounded-tr-none' 
+                                : 'bg-zinc-900/60 border border-zinc-800 text-white rounded-tl-none'
+                            }`}
+                          >
                           {/* Quote reply */}
                           {msg.reply_to?.username && (
                             <div className={`border-l-2 border-brand-orange px-2.5 py-1.5 rounded-lg mb-2 text-[10px] text-left direction-ltr ${
@@ -532,6 +565,7 @@ export const Community: React.FC<CommunityProps> = ({
                             </div>
                           )}
                         </div>
+                      </HighlightWrapper>
                       </div>
 
                       {/* Incoming Avatar (Me) */}
@@ -570,16 +604,26 @@ export const Community: React.FC<CommunityProps> = ({
               )}
 
               {/* Mention drop container */}
-              {showMentionSuggestions && usernames && usernames.length > 0 && (
-                <div className="absolute bottom-[calc(100%+8px)] left-3 right-3 md:left-0 md:right-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-1 shadow-2xl backdrop-blur-md">
-                  {usernames
-                    .filter((u: any) => u.username.toLowerCase().includes(mentionSearch.toLowerCase()) && u.username !== user?.username)
-                    .map((u: any) => (
+              {showMentionSuggestions && usernames && usernames.length > 0 && (() => {
+                const filteredSuggestions = usernames.filter((u: any) => u.username.toLowerCase().includes(mentionSearch.toLowerCase()) && u.username !== user?.username);
+                if (filteredSuggestions.length === 0) {
+                  return (
+                    <div className="absolute bottom-[calc(100%+8px)] left-3 right-3 md:left-0 md:right-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-3 shadow-2xl backdrop-blur-md text-xs text-zinc-500 text-center font-bold">
+                      No matching users found
+                    </div>
+                  );
+                }
+                return (
+                  <div className="absolute bottom-[calc(100%+8px)] left-3 right-3 md:left-0 md:right-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-1 shadow-2xl backdrop-blur-md">
+                    {filteredSuggestions.map((u: any, idx: number) => (
                       <button
                         key={u.username}
                         type="button"
                         onClick={() => handleSelectMention(u.username)}
-                        className="w-full flex items-center gap-3 p-2.5 hover:bg-brand-orange/10 cursor-pointer rounded-lg text-left text-xs font-bold text-white transition-colors"
+                        onMouseEnter={() => setActiveSuggestionIdx(idx)}
+                        className={`w-full flex items-center gap-3 p-2.5 cursor-pointer rounded-lg text-left text-xs font-bold text-white transition-colors ${
+                          idx === activeSuggestionIdx ? 'bg-brand-orange/20 border border-brand-orange/30 shadow-orange-glow' : 'hover:bg-brand-orange/10'
+                        }`}
                       >
                         <UserAvatar username={u.username} avatarUrl={u.avatar_url} equippedFrame={u.equipped_frame} size={24} />
                         <div className="flex flex-col text-left">
@@ -588,11 +632,9 @@ export const Community: React.FC<CommunityProps> = ({
                         </div>
                       </button>
                     ))}
-                  {usernames.filter((u: any) => u.username.toLowerCase().includes(mentionSearch.toLowerCase()) && u.username !== user?.username).length === 0 && (
-                    <div className="p-3 text-xs text-zinc-500 text-center font-bold">No matching users found</div>
-                  )}
-                </div>
-              )}
+                  </div>
+                );
+              })()}
 
               {/* Editing tag indicator */}
               {editingMessage && (
@@ -634,10 +676,27 @@ export const Community: React.FC<CommunityProps> = ({
                       onFocus={() => setIsInputFocused(true)}
                       onBlur={() => setIsInputFocused(false)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          const form = e.currentTarget.form;
-                          if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                        const filtered = usernames ? usernames.filter((u: any) => u.username.toLowerCase().includes(mentionSearch.toLowerCase()) && u.username !== user?.username) : [];
+                        if (showMentionSuggestions && filtered.length > 0) {
+                          if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            setActiveSuggestionIdx(prev => (prev + 1) % filtered.length);
+                          } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            setActiveSuggestionIdx(prev => (prev - 1 + filtered.length) % filtered.length);
+                          } else if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSelectMention(filtered[activeSuggestionIdx].username);
+                          } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            setShowMentionSuggestions(false);
+                          }
+                        } else {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            const form = e.currentTarget.form;
+                            if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                          }
                         }
                       }}
                       rows={1}

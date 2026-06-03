@@ -217,7 +217,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
   handleAdminDeleteUser,
   apiBase
 }) => {
-  const { currentPage, user, token, forgotEmail, equippedFrame, setEquippedFrame, equippedTitle, setEquippedTitle, unlockedCosmetics, setCurrentPage, handleLogout, handleUpdateProfile, handleUploadImage, isSubscribed, pushLoading, handleTogglePushNotifications, showToast, triggerXpPopup, xpSettings, fetchUserProfile, getAvatarFrameClass, showConfirm } = useAuth();
+  const { currentPage, user, token, forgotEmail, equippedFrame, setEquippedFrame, equippedTitle, setEquippedTitle, unlockedCosmetics, setCurrentPage, handleLogout, handleUpdateProfile, handleUploadImage, isSubscribed, pushLoading, handleTogglePushNotifications, showToast, triggerXpPopup, xpSettings, fetchUserProfile, getAvatarFrameClass, showConfirm, usernamesDirectory } = useAuth();
 
   switch (currentPage) {
     case 'home':
@@ -241,7 +241,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           handleDeletePost={handleDeletePost}
           handleSharePost={(id) => showToast('Post link copied to clipboard! 🔗')}
           handleUploadImage={handleUploadImage}
-          usernames={chatHook.usernamesDirectory}
+          usernames={usernamesDirectory}
           showToast={showToast}
           equippedFrame={equippedFrame}
           leaderboard={leaderboard}
@@ -309,7 +309,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           handleOpenModerationModal={handleOpenModerationModal}
           handleDeleteComment={handleDeleteComment}
           handleEditComment={handleEditComment}
-          usernames={chatHook.usernamesDirectory}
+          usernames={usernamesDirectory}
           showToast={showToast}
         />
       );
@@ -347,7 +347,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           handleUpvoteSuggestion={handleUpvoteSuggestion}
           handleOpenModerationModal={handleOpenModerationModal}
           handleDeleteSuggestion={handleDeleteSuggestion}
-          usernames={chatHook.usernamesDirectory}
+          usernames={usernamesDirectory}
           getAvatarFrameClass={getAvatarFrameClass}
           equippedFrame={equippedFrame}
           loadOlderMessages={chatHook.fetchChatMessages}

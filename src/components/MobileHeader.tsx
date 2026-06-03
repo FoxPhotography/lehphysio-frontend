@@ -2,6 +2,7 @@ import React from 'react';
 import { UserAvatar } from './UserAvatar';
 import { Store, LogIn } from 'lucide-react';
 import logo from '../assets/LOGO.svg';
+import { NotificationBell } from './notifications/NotificationBell';
 
 interface MobileHeaderProps {
   setCurrentPage: (page: string) => void;
@@ -44,6 +45,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         >
           <Store className="w-4 h-4" />
         </button>
+        
+        {user && <NotificationBell />}
         
         {user ? (
           <UserAvatar 

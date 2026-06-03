@@ -12,6 +12,7 @@ import { gameService } from './services/gameService';
 // Context
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider, useSocket } from './context/SocketContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 // Hooks
 import { useChat } from './hooks/useChat';
@@ -1363,7 +1364,9 @@ function App() {
   return (
     <AuthProvider>
       <SocketProvider>
-        <InnerApp />
+        <NotificationProvider>
+          <InnerApp />
+        </NotificationProvider>
       </SocketProvider>
     </AuthProvider>
   );

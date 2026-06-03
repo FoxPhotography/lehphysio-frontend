@@ -8,6 +8,7 @@ import { BottomNav } from '../components/BottomNav';
 import { CustomModal } from '../components/CustomModal';
 import { XPPopup } from '../components/XPPopup';
 import { Toast } from '../components/Toast';
+import { NotificationCenter } from '../components/notifications/NotificationCenter';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -48,6 +49,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
 
       {/* Floating XP Popups */}
       <XPPopup popups={xpPopups} />
+
+      {/* Notification Center Dropdown */}
+      <NotificationCenter />
 
       {/* Desktop Sticky Sidebar */}
       <Sidebar

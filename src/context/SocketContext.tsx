@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { API_BASE } from '../services/api';
 
@@ -11,11 +11,54 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   }, []);
 
+  const hasConnected = useRef(false);
+
   useEffect(() => {
-    socket.connect();
-    return () => {
-      if (socket) socket.disconnect();
+    if (!hasConnected.current) {
+      socket.connect();
+      hasConnected.current = true;
+    }
+
+    const onReconnect = () => {
+      // Re-authenticate on reconnection
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload?.id) {
+            socket.emit('authenticate', payload.id);
+          }
+        } catch (e) {
+          // Invalid token, skip
+        }
+      }
     };
+
+    socket.on('connect', onReconnect);
+
+    return () => {
+      socket.off('connect', onReconnect);
+    };
+  }, [socket]);
+
+  // Authenticate socket when user logs in
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const token = localStorage.getItem('token');
+      if (token && socket.connected) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload?.id) {
+            socket.emit('authenticate', payload.id);
+          }
+        } catch (e) {
+          // Invalid token
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, [socket]);
 
   return (
