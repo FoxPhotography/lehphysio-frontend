@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, WifiOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Sidebar } from '../components/Sidebar';
 import { MobileHeader } from '../components/MobileHeader';
@@ -39,7 +39,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
     streakOverlay,
     setStreakOverlay,
     getFlameTier,
-    triggerXpPopup
+    triggerXpPopup,
+    isOffline
   } = useAuth();
 
   return (
@@ -66,6 +67,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
 
       {/* Main Column Wrapper */}
       <div className="app-body-wrapper">
+        {/* Offline Banner */}
+        {isOffline && (
+          <div className="bg-red-600/90 backdrop-blur-md text-white text-center py-1.5 px-4 text-[11px] font-black flex items-center justify-center gap-2 z-[999] border-b border-red-500/20 shadow-lg shrink-0">
+            <WifiOff className="w-3.5 h-3.5" />
+            <span>You are currently offline. Showing cached content.</span>
+          </div>
+        )}
+
         {/* Mobile Header */}
         <MobileHeader
           setCurrentPage={setCurrentPage}

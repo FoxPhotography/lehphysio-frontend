@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { authService } from '../services/authService';
+import { feedCacheService } from '../services/feedCacheService';
 import { playChatSound, setFramesCache } from '../utils/helpers';
 import { User, XpSettings } from '../types';
 
@@ -85,6 +86,7 @@ interface AuthContextType {
 
   // Auth Handlers
   handleLogout: () => void;
+  isOffline: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -93,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentPage, _setCurrentPage] = useState('home');
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
-  const [confirmEmail, setConfirmEmail] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState(() => localStorage.getItem('confirmEmail') || '');
   const [forgotEmail, setForgotEmail] = useState('');
 
   // Cosmetics
@@ -123,6 +125,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     quiz_solve: 150
   });
 
+  const profileFetchInProgress = useRef(false);
+
   // PWA & Push
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
@@ -137,6 +141,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     xpEarned: number;
     hasStreakBonus: boolean;
   }>({ show: false, days: 0, xpEarned: 0, hasStreakBonus: false });
+
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOffline(false);
+      showToast('Back online! Syncing fresh data... 🟢');
+      window.dispatchEvent(new Event('app_online'));
+    };
+
+    const handleOffline = () => {
+      setIsOffline(true);
+      showToast('Offline mode. Showing cached content. 🔴');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -203,6 +230,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (token) {
       localStorage.setItem('token', token);
+
+      if (token.includes('.')) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const userId = payload?.id;
+          if (userId) {
+            feedCacheService.get(`user_profile_${userId}`).then(cache => {
+              if (cache && cache.data) {
+                setUser(cache.data);
+              }
+            });
+          }
+        } catch (e) {
+          console.error('Error decoding token for user cache:', e);
+        }
+      }
+
       fetchUserProfile();
       fetchUsernamesDirectory();
     } else {
@@ -214,11 +258,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserProfile = async () => {
     if (!token) return;
+    if (profileFetchInProgress.current) return;
+    profileFetchInProgress.current = true;
     try {
       const res = await authService.fetchUserProfile(token);
       const data = await res.json();
       if (res.ok) {
-        setUser(data.user);
+        const userId = data.user.id || data.user._id;
+        setUser(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(data.user)) {
+            if (userId) {
+              feedCacheService.set(`user_profile_${userId}`, data.user);
+            }
+            return data.user;
+          }
+          return prev;
+        });
         if (data.user.equipped_frame) {
           setEquippedFrame(data.user.equipped_frame);
           localStorage.setItem('eq_frame', data.user.equipped_frame);
@@ -240,6 +295,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      profileFetchInProgress.current = false;
     }
   };
 
@@ -646,7 +703,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       equippedFrame, setEquippedFrame, equippedTitle, setEquippedTitle, unlockedCosmetics, setUnlockedCosmetics,
       deferredPrompt, showInstallBanner, setShowInstallBanner, isSubscribed, pushLoading, isStandalone,
       showIOSInstall, setShowIOSInstall, handleInstallPWA, dismissInstallBanner, handleTogglePushNotifications, dismissIOSInstall,
-      streakOverlay, setStreakOverlay, getFlameTier, getAvatarFrameClass, handleLogout
+      streakOverlay, setStreakOverlay, getFlameTier, getAvatarFrameClass, handleLogout, isOffline
     }}>
       {children}
     </AuthContext.Provider>

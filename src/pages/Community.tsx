@@ -66,6 +66,7 @@ interface CommunityProps {
   loadOlderMessages?: (beforeId: string) => void;
   isLoadingOlder?: boolean;
   hasMoreChat?: boolean;
+  isRefreshingChat?: boolean;
 }
 
 // Helper to strip emojis from names
@@ -125,6 +126,7 @@ export const Community: React.FC<CommunityProps> = ({
   loadOlderMessages,
   isLoadingOlder = false,
   hasMoreChat = true,
+  isRefreshingChat = false,
 }) => {
 
   const getFrameClass = (frameName: string) => {
@@ -378,6 +380,12 @@ export const Community: React.FC<CommunityProps> = ({
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-brand-orange" />
                   <h3 className="text-sm font-black text-white">Chat Feed</h3>
+                  {isRefreshingChat && (
+                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-bold uppercase tracking-wider animate-pulse ml-2">
+                      <div className="w-3.5 h-3.5 border-2 border-brand-orange border-t-transparent rounded-full animate-spin" />
+                      <span>Updating...</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-brand-orange font-extrabold uppercase tracking-wider">
                   <span className="relative flex h-2 w-2">

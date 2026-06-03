@@ -74,6 +74,7 @@ interface AppRouterProps {
   isLoadingOlderPosts: boolean;
   hasMorePosts: boolean;
   fetchCommunityPosts: (beforeId?: string) => Promise<void>;
+  isRefreshingFeed: boolean;
 
   // Leaderboard tab
   leaderboard: any[];
@@ -175,6 +176,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
   isLoadingOlderPosts,
   hasMorePosts,
   fetchCommunityPosts,
+  isRefreshingFeed,
 
   leaderboard,
   leaderboardTab,
@@ -219,7 +221,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
   handleAdminDeleteUser,
   apiBase
 }) => {
-  const { currentPage, user, token, forgotEmail, equippedFrame, setEquippedFrame, equippedTitle, setEquippedTitle, unlockedCosmetics, setCurrentPage, handleLogout, handleUpdateProfile, handleUploadImage, isSubscribed, pushLoading, handleTogglePushNotifications, showToast, triggerXpPopup, xpSettings, fetchUserProfile, getAvatarFrameClass, showConfirm, usernamesDirectory } = useAuth();
+  const { currentPage, user, token, forgotEmail, equippedFrame, setEquippedFrame, equippedTitle, setEquippedTitle, unlockedCosmetics, setCurrentPage, handleLogout, handleUpdateProfile, handleUploadImage, isSubscribed, pushLoading, handleTogglePushNotifications, showToast, triggerXpPopup, xpSettings, fetchUserProfile, getAvatarFrameClass, showConfirm, usernamesDirectory, confirmEmail } = useAuth();
 
   switch (currentPage) {
     case 'home':
@@ -255,6 +257,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           loadOlderPosts={fetchCommunityPosts}
           isLoadingOlderPosts={isLoadingOlderPosts}
           hasMorePosts={hasMorePosts}
+          isRefreshingFeed={isRefreshingFeed}
         />
       );
     case 'news':
@@ -357,6 +360,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           loadOlderMessages={chatHook.fetchChatMessages}
           isLoadingOlder={chatHook.isLoadingOlderChat}
           hasMoreChat={chatHook.hasMoreChat}
+          isRefreshingChat={chatHook.isRefreshingChat}
         />
       );
     case 'games':
@@ -481,6 +485,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
     case 'confirm':
       return (
         <Confirm
+          confirmEmail={confirmEmail}
           confirmCode={confirmCode}
           setConfirmCode={setConfirmCode}
           authError={authError}

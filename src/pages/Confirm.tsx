@@ -10,6 +10,7 @@ import {
 } from '../components/AuthComponents';
 
 interface ConfirmProps {
+  confirmEmail?: string;
   confirmCode: string;
   setConfirmCode: (val: string) => void;
   authError: string;
@@ -18,6 +19,7 @@ interface ConfirmProps {
 }
 
 export const Confirm: React.FC<ConfirmProps> = ({
+  confirmEmail,
   confirmCode,
   setConfirmCode,
   authError,
@@ -26,7 +28,7 @@ export const Confirm: React.FC<ConfirmProps> = ({
 }) => (
   <AuthLayout
     title="Verify Account"
-    subtitle="Enter the 6-digit code sent to your email"
+    subtitle={confirmEmail ? `Enter the 6-digit code sent to ${confirmEmail}` : "Enter the 6-digit code sent to your email"}
   >
     <form id="verify-form" onSubmit={handleConfirm} className="space-y-5">
       <AuthError message={authError} />

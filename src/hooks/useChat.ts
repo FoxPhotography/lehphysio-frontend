@@ -25,6 +25,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
   const [isLoadingOlderChat, setIsLoadingOlderChat] = useState(false);
   const [hasMoreChat, setHasMoreChat] = useState(true);
   const [isFindingTargetMessage, setIsFindingTargetMessage] = useState(false);
+  const [isRefreshingChat, setIsRefreshingChat] = useState(false);
   const findAttemptsRef = useRef(0);
 
   const chatMessagesRef = useRef(chatMessages);
@@ -49,6 +50,25 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     tokenRef.current = token;
   }, [token]);
 
+  // Load cached chat messages immediately when user is available
+  useEffect(() => {
+    if (user?.id) {
+      const cached = localStorage.getItem(`chat_cache_${user.id}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setChatMessages(parsed);
+          chatMessagesRef.current = parsed;
+        } catch (e) {
+          console.error('Error parsing cached chat messages:', e);
+        }
+      }
+    } else {
+      setChatMessages([]);
+      chatMessagesRef.current = [];
+    }
+  }, [user?.id]);
+
   // Monitor deepLinkTarget to start the search process
   useEffect(() => {
     if (currentPage === 'community' && communityTab === 'chat' && deepLinkTarget?.type === 'chat_message') {
@@ -65,30 +85,12 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
 
     const targetId = Number(deepLinkTarget.messageId);
 
-    // 1. Wait for socket connection if it's not ready yet
-    if (!socket.connected && findAttemptsRef.current === 0) {
-      const checkSocket = setInterval(() => {
-        if (socket.connected) {
-          clearInterval(checkSocket);
-          fetchChatMessages();
-        }
-      }, 100);
-      const socketTimeout = setTimeout(() => {
-        clearInterval(checkSocket);
-        fetchChatMessages();
-      }, 3000);
-      return () => {
-        clearInterval(checkSocket);
-        clearTimeout(socketTimeout);
-      };
-    }
-
-    // 2. If chat messages are not loaded yet, wait for them
+    // 1. If chat messages are not loaded yet, wait for them
     if (chatMessages.length === 0) {
       return;
     }
 
-    // 3. Look for target message in chatMessages
+    // 2. Look for target message in chatMessages
     const found = chatMessages.some((m: any) => Number(m.id) === targetId);
     if (found) {
       setTimeout(() => {
@@ -105,7 +107,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
       return;
     }
 
-    // 4. Target message is NOT in loaded messages.
+    // 3. Target message is NOT in loaded messages.
     // Check if target message could be older.
     const oldestMessage = chatMessages[0];
     if (oldestMessage && targetId < Number(oldestMessage.id) && hasMoreChat && findAttemptsRef.current < 5) {
@@ -117,7 +119,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
       window.history.replaceState({}, '', '/chat');
       showToast('Could not locate the message. It might have been deleted.');
     }
-  }, [isFindingTargetMessage, chatMessages, socket.connected, deepLinkTarget]);
+  }, [isFindingTargetMessage, chatMessages, deepLinkTarget]);
 
   // Mark messages as seen when chat becomes active
   useEffect(() => {
@@ -134,6 +136,8 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     try {
       if (beforeId) {
         setIsLoadingOlderChat(true);
+      } else {
+        setIsRefreshingChat(true);
       }
       const res = await chatService.fetchChatMessages(beforeId, tokenRef.current);
       const data = await res.json();
@@ -173,7 +177,13 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
           const serverIds = new Set(data.map((m: any) => m.id));
           const filteredPending = pendingMessages.filter((pm: any) => !serverIds.has(pm.id));
           
-          setChatMessages([...data, ...filteredPending]);
+          const merged = [...data, ...filteredPending];
+          setChatMessages(merged);
+          chatMessagesRef.current = merged;
+
+          if (userRef.current?.id) {
+            localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(data));
+          }
 
           const onlineHeader = res.headers.get('X-Online-Count');
           if (onlineHeader) {
@@ -186,6 +196,8 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     } finally {
       if (beforeId) {
         setIsLoadingOlderChat(false);
+      } else {
+        setIsRefreshingChat(false);
       }
     }
   };
@@ -209,6 +221,23 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
       socket.off('chat_update', handleChatUpdate);
     };
   }, [communityTab, currentPage, socket]);
+
+  // Sync missed messages on reconnect / online status
+  useEffect(() => {
+    const handleOnlineSync = () => {
+      if (communityTab === 'chat' && currentPage === 'community') {
+        fetchChatMessages();
+      }
+    };
+
+    socket.on('connect', handleOnlineSync);
+    window.addEventListener('app_online', handleOnlineSync);
+
+    return () => {
+      socket.off('connect', handleOnlineSync);
+      window.removeEventListener('app_online', handleOnlineSync);
+    };
+  }, [socket, communityTab, currentPage]);
 
   // Autoscroll chat to bottom smartly
   useEffect(() => {
@@ -459,6 +488,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     isLoadingOlderChat,
     hasMoreChat,
     isFindingTargetMessage,
+    isRefreshingChat,
     fetchChatMessages,
     handleChatContextMenu,
     handleChatTouchStart,

@@ -8,6 +8,7 @@ import { authService } from './services/authService';
 import { episodeService } from './services/episodeService';
 import { communityService } from './services/communityService';
 import { gameService } from './services/gameService';
+import { feedCacheService } from './services/feedCacheService';
 
 // Context
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -21,6 +22,26 @@ import { useGames } from './hooks/useGames';
 // Layout & Routing
 import { MainLayout } from './layouts/MainLayout';
 import { AppRouter } from './routes/router';
+
+const getUserId = (user: any, token: string): string | null => {
+  if (user?.id) return String(user.id);
+  if (token && token.includes('.')) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload?.id) return String(payload.id);
+    } catch (e) {}
+  }
+  return null;
+};
+
+const getClientRank = (xp: number) => {
+  const score = xp || 0;
+  if (score >= 6000) return { name_ar: 'أسطورة الريهاب', name_en: 'Rehab Legend', emoji: '👑', tier: 5 };
+  if (score >= 3000) return { name_ar: 'النيوروچي', name_en: 'Neurogenic', emoji: '🧠', tier: 4 };
+  if (score >= 1500) return { name_ar: 'سيد الأورثو', name_en: 'Ortho King', emoji: '🦴', tier: 3 };
+  if (score >= 500) return { name_ar: 'أخصائي الألم', name_en: 'Pain Specialist', emoji: '⚡', tier: 2 };
+  return { name_ar: 'طالب تشريح', name_en: 'Anatomy Rookie', emoji: '🧪', tier: 1 };
+};
 
 function InnerApp() {
   const {
@@ -40,10 +61,13 @@ function InnerApp() {
     equippedFrame,
     equippedTitle,
     xpSettings,
-    setStreakOverlay
+    setStreakOverlay,
+    confirmEmail,
+    setConfirmEmail
   } = useAuth();
 
   const socket = useSocket();
+  const inProgressRequests = useRef<Record<string, boolean>>({});
 
   // App Data
   const [episodes, setEpisodes] = useState([]);
@@ -51,6 +75,7 @@ function InnerApp() {
   const [leaderboardTab, setLeaderboardTab] = useState('all-time');
   const [communityPosts, setCommunityPosts] = useState<any[]>([]);
   const [newsPosts, setNewsPosts] = useState<any[]>([]);
+  const [isRefreshingFeed, setIsRefreshingFeed] = useState(false);
   const [isLoadingOlderPosts, setIsLoadingOlderPosts] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const [newPostContent, setNewPostContent] = useState('');
@@ -243,6 +268,69 @@ function InnerApp() {
     };
   }, [token]);
 
+  // Load cached posts list immediately on user availability or token presence
+  useEffect(() => {
+    const userId = getUserId(user, token);
+    if (userId) {
+      feedCacheService.get(`feed_${userId}`).then(cache => {
+        if (cache && cache.data) {
+          setCommunityPosts(cache.data);
+        }
+      });
+      feedCacheService.get(`news_${userId}`).then(cache => {
+        if (cache && cache.data) {
+          setNewsPosts(cache.data);
+        }
+      });
+      feedCacheService.get(`episodes_${userId}`).then(cache => {
+        if (cache && cache.data) {
+          setEpisodes(cache.data);
+        }
+      });
+    } else {
+      setCommunityPosts([]);
+      setNewsPosts([]);
+      setEpisodes([]);
+    }
+  }, [user?.id, token]);
+
+  // Load cached leaderboard immediately on tab/batch changes
+  useEffect(() => {
+    const userId = getUserId(user, token);
+    if (userId) {
+      const cacheKey = `leaderboard_${userId}_${leaderboardTab}_${user?.batch || ''}`;
+      feedCacheService.get(cacheKey).then(cache => {
+        if (cache && cache.data) {
+          setLeaderboard(cache.data);
+        }
+      });
+    } else {
+      setLeaderboard([]);
+    }
+  }, [user?.batch, leaderboardTab, token, user?.id]);
+
+  // Sync communityTab and currentPage states
+  useEffect(() => {
+    if (currentPage === 'community') {
+      setCommunityTab('chat');
+    } else if (currentPage === 'home') {
+      setCommunityTab('feed');
+    }
+  }, [currentPage]);
+
+  // Sync fresh data when app comes back online
+  useEffect(() => {
+    const handleOnlineSync = () => {
+      fetchEpisodes();
+      fetchCommunityPosts();
+      fetchNewsPosts();
+      fetchLeaderboard();
+      fetchPublicSuggestions();
+    };
+    window.addEventListener('app_online', handleOnlineSync);
+    return () => window.removeEventListener('app_online', handleOnlineSync);
+  }, [token]);
+
   useEffect(() => {
     const handleNewsPublished = () => {
       fetchNewsPosts();
@@ -286,27 +374,110 @@ function InnerApp() {
     }
   }, [communityPosts]);
 
+  // Sync hasVotedPoll with user data if available
   useEffect(() => {
-    if (currentPage === 'leaderboard') fetchLeaderboard();
-  }, [currentPage, leaderboardTab]);
+    if (user) {
+      const todayStr = getLocalDateString();
+      setHasVotedPoll(user.last_poll_vote_date === todayStr);
+    } else {
+      setHasVotedPoll(false);
+    }
+  }, [user]);
 
-  const fetchEpisodes = async () => {
+  // Background refresh for all home page sections when home page is navigated to
+  useEffect(() => {
+    if (currentPage === 'home') {
+      fetchUserProfile();
+      fetchEpisodes();
+      fetchCommunityPosts();
+      fetchNewsPosts();
+      fetchLeaderboard();
+    } else if (currentPage === 'episodes') {
+      fetchEpisodes();
+    } else if (currentPage === 'news') {
+      fetchNewsPosts();
+    }
+  }, [currentPage]);
+
+  // Revalidate leaderboard when batch or tab changes
+  useEffect(() => {
+    if (currentPage === 'home' || currentPage === 'leaderboard') {
+      fetchLeaderboard();
+    }
+  }, [user?.batch, leaderboardTab, currentPage]);
+
+  const fetchEpisodes = async (forceRefresh: boolean = false) => {
+    const reqKey = 'episodes';
+    if (inProgressRequests.current[reqKey]) return;
+    inProgressRequests.current[reqKey] = true;
+
+    const userId = getUserId(user, token);
+    let showSpinner = true;
     try {
+      if (userId) {
+        const cache = await feedCacheService.get(`episodes_${userId}`);
+        if (cache && cache.data && cache.data.length > 0) {
+          setEpisodes(cache.data);
+          const cacheAge = Date.now() - cache.cachedAt;
+          const ttl = 5 * 60 * 1000;
+          if (cacheAge < ttl && !forceRefresh) {
+            showSpinner = false;
+          }
+        }
+      }
+
       const res = await episodeService.fetchEpisodes(token);
-      const data = await res.json();
-      if (res.ok) setEpisodes(data);
+      if (res.ok) {
+        const data = await res.json();
+        setEpisodes(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(data)) {
+            if (userId) {
+              feedCacheService.set(`episodes_${userId}`, data);
+            }
+            return data;
+          }
+          return prev;
+        });
+      }
     } catch (e) {
       console.error(e);
+    } finally {
+      inProgressRequests.current[reqKey] = false;
     }
   };
 
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = async (forceRefresh: boolean = false) => {
+    const userId = getUserId(user, token);
+    const cacheKey = `leaderboard_${userId}_${leaderboardTab}_${user?.batch || ''}`;
+    const reqKey = `leaderboard_${leaderboardTab}_${user?.batch || ''}`;
+    if (inProgressRequests.current[reqKey]) return;
+    inProgressRequests.current[reqKey] = true;
+
     try {
+      if (userId) {
+        const cache = await feedCacheService.get(cacheKey);
+        if (cache && cache.data && cache.data.length > 0) {
+          setLeaderboard(cache.data);
+        }
+      }
+
       const res = await gameService.fetchLeaderboard(leaderboardTab, user?.batch);
-      const data = await res.json();
-      if (res.ok) setLeaderboard(data);
+      if (res.ok) {
+        const data = await res.json();
+        setLeaderboard(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(data)) {
+            if (userId) {
+              feedCacheService.set(cacheKey, data);
+            }
+            return data;
+          }
+          return prev;
+        });
+      }
     } catch (e) {
       console.error(e);
+    } finally {
+      inProgressRequests.current[reqKey] = false;
     }
   };
 
@@ -461,15 +632,15 @@ function InnerApp() {
     }
   }, [currentPage, user, token]);
 
-  const fetchCommunityPosts = async (beforeId?: string) => {
+  const fetchCommunityPosts = async (beforeId?: string, forceRefresh: boolean = false) => {
+    const userId = getUserId(user, token);
+
     if (beforeId) {
       setIsLoadingOlderPosts(true);
-    }
-    try {
-      const res = await communityService.fetchCommunityPosts(beforeId, token);
-      const data = await res.json();
-      if (res.ok) {
-        if (beforeId) {
+      try {
+        const res = await communityService.fetchCommunityPosts(beforeId, token);
+        const data = await res.json();
+        if (res.ok) {
           setCommunityPosts(prev => {
             const existingIds = new Set(prev.map(p => p.id));
             const newPosts = data.filter((p: any) => !existingIds.has(p.id));
@@ -478,27 +649,114 @@ function InnerApp() {
             }
             return [...prev, ...newPosts];
           });
-        } else {
-          setCommunityPosts(data);
-          setHasMorePosts(data.length >= 10);
         }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoadingOlderPosts(false);
+      }
+      return;
+    }
+
+    const reqKey = 'feed_main';
+    if (inProgressRequests.current[reqKey]) return;
+    inProgressRequests.current[reqKey] = true;
+
+    let showSpinner = true;
+    if (userId) {
+      const cache = await feedCacheService.get(`feed_${userId}`);
+      if (cache && cache.data && cache.data.length > 0) {
+        setCommunityPosts(prev => {
+          const pendingPosts = prev.filter(p => p.pending);
+          const cachedData = cache.data.filter(cp => !pendingPosts.some(pp => pp.id === cp.id));
+          return [...pendingPosts, ...cachedData];
+        });
+
+        const cacheAge = Date.now() - cache.cachedAt;
+        const ttl = 5 * 60 * 1000;
+        if (cacheAge < ttl && !forceRefresh) {
+          showSpinner = false;
+        }
+      }
+    }
+
+    if (showSpinner) {
+      setIsRefreshingFeed(true);
+    }
+
+    try {
+      const res = await communityService.fetchCommunityPosts(undefined, token);
+      if (res.ok) {
+        const data = await res.json();
+        setCommunityPosts(prev => {
+          const pendingPosts = prev.filter(p => p.pending);
+          const currentNonPendingPosts = prev.filter(p => !p.pending);
+          const freshData = data || [];
+
+          if (JSON.stringify(currentNonPendingPosts) === JSON.stringify(freshData)) {
+            return prev;
+          }
+
+          const merged = [...pendingPosts, ...freshData.filter((fp: any) => !pendingPosts.some(pp => pp.id === fp.id))];
+          if (userId) {
+            feedCacheService.set(`feed_${userId}`, merged);
+          }
+          setHasMorePosts(freshData.length >= 10);
+          return merged;
+        });
+      } else if (showSpinner) {
+        showToast('Offline: showing cached feed.');
+      }
+    } catch (e) {
+      console.error(e);
+      if (showSpinner) {
+        showToast('Offline: showing cached feed.');
+      }
+    } finally {
+      if (showSpinner) {
+        setIsRefreshingFeed(false);
+      }
+      inProgressRequests.current[reqKey] = false;
+    }
+  };
+
+  const fetchNewsPosts = async (forceRefresh: boolean = false) => {
+    const reqKey = 'news';
+    if (inProgressRequests.current[reqKey]) return;
+    inProgressRequests.current[reqKey] = true;
+
+    const userId = getUserId(user, token);
+    let showSpinner = true;
+    try {
+      if (userId) {
+        const cache = await feedCacheService.get(`news_${userId}`);
+        if (cache && cache.data && cache.data.length > 0) {
+          setNewsPosts(cache.data);
+          const cacheAge = Date.now() - cache.cachedAt;
+          const ttl = 5 * 60 * 1000;
+          if (cacheAge < ttl && !forceRefresh) {
+            showSpinner = false;
+          }
+        }
+      }
+
+      const res = await communityService.fetchNewsPosts(token);
+      const data = await res.json();
+      if (res.ok) {
+        setNewsPosts(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(data)) {
+            if (userId) {
+              feedCacheService.set(`news_${userId}`, data);
+            }
+            return data;
+          }
+          return prev;
+        });
       }
     } catch (e) {
       console.error(e);
     } finally {
-      setIsLoadingOlderPosts(false);
-    }
-  };
-
-  const fetchNewsPosts = async () => {
-    try {
-      const res = await communityService.fetchNewsPosts(token);
-      const data = await res.json();
-      if (res.ok) {
-        setNewsPosts(data);
-      }
-    } catch (e) {
-      console.error(e);
+      inProgressRequests.current[reqKey] = false;
     }
   };
 
@@ -570,20 +828,39 @@ function InnerApp() {
     e.preventDefault();
     setAuthError('');
     setAuthSuccess('');
+    if (import.meta.env.DEV) {
+      console.log('handleRegister: Submitting registration form');
+    }
     try {
       const res = await authService.register(registerForm);
       const data = await res.json();
+      if (import.meta.env.DEV) {
+        console.log('handleRegister: Received response from register API', {
+          status: res.status,
+          ok: res.ok
+        });
+      }
       if (res.ok) {
         setAuthSuccess(data.message);
         setConfirmEmail(registerForm.email);
+        localStorage.setItem('confirmEmail', registerForm.email);
+        if (import.meta.env.DEV) {
+          console.log('handleRegister: Registration successful');
+        }
         setTimeout(() => {
+          if (import.meta.env.DEV) {
+            console.log('handleRegister: Redirecting user to confirmation page');
+          }
           setCurrentPage('confirm');
           setAuthSuccess('');
         }, 1500);
       } else {
-        setAuthError(data.error);
+        setAuthError(data.error || 'Failed to register.');
       }
-    } catch (e) {
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error('handleRegister: Error submitting form', err);
+      }
       setAuthError('Connection error occurred.');
     }
   };
@@ -592,10 +869,20 @@ function InnerApp() {
     e.preventDefault();
     setAuthError('');
     setAuthSuccess('');
+    if (import.meta.env.DEV) {
+      console.log('handleConfirm: Submitting verification code');
+    }
     try {
       const res = await authService.confirmCode(confirmEmail, confirmCode);
       const data = await res.json();
+      if (import.meta.env.DEV) {
+        console.log('handleConfirm: Received response from verify API', {
+          status: res.status,
+          ok: res.ok
+        });
+      }
       if (res.ok) {
+        localStorage.removeItem('confirmEmail');
         setAuthSuccess(data.message);
         setToken(data.token);
         setUser(data.user);
@@ -892,33 +1179,168 @@ function InnerApp() {
   };
 
   const handleCreatePost = async (title: string, content: string, imageUrl: string, isNews: boolean = false) => {
-    if (!token) return;
+    if (!token || !user) return;
+    const userId = getUserId(user, token);
+
+    // Create local pending post object
+    const tempId = `temp-${Date.now()}`;
+    const pendingPost = {
+      id: tempId,
+      user_id: user.id,
+      username: user.username,
+      avatar_url: user.avatar_url,
+      equipped_frame: user.equipped_frame || 'none',
+      batch: user.batch || '',
+      rank: getClientRank(user.total_xp || 0),
+      title: title || null,
+      content: content,
+      image_url: imageUrl || null,
+      likes_count: 0,
+      shares_count: 0,
+      comments_count: 0,
+      created_at: new Date().toISOString(),
+      status: 'pending',
+      pending: true,
+      isLiked: false,
+      is_news: isNews
+    };
+
+    // Insert the post immediately into the current feed and save it to the cache
+    if (isNews) {
+      setNewsPosts(prev => {
+        const updated = [pendingPost, ...prev];
+        if (userId) feedCacheService.set(`news_${userId}`, updated);
+        return updated;
+      });
+    } else {
+      setCommunityPosts(prev => {
+        const updated = [pendingPost, ...prev];
+        if (userId) feedCacheService.set(`feed_${userId}`, updated);
+        return updated;
+      });
+    }
+
     try {
       const res = await communityService.createPost(title, content, imageUrl, isNews, token);
       const data = await res.json();
+
       if (res.ok) {
         showToast(data.message || 'Post published! 🎉');
         triggerXpPopup(25);
-        fetchCommunityPosts();
-        fetchNewsPosts();
         fetchUserProfile();
+
+        if (isNews) {
+          setNewsPosts(prev => {
+            const updated = prev.map(p => {
+              if (p.id === tempId) {
+                return {
+                  ...p,
+                  id: data.id,
+                  status: data.status,
+                  pending: data.status === 'pending'
+                };
+              }
+              return p;
+            });
+            if (userId) feedCacheService.set(`news_${userId}`, updated);
+            return updated;
+          });
+          fetchNewsPosts(true);
+        } else {
+          setCommunityPosts(prev => {
+            const updated = prev.map(p => {
+              if (p.id === tempId) {
+                return {
+                  ...p,
+                  id: data.id,
+                  status: data.status,
+                  pending: data.status === 'pending'
+                };
+              }
+              return p;
+            });
+            if (userId) feedCacheService.set(`feed_${userId}`, updated);
+            return updated;
+          });
+          fetchCommunityPosts(undefined, true);
+        }
       } else {
         showToast(data.error || 'Failed to create post.');
+        if (isNews) {
+          setNewsPosts(prev => {
+            const updated = prev.filter(p => p.id !== tempId);
+            if (userId) feedCacheService.set(`news_${userId}`, updated);
+            return updated;
+          });
+        } else {
+          setCommunityPosts(prev => {
+            const updated = prev.filter(p => p.id !== tempId);
+            if (userId) feedCacheService.set(`feed_${userId}`, updated);
+            return updated;
+          });
+        }
       }
     } catch (err) {
       showToast('Connection failed.');
+      if (isNews) {
+        setNewsPosts(prev => {
+          const updated = prev.filter(p => p.id !== tempId);
+          if (userId) feedCacheService.set(`news_${userId}`, updated);
+          return updated;
+        });
+      } else {
+        setCommunityPosts(prev => {
+          const updated = prev.filter(p => p.id !== tempId);
+          if (userId) feedCacheService.set(`feed_${userId}`, updated);
+          return updated;
+        });
+      }
     }
   };
 
   const handleEditPost = async (postId: number, content: string, imageUrl: string, title?: string | null) => {
-    if (!token) return;
+    if (!token || !user) return;
+    const userId = getUserId(user, token);
     try {
       const res = await communityService.editPost(postId, content, imageUrl, token);
       const data = await res.json();
       if (res.ok) {
         showToast(data.message || 'Post updated successfully!');
-        fetchCommunityPosts();
-        fetchNewsPosts();
+        
+        setCommunityPosts(prev => {
+          const updated = prev.map(p => {
+            if (p.id === postId) {
+              return {
+                ...p,
+                content,
+                image_url: imageUrl,
+                status: data.status || p.status
+              };
+            }
+            return p;
+          });
+          if (userId) feedCacheService.set(`feed_${userId}`, updated);
+          return updated;
+        });
+
+        setNewsPosts(prev => {
+          const updated = prev.map(p => {
+            if (p.id === postId) {
+              return {
+                ...p,
+                content,
+                image_url: imageUrl,
+                status: data.status || p.status
+              };
+            }
+            return p;
+          });
+          if (userId) feedCacheService.set(`news_${userId}`, updated);
+          return updated;
+        });
+
+        fetchCommunityPosts(undefined, true);
+        fetchNewsPosts(true);
       } else {
         showToast(data.error || 'Failed to update post.');
       }
@@ -932,14 +1354,27 @@ function InnerApp() {
       'Delete Post',
       'Are you sure you want to delete this post? This action cannot be undone.',
       async () => {
-        if (!token) return;
+        if (!token || !user) return;
+        const userId = getUserId(user, token);
         try {
           const res = await communityService.deletePost(postId, token);
           const data = await res.json();
           if (res.ok) {
             showToast(data.message || 'Post deleted successfully.');
-            fetchCommunityPosts();
-            fetchNewsPosts();
+            
+            setCommunityPosts(prev => {
+              const updated = prev.filter(p => p.id !== postId);
+              if (userId) feedCacheService.set(`feed_${userId}`, updated);
+              return updated;
+            });
+            setNewsPosts(prev => {
+              const updated = prev.filter(p => p.id !== postId);
+              if (userId) feedCacheService.set(`news_${userId}`, updated);
+              return updated;
+            });
+
+            fetchCommunityPosts(undefined, true);
+            fetchNewsPosts(true);
           } else {
             showToast(data.error || 'Failed to delete post.');
           }
@@ -956,7 +1391,8 @@ function InnerApp() {
       'Cancel Pending Revision',
       'Are you sure you want to discard your pending edit draft? This will revert the post to the live approved version.',
       async () => {
-        if (!token) return;
+        if (!token || !user) return;
+        const userId = getUserId(user, token);
         try {
           const res = await fetch(`${API_BASE}/api/community/posts/${postId}/revision`, {
             method: 'DELETE',
@@ -965,7 +1401,19 @@ function InnerApp() {
           const data = await res.json();
           if (res.ok) {
             showToast(data.message || 'Pending revision discarded.');
-            fetchCommunityPosts();
+            
+            setCommunityPosts(prev => {
+              const updated = prev.map(p => {
+                if (p.id === postId) {
+                  return { ...p, edit_draft: null };
+                }
+                return p;
+              });
+              if (userId) feedCacheService.set(`feed_${userId}`, updated);
+              return updated;
+            });
+
+            fetchCommunityPosts(undefined, true);
           } else {
             showToast(data.error || 'Failed to cancel revision.');
           }
@@ -978,7 +1426,8 @@ function InnerApp() {
   };
 
   const handleLikePost = async (postId: number) => {
-    if (!token) return;
+    if (!token || !user) return;
+    const userId = getUserId(user, token);
     playChatSound('react');
     const likeXp = 5;
 
@@ -986,14 +1435,22 @@ function InnerApp() {
     const wasLiked = currentPost?.isLiked ?? false;
     const xpDelta = wasLiked ? -likeXp : likeXp;
 
-    setCommunityPosts((prev: any[]) => prev.map((p: any) => {
-      if (p.id !== postId) return p;
-      return { ...p, isLiked: !p.isLiked, likes_count: p.likes_count + (p.isLiked ? -1 : 1) };
-    }));
-    setNewsPosts((prev: any[]) => prev.map((p: any) => {
-      if (p.id !== postId) return p;
-      return { ...p, isLiked: !p.isLiked, likes_count: p.likes_count + (p.isLiked ? -1 : 1) };
-    }));
+    setCommunityPosts((prev: any[]) => {
+      const updated = prev.map((p: any) => {
+        if (p.id !== postId) return p;
+        return { ...p, isLiked: !p.isLiked, likes_count: p.likes_count + (p.isLiked ? -1 : 1) };
+      });
+      if (userId) feedCacheService.set(`feed_${userId}`, updated);
+      return updated;
+    });
+    setNewsPosts((prev: any[]) => {
+      const updated = prev.map((p: any) => {
+        if (p.id !== postId) return p;
+        return { ...p, isLiked: !p.isLiked, likes_count: p.likes_count + (p.isLiked ? -1 : 1) };
+      });
+      if (userId) feedCacheService.set(`news_${userId}`, updated);
+      return updated;
+    });
 
     setUser((prev: any) => prev ? { ...prev, total_xp: prev.total_xp + xpDelta, weekly_xp: (prev.weekly_xp || 0) + xpDelta } : prev);
     triggerXpPopup(xpDelta);
@@ -1004,13 +1461,43 @@ function InnerApp() {
         fetchUserProfile();
       } else {
         setUser((prev: any) => prev ? { ...prev, total_xp: prev.total_xp - xpDelta, weekly_xp: (prev.weekly_xp || 0) - xpDelta } : prev);
-        fetchCommunityPosts();
-        fetchNewsPosts();
+        
+        setCommunityPosts((prev: any[]) => {
+          const updated = prev.map((p: any) => {
+            if (p.id !== postId) return p;
+            return { ...p, isLiked: !p.isLiked, likes_count: p.likes_count + (p.isLiked ? -1 : 1) };
+          });
+          if (userId) feedCacheService.set(`feed_${userId}`, updated);
+          return updated;
+        });
+        setNewsPosts((prev: any[]) => {
+          const updated = prev.map((p: any) => {
+            if (p.id !== postId) return p;
+            return { ...p, isLiked: !p.isLiked, likes_count: p.likes_count + (p.isLiked ? -1 : 1) };
+          });
+          if (userId) feedCacheService.set(`news_${userId}`, updated);
+          return updated;
+        });
       }
     } catch (e) {
       setUser((prev: any) => prev ? { ...prev, total_xp: prev.total_xp - xpDelta, weekly_xp: (prev.weekly_xp || 0) - xpDelta } : prev);
-      fetchCommunityPosts();
-      fetchNewsPosts();
+      
+      setCommunityPosts((prev: any[]) => {
+        const updated = prev.map((p: any) => {
+          if (p.id !== postId) return p;
+          return { ...p, isLiked: !p.isLiked, likes_count: p.likes_count + (p.isLiked ? -1 : 1) };
+        });
+        if (userId) feedCacheService.set(`feed_${userId}`, updated);
+        return updated;
+      });
+      setNewsPosts((prev: any[]) => {
+        const updated = prev.map((p: any) => {
+          if (p.id !== postId) return p;
+          return { ...p, isLiked: !p.isLiked, likes_count: p.likes_count + (p.isLiked ? -1 : 1) };
+        });
+        if (userId) feedCacheService.set(`news_${userId}`, updated);
+        return updated;
+      });
       console.error(e);
     }
   };
@@ -1334,6 +1821,7 @@ function InnerApp() {
         isLoadingOlderPosts={isLoadingOlderPosts}
         hasMorePosts={hasMorePosts}
         fetchCommunityPosts={fetchCommunityPosts}
+        isRefreshingFeed={isRefreshingFeed}
 
         leaderboard={leaderboard}
         leaderboardTab={leaderboardTab}

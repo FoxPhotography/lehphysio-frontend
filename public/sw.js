@@ -34,8 +34,15 @@ self.addEventListener('activate', (event) => {
 
 // Resilient Network-first with Cache fallback strategy
 self.addEventListener('fetch', (event) => {
-  // Only intercept GET requests and exclude API requests/WebSockets
-  if (event.request.method !== 'GET' || event.request.url.includes('/api/') || event.request.url.includes('socket.io')) {
+  // Only intercept GET requests and exclude API requests/WebSockets/Vite dev server assets
+  if (
+    event.request.method !== 'GET' || 
+    event.request.url.includes('/api/') || 
+    event.request.url.includes('socket.io') ||
+    event.request.url.includes('/@vite/') ||
+    event.request.url.includes('__vite_ping') ||
+    event.request.url.includes('/node_modules/')
+  ) {
     return;
   }
 
@@ -58,9 +65,19 @@ self.addEventListener('fetch', (event) => {
             return cachedResponse;
           }
           // Fallback to offline index page
-          if (event.request.headers.get('accept').includes('text/html')) {
-            return caches.match('/index.html');
+          const acceptHeader = event.request.headers.get('accept');
+          if (acceptHeader && acceptHeader.includes('text/html')) {
+            return caches.match('/index.html').then((indexResponse) => {
+              return indexResponse || new Response(
+                '<!DOCTYPE html><html><head><title>Offline</title></head><body><h1>Offline</h1><p>You are currently offline. Please reconnect to access this page.</p></body></html>',
+                {
+                  status: 200,
+                  headers: { 'Content-Type': 'text/html; charset=utf-8' }
+                }
+              );
+            });
           }
+          return new Response('Offline', { status: 503, statusText: 'Offline' });
         });
       })
   );

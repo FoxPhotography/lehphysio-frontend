@@ -41,6 +41,16 @@ export const Register: React.FC<RegisterProps> = ({
       <AuthError message={authError} />
       <AuthSuccess message={authSuccess} />
 
+      {authSuccess && (
+        <button
+          type="button"
+          onClick={() => setCurrentPage('confirm')}
+          className="w-full bg-brand-orange hover:bg-brand-amber text-black font-black text-xs py-3 rounded-xl cursor-pointer transition-all shadow-md text-center"
+        >
+          Go To Verification Page
+        </button>
+      )}
+
       <FormField label="Username" icon={<User className="w-3 h-3" />}>
         <AuthInput
           type="text"

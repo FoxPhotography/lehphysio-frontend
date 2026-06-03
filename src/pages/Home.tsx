@@ -31,7 +31,9 @@ import {
   Sparkles,
   Crown,
   Medal,
-  Star
+  Star,
+  Clock,
+  XCircle
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_BASE || (
@@ -70,6 +72,7 @@ interface HomeProps {
   loadOlderPosts?: (beforeId: string) => void;
   isLoadingOlderPosts?: boolean;
   hasMorePosts?: boolean;
+  isRefreshingFeed?: boolean;
 }
 
 // Helper to strip emojis from text
@@ -108,7 +111,8 @@ export const Home: React.FC<HomeProps> = ({
   newsPosts = [],
   loadOlderPosts,
   isLoadingOlderPosts = false,
-  hasMorePosts = true
+  hasMorePosts = true,
+  isRefreshingFeed = false
 }) => {
   const activeStreak = user?.streak_count || 0;
   const first = leaderboard[0];
@@ -966,11 +970,17 @@ export const Home: React.FC<HomeProps> = ({
 
       {/* Community Feed */}
       <section className="space-y-4">
-        <div className="flex items-center">
+        <div className="flex items-center justify-between">
           <span className="flex items-center gap-2.5 text-lg font-black text-white">
             <MessageSquare className="w-5 h-5 text-brand-orange" />
             <span>Community Feed</span>
           </span>
+          {isRefreshingFeed && (
+            <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-bold uppercase tracking-wider animate-pulse">
+              <div className="w-3 h-3 border-2 border-brand-orange border-t-transparent rounded-full animate-spin" />
+              <span>Updating...</span>
+            </div>
+          )}
         </div>
 
         {/* Interactive Poll of the Day */}
@@ -1095,11 +1105,20 @@ export const Home: React.FC<HomeProps> = ({
               const isPostHighlighted = deepLinkTarget?.type === 'post' && deepLinkTarget?.postId === post.id;
               const isAuthor = user && (post.user_id === user.id || post.username === user.username);
               const hasPendingRevision = isAuthor && post.edit_draft;
+              const isPendingPost = post.pending === true || post.status === 'pending';
+              const isRejectedPost = post.status === 'rejected';
               return (
                 <HighlightWrapper key={post.id} isHighlighted={isPostHighlighted} className="rounded-2xl">
                   <div 
                     id={`post-${post.id}`} 
-                    className={`glass-card p-5 text-left border border-zinc-900/60 relative ${hasPendingRevision ? 'opacity-75' : ''}`}
+                    className={`glass-card p-5 text-left relative transition-all ${
+                      hasPendingRevision || isPendingPost 
+                        ? 'border-dashed border-zinc-700/60' 
+                        : isRejectedPost 
+                        ? 'border-red-500/25 bg-red-950/5' 
+                        : 'border-zinc-900/60'
+                    }`}
+                    style={{ opacity: (isPendingPost || hasPendingRevision) ? 0.6 : 1 }}
                   >
                 <div className="flex justify-between items-start">
                   <div className="flex gap-3 items-center">
@@ -1118,6 +1137,18 @@ export const Home: React.FC<HomeProps> = ({
                         {hasPendingRevision && (
                           <span className="text-[9px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/25 px-2 py-0.5 rounded-full">
                             Pending Review
+                          </span>
+                        )}
+                        {isPendingPost && (
+                          <span className="text-[9px] font-black uppercase tracking-wider bg-yellow-500/15 text-yellow-400 border border-yellow-500/25 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Clock className="w-2.5 h-2.5" />
+                            <span>Pending Approval</span>
+                          </span>
+                        )}
+                        {isRejectedPost && (
+                          <span className="text-[9px] font-black uppercase tracking-wider bg-red-500/15 text-red-400 border border-red-500/25 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <XCircle className="w-2.5 h-2.5" />
+                            <span>Rejected</span>
                           </span>
                         )}
                       </div>
@@ -1140,7 +1171,7 @@ export const Home: React.FC<HomeProps> = ({
                       </button>
                     )}
                     {/* 3-dot post options menu */}
-                    {user && (post.user_id === user.id || post.username === user.username || user.role === 'admin' || user.role === 'owner') && (
+                    {user && !post.pending && (post.user_id === user.id || post.username === user.username || user.role === 'admin' || user.role === 'owner') && (
                       <div className="relative">
                         <button
                           onClick={(e) => {
@@ -1287,6 +1318,30 @@ export const Home: React.FC<HomeProps> = ({
                       </div>
                     )}
 
+                    {isPendingPost && (
+                      <div className="mt-4 p-3 rounded-xl border border-yellow-500/10 bg-yellow-500/[0.02] flex items-center gap-2 text-yellow-400/80 font-bold text-[10px] uppercase tracking-wider">
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
+                        <span>Waiting for moderation approval...</span>
+                      </div>
+                    )}
+
+                    {isRejectedPost && (
+                      <div className="mt-4 p-4 rounded-xl border border-red-500/20 bg-red-950/10 flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5 text-red-400 font-extrabold text-[10px] uppercase tracking-wide">
+                          <XCircle className="w-4 h-4 shrink-0" />
+                          <span>Post Rejected</span>
+                        </div>
+                        {post.rejection_reason && (
+                          <p className="text-xs text-zinc-300 font-medium">
+                            <strong>Reason:</strong> {post.rejection_reason}
+                          </p>
+                        )}
+                        <p className="text-[10px] text-zinc-500 font-semibold leading-relaxed">
+                          You can edit this post to fix any issues and resubmit it.
+                        </p>
+                      </div>
+                    )}
+
                     {/* Floating Heart Burst overlay */}
                     <AnimatePresence>
                       {floatingHearts.filter(h => h.postId === post.id).map(h => (
@@ -1308,22 +1363,34 @@ export const Home: React.FC<HomeProps> = ({
                 {/* Actions row */}
                 <div className="flex gap-6 mt-4 pt-3.5 border-t border-zinc-900/60">
                   <button 
-                    className={`flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer ${post.isLiked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`} 
-                    onClick={() => handleLikePost(post.id)}
+                    className={`flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer ${post.isLiked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'} ${post.pending ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                    onClick={() => {
+                      if (post.pending) return;
+                      handleLikePost(post.id);
+                    }}
+                    disabled={post.pending}
                   >
                     <Heart className={`w-4 h-4 ${post.isLiked ? 'fill-current' : ''}`} /> 
                     <span>{post.likes_count}</span>
                   </button>
                   <button 
-                    className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer" 
-                    onClick={() => toggleComments(post.id)}
+                    className={`flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer ${post.pending ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                    onClick={() => {
+                      if (post.pending) return;
+                      toggleComments(post.id);
+                    }}
+                    disabled={post.pending}
                   >
                     <MessageCircle className="w-4 h-4" /> 
                     <span>{post.comments_count || 0}</span>
                   </button>
                   <button 
-                    className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer" 
-                    onClick={() => handleSharePost(post.id)}
+                    className={`flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer ${post.pending ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                    onClick={() => {
+                      if (post.pending) return;
+                      handleSharePost(post.id);
+                    }}
+                    disabled={post.pending}
                   >
                     <Share2 className="w-4 h-4" /> 
                     <span>{post.shares_count || 0}</span>

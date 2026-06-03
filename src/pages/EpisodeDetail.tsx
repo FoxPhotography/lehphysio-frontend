@@ -92,6 +92,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
   const [activeSuggestionIdx, setActiveSuggestionIdx] = useState(0);
 
   const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
+  const { episode, quiz, has_solved_quiz, likes_count, shares_count, has_liked, comments = [] } = episodeDetail || {};
 
   const getFilteredUsernames = () => {
     if (mentionSearchText === null || !usernames) return [];
@@ -158,9 +159,8 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
     );
   }
 
-  if (!episodeDetail) return null;
+  if (!episodeDetail || !episode) return null;
 
-  const { episode, quiz, has_solved_quiz, likes_count, shares_count, has_liked, comments } = episodeDetail;
   const embedUrl = getYoutubeEmbedUrl(episode.youtube_url);
 
   return (
