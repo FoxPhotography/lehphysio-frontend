@@ -36,7 +36,7 @@ interface AuthContextType {
 
   // XP Popups
   xpPopups: any[];
-  triggerXpPopup: (amount: number) => void;
+  triggerXpPopup: (amount: number, fromSocket?: boolean) => void;
   xpSettings: XpSettings;
 
   // User directory / profiles
@@ -179,7 +179,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [toastMessage]);
 
-  const triggerXpPopup = (amount: number) => {
+  const recentPopupsRef = useRef<{ amount: number; timestamp: number }[]>([]);
+
+  const triggerXpPopup = (amount: number, fromSocket = false) => {
+    if (fromSocket) {
+      const now = Date.now();
+      recentPopupsRef.current = recentPopupsRef.current.filter(p => now - p.timestamp < 3500);
+      const foundIdx = recentPopupsRef.current.findIndex(p => p.amount === amount);
+      if (foundIdx !== -1) {
+        recentPopupsRef.current.splice(foundIdx, 1);
+        return;
+      }
+    } else {
+      recentPopupsRef.current.push({ amount, timestamp: Date.now() });
+    }
+
     const id = Date.now() + Math.random();
     setXpPopups(prev => [...prev, { id, amount }]);
     playChatSound(amount > 0 ? 'xp_gain' : 'xp_loss');
@@ -283,11 +297,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.setItem('eq_title', data.user.equipped_title);
         }
         if (data.rewards) {
-          if (data.rewards.daily_login) {
-            triggerXpPopup(xpSettings.daily_login || 10);
-          }
-          if (data.rewards.streak_bonus) {
-            setTimeout(() => triggerXpPopup(xpSettings.streak_bonus || 70), 1000);
+          const totalXpEarned = (data.rewards.daily_login ? (xpSettings.daily_login || 10) : 0) + 
+                               (data.rewards.streak_bonus ? (xpSettings.streak_bonus || 70) : 0);
+          
+          if (data.rewards.daily_login || data.rewards.streak_bonus) {
+            setStreakOverlay({
+              show: true,
+              days: data.user.streak_count || 1,
+              xpEarned: totalXpEarned,
+              hasStreakBonus: !!data.rewards.streak_bonus
+            });
+            playChatSound('win');
           }
         }
       } else {

@@ -37,6 +37,11 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
   const swipeMessageIdRef = useRef<number | null>(null);
   const prevMessagesCountRef = useRef<number>(0);
   const shouldScrollToBottomRef = useRef(false);
+  const deepLinkTargetRef = useRef(deepLinkTarget);
+
+  useEffect(() => {
+    deepLinkTargetRef.current = deepLinkTarget;
+  }, [deepLinkTarget]);
 
   useEffect(() => {
     chatMessagesRef.current = chatMessages;
@@ -93,17 +98,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     // 2. Look for target message in chatMessages
     const found = chatMessages.some((m: any) => Number(m.id) === targetId);
     if (found) {
-      setTimeout(() => {
-        const el = document.getElementById(`chat-msg-${targetId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setTimeout(() => {
-            setDeepLinkTarget(null);
-            window.history.replaceState({}, '', '/chat');
-          }, 3000);
-        }
-        setIsFindingTargetMessage(false);
-      }, 100);
+      setIsFindingTargetMessage(false);
       return;
     }
 
@@ -154,7 +149,14 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
             setChatMessages(prev => {
               const prevIds = new Set(prev.map((m: any) => m.id));
               const filteredNew = data.filter((m: any) => !prevIds.has(m.id));
-              return [...filteredNew, ...prev];
+              const mergedMessages = [...filteredNew, ...prev];
+
+              if (userRef.current?.id) {
+                const cacheSlice = mergedMessages.slice(-1000);
+                localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(cacheSlice));
+              }
+
+              return mergedMessages;
             });
 
             setTimeout(() => {
@@ -165,7 +167,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
           }
         } else {
           setHasMoreChat(true);
-          if (chatMessagesRef.current && chatMessagesRef.current.length > 0 && data.length > chatMessagesRef.current.length) {
+          if (chatMessagesRef.current && chatMessagesRef.current.length > 0 && data.length > 0) {
             const currentIds = new Set(chatMessagesRef.current.map((m: any) => m.id));
             const hasNewIncoming = data.some((m: any) => !currentIds.has(m.id) && (!userRef.current || m.username !== userRef.current.username));
             if (hasNewIncoming) {
@@ -174,16 +176,46 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
           }
           
           const pendingMessages = chatMessagesRef.current.filter((m: any) => m.isPending);
-          const serverIds = new Set(data.map((m: any) => m.id));
-          const filteredPending = pendingMessages.filter((pm: any) => !serverIds.has(pm.id));
           
-          const merged = [...data, ...filteredPending];
-          setChatMessages(merged);
-          chatMessagesRef.current = merged;
+          setChatMessages(prev => {
+            const map = new Map<number, any>();
+            // Add existing messages first to accumulate cache
+            prev.forEach(m => map.set(m.id, m));
+            // Add/overwrite with fresh server data
+            data.forEach(m => map.set(m.id, m));
+            // Ensure pending messages are preserved
+            pendingMessages.forEach(m => map.set(m.id, m));
 
-          if (userRef.current?.id) {
-            localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(data));
-          }
+            // Client-side reconciliation for deletions within the returned data range
+            if (data.length > 0) {
+              const oldestIncoming = data[0];
+              const oldestTime = new Date(oldestIncoming.created_at || oldestIncoming.timestamp || 0).getTime();
+              
+              for (const [id, msg] of map.entries()) {
+                if (msg.isPending) continue;
+                const msgTime = new Date(msg.created_at || msg.timestamp || 0).getTime();
+                if (msgTime >= oldestTime) {
+                  const existsInIncoming = data.some((m: any) => m.id === id);
+                  if (!existsInIncoming) {
+                    map.delete(id);
+                  }
+                }
+              }
+            }
+
+            const mergedMessages = Array.from(map.values()).sort((a, b) => {
+              const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
+              const timeB = new Date(b.created_at || b.timestamp || 0).getTime();
+              return timeA - timeB;
+            });
+
+            if (userRef.current?.id) {
+              const cacheSlice = mergedMessages.slice(-1000);
+              localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(cacheSlice));
+            }
+
+            return mergedMessages;
+          });
 
           const onlineHeader = res.headers.get('X-Online-Count');
           if (onlineHeader) {
@@ -205,15 +237,41 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
   // Poll/Listen for chat updates via socket.io
   useEffect(() => {
     if (communityTab === 'chat' && currentPage === 'community') {
-      shouldScrollToBottomRef.current = true;
+      shouldScrollToBottomRef.current = deepLinkTargetRef.current?.type !== 'chat_message';
       fetchChatMessages();
     }
   }, [communityTab, currentPage]);
 
   useEffect(() => {
-    const handleChatUpdate = () => {
+    const handleChatUpdate = (payload?: any) => {
       if (communityTab === 'chat' && currentPage === 'community') {
-        fetchChatMessages();
+        if (payload?.type === 'delete') {
+          setChatMessages(prev => {
+            const filtered = prev.filter(m => m.id !== payload.messageId);
+            if (userRef.current?.id) {
+              localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(filtered.slice(-1000)));
+            }
+            return filtered;
+          });
+        } else if (payload?.type === 'delete_bulk') {
+          setChatMessages(prev => {
+            const filtered = prev.filter(m => !payload.messageIds.includes(m.id));
+            if (userRef.current?.id) {
+              localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(filtered.slice(-1000)));
+            }
+            return filtered;
+          });
+        } else if (payload?.type === 'edit') {
+          setChatMessages(prev => {
+            const updated = prev.map(m => m.id === payload.messageId ? { ...m, message: payload.message, is_edited: 1 } : m);
+            if (userRef.current?.id) {
+              localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(updated.slice(-1000)));
+            }
+            return updated;
+          });
+        } else {
+          fetchChatMessages();
+        }
       }
     };
     socket.on('chat_update', handleChatUpdate);
@@ -242,6 +300,12 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
   // Autoscroll chat to bottom smartly
   useEffect(() => {
     if (currentPage === 'community') {
+      if (deepLinkTarget?.type === 'chat_message') {
+        shouldScrollToBottomRef.current = false;
+        prevMessagesCountRef.current = chatMessages.length;
+        return;
+      }
+
       const el = document.getElementById('pl-chat-feed');
       if (el) {
         const hasNewMessages = chatMessages.length > prevMessagesCountRef.current;
@@ -258,7 +322,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
       }
     }
     prevMessagesCountRef.current = chatMessages.length;
-  }, [chatMessages, currentPage, user]);
+  }, [chatMessages, currentPage, user, deepLinkTarget]);
 
   const handleChatContextMenu = (e: React.MouseEvent, msg: any) => {
     e.preventDefault();

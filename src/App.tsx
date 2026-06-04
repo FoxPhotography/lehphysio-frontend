@@ -542,7 +542,7 @@ function InnerApp() {
           return updated;
         });
         if (data.xp_earned) {
-          triggerXpPopup(data.xp_earned);
+          triggerXpPopup(data.xp_earned, true);
         }
       }
     };
@@ -558,7 +558,7 @@ function InnerApp() {
     const handleRankUpdated = (data: { userId: number, rank: any }) => {
       const currentId = getUserId(user, token);
       if (String(data.userId) === String(currentId)) {
-        showToast(`🏆 New Rank unlocked: ${data.rank.name_ar} ${data.rank.emoji}!`);
+        showToast(`🏆 New Rank unlocked: ${data.rank.name_en} ${data.rank.emoji}!`);
         playChatSound('success');
         setUser((prev: any) => {
           if (!prev) return null;
@@ -603,36 +603,55 @@ function InnerApp() {
       streak_count: number;
       equipped_frame: string;
       avatar_url: string | null;
-    }) => {
+    } | Array<{
+      userId: number;
+      username: string;
+      batch: string;
+      total_xp: number;
+      weekly_xp: number;
+      streak_count: number;
+      equipped_frame: string;
+      avatar_url: string | null;
+    }>) => {
       const userId = getUserId(user, token);
       setLeaderboard(prev => {
-        const exists = prev.some((u: any) => u.username === data.username);
-        
+        const updates = Array.isArray(data) ? data : [data];
         let updatedList = [...prev];
-        const newXp = leaderboardTab === 'weekly' ? data.weekly_xp : data.total_xp;
+        let changed = false;
 
-        if (leaderboardTab === 'batch' && user?.batch && data.batch !== user.batch) {
-          return prev.filter((u: any) => u.username !== data.username);
+        for (const item of updates) {
+          if (!item || !item.username) continue;
+          changed = true;
+
+          const exists = updatedList.some((u: any) => u.username === item.username);
+          const newXp = leaderboardTab === 'weekly' ? item.weekly_xp : item.total_xp;
+
+          if (leaderboardTab === 'batch' && user?.batch && item.batch !== user.batch) {
+            updatedList = updatedList.filter((u: any) => u.username !== item.username);
+            continue;
+          }
+
+          const updatedUserObj = {
+            username: item.username,
+            batch: item.batch,
+            xp: newXp,
+            streak_count: item.streak_count,
+            rank: getClientRank(item.total_xp),
+            equipped_frame: item.equipped_frame || 'none',
+            avatar_url: item.avatar_url || null
+          };
+
+          if (exists) {
+            updatedList = updatedList.map((u: any) => u.username === item.username ? { ...u, ...updatedUserObj } : u);
+          } else {
+            if (updatedList.length < 100 || (updatedList.length > 0 && newXp > updatedList[updatedList.length - 1].xp)) {
+              updatedList.push(updatedUserObj);
+            }
+          }
         }
 
-        const updatedUserObj = {
-          username: data.username,
-          batch: data.batch,
-          xp: newXp,
-          streak_count: data.streak_count,
-          rank: getClientRank(data.total_xp),
-          equipped_frame: data.equipped_frame || 'none',
-          avatar_url: data.avatar_url || null
-        };
-
-        if (exists) {
-          updatedList = prev.map((u: any) => u.username === data.username ? { ...u, ...updatedUserObj } : u);
-        } else {
-          if (prev.length < 100 || (prev.length > 0 && newXp > prev[prev.length - 1].xp)) {
-            updatedList.push(updatedUserObj);
-          } else {
-            return prev;
-          }
+        if (!changed) {
+          return prev;
         }
 
         updatedList.sort((a: any, b: any) => {

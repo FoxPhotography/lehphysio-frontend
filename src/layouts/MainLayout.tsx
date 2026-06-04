@@ -339,7 +339,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
                   className="space-y-1.5"
                 >
                   <h1 className={`text-4xl ${tier.textClass} tracking-tighter leading-none select-none`}>
-                    {streakOverlay.days} {streakOverlay.days > 10 ? 'يوماً' : 'أيام'} متتالية!
+                    {streakOverlay.days} Consecutive {streakOverlay.days === 1 ? 'Day' : 'Days'}!
                   </h1>
                   <p className="text-sm font-bold text-zinc-400 select-none uppercase tracking-wide">
                     Your Current Active Streak

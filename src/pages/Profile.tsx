@@ -587,7 +587,7 @@ export const Profile: React.FC<ProfileProps> = ({
             ) : (
               <span className="text-[14px]">🔔</span>
             )}
-            {isSubscribed ? 'إلغاء تفعيل الإشعارات' : 'تفعيل الإشعارات التلقائية'}
+            {isSubscribed ? 'Disable Notifications' : 'Enable Notifications'}
           </motion.button>
 
           {(() => {

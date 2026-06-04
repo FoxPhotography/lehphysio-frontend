@@ -209,12 +209,24 @@ export const Community: React.FC<CommunityProps> = ({
     return undefined;
   }, []);
 
-  // Scroll to and highlight message from URL param ?msg=X or deepLinkTarget
+  // Auto-switch to chat tab if we have a chat deep link target
+  useEffect(() => {
+    if (deepLinkTarget?.type === 'chat_message') {
+      setActiveSubTab('chat');
+    }
+  }, [deepLinkTarget]);
+
+  // Scroll to and highlight message from URL param ?msg=X, hash, or deepLinkTarget
   useEffect(() => {
     if (activeSubTab === 'chat' && chatMessages.length > 0) {
       const searchParams = new URLSearchParams(window.location.search);
       const msgIdStr = searchParams.get('msg');
-      const msgId = msgIdStr ? parseInt(msgIdStr, 10) : (deepLinkTarget?.type === 'chat_message' ? deepLinkTarget.messageId : null);
+      const hashMatch = window.location.hash.match(/#(?:chat-msg-|message-)?(\d+)/);
+      const msgId = msgIdStr 
+        ? parseInt(msgIdStr, 10) 
+        : (hashMatch 
+            ? parseInt(hashMatch[1], 10) 
+            : (deepLinkTarget?.type === 'chat_message' ? Number(deepLinkTarget.messageId) : null));
 
       if (msgId) {
         const exists = chatMessages.some(m => m.id === msgId);
@@ -223,6 +235,13 @@ export const Community: React.FC<CommunityProps> = ({
             const el = document.getElementById(`chat-msg-${msgId}`);
             if (el) {
               el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              
+              // Apply yellow highlight animation
+              el.classList.add('notification-highlight-yellow');
+              setTimeout(() => {
+                el.classList.remove('notification-highlight-yellow');
+              }, 3000);
+
               if (deepLinkTarget) setDeepLinkTarget(null);
               // Clear URL hash/query parameters to avoid scroll loops
               window.history.replaceState({}, '', '/chat');
@@ -359,13 +378,7 @@ export const Community: React.FC<CommunityProps> = ({
         </div>
 
         {activeSubTab === 'chat' ? (
-          isFindingTargetMessage ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 gap-3 min-h-[300px]">
-              <div className="w-8 h-8 border-4 border-brand-orange border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-sm font-bold font-sans">Loading conversation...</span>
-            </div>
-          ) : (
-            <>
+          <>
             {/* Multi-select bar or Standard Header */}
             {isMultiSelectMode ? (
               <div className="flex justify-between items-center bg-brand-orange/10 border border-brand-orange/20 rounded-xl p-3 mb-3 mx-3 md:mx-0 shrink-0">
@@ -437,13 +450,13 @@ export const Community: React.FC<CommunityProps> = ({
                 return (
                   <div 
                     key={msg.id} 
-                    id={`chat-msg-${msg.id}`}
                     className="flex w-full"
                     style={{
                       justifyContent: isMyMsg ? 'flex-end' : 'flex-start',
                     }}
                   >
                     <div
+                      id={`chat-msg-${msg.id}`}
                       className={`flex items-start gap-2.5 max-w-[85%] relative rounded-2xl select-none cursor-pointer transition-all ${
                         isSelected ? 'ring-2 ring-brand-orange/40 bg-brand-orange/5' : ''
                       }`}
@@ -529,10 +542,11 @@ export const Community: React.FC<CommunityProps> = ({
                         {/* Text card bubble */}
                         <HighlightWrapper
                           isHighlighted={deepLinkTarget?.type === 'chat_message' && deepLinkTarget?.messageId === msg.id}
+                          highlightColor="#FFB000"
                           className="rounded-2xl"
                         >
                           <div 
-                            className={`px-3 py-2 rounded-2xl text-xs md:text-sm font-semibold shadow-lg text-left relative ${
+                            className={`px-3 py-2 rounded-2xl text-xs md:text-sm font-semibold shadow-lg text-left relative min-w-0 ${
                               isMyMsg 
                                 ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black rounded-tr-none' 
                                 : 'bg-zinc-900/60 border border-zinc-800 text-white rounded-tl-none'
@@ -550,12 +564,12 @@ export const Community: React.FC<CommunityProps> = ({
                             </div>
                           )}
 
-                          <div className="flex items-end justify-between gap-3 min-w-0 direction-ltr">
-                            <p className="whitespace-pre-wrap word-break-word leading-relaxed flex-1">
+                          <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1 w-full min-w-0 direction-ltr">
+                            <p className="whitespace-pre-wrap break-words [word-break:break-word] leading-relaxed min-w-0">
                               {renderTextWithMentions(msg.message)}
                             </p>
                             
-                            <div className="flex items-center gap-1 shrink-0 text-[8px] opacity-75 select-none pb-0.5">
+                            <div className="flex items-center gap-1 shrink-0 text-[8px] opacity-75 select-none pb-0.5 ml-auto self-end">
                               {!!msg.is_edited && <span>(edited)</span>}
                               <span>{new Date(msg.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                               {isMyMsg && (
@@ -759,7 +773,6 @@ export const Community: React.FC<CommunityProps> = ({
               )}
             </AnimatePresence>
           </>
-          )
         ) : (
           <div className="flex flex-col flex-1 overflow-hidden">
             {user ? (
