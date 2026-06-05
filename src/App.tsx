@@ -49,8 +49,8 @@ const mergePendingAndFresh = (pendingPosts: any[], freshData: any[]): any[] => {
       if (String(pp.id) === String(fd.id)) return true;
       if (String(pp.id).startsWith('temp-') &&
           String(pp.user_id) === String(fd.user_id) &&
-          pp.content === fd.content &&
-          pp.title === fd.title) {
+          (pp.content || '').trim() === (fd.content || '').trim() &&
+          (pp.title || '').trim() === (fd.title || '').trim()) {
         return true;
       }
       return false;
@@ -403,8 +403,8 @@ function InnerApp() {
           if (String(p.id) === String(newPost.id)) return true;
           if (String(p.id).startsWith('temp-') && 
               String(p.user_id) === String(newPost.user_id) && 
-              p.content === newPost.content && 
-              p.title === newPost.title) {
+              (p.content || '').trim() === (newPost.content || '').trim() && 
+              (p.title || '').trim() === (newPost.title || '').trim()) {
             return true;
           }
           return false;
@@ -450,8 +450,8 @@ function InnerApp() {
           if (String(p.id) === String(newAnn.id)) return true;
           if (String(p.id).startsWith('temp-') && 
               String(p.user_id) === String(newAnn.user_id) && 
-              p.content === newAnn.content && 
-              p.title === newAnn.title) {
+              (p.content || '').trim() === (newAnn.content || '').trim() && 
+              (p.title || '').trim() === (newAnn.title || '').trim()) {
             return true;
           }
           return false;
@@ -802,7 +802,6 @@ function InnerApp() {
       const data = await res.json();
       if (res.ok) {
         showToast(data.is_correct ? `✅ Correct Answer! +${data.xp_awarded} XP ⚡` : `❌ Wrong Answer! +${data.xp_awarded} XP ⚡`);
-        triggerXpPopup(data.xp_awarded, data.is_correct);
         playChatSound(data.is_correct ? 'win' : 'error');
         fetchDailyQuestion();
         fetchUserProfile();
@@ -1628,6 +1627,10 @@ function InnerApp() {
     if (!token || !user) return;
     const userId = getUserId(user, token);
 
+    const ROLE_WEIGHTS = { user: 0, moderator: 1, admin: 2, owner: 3 };
+    const userWeight = ROLE_WEIGHTS[user.role as keyof typeof ROLE_WEIGHTS] || 0;
+    const isApprovedStaff = userWeight >= 1;
+
     // Create local pending post object
     const tempId = `temp-${Date.now()}`;
     const pendingPost = {
@@ -1645,8 +1648,8 @@ function InnerApp() {
       shares_count: 0,
       comments_count: 0,
       created_at: new Date().toISOString(),
-      status: 'pending',
-      pending: true,
+      status: isApprovedStaff ? 'approved' : 'pending',
+      pending: !isApprovedStaff,
       isLiked: false,
       is_news: isNews
     };
@@ -1676,7 +1679,6 @@ function InnerApp() {
 
       if (res.ok) {
         showToast(data.message || 'Post published! 🎉');
-        triggerXpPopup(25);
         fetchUserProfile();
 
         if (isNews) {
