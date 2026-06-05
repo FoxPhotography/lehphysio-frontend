@@ -338,9 +338,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
                   transition={{ delay: 0.4, type: 'spring' }}
                   className="space-y-1.5"
                 >
-                  <h1 className={`text-4xl ${tier.textClass} tracking-tighter leading-none select-none`}>
-                    {streakOverlay.days} Consecutive {streakOverlay.days === 1 ? 'Day' : 'Days'}!
-                  </h1>
+                    <h1 className={`text-4xl ${tier.textClass} tracking-tighter leading-none select-none`}>
+                      {streakOverlay.days}-Day Streak!
+                    </h1>
                   <p className="text-sm font-bold text-zinc-400 select-none uppercase tracking-wide">
                     Your Current Active Streak
                   </p>
@@ -353,9 +353,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
                   className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 shadow-lg text-white"
                 >
                   <div className="w-5 h-5 rounded-full bg-green-500 text-black flex items-center justify-center font-black text-[10px]">✓</div>
-                  <span className="text-xs font-black select-none">
-                    كسبت <strong className="text-green-400">+{streakOverlay.xpEarned} XP</strong> بنجاح!
-                  </span>
+                <span className="text-xs font-black select-none">
+                  <strong className="text-green-400">+{streakOverlay.xpEarned} XP</strong> Earned!
+                </span>
                 </motion.div>
 
                 <motion.button

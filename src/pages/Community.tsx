@@ -149,6 +149,13 @@ export const Community: React.FC<CommunityProps> = ({
   const [activeSuggestionIdx, setActiveSuggestionIdx] = useState(0);
   const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
 
+  const selectedMessages = chatMessages.filter(msg => selectedMessageIds.includes(msg.id));
+  const canDeleteSelected = !!user && (
+    user.role === 'admin' || 
+    user.role === 'owner' || 
+    selectedMessages.every(msg => msg.username === user.username)
+  );
+
   // Track exact visual viewport height to support mobile virtual keyboards
   useEffect(() => {
     if (!window.visualViewport) return undefined;
@@ -384,7 +391,9 @@ export const Community: React.FC<CommunityProps> = ({
               <div className="flex justify-between items-center bg-brand-orange/10 border border-brand-orange/20 rounded-xl p-3 mb-3 mx-3 md:mx-0 shrink-0">
                 <span className="text-xs font-black text-white">Selected {selectedMessageIds.length} messages</span>
                 <div className="flex gap-2">
-                  <button className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-[10px] py-1.5 px-3 rounded-lg cursor-pointer" onClick={handleBulkDeleteMessages} disabled={selectedMessageIds.length === 0}>Delete</button>
+                  {canDeleteSelected && (
+                    <button className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-[10px] py-1.5 px-3 rounded-lg cursor-pointer" onClick={handleBulkDeleteMessages} disabled={selectedMessageIds.length === 0}>Delete</button>
+                  )}
                   <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-[10px] py-1.5 px-3 rounded-lg cursor-pointer" onClick={() => { setIsMultiSelectMode(false); setSelectedMessageIds([]); }}>Cancel</button>
                 </div>
               </div>

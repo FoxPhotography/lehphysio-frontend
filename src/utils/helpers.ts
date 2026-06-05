@@ -176,9 +176,12 @@ export const getYoutubeEmbedUrl = (url: string) => {
 
 export const getLocalDateString = () => {
   const d = new Date();
-  const offset = d.getTimezoneOffset();
-  const localDate = new Date(d.getTime() - (offset * 60000));
-  return localDate.toISOString().split('T')[0];
+  const options = { timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit' } as const;
+  const parts = new Intl.DateTimeFormat('en-US', options).formatToParts(d);
+  const year = parts.find((p: any) => p.type === 'year')?.value;
+  const month = parts.find((p: any) => p.type === 'month')?.value;
+  const day = parts.find((p: any) => p.type === 'day')?.value;
+  return `${year}-${month}-${day}`;
 };
 
 // Frame image cache (populated by App.tsx on mount)

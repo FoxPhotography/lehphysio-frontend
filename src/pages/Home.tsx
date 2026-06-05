@@ -48,10 +48,8 @@ interface HomeProps {
   navigateToEpisode: (id: number) => void;
   setCurrentPage: (page: string) => void;
   setCommunityTab: (tab: 'feed' | 'chat') => void;
-  pollVotes: number[];
-  userVotedOption: number | null;
-  hasVotedPoll: boolean;
-  handlePollVote: (idx: number) => void;
+  dailyQuestion?: any;
+  handleAnswerQuestion?: (questionId: number, selectedAnswer: number) => Promise<void>;
   newPostContent: string;
   setNewPostContent: (content: string) => void;
   handleCreatePost: (title: string, content: string, imageUrl: string) => Promise<void>;
@@ -88,10 +86,8 @@ export const Home: React.FC<HomeProps> = ({
   navigateToEpisode,
   setCurrentPage,
   setCommunityTab,
-  pollVotes,
-  userVotedOption,
-  hasVotedPoll,
-  handlePollVote,
+  dailyQuestion,
+  handleAnswerQuestion,
   newPostContent,
   setNewPostContent,
   handleCreatePost,
@@ -983,54 +979,69 @@ export const Home: React.FC<HomeProps> = ({
           )}
         </div>
 
-        {/* Interactive Poll of the Day */}
-        <div className="glass-card p-5 text-left space-y-4 border border-brand-orange/20 relative overflow-hidden">
-          <div className="flex gap-2 relative z-10">
-            <span className="text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
-              Daily Poll
-            </span>
+        {/* Question of the Day */}
+        {dailyQuestion && dailyQuestion.active && dailyQuestion.question && (
+          <div className="glass-card p-5 text-left space-y-4 border border-brand-orange/20 relative overflow-hidden">
+            <div className="flex gap-2 relative z-10">
+              <span className="text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
+                Question of the Day
+              </span>
+            </div>
+            <h3 className="text-base font-extrabold text-white leading-relaxed relative z-10">
+              {dailyQuestion.question.question}
+            </h3>
+            <div className="flex flex-col gap-2.5 relative z-10">
+              {dailyQuestion.question.options.map((option: string, idx: number) => {
+                const isSelected = dailyQuestion.has_answered && dailyQuestion.user_answer?.selected_answer === idx;
+                const isCorrectOption = dailyQuestion.has_answered && dailyQuestion.question.correct_answer === idx;
+                const showCorrectness = dailyQuestion.has_answered;
+
+                let btnStyles = 'border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 text-zinc-300';
+                if (showCorrectness) {
+                  if (isCorrectOption) {
+                    btnStyles = 'border-emerald-500 bg-emerald-500/5 text-emerald-400 font-extrabold';
+                  } else if (isSelected) {
+                    btnStyles = 'border-red-500 bg-red-500/5 text-red-400 font-extrabold';
+                  } else {
+                    btnStyles = 'border-zinc-900 bg-zinc-950/20 text-zinc-600 opacity-60';
+                  }
+                }
+
+                return (
+                  <button
+                    key={idx}
+                    className={`w-full text-left p-3.5 rounded-xl border font-bold text-xs relative overflow-hidden transition-all duration-200 group active:scale-99 ${btnStyles} disabled:cursor-default`}
+                    onClick={() => handleAnswerQuestion && handleAnswerQuestion(dailyQuestion.question.id, idx)}
+                    disabled={dailyQuestion.has_answered}
+                  >
+                    <div className="flex justify-between items-center relative z-10">
+                      <span>{option}</span>
+                      {showCorrectness && (
+                        <span>
+                          {isCorrectOption && '✅'}
+                          {isSelected && !isCorrectOption && '❌'}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {dailyQuestion.has_answered && (
+              <p className="text-[10px] text-brand-amber font-extrabold flex items-center gap-1.5 uppercase tracking-wide">
+                <Zap className="w-3.5 h-3.5 fill-current animate-fire-pulse" />
+                <span>
+                  {dailyQuestion.user_answer?.is_correct 
+                    ? `✅ Correct Answer (+${dailyQuestion.user_answer?.xp_awarded} XP earned!)` 
+                    : `❌ Wrong Answer (+${dailyQuestion.user_answer?.xp_awarded} XP earned!)`
+                  }
+                </span>
+              </p>
+            )}
           </div>
-          <h3 className="text-base font-extrabold text-white leading-relaxed relative z-10">
-            What is the nerve supplying the Deltoid muscle?
-          </h3>
-          <div className="flex flex-col gap-2.5 relative z-10">
-            {['Axillary nerve', 'Radial nerve', 'Median nerve', 'Musculocutaneous nerve'].map((option, idx) => {
-              const totalV = pollVotes.reduce((a,b) => a+b, 0);
-              const pct = totalV > 0 ? Math.round((pollVotes[idx] / totalV) * 100) : 0;
-              return (
-                <button
-                  key={idx}
-                  className={`w-full text-left p-3.5 rounded-xl border font-bold text-xs relative overflow-hidden transition-all duration-200 group active:scale-99 ${
-                    userVotedOption === idx 
-                      ? 'border-brand-orange bg-brand-orange/5 text-brand-orange' 
-                      : 'border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 text-zinc-300'
-                  } disabled:cursor-default`}
-                  onClick={() => handlePollVote(idx)}
-                  disabled={hasVotedPoll}
-                >
-                  <div className="flex justify-between items-center relative z-10">
-                    <span>{option}</span>
-                    {hasVotedPoll && (
-                      <span className="font-extrabold text-xs ml-4">{pct}%</span>
-                    )}
-                  </div>
-                  {hasVotedPoll && (
-                    <div 
-                      className="absolute inset-y-0 left-0 bg-brand-orange/10 z-0 transition-all duration-500" 
-                      style={{ width: `${pct}%` }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          {hasVotedPoll && (
-            <p className="text-[10px] text-brand-amber font-extrabold flex items-center gap-1.5 uppercase tracking-wide">
-              <Zap className="w-3.5 h-3.5 fill-current animate-fire-pulse" />
-              <span>You earned +{xpSettings.poll_vote || 30} XP for participating in the interactive poll!</span>
-            </p>
-          )}
-        </div>
+        )}
+
 
         {/* Post Composer */}
         {user && (

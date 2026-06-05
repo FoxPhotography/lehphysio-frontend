@@ -116,10 +116,27 @@ function InnerApp() {
   const [redeemError, setRedeemError] = useState('');
   const [redeemSuccess, setRedeemSuccess] = useState('');
 
-  // Polls Mock State
-  const [pollVotes, setPollVotes] = useState<number[]>([42, 12, 8, 25]);
-  const [hasVotedPoll, setHasVotedPoll] = useState(false);
-  const [userVotedOption, setUserVotedOption] = useState<number | null>(null);
+
+
+  // Question of the Day State
+  const [dailyQuestion, setDailyQuestion] = useState<{
+    active: boolean;
+    has_answered: boolean;
+    question?: {
+      id: number;
+      question: string;
+      options: string[];
+      correct_answer?: number;
+      publish_at: string;
+      status: string;
+    };
+    user_answer?: {
+      selected_answer: number;
+      is_correct: boolean;
+      xp_awarded: number;
+      answered_at: string;
+    };
+  } | null>(null);
 
   // Episode Details State
   const [selectedEpisodeId, setSelectedEpisodeId] = useState<number | null>(null);
@@ -577,16 +594,47 @@ function InnerApp() {
       }
     };
 
+
+
+    const handleQuestionPublished = (question: any) => {
+      setDailyQuestion({
+        active: true,
+        has_answered: false,
+        question
+      });
+      showToast('⚡ Question of the Day is now live!');
+      playChatSound('success');
+    };
+
+    const handleQuestionExpired = (data: { question_id: number }) => {
+      setDailyQuestion(prev => {
+        if (prev && prev.question && prev.question.id === data.question_id) {
+          return { ...prev, active: false };
+        }
+        return prev;
+      });
+    };
+
+    const handleQuestionAnswered = () => {
+      fetchDailyQuestion();
+    };
+
     socket.on('xp_updated', handleXpUpdated);
     socket.on('level_updated', handleLevelUpdated);
     socket.on('rank_updated', handleRankUpdated);
     socket.on('badge_unlocked', handleBadgeUnlocked);
+    socket.on('question:published', handleQuestionPublished);
+    socket.on('question:expired', handleQuestionExpired);
+    socket.on('question:answered', handleQuestionAnswered);
 
     return () => {
       socket.off('xp_updated', handleXpUpdated);
       socket.off('level_updated', handleLevelUpdated);
       socket.off('rank_updated', handleRankUpdated);
       socket.off('badge_unlocked', handleBadgeUnlocked);
+      socket.off('question:published', handleQuestionPublished);
+      socket.off('question:expired', handleQuestionExpired);
+      socket.off('question:answered', handleQuestionAnswered);
     };
   }, [socket, user, token]);
 
@@ -723,15 +771,50 @@ function InnerApp() {
     }
   }, [communityPosts]);
 
-  // Sync hasVotedPoll with user data if available
-  useEffect(() => {
-    if (user) {
-      const todayStr = getLocalDateString();
-      setHasVotedPoll(user.last_poll_vote_date === todayStr);
-    } else {
-      setHasVotedPoll(false);
+
+
+  const fetchDailyQuestion = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/questions/daily`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setDailyQuestion(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch daily question:', e);
     }
-  }, [user]);
+  };
+
+  const handleAnswerQuestion = async (questionId: number, selectedAnswer: number) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/questions/daily/answer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ question_id: questionId, selected_answer: selectedAnswer })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.is_correct ? `✅ Correct Answer! +${data.xp_awarded} XP ⚡` : `❌ Wrong Answer! +${data.xp_awarded} XP ⚡`);
+        triggerXpPopup(data.xp_awarded, data.is_correct);
+        playChatSound(data.is_correct ? 'win' : 'error');
+        fetchDailyQuestion();
+        fetchUserProfile();
+      } else {
+        showToast(data.error || 'Failed to submit answer.');
+        playChatSound('error');
+      }
+    } catch (err) {
+      showToast('Connection error.');
+      playChatSound('error');
+    }
+  };
 
   useEffect(() => {
     if (currentPage === 'home') {
@@ -740,12 +823,13 @@ function InnerApp() {
       fetchCommunityPosts();
       fetchNewsPosts();
       fetchLeaderboard();
+      fetchDailyQuestion();
     } else if (currentPage === 'episodes') {
       fetchEpisodes();
     } else if (currentPage === 'news') {
       fetchNewsPosts();
     }
-  }, [currentPage]);
+  }, [currentPage, token]);
 
   // Reset auth errors/success on navigation to prevent carrying over
   useEffect(() => {
@@ -1538,31 +1622,7 @@ function InnerApp() {
     handleQuizSubmit(quizId);
   };
 
-  const handlePollVote = async (optionIdx: number) => {
-    if (!token) {
-      showToast('Please login to vote 🔐');
-      return;
-    }
-    if (hasVotedPoll) return;
-    
-    setHasVotedPoll(true);
-    setUserVotedOption(optionIdx);
-    setPollVotes(prev => prev.map((v, i) => i === optionIdx ? v + 1 : v));
-    triggerXpPopup(30);
 
-    try {
-      const res = await fetch(`${API_BASE}/api/rewards/poll-vote`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ optionIndex: optionIdx })
-      });
-      if (res.ok) {
-        fetchUserProfile();
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const handleCreatePost = async (title: string, content: string, imageUrl: string, isNews: boolean = false) => {
     if (!token || !user) return;
@@ -2081,7 +2141,6 @@ function InnerApp() {
       const data = await res.json();
       if (res.ok) {
         showToast(data.message || 'Opened daily surprise box! You earned +50 XP ⚡');
-        triggerXpPopup(data.xp_earned || 50);
         playChatSound('win');
         fetchUserProfile();
       } else {
@@ -2163,10 +2222,8 @@ function InnerApp() {
     >
       <AppRouter
         loginReward={loginReward}
-        pollVotes={pollVotes}
-        userVotedOption={userVotedOption}
-        hasVotedPoll={hasVotedPoll}
-        handlePollVote={handlePollVote}
+        dailyQuestion={dailyQuestion}
+        handleAnswerQuestion={handleAnswerQuestion}
         newPostContent={newPostContent}
         setNewPostContent={setNewPostContent}
         handleCreatePost={handleCreatePost}

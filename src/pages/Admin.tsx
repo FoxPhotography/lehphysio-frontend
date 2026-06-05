@@ -1458,6 +1458,8 @@ const XP_SETTING_METADATA: Record<string, { label: string; desc: string; icon: R
   surprise_box:  { label: 'Surprise Box Claim',   desc: 'XP awarded when opening the daily surprise box.',              icon: <Settings  className="w-4 h-4" /> },
   poll_vote:     { label: 'Daily Poll Vote',      desc: 'XP awarded for voting in the daily dashboard poll.',            icon: <CheckCircle className="w-4 h-4" /> },
   quiz_solve:    { label: 'Quiz Solved',          desc: 'Fallback XP for solving an episode quiz.',                     icon: <CheckCircle className="w-4 h-4" /> },
+  question_of_the_day_correct: { label: 'Question Of The Day Correct', desc: 'XP awarded for answering the daily question correctly.', icon: <CheckCircle className="w-4 h-4" /> },
+  question_of_the_day_wrong:   { label: 'Question Of The Day Wrong',   desc: 'XP awarded for answering the daily question incorrectly.', icon: <XCircle className="w-4 h-4" /> },
 };
 
 const XpSettingsManager: React.FC<{
@@ -1470,6 +1472,8 @@ const XpSettingsManager: React.FC<{
     like: 5, comment: 15, share: 25, comment_like: 2, daily_login: 10,
     streak_bonus: 70, game_play: 50, referral: 25, surprise_box: 50,
     poll_vote: 30, quiz_solve: 150,
+    question_of_the_day_correct: 50,
+    question_of_the_day_wrong: 10,
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);

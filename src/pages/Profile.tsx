@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 import {
   Camera,
   Pencil,
@@ -123,6 +124,22 @@ export const Profile: React.FC<ProfileProps> = ({
   onTogglePushNotifications,
 }) => {
   if (!user) return null;
+
+  const { getFlameTier } = useAuth();
+  const streak = user.streak_count || 0;
+  const tier = getFlameTier(streak);
+
+  const containerClass = 
+    streak >= 15 ? 'bg-cyan-500/15 border border-cyan-500/20' :
+    streak >= 7  ? 'bg-purple-500/15 border border-purple-500/20' :
+    streak >= 3  ? 'bg-yellow-500/15 border border-yellow-500/20' :
+    'bg-red-500/15 border border-red-500/20';
+
+  const shadowClass = 
+    streak >= 15 ? 'drop-shadow-[0_0_12px_rgba(0,191,255,0.75)]' :
+    streak >= 7  ? 'drop-shadow-[0_0_12px_rgba(255,0,255,0.75)]' :
+    streak >= 3  ? 'drop-shadow-[0_0_12px_rgba(255,215,0,0.75)]' :
+    'drop-shadow-[0_0_12px_rgba(239,68,68,0.75)]';
 
   const [isEditingBatch, setIsEditingBatch] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState(user.batch);
@@ -488,23 +505,23 @@ export const Profile: React.FC<ProfileProps> = ({
             </div>
           </div>
           <div className="rounded-xl border border-white/8 bg-black/30 p-3.5 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-red-500/15 border border-red-500/20 flex items-center justify-center flex-shrink-0 relative overflow-visible">
-              <svg viewBox="0 0 100 100" className="w-8 h-8 filter drop-shadow-[0_0_12px_rgba(239,68,68,0.7)] select-none">
+            <div className={`w-9 h-9 rounded-lg ${containerClass} flex items-center justify-center flex-shrink-0 relative overflow-visible`}>
+              <svg viewBox="0 0 100 100" className={`w-8 h-8 ${shadowClass} select-none`}>
                 <defs>
                   <linearGradient id="profileOuterFlame" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor="#d90429" stopOpacity="0.9" />
-                    <stop offset="60%" stopColor="#f77f00" stopOpacity="0.8" />
-                    <stop offset="100%" stopColor="#fcbf49" stopOpacity="0" />
+                    <stop offset="0%" stopColor={tier.outer[0]} stopOpacity="0.9" />
+                    <stop offset="60%" stopColor={tier.outer[1]} stopOpacity="0.8" />
+                    <stop offset="100%" stopColor={tier.outer[2]} stopOpacity="0" />
                   </linearGradient>
                   <linearGradient id="profileMidFlame" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor="#f77f00" stopOpacity="0.95" />
-                    <stop offset="50%" stopColor="#fcbf49" stopOpacity="0.85" />
-                    <stop offset="100%" stopColor="#eae2b7" stopOpacity="0" />
+                    <stop offset="0%" stopColor={tier.mid[0]} stopOpacity="0.95" />
+                    <stop offset="50%" stopColor={tier.mid[1]} stopOpacity="0.85" />
+                    <stop offset="100%" stopColor={tier.mid[2]} stopOpacity="0" />
                   </linearGradient>
                   <linearGradient id="profileInnerFlame" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor="#fcbf49" stopOpacity="1" />
-                    <stop offset="50%" stopColor="#ffffff" stopOpacity="0.9" />
-                    <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+                    <stop offset="0%" stopColor={tier.inner[0]} stopOpacity="1" />
+                    <stop offset="50%" stopColor={tier.inner[1]} stopOpacity="0.9" />
+                    <stop offset="100%" stopColor={tier.inner[2]} stopOpacity="0" />
                   </linearGradient>
                 </defs>
 

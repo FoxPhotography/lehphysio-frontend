@@ -22,10 +22,8 @@ import { getLocalDateString } from '../utils/helpers';
 interface AppRouterProps {
   // Page states and methods not in AuthContext
   loginReward: any;
-  pollVotes: number[];
-  userVotedOption: number | null;
-  hasVotedPoll: boolean;
-  handlePollVote: (idx: number) => void;
+  dailyQuestion?: any;
+  handleAnswerQuestion?: (questionId: number, selectedAnswer: number) => Promise<void>;
   newPostContent: string;
   setNewPostContent: (content: string) => void;
   handleCreatePost: (title: string, content: string, imageUrl: string, isNews?: boolean) => Promise<void>;
@@ -127,10 +125,8 @@ interface AppRouterProps {
 
 export const AppRouter: React.FC<AppRouterProps> = ({
   loginReward,
-  pollVotes,
-  userVotedOption,
-  hasVotedPoll,
-  handlePollVote,
+  dailyQuestion,
+  handleAnswerQuestion,
   newPostContent,
   setNewPostContent,
   handleCreatePost,
@@ -233,10 +229,8 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           navigateToEpisode={navigateToEpisode}
           setCurrentPage={setCurrentPage}
           setCommunityTab={chatHook.setCommunityTab || (() => {})}
-          pollVotes={pollVotes}
-          userVotedOption={userVotedOption}
-          hasVotedPoll={hasVotedPoll}
-          handlePollVote={handlePollVote}
+          dailyQuestion={dailyQuestion}
+          handleAnswerQuestion={handleAnswerQuestion}
           newPostContent={newPostContent}
           setNewPostContent={setNewPostContent}
           handleCreatePost={handleCreatePost}

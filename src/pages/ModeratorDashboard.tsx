@@ -21,7 +21,12 @@ import {
   Unlock,
   Check,
   Eye,
+  BarChart3,
+  HelpCircle,
+  Trash2,
+  RefreshCw,
 } from 'lucide-react';
+import { PremiumDateTimePicker } from '../components/PremiumDateTimePicker';
 
 interface ModeratorDashboardProps {
   user: any;
@@ -40,7 +45,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
   handleOpenModerationModal,
   setCurrentPage,
 }) => {
-  const [activeTab, setActiveTab] = useState<'posts' | 'revisions' | 'suggestions' | 'users' | 'reports'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'revisions' | 'suggestions' | 'users' | 'reports' | 'qotd'>('posts');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -49,6 +54,20 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<any[]>([]);
   const [userSearchQuery, setUserSearchQuery] = useState('');
+
+
+
+  // Question of the Day states
+  const [questionsList, setQuestionsList] = useState<any[]>([]);
+  const [qQuestion, setQQuestion] = useState('');
+  const [qOptions, setQOptions] = useState<string[]>(['', '', '', '']);
+  const [qCorrect, setQCorrect] = useState<number>(0);
+  const [qPublishAt, setQPublishAt] = useState('');
+  const [qStatus, setQStatus] = useState<'Draft' | 'Scheduled'>('Scheduled');
+  const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
+  const [selectedStats, setSelectedStats] = useState<any | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [qSubmitting, setQSubmitting] = useState(false);
 
   // Rejection modal state
   const [rejectionPostId, setRejectionPostId] = useState<number | null>(null);
@@ -116,6 +135,145 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
     }
   };
 
+  // Fetch all QOTDs (Moderators/Admins)
+  const fetchQuestions = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${apiBase}/api/questions/admin`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setQuestionsList(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch questions:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Submit QOTD (create/edit)
+  const handleQSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanQuestion = qQuestion.trim();
+    if (!cleanQuestion) {
+      setMessage('Please enter the question text.');
+      return;
+    }
+    const cleanOpts = qOptions.map(opt => opt.trim()).filter(Boolean);
+    if (cleanOpts.length < 2) {
+      setMessage('Please provide at least two choices.');
+      return;
+    }
+    setQSubmitting(true);
+    setMessage('');
+    try {
+      const url = editingQuestionId 
+        ? `${apiBase}/api/questions/admin/${editingQuestionId}`
+        : `${apiBase}/api/questions/admin`;
+      const method = editingQuestionId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          question: cleanQuestion,
+          options: cleanOpts,
+          correct_answer: qCorrect,
+          publish_at: qPublishAt ? new Date(qPublishAt).toISOString() : '',
+          status: qStatus
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setMessage(editingQuestionId ? 'Question updated successfully!' : 'Daily Question created and scheduled successfully!');
+        setQQuestion('');
+        setQOptions(['', '', '', '']);
+        setQCorrect(0);
+        setQPublishAt('');
+        setQStatus('Scheduled');
+        setEditingQuestionId(null);
+        fetchQuestions();
+      } else {
+        setMessage(data.error || 'Failed to save question.');
+      }
+    } catch (err) {
+      console.error('Error saving question:', err);
+      setMessage('Failed to connect to server.');
+    } finally {
+      setQSubmitting(false);
+    }
+  };
+
+  // Delete QOTD
+  const handleQDelete = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this question?')) return;
+    try {
+      const res = await fetch(`${apiBase}/api/questions/admin/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage('Question deleted successfully.');
+        fetchQuestions();
+      } else {
+        setMessage(data.error || 'Failed to delete question.');
+      }
+    } catch (err) {
+      console.error('Error deleting question:', err);
+      setMessage('Failed to connect to server.');
+    }
+  };
+
+  // Fetch statistics of QOTD
+  const fetchQStats = async (id: number) => {
+    setStatsLoading(true);
+    try {
+      const res = await fetch(`${apiBase}/api/questions/admin/${id}/stats`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSelectedStats(data);
+      } else {
+        setMessage(data.error || 'Failed to fetch question statistics.');
+      }
+    } catch (err) {
+      console.error('Error fetching stats:', err);
+      setMessage('Failed to connect to server.');
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  // Edit action helper
+  const handleEditClick = (q: any) => {
+    setEditingQuestionId(q._id || q.id);
+    setQQuestion(q.question);
+    const padded = [...q.options];
+    while (padded.length < 4) padded.push('');
+    setQOptions(padded);
+    setQCorrect(q.correct_answer);
+    
+    if (q.publish_at) {
+      const date = new Date(q.publish_at);
+      const offset = date.getTimezoneOffset();
+      const localDate = new Date(date.getTime() - offset * 60 * 1000);
+      setQPublishAt(localDate.toISOString().slice(0, 16));
+    } else {
+      setQPublishAt('');
+    }
+    
+    setQStatus(q.status);
+    setMessage('');
+  };
+
   useEffect(() => {
     if (activeTab === 'posts' || activeTab === 'revisions') {
       fetchPendingPosts();
@@ -123,6 +281,8 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       fetchSuggestions();
     } else if (activeTab === 'users') {
       fetchUsers();
+    } else if (activeTab === 'qotd') {
+      fetchQuestions();
     }
   }, [activeTab]);
 
@@ -277,6 +437,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
           { id: 'posts', label: 'Pending Posts', icon: <FileText className="w-3.5 h-3.5" />, count: pendingNewPosts.length },
           { id: 'revisions', label: 'Post Revisions', icon: <FileEdit className="w-3.5 h-3.5" />, count: pendingRevisions.length },
           { id: 'suggestions', label: 'Suggestions', icon: <Lightbulb className="w-3.5 h-3.5" />, count: suggestions.filter(s => s.status === 'pending').length },
+          { id: 'qotd', label: 'Daily Question', icon: <HelpCircle className="w-3.5 h-3.5" /> },
           { id: 'users', label: 'User Actions', icon: <UserCheck className="w-3.5 h-3.5" /> },
           { id: 'reports', label: 'Reports Queue', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
         ].map((tab) => (
@@ -321,7 +482,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       </AnimatePresence>
 
       {/* Loading Indicator */}
-      {loading && pendingPosts.length === 0 && suggestions.length === 0 && usersList.length === 0 && (
+      {loading && pendingPosts.length === 0 && suggestions.length === 0 && usersList.length === 0 && questionsList.length === 0 && !selectedStats && (
         <div className="rounded-2xl border border-white/8 bg-zinc-900/60 p-12 text-center">
           <div className="w-8 h-8 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mx-auto mb-3" />
           <p className="text-zinc-500 text-xs">Loading queue items...</p>
@@ -707,6 +868,199 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
         </div>
       )}
 
+      {/* ── 6. DAILY QUESTION MANAGEMENT (QOTD) ─────────────────────────── */}
+      {activeTab === 'qotd' && !loading && (
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
+          {/* Daily Questions List (Left column, col-span-3) */}
+          <div className="md:col-span-3 rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4 text-left">
+            <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">Daily Questions List</h3>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead>
+                  <tr className="border-b border-white/8 text-zinc-500 font-bold">
+                    <th className="pb-2">Question</th>
+                    <th className="pb-2">Publish At</th>
+                    <th className="pb-2 text-center">Status</th>
+                    <th className="pb-2 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {questionsList.map((q) => {
+                    const statusColors = {
+                      Draft: 'bg-zinc-800 text-zinc-400 border-white/10',
+                      Scheduled: 'bg-blue-500/15 text-blue-400 border-blue-500/25',
+                      Published: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+                      Expired: 'bg-orange-500/15 text-orange-400 border-orange-500/25',
+                    };
+                    const badgeClass = statusColors[q.status as keyof typeof statusColors] || statusColors.Draft;
+
+                    return (
+                      <tr key={q._id || q.id} className="hover:bg-white/2 transition-colors">
+                        <td className="py-3 pr-3 font-medium text-white max-w-[200px] truncate" title={q.question}>
+                          {q.question}
+                          <div className="text-[10px] text-zinc-500 font-normal mt-0.5">
+                            Correct Option: <span className="text-emerald-400 font-bold">#{q.correct_answer + 1}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 pr-3 text-zinc-400 text-[10px]">
+                          {q.publish_at ? new Date(q.publish_at).toLocaleString() : 'Not Set'}
+                        </td>
+                        <td className="py-3 pr-3 text-center">
+                          <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wide border ${badgeClass}`}>
+                            {q.status}
+                          </span>
+                        </td>
+                        <td className="py-3 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {(q.status === 'Draft' || q.status === 'Scheduled') ? (
+                              <>
+                                <button
+                                  onClick={() => handleEditClick(q)}
+                                  title="Edit"
+                                  className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/5 border border-white/8 text-zinc-400 hover:text-white cursor-pointer hover:border-white/15 transition-all"
+                                >
+                                  <FileEdit className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleQDelete(q._id || q.id)}
+                                  title="Delete"
+                                  className="w-7 h-7 rounded-lg flex items-center justify-center bg-red-500/10 border border-red-500/25 text-red-400 hover:bg-red-500/20 cursor-pointer transition-all"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => fetchQStats(q._id || q.id)}
+                                title="View Statistics"
+                                className="w-7 h-7 rounded-lg flex items-center justify-center bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/25 cursor-pointer transition-all"
+                              >
+                                <BarChart3 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {questionsList.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="text-center py-8 text-zinc-500">
+                        No daily questions found. Create one on the right!
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Create/Edit Question Form (Right column, col-span-2) */}
+          <div className="md:col-span-2 rounded-2xl border border-white/8 bg-zinc-900/60 p-5 text-left space-y-4">
+            <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
+              {editingQuestionId ? 'Edit Daily Question' : 'Create Daily Question'}
+            </h3>
+            
+            <form onSubmit={handleQSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Question Text</label>
+                <textarea
+                  required
+                  placeholder="e.g. Which muscle is responsible for shoulder abduction beyond 90 degrees?"
+                  value={qQuestion}
+                  onChange={(e) => setQQuestion(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-650 text-xs focus:outline-none focus:border-emerald-500/50 resize-none"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Choices & Correct Answer</label>
+                {[0, 1, 2, 3].map((idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      required={idx < 2}
+                      placeholder={`Option ${idx + 1}${idx >= 2 ? ' (optional)' : ' (required)'}`}
+                      value={qOptions[idx] || ''}
+                      onChange={(e) => {
+                        const updated = [...qOptions];
+                        updated[idx] = e.target.value;
+                        setQOptions(updated);
+                      }}
+                      className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-emerald-500/50"
+                    />
+                    <label className="flex items-center gap-1 cursor-pointer shrink-0">
+                      <input
+                        type="radio"
+                        name="correctAnswer"
+                        checked={qCorrect === idx}
+                        onChange={() => setQCorrect(idx)}
+                        className="accent-emerald-500 w-3.5 h-3.5"
+                      />
+                      <span className="text-[10px] font-bold text-zinc-400">Correct</span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-4">
+                <PremiumDateTimePicker
+                  value={qPublishAt}
+                  onChange={setQPublishAt}
+                  label="Publish At"
+                  required
+                />
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider block">Status</label>
+                  <div className="relative">
+                    <select
+                      value={qStatus}
+                      onChange={(e) => setQStatus(e.target.value as any)}
+                      className="w-full bg-zinc-950 border border-white/10 rounded-xl p-2.5 text-xs text-white font-bold focus:border-emerald-500/50 outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="Draft">Draft</option>
+                      <option value="Scheduled">Scheduled</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-550 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="submit"
+                  disabled={qSubmitting}
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-3 rounded-xl cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50"
+                >
+                  {qSubmitting ? 'Saving...' : editingQuestionId ? 'Update Question' : 'Publish / Schedule'}
+                </button>
+                {editingQuestionId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingQuestionId(null);
+                      setQQuestion('');
+                      setQOptions(['', '', '', '']);
+                      setQCorrect(0);
+                      setQPublishAt('');
+                      setQStatus('Scheduled');
+                      setMessage('');
+                    }}
+                    className="border border-zinc-800 hover:bg-zinc-900/60 text-zinc-400 font-bold text-xs py-3 px-5 rounded-xl cursor-pointer transition-all active:scale-[0.98]"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+
       {/* Rejection reason modal */}
       <AnimatePresence>
         {rejectionPostId !== null && (
@@ -748,6 +1102,91 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 >
                   إلغاء
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* QOTD Stats Modal */}
+        {selectedStats && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="glass-card w-full max-w-md p-6 relative flex flex-col gap-5 border border-white/10 text-left"
+            >
+              <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                <div className="flex items-center gap-2.5 text-emerald-400">
+                  <BarChart3 className="w-5 h-5 flex-shrink-0" />
+                  <h3 className="text-base font-black tracking-tight">Question Statistics</h3>
+                </div>
+                <button 
+                  onClick={() => setSelectedStats(null)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center bg-white/5 border border-white/8 text-zinc-400 hover:text-white cursor-pointer transition-all"
+                >
+                  <XCircle className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-extrabold text-white leading-relaxed">{selectedStats.question}</h4>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="bg-white/3 border border-white/5 rounded-xl p-3">
+                    <p className="text-[9px] text-zinc-500 font-bold uppercase">Unique Participants</p>
+                    <p className="text-lg font-black text-white mt-0.5">{selectedStats.unique_participants}</p>
+                  </div>
+                  <div className="bg-white/3 border border-white/5 rounded-xl p-3">
+                    <p className="text-[9px] text-zinc-500 font-bold uppercase">Total Answers</p>
+                    <p className="text-lg font-black text-white mt-0.5">{selectedStats.total_answers}</p>
+                  </div>
+                  <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3">
+                    <p className="text-[9px] text-emerald-400 font-bold uppercase">Correct Answers</p>
+                    <p className="text-lg font-black text-emerald-400 mt-0.5">
+                      {selectedStats.correct_answers} ({selectedStats.correct_percentage}%)
+                    </p>
+                  </div>
+                  <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-3">
+                    <p className="text-[9px] text-red-400 font-bold uppercase">Wrong Answers</p>
+                    <p className="text-lg font-black text-red-400 mt-0.5">
+                      {selectedStats.wrong_answers} ({selectedStats.total_answers > 0 ? 100 - selectedStats.correct_percentage : 0}%)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <p className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider">Answer Distribution</p>
+                  <div className="space-y-2">
+                    {selectedStats.options.map((option: string, idx: number) => {
+                      const count = selectedStats.option_counts[idx] || 0;
+                      const pct = selectedStats.total_answers > 0 ? Math.round((count / selectedStats.total_answers) * 100) : 0;
+                      const isCorrect = idx === selectedStats.correct_answer;
+
+                      return (
+                        <div key={idx} className="space-y-1">
+                          <div className="flex justify-between text-xs font-bold text-zinc-300">
+                            <span className="truncate pr-2 flex items-center gap-1.5">
+                              {option}
+                              {isCorrect && <span className="bg-emerald-500/20 text-emerald-400 text-[8px] font-bold px-1.5 py-0.2 rounded border border-emerald-500/20">Correct</span>}
+                            </span>
+                            <span className="shrink-0 text-[10px] text-zinc-550 font-extrabold">
+                              {count} answers ({pct}%)
+                            </span>
+                          </div>
+                          <div className="w-full bg-zinc-950 rounded-full h-1.5 overflow-hidden border border-white/5">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-500 ${isCorrect ? 'bg-emerald-500' : 'bg-white/20'}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </motion.div>
           </div>
