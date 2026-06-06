@@ -122,7 +122,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     referral: 25,
     surprise_box: 50,
     poll_vote: 30,
-    quiz_solve: 150
+    quiz_solve: 150,
+    suggestion_create: 50
   });
 
   const profileFetchInProgress = useRef(false);
@@ -179,22 +180,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [toastMessage]);
 
-  const recentPopupsRef = useRef<{ amount: number; timestamp: number }[]>([]);
+  const recentPopupsRef = useRef<{ amount: number; timestamp: number; fromSocket: boolean }[]>([]);
 
   const triggerXpPopup = (amount: number, fromSocket = false) => {
-    if (fromSocket) {
-      const now = Date.now();
-      recentPopupsRef.current = recentPopupsRef.current.filter(p => now - p.timestamp < 3500);
-      const foundIdx = recentPopupsRef.current.findIndex(p => p.amount === amount);
-      if (foundIdx !== -1) {
-        recentPopupsRef.current.splice(foundIdx, 1);
-        return;
-      }
-    } else {
-      recentPopupsRef.current.push({ amount, timestamp: Date.now() });
+    const now = Date.now();
+    // Keep entries for 3.5 seconds
+    recentPopupsRef.current = recentPopupsRef.current.filter(p => now - p.timestamp < 3500);
+    
+    // Check if we have a duplicate of the same amount from the OTHER source (socket vs API)
+    const foundIdx = recentPopupsRef.current.findIndex(
+      p => p.amount === amount && p.fromSocket !== fromSocket
+    );
+    
+    if (foundIdx !== -1) {
+      // Remove it from the cache to keep it clean and return without displaying the popup
+      recentPopupsRef.current.splice(foundIdx, 1);
+      return;
     }
+    
+    // Otherwise, this is the first of the two notifications. Cache it and display.
+    recentPopupsRef.current.push({ amount, timestamp: now, fromSocket });
 
-    const id = Date.now() + Math.random();
+    const id = now + Math.random();
     setXpPopups(prev => [...prev, { id, amount }]);
     playChatSound(amount > 0 ? 'xp_gain' : 'xp_loss');
     setTimeout(() => {
@@ -493,8 +500,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Service Worker and Push Activation
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').then((reg) => {
-        console.log('PWA Service Worker registered with scope:', reg.scope);
+      navigator.serviceWorker.register('/sw.js').then(() => {
+        // registered
       }).catch(err => {
         console.error('Service Worker registration failed:', err);
       });

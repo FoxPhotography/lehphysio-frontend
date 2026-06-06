@@ -33,6 +33,7 @@ export const episodeService = {
       body: JSON.stringify({
         type: 'comment',
         content,
+        parent_id: parentId || null,
         parentId: parentId || null,
       }),
     }, token);

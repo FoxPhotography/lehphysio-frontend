@@ -33,7 +33,8 @@ import {
   Medal,
   Star,
   Clock,
-  XCircle
+  XCircle,
+  AlertTriangle
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_BASE || (
@@ -72,6 +73,7 @@ interface HomeProps {
   isLoadingOlderPosts?: boolean;
   hasMorePosts?: boolean;
   isRefreshingFeed?: boolean;
+  handleOpenReportModal?: (type: 'post' | 'comment' | 'message', id: number, preview?: string) => void;
 }
 
 // Helper to strip emojis from text
@@ -109,7 +111,8 @@ export const Home: React.FC<HomeProps> = ({
   loadOlderPosts,
   isLoadingOlderPosts = false,
   hasMorePosts = true,
-  isRefreshingFeed = false
+  isRefreshingFeed = false,
+  handleOpenReportModal
 }) => {
   const activeStreak = user?.streak_count || 0;
   const first = leaderboard[0];
@@ -140,7 +143,7 @@ export const Home: React.FC<HomeProps> = ({
   const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
   const [activeSuggestionIdx, setActiveSuggestionIdx] = useState(0);
   const [commentSubmitting, setCommentSubmitting] = useState<{[key: number]: boolean}>({});
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; commentId: number; content: string; postId: number; parentId?: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; commentId: number; content: string; postId: number; parentId?: number; commentUserId?: number; commentUsername?: string } | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editCommentText, setEditCommentText] = useState('');
 
@@ -1182,7 +1185,7 @@ export const Home: React.FC<HomeProps> = ({
                       </button>
                     )}
                     {/* 3-dot post options menu */}
-                    {user && !post.pending && (post.user_id === user.id || post.username === user.username || user.role === 'admin' || user.role === 'owner') && (
+                    {user && !post.pending && (
                       <div className="relative">
                         <button
                           onClick={(e) => {
@@ -1201,28 +1204,43 @@ export const Home: React.FC<HomeProps> = ({
                               exit={{ opacity: 0, scale: 0.95, y: -5 }}
                               className="absolute right-0 top-9 z-20 bg-zinc-950 border border-zinc-800 rounded-xl p-1.5 flex flex-col gap-1 min-w-[120px] shadow-2xl"
                             >
-                              <button
-                                onClick={() => {
-                                  setEditingPostId(post.id);
-                                  setEditPostContent(post.content);
-                                  setEditPostImageUrl(post.image_url || '');
-                                  setOpenPostMenu(null);
-                                }}
-                                className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-brand-amber rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                                <span>Edit</span>
-                              </button>
-                              <button
-                                onClick={() => {
-                                  handleDeletePost(post.id);
-                                  setOpenPostMenu(null);
-                                }}
-                                className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                <span>Delete</span>
-                              </button>
+                              {(post.user_id === user.id || post.username === user.username || user.role === 'admin' || user.role === 'owner') ? (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setEditingPostId(post.id);
+                                      setEditPostContent(post.content);
+                                      setEditPostImageUrl(post.image_url || '');
+                                      setOpenPostMenu(null);
+                                    }}
+                                    className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-brand-amber rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                    <span>Edit</span>
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      handleDeletePost(post.id);
+                                      setOpenPostMenu(null);
+                                    }}
+                                    className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span>Delete</span>
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    handleOpenReportModal && handleOpenReportModal('post', post.id, post.content);
+                                    setOpenPostMenu(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-amber-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                                >
+                                  <AlertTriangle className="w-3.5 h-3.5" />
+                                  <span>Report Post</span>
+                                </button>
+                              )}
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -1435,9 +1453,9 @@ export const Home: React.FC<HomeProps> = ({
                                     id={`comment-${c.id}`}
                                     className="bg-zinc-900/30 rounded-xl p-3.5 border border-zinc-900/40 relative group/comment"
                                     onContextMenu={(e) => {
-                                      if (user && (c.user_id === user.id || user.role === 'admin' || user.role === 'owner')) {
+                                      if (user) {
                                         e.preventDefault();
-                                        setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, postId: post.id });
+                                        setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, postId: post.id, commentUserId: c.user_id, commentUsername: c.username });
                                       }
                                     }}
                                   >
@@ -1454,11 +1472,11 @@ export const Home: React.FC<HomeProps> = ({
                                             <span className="text-[9px] text-zinc-500 font-semibold">
                                               {new Date(c.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                             </span>
-                                            {user && (c.user_id === user.id || c.username === user.username || user.role === 'admin' || user.role === 'owner') && (
+                                            {user && (
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation();
-                                                  setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, postId: post.id });
+                                                  setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, postId: post.id, commentUserId: c.user_id, commentUsername: c.username });
                                                 }}
                                                 className="text-zinc-500 hover:text-white cursor-pointer opacity-0 group-hover/comment:opacity-100 transition-opacity"
                                                 title="More Options"
@@ -1525,11 +1543,11 @@ export const Home: React.FC<HomeProps> = ({
                                                       <span className="text-[8px] text-zinc-600 font-semibold">
                                                         {new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                                       </span>
-                                                      {user && (r.user_id === user.id || r.username === user.username || user.role === 'admin' || user.role === 'owner') && (
+                                                      {user && (
                                                         <button
                                                           onClick={(e) => {
                                                             e.stopPropagation();
-                                                            setContextMenu({ x: e.clientX, y: e.clientY, commentId: r.id, content: r.content, postId: post.id, parentId: c.id });
+                                                            setContextMenu({ x: e.clientX, y: e.clientY, commentId: r.id, content: r.content, postId: post.id, parentId: c.id, commentUserId: r.user_id, commentUsername: r.username });
                                                           }}
                                                           className="text-zinc-600 hover:text-white cursor-pointer opacity-0 group-hover/reply:opacity-100 transition-opacity"
                                                           title="More"
@@ -1719,27 +1737,42 @@ export const Home: React.FC<HomeProps> = ({
               className="bg-zinc-950 border border-zinc-800 rounded-xl p-1 flex flex-col gap-0.5 min-w-[130px] shadow-2xl z-[1000]"
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                onClick={() => {
-                  setEditingCommentId(contextMenu.commentId);
-                  setEditCommentText(contextMenu.content);
-                  setContextMenu(null);
-                }}
-                className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-white rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
-              >
-                <Edit2 className="w-3.5 h-3.5 text-zinc-500" />
-                <span>Edit Post</span>
-              </button>
-              <button
-                onClick={() => {
-                  deleteComment(contextMenu.postId, contextMenu.commentId, !!contextMenu.parentId, contextMenu.parentId);
-                  setContextMenu(null);
-                }}
-                className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                <span>Delete Post</span>
-              </button>
+              {user && (contextMenu.commentUserId === user.id || contextMenu.commentUsername === user.username || user.role === 'moderator' || user.role === 'admin' || user.role === 'owner') ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setEditingCommentId(contextMenu.commentId);
+                      setEditCommentText(contextMenu.content);
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-white rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                  >
+                    <Edit2 className="w-3.5 h-3.5 text-zinc-500" />
+                    <span>Edit Comment</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      deleteComment(contextMenu.postId, contextMenu.commentId, !!contextMenu.parentId, contextMenu.parentId);
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                    <span>Delete Comment</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    handleOpenReportModal && handleOpenReportModal('comment', contextMenu.commentId, contextMenu.content);
+                    setContextMenu(null);
+                  }}
+                  className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-amber-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Report Comment</span>
+                </button>
+              )}
             </motion.div>
           </div>
         )}

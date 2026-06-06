@@ -94,6 +94,7 @@ export interface XpSettings {
   surprise_box: number;
   poll_vote: number;
   quiz_solve: number;
+  suggestion_create?: number;
 }
 
 export interface Suggestion {
@@ -104,7 +105,13 @@ export interface Suggestion {
   created_at: string;
   status: 'pending' | 'approved' | 'rejected';
   upvotes_count: number;
+  upvotes?: number;
   has_upvoted?: boolean;
+  hasUpvoted?: boolean;
+  edit_draft?: { title: string; content: string } | null;
+  delete_pending?: boolean;
+  rejection_reason?: string | null;
+  user_id?: number;
 }
 
 export interface GameRoom {
@@ -135,7 +142,8 @@ export type NotificationType =
   | 'suggestion_approved' | 'suggestion_rejected'
   | 'user_muted' | 'user_unmuted'
   | 'user_banned' | 'user_unbanned'
-  | 'user_role_updated';
+  | 'user_role_updated'
+  | 'moderation_post_pending' | 'moderation_post_edited' | 'moderation_suggestion_pending' | 'moderation_report_pending';
 
 export interface AppNotification {
   _id: number;
@@ -143,7 +151,7 @@ export interface AppNotification {
   actor_id: { id: number; username: string; avatar_url: string | null } | number | null;
   type: NotificationType;
   target_id: number | null;
-  target_type: 'post' | 'comment' | 'episode' | 'chat_message' | null;
+  target_type: 'post' | 'comment' | 'episode' | 'chat_message' | 'suggestion' | 'report' | 'user' | null;
   title: string;
   body: string;
   metadata: Record<string, any>;
@@ -165,4 +173,16 @@ export interface NotificationPagination {
   limit: number;
   total: number;
   hasMore: boolean;
+}
+
+export interface Report {
+  id: number;
+  reporter: { id: number; username: string; avatar_url: string | null };
+  target_user: { id: number; username: string; avatar_url: string | null };
+  target_type: 'post' | 'comment' | 'message';
+  target_id: number;
+  reason: string;
+  content_preview: string | null;
+  status: 'pending' | 'resolved' | 'dismissed';
+  created_at: string;
 }

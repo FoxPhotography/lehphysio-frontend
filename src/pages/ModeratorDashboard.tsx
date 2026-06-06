@@ -54,6 +54,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<any[]>([]);
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [reports, setReports] = useState<any[]>([]);
 
 
 
@@ -130,6 +131,51 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       }
     } catch (err) {
       console.error('Failed to fetch users:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch content reports list
+  const fetchReports = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${apiBase}/api/admin/reports`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setReports(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch reports:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Action on reports
+  const handleResolveReport = async (reportId: number, action: 'dismiss' | 'resolve_delete') => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${apiBase}/api/admin/reports/${reportId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage(action === 'dismiss' ? 'Report dismissed successfully.' : 'Content deleted and report resolved.');
+        fetchReports();
+      } else {
+        setMessage(data.error || 'Failed to resolve report.');
+      }
+    } catch (err) {
+      console.error('Error resolving report:', err);
+      setMessage('Failed to process request due to a server error.');
     } finally {
       setLoading(false);
     }
@@ -283,8 +329,30 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       fetchUsers();
     } else if (activeTab === 'qotd') {
       fetchQuestions();
+    } else if (activeTab === 'reports') {
+      fetchReports();
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    const handleTabChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setActiveTab(customEvent.detail);
+      }
+    };
+    window.addEventListener('change_moderator_tab', handleTabChange);
+
+    const savedTab = localStorage.getItem('moderator_active_tab');
+    if (savedTab) {
+      setActiveTab(savedTab as any);
+      localStorage.removeItem('moderator_active_tab');
+    }
+
+    return () => {
+      window.removeEventListener('change_moderator_tab', handleTabChange);
+    };
+  }, []);
 
   // Handle Post Moderation (Approve)
   const handleApprovePost = async (postId: number, isRevision: boolean) => {
@@ -299,7 +367,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       });
       const data = await res.json();
       if (res.ok) {
-        setMessage(isRevision ? 'تم قبول تعديلات المنشور بنجاح! 🎉' : 'تم الموافقة على نشر المنشور بنجاح! 🎉');
+        setMessage(isRevision ? 'Edit approved successfully!' : 'Post approved successfully!');
         fetchPendingPosts();
       } else {
         setMessage(data.error || 'Failed to approve post.');
@@ -333,7 +401,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       });
       const data = await res.json();
       if (res.ok) {
-        setMessage(isRejectingRevision ? 'تم رفض وإلغاء تعديل المنشور.' : 'تم رفض وحذف المنشور المعلق.');
+        setMessage(isRejectingRevision ? 'Edit rejected successfully!' : 'Post rejected successfully.');
         setRejectionPostId(null);
         fetchPendingPosts();
       } else {
@@ -345,7 +413,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
   };
 
   // Handle Suggestion Moderation
-  const handleSuggestionStatus = async (suggestionId: number, status: 'approved' | 'rejected') => {
+  const handleSuggestionStatus = async (suggestionId: number, status: 'approved' | 'rejected', action?: string, reason?: string) => {
     try {
       const res = await fetch(`${apiBase}/api/admin/suggestions/${suggestionId}`, {
         method: 'PATCH',
@@ -353,10 +421,20 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, action, reason }),
       });
       if (res.ok) {
-        setMessage(status === 'approved' ? 'تم الموافقة على الاقتراح!' : 'تم رفض الاقتراح.');
+        if (action === 'approve_revision') {
+          setMessage('Suggestion edit approved!');
+        } else if (action === 'reject_revision') {
+          setMessage('Suggestion edit rejected.');
+        } else if (action === 'approve_delete') {
+          setMessage('Suggestion deletion approved.');
+        } else if (action === 'reject_delete') {
+          setMessage('Suggestion deletion rejected.');
+        } else {
+          setMessage(status === 'approved' ? 'Suggestion approved!' : 'Suggestion rejected.');
+        }
         fetchSuggestions();
       }
     } catch (err) {
@@ -625,57 +703,140 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
             </div>
           ) : (
             <div className="space-y-3">
-              {suggestions.map((s) => (
-                <div
-                  key={s.id}
-                  className={`rounded-2xl border p-4.5 space-y-3 text-left transition-all ${
-                    s.status === 'approved' ? 'border-emerald-500/20 bg-emerald-500/3' :
-                    s.status === 'rejected' ? 'border-red-500/20 bg-red-500/3' :
-                    'border-white/8 bg-zinc-900/60'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h4 className="text-[13px] font-bold text-white">{s.title}</h4>
-                      <p className="text-[10px] text-zinc-500">
-                        Submitted by @{s.username} · {new Date(s.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wide border shrink-0 ${
-                      s.status === 'approved' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25' :
-                      s.status === 'rejected' ? 'bg-red-500/15 text-red-400 border-red-500/25' :
-                      'bg-zinc-800 text-zinc-400 border-white/10'
-                    }`}>
-                      {s.status}
-                    </span>
-                  </div>
-                  
-                  <p className="text-xs text-zinc-300 leading-relaxed">{s.content}</p>
+              {suggestions.map((s) => {
+                let statusColor = 'text-zinc-500';
+                let statusBg = 'bg-zinc-800 text-zinc-400 border-white/10';
+                let statusLabel = s.status;
 
-                  <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                    <span className="flex items-center gap-1 text-[11px] text-orange-400 font-bold">
-                      <ThumbsUp className="w-3.5 h-3.5" /> {s.upvotes || 0} Upvotes
-                    </span>
+                if (s.delete_pending) {
+                  statusColor = 'text-red-400';
+                  statusBg = 'bg-red-500/15 text-red-400 border-red-500/25';
+                  statusLabel = 'Delete Pending';
+                } else if (s.edit_draft) {
+                  statusColor = 'text-amber-400';
+                  statusBg = 'bg-amber-500/15 text-amber-400 border-amber-500/25';
+                  statusLabel = 'Edit Pending';
+                } else if (s.status === 'approved') {
+                  statusColor = 'text-emerald-400';
+                  statusBg = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25';
+                } else if (s.status === 'rejected') {
+                  statusColor = 'text-red-400';
+                  statusBg = 'bg-red-500/15 text-red-400 border-red-500/25';
+                }
 
-                    {s.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleSuggestionStatus(s.id, 'approved')}
-                          className="bg-emerald-500/15 border border-emerald-500/25 hover:bg-emerald-500/25 text-emerald-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
-                        >
-                          <Check className="w-3 h-3" /> Approve
-                        </button>
-                        <button
-                          onClick={() => handleSuggestionStatus(s.id, 'rejected')}
-                          className="bg-red-500/15 border border-red-500/25 hover:bg-red-500/25 text-red-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
-                        >
-                          <XCircle className="w-3 h-3" /> Reject
-                        </button>
+                return (
+                  <div
+                    key={s.id}
+                    className={`rounded-2xl border p-4.5 space-y-4 text-left transition-all ${
+                      s.delete_pending ? 'border-red-500/25 bg-red-500/5' :
+                      s.edit_draft ? 'border-amber-500/25 bg-amber-500/5' :
+                      s.status === 'approved' ? 'border-emerald-500/20 bg-emerald-500/3' :
+                      s.status === 'rejected' ? 'border-red-500/20 bg-red-500/3' :
+                      'border-white/8 bg-zinc-900/60'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h4 className="text-[13px] font-bold text-white">
+                          {s.title}
+                        </h4>
+                        <p className="text-[10px] text-zinc-500">
+                          Submitted by @{s.username} ({s.batch || 'User'}) · {new Date(s.created_at).toLocaleDateString()}
+                        </p>
                       </div>
+                      <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wide border shrink-0 ${statusBg}`}>
+                        {statusLabel}
+                      </span>
+                    </div>
+                    
+                    {s.edit_draft ? (
+                      <div className="p-3.5 border border-amber-500/20 bg-amber-500/5 rounded-xl space-y-3">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-bold">
+                          <FileEdit className="w-3.5 h-3.5" /> Revision Edit Request Pending
+                        </span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-bold text-zinc-500 uppercase">Original</span>
+                            <h5 className="text-xs font-bold text-zinc-400">{s.title}</h5>
+                            <p className="text-[11px] text-zinc-500">{s.content}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-bold text-amber-500 uppercase">New Draft</span>
+                            <h5 className="text-xs font-bold text-white">{s.edit_draft.title}</h5>
+                            <p className="text-[11px] text-zinc-300">{s.edit_draft.content}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleSuggestionStatus(s.id, 'approved', 'approve_revision')}
+                            className="bg-emerald-500/20 border border-emerald-500/30 hover:bg-emerald-500/30 text-emerald-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                          >
+                            <Check className="w-3 h-3" /> Approve Revision
+                          </button>
+                          <button
+                            onClick={() => {
+                              const reason = prompt("Enter rejection reason (optional):");
+                              handleSuggestionStatus(s.id, 'rejected', 'reject_revision', reason || undefined);
+                            }}
+                            className="bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                          >
+                            <XCircle className="w-3 h-3" /> Reject Revision
+                          </button>
+                        </div>
+                      </div>
+                    ) : s.delete_pending ? (
+                      <div className="p-3 border border-red-500/20 bg-red-500/5 rounded-xl space-y-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-red-400 flex items-center gap-1.5 font-bold">
+                          <AlertTriangle className="w-3.5 h-3.5" /> Deletion Request Pending
+                        </span>
+                        <p className="text-xs text-zinc-300 leading-relaxed">{s.content}</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleSuggestionStatus(s.id, 'rejected', 'approve_delete')}
+                            className="bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                          >
+                            <Check className="w-3 h-3" /> Approve Deletion
+                          </button>
+                          <button
+                            onClick={() => handleSuggestionStatus(s.id, 'approved', 'reject_delete')}
+                            className="border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                          >
+                            <XCircle className="w-3 h-3" /> Keep Suggestion
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-zinc-300 leading-relaxed">{s.content}</p>
                     )}
+
+                    <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                      <span className="flex items-center gap-1 text-[11px] text-orange-400 font-bold">
+                        <ThumbsUp className="w-3.5 h-3.5" /> {s.upvotes || 0} Upvotes
+                      </span>
+
+                      {s.status === 'pending' && !s.edit_draft && !s.delete_pending && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleSuggestionStatus(s.id, 'approved')}
+                            className="bg-emerald-500/15 border border-emerald-500/25 hover:bg-emerald-500/25 text-emerald-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                          >
+                            <Check className="w-3 h-3" /> Approve
+                          </button>
+                          <button
+                            onClick={() => {
+                              const reason = prompt("Enter rejection reason (optional):");
+                              handleSuggestionStatus(s.id, 'rejected', undefined, reason || undefined);
+                            }}
+                            className="bg-red-500/15 border border-red-500/25 hover:bg-red-500/25 text-red-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                          >
+                            <XCircle className="w-3 h-3" /> Reject
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -839,32 +1000,104 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
         </div>
       )}
 
-      {/* ── 5. REPORTS QUEUE (FUTURE-READY PLACEHOLDER) ────────────────────── */}
-      {activeTab === 'reports' && (
-        <div className="rounded-2xl border border-dashed border-white/10 bg-zinc-900/60 p-10 text-center space-y-4">
-          <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/25 flex items-center justify-center mx-auto text-red-400 animate-pulse">
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-          <div className="max-w-md mx-auto space-y-1">
-            <h3 className="text-sm font-bold text-white">Reports Handling Queue</h3>
-            <p className="text-xs text-zinc-500 leading-relaxed">
-              This section is prepared for receiving reported content (posts, comments, chat messages) flag notifications.
-            </p>
-          </div>
+      {/* ── 5. REPORTS QUEUE ────────────────────────────────────────────── */}
+      {activeTab === 'reports' && !loading && (
+        <div className="space-y-4">
+          {reports.length === 0 ? (
+            <div className="rounded-2xl border border-white/8 bg-zinc-900/40 p-8 text-center text-zinc-500 text-[13px]">
+              No content reports pending moderation.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {reports.map((report) => (
+                <div key={report.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-5 space-y-4 text-left">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center border border-white/10">
+                        {report.reporter?.avatar_url ? (
+                          <img src={report.reporter.avatar_url} alt={report.reporter.username} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-[12px] font-bold text-zinc-400">
+                            {report.reporter?.username ? report.reporter.username[0].toUpperCase() : '?'}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="text-[12px] font-black text-white">
+                          Reporter: <span className="text-zinc-400">@{report.reporter?.username || 'Unknown'}</span>
+                        </h4>
+                        <p className="text-[9px] text-zinc-500">
+                          {new Date(report.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                        report.target_type === 'post' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                        report.target_type === 'comment' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                        'bg-pink-500/10 text-pink-400 border border-pink-500/20'
+                      }`}>
+                        Reported {report.target_type}
+                      </span>
+                      
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                        report.status === 'pending' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/25 animate-pulse' :
+                        report.status === 'resolved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25' :
+                        'bg-zinc-800 text-zinc-400 border border-white/10'
+                      }`}>
+                        {report.status}
+                      </span>
+                    </div>
+                  </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto pt-4">
-            {[
-              { label: 'Reported Posts', count: 0, desc: 'Flagged community feed content' },
-              { label: 'Reported Comments', count: 0, desc: 'Flagged replies & discussion items' },
-              { label: 'Reported Messages', count: 0, desc: 'Flagged public chat logs' },
-            ].map((rep, idx) => (
-              <div key={idx} className="p-3.5 rounded-xl bg-zinc-950/40 border border-white/5 text-left space-y-1">
-                <span className="bg-zinc-800 text-zinc-500 text-[10px] font-bold px-1.5 py-0.5 rounded">0 pending</span>
-                <h4 className="text-[11px] font-black text-white pt-1">{rep.label}</h4>
-                <p className="text-[9px] text-zinc-600 leading-tight">{rep.desc}</p>
-              </div>
-            ))}
-          </div>
+                  <div className="space-y-3">
+                    <div className="p-3.5 rounded-xl bg-red-500/5 border border-red-500/10">
+                      <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider">Reason for Report</p>
+                      <p className="text-xs text-zinc-200 mt-1 font-medium italic">"{report.reason}"</p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-zinc-950/40 border border-white/5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center border border-white/5">
+                          {report.target_user?.avatar_url ? (
+                            <img src={report.target_user.avatar_url} alt={report.target_user.username} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-[9px] font-bold text-zinc-400">
+                              {report.target_user?.username ? report.target_user.username[0].toUpperCase() : '?'}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-zinc-400">
+                          Author: <span className="text-white font-bold">@{report.target_user?.username || 'Unknown'}</span>
+                        </p>
+                      </div>
+                      <p className="text-xs text-zinc-300 leading-relaxed bg-zinc-900/50 p-2.5 rounded-lg border border-white/5 whitespace-pre-line font-mono">
+                        {report.content_preview || <span className="text-zinc-600 italic">No content preview available.</span>}
+                      </p>
+                    </div>
+                  </div>
+
+                  {report.status === 'pending' && (
+                    <div className="flex gap-2.5 pt-3 border-t border-white/5">
+                      <button
+                        onClick={() => handleResolveReport(report.id, 'dismiss')}
+                        className="flex-1 bg-zinc-850 hover:bg-zinc-800 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer border border-white/10 transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <Check className="w-4 h-4 text-emerald-400" /> Keep Content (Dismiss)
+                      </button>
+                      <button
+                        onClick={() => handleResolveReport(report.id, 'resolve_delete')}
+                        className="flex-1 bg-red-500 text-black font-black text-xs py-2.5 rounded-xl cursor-pointer hover:bg-red-400 transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <Trash2 className="w-4 h-4" /> Delete Content
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1074,14 +1307,14 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
               <div className="flex items-center gap-2.5 text-red-400">
                 <XCircle className="w-6 h-6 flex-shrink-0" />
                 <h3 className="text-base font-black tracking-tight">
-                  {isRejectingRevision ? 'رفض تعديل المنشور المعلق' : 'رفض وحذف المنشور المعلق'}
+                  {isRejectingRevision ? 'Reject Edit' : 'Reject and Delete Post'}
                 </h3>
               </div>
 
               <div className="space-y-1.5 text-left">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">السبب (اختياري)</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Reason (Optional)</label>
                 <textarea
-                  placeholder="اكتب سبب الرفض لمشاركته مع الكاتب..."
+                  placeholder="Write the reason for rejection to share with the author..."
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
                   rows={4}
@@ -1094,7 +1327,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   onClick={handleRejectPostSubmit}
                   className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black text-xs py-3 rounded-xl cursor-pointer transition-all active:scale-[0.98]"
                 >
-                  تأكيد الرفض
+                  Confirm Rejection
                 </button>
                 <button
                   onClick={() => setRejectionPostId(null)}

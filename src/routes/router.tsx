@@ -65,7 +65,10 @@ interface AppRouterProps {
   handleCreateSuggestion: (title: string, content: string) => Promise<void>;
   handleUpvoteSuggestion: (id: number) => Promise<void>;
   handleDeleteSuggestion: (id: number) => void;
+  handleEditSuggestion: (id: number, title: string, content: string) => Promise<void>;
+  handleCancelSuggestionRevision: (id: number) => Promise<void>;
   handleOpenModerationModal: (username: string, userId: number) => void;
+  handleOpenReportModal?: (type: 'post' | 'comment' | 'message', id: number, preview?: string) => void;
 
   // Games page specific hook bindings
   gamesHook: any;
@@ -117,7 +120,7 @@ interface AppRouterProps {
   setAdminCodeForm: React.Dispatch<React.SetStateAction<any>>;
   handleAdminCreateCode: (e: React.FormEvent) => Promise<void>;
   handleAdminUpdateUserRole: (userId: number, role: string) => Promise<void>;
-  handleAdminUpdateSuggestionStatus: (suggestionId: number, status: 'approved' | 'rejected') => Promise<void>;
+  handleAdminUpdateSuggestionStatus: (suggestionId: number, status: 'approved' | 'rejected', action?: string, reason?: string) => Promise<void>;
   handleAdminDeleteCode: (codeId: number, name: string) => void;
   handleAdminDeleteUser: (userId: number, username: string) => void;
   apiBase: string;
@@ -166,6 +169,8 @@ export const AppRouter: React.FC<AppRouterProps> = ({
   handleCreateSuggestion,
   handleUpvoteSuggestion,
   handleDeleteSuggestion,
+  handleEditSuggestion,
+  handleCancelSuggestionRevision,
   handleOpenModerationModal,
 
   gamesHook,
@@ -216,7 +221,8 @@ export const AppRouter: React.FC<AppRouterProps> = ({
   handleAdminUpdateSuggestionStatus,
   handleAdminDeleteCode,
   handleAdminDeleteUser,
-  apiBase
+  apiBase,
+  handleOpenReportModal
 }) => {
   const { currentPage, user, token, forgotEmail, equippedFrame, setEquippedFrame, equippedTitle, setEquippedTitle, unlockedCosmetics, setCurrentPage, handleLogout, handleUpdateProfile, handleUploadImage, isSubscribed, pushLoading, handleTogglePushNotifications, showToast, triggerXpPopup, xpSettings, fetchUserProfile, getAvatarFrameClass, showConfirm, usernamesDirectory, confirmEmail } = useAuth();
 
@@ -253,6 +259,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           isLoadingOlderPosts={isLoadingOlderPosts}
           hasMorePosts={hasMorePosts}
           isRefreshingFeed={isRefreshingFeed}
+          handleOpenReportModal={handleOpenReportModal}
         />
       );
     case 'news':
@@ -312,6 +319,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           handleEditComment={handleEditComment}
           usernames={usernamesDirectory}
           showToast={showToast}
+          handleOpenReportModal={handleOpenReportModal}
         />
       );
     case 'community':
@@ -349,6 +357,8 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           handleUpvoteSuggestion={handleUpvoteSuggestion}
           handleOpenModerationModal={handleOpenModerationModal}
           handleDeleteSuggestion={handleDeleteSuggestion}
+          handleEditSuggestion={handleEditSuggestion}
+          handleCancelSuggestionRevision={handleCancelSuggestionRevision}
           usernames={usernamesDirectory}
           getAvatarFrameClass={getAvatarFrameClass}
           equippedFrame={equippedFrame}
@@ -356,6 +366,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           isLoadingOlder={chatHook.isLoadingOlderChat}
           hasMoreChat={chatHook.hasMoreChat}
           isRefreshingChat={chatHook.isRefreshingChat}
+          handleOpenReportModal={handleOpenReportModal}
         />
       );
     case 'games':

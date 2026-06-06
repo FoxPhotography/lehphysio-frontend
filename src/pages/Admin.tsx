@@ -1460,6 +1460,7 @@ const XP_SETTING_METADATA: Record<string, { label: string; desc: string; icon: R
   quiz_solve:    { label: 'Quiz Solved',          desc: 'Fallback XP for solving an episode quiz.',                     icon: <CheckCircle className="w-4 h-4" /> },
   question_of_the_day_correct: { label: 'Question Of The Day Correct', desc: 'XP awarded for answering the daily question correctly.', icon: <CheckCircle className="w-4 h-4" /> },
   question_of_the_day_wrong:   { label: 'Question Of The Day Wrong',   desc: 'XP awarded for answering the daily question incorrectly.', icon: <XCircle className="w-4 h-4" /> },
+  suggestion_create:           { label: 'Suggestion Submitted',        desc: 'XP awarded for submitting a new suggestion or feedback.',   icon: <Lightbulb className="w-4 h-4" /> },
 };
 
 const XpSettingsManager: React.FC<{
@@ -1474,6 +1475,7 @@ const XpSettingsManager: React.FC<{
     poll_vote: 30, quiz_solve: 150,
     question_of_the_day_correct: 50,
     question_of_the_day_wrong: 10,
+    suggestion_create: 50,
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);

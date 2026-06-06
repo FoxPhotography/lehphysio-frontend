@@ -306,6 +306,34 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         window.history.replaceState({}, '', `/chat?tab=suggestions`);
         break;
       }
+      case 'moderation_post_pending': {
+        localStorage.setItem('moderator_active_tab', 'posts');
+        changePage('moderator-dashboard');
+        window.history.replaceState({}, '', `/moderator?tab=posts`);
+        window.dispatchEvent(new CustomEvent('change_moderator_tab', { detail: 'posts' }));
+        break;
+      }
+      case 'moderation_post_edited': {
+        localStorage.setItem('moderator_active_tab', 'revisions');
+        changePage('moderator-dashboard');
+        window.history.replaceState({}, '', `/moderator?tab=revisions`);
+        window.dispatchEvent(new CustomEvent('change_moderator_tab', { detail: 'revisions' }));
+        break;
+      }
+      case 'moderation_suggestion_pending': {
+        localStorage.setItem('moderator_active_tab', 'suggestions');
+        changePage('moderator-dashboard');
+        window.history.replaceState({}, '', `/moderator?tab=suggestions`);
+        window.dispatchEvent(new CustomEvent('change_moderator_tab', { detail: 'suggestions' }));
+        break;
+      }
+      case 'moderation_report_pending': {
+        localStorage.setItem('moderator_active_tab', 'reports');
+        changePage('moderator-dashboard');
+        window.history.replaceState({}, '', `/moderator?tab=reports`);
+        window.dispatchEvent(new CustomEvent('change_moderator_tab', { detail: 'reports' }));
+        break;
+      }
       case 'user_muted':
       case 'user_unmuted':
       case 'user_banned':

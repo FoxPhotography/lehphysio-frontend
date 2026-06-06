@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { playChatSound, getNameColor, getLocalDateString } from './utils/helpers';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, AlertTriangle } from 'lucide-react';
 
 // Services
 import { API_BASE } from './services/api';
@@ -102,6 +102,10 @@ function InnerApp() {
   const [isLoadingOlderPosts, setIsLoadingOlderPosts] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const [newPostContent, setNewPostContent] = useState('');
+
+  // Reporting state
+  const [reportTarget, setReportTarget] = useState<{ type: 'post' | 'comment' | 'message'; id: number; preview?: string } | null>(null);
+  const [reportReason, setReportReason] = useState('Spam');
 
   // Forms
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
@@ -517,6 +521,55 @@ function InnerApp() {
       });
     };
 
+    const handleSuggestionCreated = (newSugg: any) => {
+      console.log('[Socket] suggestion_created received:', newSugg);
+      setSuggestions(prev => {
+        const exists = prev.some(s => String(s.id) === String(newSugg.id));
+        if (exists) {
+          return prev.map(s => String(s.id) === String(newSugg.id) ? { ...s, ...newSugg } : s);
+        }
+        return [newSugg, ...prev];
+      });
+      setAdminSuggestions(prev => {
+        const exists = prev.some(s => String(s.id) === String(newSugg.id));
+        if (exists) {
+          return prev.map(s => String(s.id) === String(newSugg.id) ? { ...s, ...newSugg } : s);
+        }
+        return [newSugg, ...prev];
+      });
+    };
+
+    const handleSuggestionUpdated = (updatedSugg: any) => {
+      console.log('[Socket] suggestion_updated received:', updatedSugg);
+      const userId = getUserId(user, token);
+      setSuggestions(prev => {
+        const isAuthor = userId && String(updatedSugg.user_id) === String(userId);
+        if (updatedSugg.status !== 'approved' && !isAuthor) {
+          return prev.filter(s => String(s.id) !== String(updatedSugg.id));
+        }
+        const exists = prev.some(s => String(s.id) === String(updatedSugg.id));
+        if (exists) {
+          return prev.map(s => String(s.id) === String(updatedSugg.id) ? { ...s, ...updatedSugg } : s);
+        } else if (updatedSugg.status === 'approved' || isAuthor) {
+          return [updatedSugg, ...prev];
+        }
+        return prev;
+      });
+      setAdminSuggestions(prev => {
+        const exists = prev.some(s => String(s.id) === String(updatedSugg.id));
+        if (exists) {
+          return prev.map(s => String(s.id) === String(updatedSugg.id) ? { ...s, ...updatedSugg } : s);
+        }
+        return [updatedSugg, ...prev];
+      });
+    };
+
+    const handleSuggestionDeleted = (data: { id: number }) => {
+      console.log('[Socket] suggestion_deleted received:', data);
+      setSuggestions(prev => prev.filter(s => String(s.id) !== String(data.id)));
+      setAdminSuggestions(prev => prev.filter(s => String(s.id) !== String(data.id)));
+    };
+
     socket.on('post_created', handlePostCreated);
     socket.on('post_updated', handlePostUpdated);
     socket.on('post_deleted', handlePostDeleted);
@@ -526,6 +579,9 @@ function InnerApp() {
     socket.on('episode_created', handleEpisodeCreated);
     socket.on('episode_updated', handleEpisodeUpdated);
     socket.on('episode_deleted', handleEpisodeDeleted);
+    socket.on('suggestion_created', handleSuggestionCreated);
+    socket.on('suggestion_updated', handleSuggestionUpdated);
+    socket.on('suggestion_deleted', handleSuggestionDeleted);
 
     return () => {
       socket.off('post_created', handlePostCreated);
@@ -537,6 +593,9 @@ function InnerApp() {
       socket.off('episode_created', handleEpisodeCreated);
       socket.off('episode_updated', handleEpisodeUpdated);
       socket.off('episode_deleted', handleEpisodeDeleted);
+      socket.off('suggestion_created', handleSuggestionCreated);
+      socket.off('suggestion_updated', handleSuggestionUpdated);
+      socket.off('suggestion_deleted', handleSuggestionDeleted);
     };
   }, [socket, user, token]);
 
@@ -1004,12 +1063,23 @@ function InnerApp() {
     }
   };
 
-  const handleAdminUpdateSuggestionStatus = async (suggestionId: number, status: 'approved' | 'rejected') => {
+  const handleAdminUpdateSuggestionStatus = async (suggestionId: number, status: 'approved' | 'rejected', action?: string, reason?: string) => {
     if (!token) return;
     try {
-      const res = await communityService.updateSuggestionStatus(suggestionId, status, token);
+      const body: any = { status };
+      if (action) body.action = action;
+      if (reason) body.reason = reason;
+
+      const res = await fetch(`${API_BASE}/api/admin/suggestions/${suggestionId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      });
       if (res.ok) {
-        showToast(`Suggestion marked as ${status}! 💡`);
+        showToast('Suggestion moderation updated successfully!');
         fetchAdminSuggestions();
         fetchPublicSuggestions();
       } else {
@@ -1032,7 +1102,7 @@ function InnerApp() {
       if (res.ok) {
         showToast('Thank you! Suggestion submitted successfully. 💡');
         fetchPublicSuggestions();
-        triggerXpPopup(50);
+        triggerXpPopup(xpSettings.suggestion_create !== undefined ? xpSettings.suggestion_create : 50);
         fetchUserProfile();
       } else {
         showToast(data.error || 'Failed to submit suggestion.');
@@ -1055,6 +1125,52 @@ function InnerApp() {
         fetchPublicSuggestions();
       } else {
         showToast(data.error || 'Failed to upvote.');
+      }
+    } catch (e) {
+      showToast('Connection failed.');
+    }
+  };
+
+  const handleEditSuggestion = async (suggestionId: number, title: string, content: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/suggestions/${suggestionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ title, content })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || 'Suggestion edited successfully. ⏳');
+        fetchPublicSuggestions();
+        fetchAdminSuggestions();
+      } else {
+        showToast(data.error || 'Failed to edit suggestion.');
+      }
+    } catch (e) {
+      showToast('Connection failed.');
+    }
+  };
+
+  const handleCancelSuggestionRevision = async (suggestionId: number) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/suggestions/${suggestionId}/revision`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || 'Pending changes discarded.');
+        fetchPublicSuggestions();
+        fetchAdminSuggestions();
+      } else {
+        showToast(data.error || 'Failed to discard revision.');
       }
     } catch (e) {
       showToast('Connection failed.');
@@ -1119,7 +1235,7 @@ function InnerApp() {
         setCommunityPosts(prev => {
           const pendingPosts = prev.filter(p => p.pending);
           const merged = mergePendingAndFresh(pendingPosts, cache.data);
-          console.log('[FetchPosts] Loaded feed from cache. Count:', merged.length);
+
           return merged;
         });
 
@@ -1143,7 +1259,7 @@ function InnerApp() {
           const pendingPosts = prev.filter(p => p.pending);
           const freshData = data || [];
           const merged = mergePendingAndFresh(pendingPosts, freshData);
-          console.log('[FetchPosts] Fresh feed from API count:', freshData.length, 'merged count:', merged.length);
+
           if (userId) {
             feedCacheService.set(`feed_${userId}`, merged);
           }
@@ -1198,7 +1314,7 @@ function InnerApp() {
           const pending = prev.filter(p => p.pending);
           const freshData = data || [];
           const merged = mergePendingAndFresh(pending, freshData);
-          console.log('[FetchNews] Fresh news from API count:', freshData.length, 'merged count:', merged.length);
+
           if (userId) {
             feedCacheService.set(`news_${userId}`, merged);
           }
@@ -1501,9 +1617,10 @@ function InnerApp() {
           fetchUserProfile();
         }
       } else if (type === 'comment_like' && parentId) {
-        const res = await fetch(`${API_BASE}/api/community/comments/${parentId}/like`, {
+        const res = await fetch(`${API_BASE}/api/episodes/${selectedEpisodeId}/interact`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ type: 'comment_like', parent_id: parentId })
         });
         if (res.ok) {
           fetchUserProfile();
@@ -2154,6 +2271,89 @@ function InnerApp() {
     }
   };
 
+  const handleOpenReportModal = (type: 'post' | 'comment' | 'message', id: number, preview?: string) => {
+    setReportTarget({ type, id, preview });
+    setReportReason('Spam');
+  };
+
+  const handleConfirmReport = async () => {
+    if (!reportTarget) return;
+    try {
+      const { reportService } = await import('./services/reportService');
+      const res = await reportService.submitReport(
+        reportTarget.type,
+        reportTarget.id,
+        reportReason,
+        reportTarget.preview,
+        token
+      );
+      if (res.ok) {
+        showToast('Report submitted successfully! Thank you. ⚠️');
+      } else {
+        const data = await res.json();
+        showToast(data.error || 'Failed to submit report.');
+      }
+    } catch (err) {
+      showToast('Error submitting report.');
+    } finally {
+      setReportTarget(null);
+      setReportReason('Spam');
+    }
+  };
+
+  const renderReportModal = () => {
+    if (!reportTarget) return null;
+    return (
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
+        <div className="glass-card w-full max-w-md p-6 relative flex flex-col gap-5 border border-white/10 shadow-xl">
+          <div className="flex items-center gap-3 text-red-450">
+            <AlertTriangle className="w-6 h-6 shrink-0" />
+            <h3 className="text-lg font-black tracking-tight">Report Content</h3>
+          </div>
+          
+          <div className="flex flex-col gap-4 text-left">
+            {reportTarget.preview && (
+              <div className="p-3.5 rounded-xl bg-zinc-950/40 border border-white/5 max-h-24 overflow-y-auto">
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Content Preview</p>
+                <p className="text-xs text-zinc-300 mt-1 leading-normal italic font-mono">"{reportTarget.preview}"</p>
+              </div>
+            )}
+
+            <div>
+              <label className="text-[11px] font-black text-zinc-400 uppercase tracking-wider">Reason for Report</label>
+              <select 
+                value={reportReason} 
+                onChange={(e) => setReportReason(e.target.value)}
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm text-white font-bold mt-1.5 focus:border-red-500/50 outline-none cursor-pointer"
+              >
+                <option value="Spam">Spam</option>
+                <option value="Harassment or Abuse">Harassment or Abuse</option>
+                <option value="Inappropriate Content">Inappropriate Content</option>
+                <option value="Misinformation">Misinformation</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-2">
+            <button 
+              onClick={handleConfirmReport}
+              className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black text-xs py-3 rounded-xl cursor-pointer transition-all active:scale-97"
+            >
+              Submit Report
+            </button>
+            <button 
+              onClick={() => setReportTarget(null)}
+              className="border border-zinc-800 hover:bg-zinc-900 text-zinc-400 font-bold text-xs py-3 px-5 rounded-xl cursor-pointer transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderModerationModal = () => {
     if (!moderationUser) return null;
     return (
@@ -2161,36 +2361,36 @@ function InnerApp() {
         <div className="glass-card w-full max-w-md p-6 relative flex flex-col gap-5 border border-red-500/25 shadow-red-glow">
           <div className="flex items-center gap-3 text-red-500">
             <ShieldAlert className="w-6 h-6 shrink-0" />
-            <h3 className="text-lg font-black tracking-tight">إجراء رقابي ضد @{moderationUser.username}</h3>
+            <h3 className="text-lg font-black tracking-tight">Action Against@{moderationUser.username}</h3>
           </div>
           
           <div className="flex flex-col gap-4 text-left">
             <div>
-              <label className="text-[11px] font-black text-zinc-400 uppercase tracking-wider">الإجراء</label>
+              <label className="text-[11px] font-black text-zinc-400 uppercase tracking-wider">Action</label>
               <select 
                 value={moderationAction} 
                 onChange={(e) => setModerationAction(e.target.value)}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm text-white font-bold mt-1.5 focus:border-red-500/50 outline-none"
               >
-                <option value="mute">كتم الصوت (Mute)</option>
-                <option value="unmute">إلغاء الكتم (Unmute)</option>
-                <option value="ban">حظر المستخدم (Ban)</option>
-                <option value="unban">إلغاء الحظر (Unban)</option>
+                <option value="mute">Mute</option>
+                <option value="unmute">Unmute</option>
+                <option value="ban">Ban</option>
+                <option value="unban">Unban</option>
               </select>
             </div>
 
             {['mute', 'ban'].includes(moderationAction) && (
               <div>
-                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-wider">المدة</label>
+                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-wider">Duration</label>
                 <select 
                   value={moderationDuration} 
                   onChange={(e) => setModerationDuration(e.target.value)}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm text-white font-bold mt-1.5 focus:border-red-500/50 outline-none"
                 >
-                  <option value="1h">ساعة واحدة</option>
-                  <option value="1d">يوم واحد</option>
-                  <option value="7d">7 أيام</option>
-                  <option value="permanent">أبدي (Permanent)</option>
+                  <option value="1h">1 Hour</option>
+                  <option value="1d">1 Day</option>
+                  <option value="7d">7 Days</option>
+                  <option value="permanent">Permanent</option>
                 </select>
               </div>
             )}
@@ -2201,13 +2401,13 @@ function InnerApp() {
               onClick={handleAdminModerateUser}
               className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black text-xs py-3 rounded-xl cursor-pointer transition-all active:scale-97"
             >
-              تأكيد الإجراء
+              Confirm Action
             </button>
             <button 
               onClick={() => setModerationUser(null)}
               className="border border-zinc-800 hover:bg-zinc-900 text-zinc-400 font-bold text-xs py-3 px-5 rounded-xl cursor-pointer transition-all"
             >
-              إلغاء
+              Cancel
             </button>
           </div>
         </div>
@@ -2265,6 +2465,8 @@ function InnerApp() {
         handleCreateSuggestion={handleCreateSuggestion}
         handleUpvoteSuggestion={handleUpvoteSuggestion}
         handleDeleteSuggestion={handleDeleteSuggestion}
+        handleEditSuggestion={handleEditSuggestion}
+        handleCancelSuggestionRevision={handleCancelSuggestionRevision}
         handleOpenModerationModal={handleOpenModerationModal}
 
         gamesHook={gamesHook}
@@ -2316,8 +2518,10 @@ function InnerApp() {
         handleAdminDeleteCode={handleAdminDeleteCode}
         handleAdminDeleteUser={handleAdminDeleteUser}
         apiBase={API_BASE}
+        handleOpenReportModal={handleOpenReportModal}
       />
       {renderModerationModal()}
+      {renderReportModal()}
     </MainLayout>
   );
 }

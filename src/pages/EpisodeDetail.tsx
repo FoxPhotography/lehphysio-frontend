@@ -18,7 +18,8 @@ import {
   Key,
   Brain,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
 import { useNotifications } from '../context/NotificationContext';
@@ -49,6 +50,7 @@ interface EpisodeDetailProps {
   handleDeleteComment: (commentId: number) => void;
   handleEditComment: (commentId: number, content: string) => void;
   usernames?: any[];
+  handleOpenReportModal?: (type: 'post' | 'comment' | 'message', id: number, preview?: string) => void;
 }
 
 // Helper to strip emojis
@@ -82,13 +84,14 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
   handleOpenModerationModal,
   handleDeleteComment,
   handleEditComment,
-  usernames = []
+  usernames = [],
+  handleOpenReportModal
 }) => {
   const [mentionSearchText, setMentionSearchText] = useState<string | null>(null);
   const [commentsExpanded, setCommentsExpanded] = useState(true);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editCommentText, setEditCommentText] = useState('');
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; commentId: number; content: string; isOwner: boolean } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; commentId: number; content: string; isOwner: boolean; commentUserId?: number; commentUsername?: string } | null>(null);
   const [activeSuggestionIdx, setActiveSuggestionIdx] = useState(0);
 
   const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
@@ -356,6 +359,20 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
             >
               {user ? (
                 <div className="glass-card p-5 relative border border-zinc-900/60 flex flex-col gap-3">
+                  {replyingToComment && (
+                    <div className="flex items-center justify-between bg-brand-orange/5 border-l-2 border-brand-orange rounded-xl px-3 py-2 mb-1 text-xs font-bold text-brand-orange">
+                      <div className="flex items-center gap-1.5">
+                        <CornerUpLeft className="w-3.5 h-3.5 shrink-0" />
+                        <span>Replying to <strong>@{replyingToComment.username}</strong></span>
+                      </div>
+                      <button 
+                        onClick={() => setReplyingToComment(null)}
+                        className="text-zinc-500 hover:text-white cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                   <textarea
                     id="episode-comment-input"
                     className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl p-3.5 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none min-h-[50px] maxHeight-[120px]"
@@ -498,9 +515,17 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                           id={`comment-${c.id}`}
                           className="glass-card p-5 text-left border border-zinc-900/60 relative group/comment"
                           onContextMenu={(e) => {
-                            if (user && (c.user_id === user.id || c.username === user.username || user.role === 'admin' || user.role === 'owner')) {
+                            if (user) {
                               e.preventDefault();
-                              setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, isOwner: c.user_id === user.id || c.username === user.username });
+                              setContextMenu({ 
+                                x: e.clientX, 
+                                y: e.clientY, 
+                                commentId: c.id, 
+                                content: c.content, 
+                                isOwner: c.user_id === user.id || c.username === user.username,
+                                commentUserId: c.user_id,
+                                commentUsername: c.username
+                              });
                             }
                           }}
                         >
@@ -531,11 +556,19 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                               </div>
                             </div>
                             
-                            {user && (c.user_id === user.id || user.role === 'admin' || user.role === 'owner') && (
+                            {user && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, isOwner: c.user_id === user.id || c.username === user.username });
+                                  setContextMenu({ 
+                                    x: e.clientX, 
+                                    y: e.clientY, 
+                                    commentId: c.id, 
+                                    content: c.content, 
+                                    isOwner: c.user_id === user.id || c.username === user.username,
+                                    commentUserId: c.user_id,
+                                    commentUsername: c.username
+                                  });
                                 }}
                                 className="text-zinc-500 hover:text-white cursor-pointer opacity-0 group-hover/comment:opacity-100 transition-opacity"
                                 title="More Options"
@@ -629,11 +662,19 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                                           <span className="text-[9px] text-zinc-500 font-semibold">
                                             {new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                           </span>
-                                          {user && (r.user_id === user.id || r.username === user.username || user.role === 'admin' || user.role === 'owner') && (
+                                          {user && (
                                             <button
                                               onClick={(e) => {
                                                 e.stopPropagation();
-                                                setContextMenu({ x: e.clientX, y: e.clientY, commentId: r.id, content: r.content, isOwner: r.user_id === user.id || r.username === user.username });
+                                                setContextMenu({ 
+                                                  x: e.clientX, 
+                                                  y: e.clientY, 
+                                                  commentId: r.id, 
+                                                  content: r.content, 
+                                                  isOwner: r.user_id === user.id || r.username === user.username,
+                                                  commentUserId: r.user_id,
+                                                  commentUsername: r.username
+                                                });
                                               }}
                                               className="text-zinc-600 hover:text-white cursor-pointer opacity-0 group-hover/reply:opacity-100 transition-opacity"
                                               title="More Options"
@@ -714,27 +755,42 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
               className="bg-zinc-950 border border-zinc-800 rounded-xl p-1.5 flex flex-col gap-0.5 min-w-[130px] shadow-2xl z-[1000]"
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                onClick={() => {
-                  setEditingCommentId(contextMenu.commentId);
-                  setEditCommentText(contextMenu.content);
-                  setContextMenu(null);
-                }}
-                className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-white rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
-              >
-                <Edit2 className="w-3.5 h-3.5 text-zinc-500" />
-                <span>Edit Post</span>
-              </button>
-              <button
-                onClick={() => {
-                  handleDeleteComment(contextMenu.commentId);
-                  setContextMenu(null);
-                }}
-                className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                <span>Delete Post</span>
-              </button>
+              {user && (contextMenu.isOwner || user.role === 'moderator' || user.role === 'admin' || user.role === 'owner') ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setEditingCommentId(contextMenu.commentId);
+                      setEditCommentText(contextMenu.content);
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-white rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                  >
+                    <Edit2 className="w-3.5 h-3.5 text-zinc-500" />
+                    <span>Edit Comment</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleDeleteComment(contextMenu.commentId);
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                    <span>Delete Comment</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    handleOpenReportModal && handleOpenReportModal('comment', contextMenu.commentId, contextMenu.content);
+                    setContextMenu(null);
+                  }}
+                  className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-amber-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Report Comment</span>
+                </button>
+              )}
             </motion.div>
           </div>
         )}

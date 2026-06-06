@@ -24,7 +24,8 @@ import {
   Smile,
   Sparkles,
   Frown,
-  Zap
+  Zap,
+  AlertTriangle
 } from 'lucide-react';
 
 interface CommunityProps {
@@ -60,6 +61,8 @@ interface CommunityProps {
   handleUpvoteSuggestion: (id: number) => void;
   handleOpenModerationModal: (username: string, userId: number) => void;
   handleDeleteSuggestion: (id: number) => void;
+  handleEditSuggestion: (id: number, title: string, content: string) => Promise<void>;
+  handleCancelSuggestionRevision: (id: number) => Promise<void>;
   usernames?: any[];
   getAvatarFrameClass?: () => string;
   equippedFrame?: string;
@@ -67,6 +70,8 @@ interface CommunityProps {
   isLoadingOlder?: boolean;
   hasMoreChat?: boolean;
   isRefreshingChat?: boolean;
+  handleOpenReportModal?: (type: 'post' | 'comment' | 'message', id: number, preview?: string) => void;
+  xpSettings?: any;
 }
 
 // Helper to strip emojis from names
@@ -120,6 +125,8 @@ export const Community: React.FC<CommunityProps> = ({
   handleUpvoteSuggestion,
   handleOpenModerationModal,
   handleDeleteSuggestion,
+  handleEditSuggestion,
+  handleCancelSuggestionRevision,
   usernames = [],
   getAvatarFrameClass,
   equippedFrame,
@@ -127,6 +134,8 @@ export const Community: React.FC<CommunityProps> = ({
   isLoadingOlder = false,
   hasMoreChat = true,
   isRefreshingChat = false,
+  handleOpenReportModal,
+  xpSettings = {}
 }) => {
 
   const getFrameClass = (frameName: string) => {
@@ -141,6 +150,11 @@ export const Community: React.FC<CommunityProps> = ({
   const [suggContent, setSuggContent] = useState('');
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  
+  // Suggestion editing states
+  const [editingSuggId, setEditingSuggId] = useState<number | null>(null);
+  const [editSuggTitle, setEditSuggTitle] = useState('');
+  const [editSuggContent, setEditSuggContent] = useState('');
 
   // Mentions autocomplete state
   const [mentionSearch, setMentionSearch] = useState('');
@@ -818,7 +832,7 @@ export const Community: React.FC<CommunityProps> = ({
                   className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-xs py-2 px-4 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow self-start flex items-center gap-1.5"
                 >
                   <Zap className="w-3.5 h-3.5 fill-current" />
-                  <span>Submit Idea +50 XP</span>
+                  <span>Submit Idea +{xpSettings.suggestion_create !== undefined ? xpSettings.suggestion_create : 50} XP</span>
                 </button>
               </form>
             ) : (
@@ -834,9 +848,24 @@ export const Community: React.FC<CommunityProps> = ({
                 <div className="text-zinc-500 text-xs font-bold text-center py-10">No suggestions submitted yet. Be the first!</div>
               ) : (
                 suggestions.map((s: any) => {
+                  const isAuthor = user && (String(s.user_id) === String(user.id) || s.username === user.username);
+                  const isAdmin = user && (user.role === 'admin' || user.role === 'owner');
+                  const isEditing = editingSuggId === s.id;
+                  const isUpvoted = s.isUpvoted || s.hasUpvoted;
+
                   let statusColor = 'text-zinc-500';
                   let statusBg = 'bg-zinc-900/40 border-zinc-800';
-                  if (s.status === 'approved') {
+                  let statusLabel = s.status;
+                  
+                  if (s.delete_pending) {
+                    statusColor = 'text-red-400';
+                    statusBg = 'bg-red-500/10 border-red-500/20';
+                    statusLabel = 'Delete Pending';
+                  } else if (s.edit_draft) {
+                    statusColor = 'text-amber-400';
+                    statusBg = 'bg-amber-500/10 border-amber-500/20';
+                    statusLabel = 'Edit Pending';
+                  } else if (s.status === 'approved') {
                     statusColor = 'text-green-400';
                     statusBg = 'bg-green-500/10 border-green-500/20';
                   } else if (s.status === 'rejected') {
@@ -846,41 +875,128 @@ export const Community: React.FC<CommunityProps> = ({
 
                   return (
                     <div key={s.id} className="glass-card p-4 border border-zinc-900/60 flex flex-col gap-2.5 text-left">
-                      <div className="flex justify-between items-start gap-4">
-                        <div>
-                          <h4 className="text-xs font-black text-white">{s.title}</h4>
-                          <span className="text-[10px] text-zinc-500 font-semibold block mt-0.5">
-                            By @{s.username} · {new Date(s.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                          </span>
+                      {isEditing ? (
+                        <div className="flex flex-col gap-3">
+                          <div>
+                            <label className="text-[10px] font-bold text-brand-orange uppercase block mb-1">Title</label>
+                            <input 
+                              type="text" 
+                              className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl px-3 py-1.5 text-xs font-semibold focus:border-brand-orange outline-none"
+                              value={editSuggTitle}
+                              onChange={(e) => setEditSuggTitle(e.target.value)}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-brand-orange uppercase block mb-1">Details</label>
+                            <textarea 
+                              className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl p-3 text-xs font-semibold focus:border-brand-orange outline-none resize-none"
+                              value={editSuggContent}
+                              onChange={(e) => setEditSuggContent(e.target.value)}
+                              required
+                              rows={3}
+                            />
+                          </div>
+                          <div className="flex gap-2 justify-end">
+                            <button 
+                              type="button"
+                              className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-[10px] py-1.5 px-4 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow"
+                              onClick={async () => {
+                                await handleEditSuggestion(s.id, editSuggTitle, editSuggContent);
+                                setEditingSuggId(null);
+                              }}
+                            >
+                              Save Edits
+                            </button>
+                            <button 
+                              type="button"
+                              className="border border-zinc-800 hover:bg-zinc-900 text-zinc-400 font-bold text-[10px] py-1.5 px-4 rounded-xl cursor-pointer transition-all"
+                              onClick={() => setEditingSuggId(null)}
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
-                        <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase border ${statusColor} ${statusBg}`}>
-                          {s.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-zinc-400 font-medium leading-relaxed">
-                        {s.content}
-                      </p>
-                      
-                      <div className="flex justify-between items-center pt-2 border-t border-zinc-900/40">
-                        <button 
-                          type="button" 
-                          className={`flex items-center gap-1 text-[10px] font-bold transition-colors cursor-pointer ${s.isUpvoted ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`} 
-                          onClick={() => handleUpvoteSuggestion(s.id)}
-                        >
-                          <ThumbsUp className={`w-3.5 h-3.5 ${s.isUpvoted ? 'fill-current' : ''}`} /> 
-                          <span>{s.upvotes || 0} Upvotes</span>
-                        </button>
-                        {user && (user.role === 'admin' || user.role === 'owner') && (
-                          <button 
-                            type="button" 
-                            className="flex items-center gap-1 text-[10px] font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer" 
-                            onClick={() => handleDeleteSuggestion(s.id)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> 
-                            <span>Delete</span>
-                          </button>
-                        )}
-                      </div>
+                      ) : (
+                        <>
+                          <div className="flex justify-between items-start gap-4">
+                            <div>
+                              <h4 className="text-xs font-black text-white">
+                                {s.title}
+                              </h4>
+                              <span className="text-[10px] text-zinc-500 font-semibold block mt-0.5">
+                                By @{s.username} · {new Date(s.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase border ${statusColor} ${statusBg}`}>
+                              {statusLabel}
+                            </span>
+                          </div>
+                          <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+                            {s.content}
+                          </p>
+                          
+                          {s.status === 'rejected' && isAuthor && s.rejection_reason && (
+                            <div className="p-2 border border-red-500/20 bg-red-500/5 text-red-400 rounded-lg text-[10px] font-semibold">
+                              Rejection Reason: {s.rejection_reason}
+                            </div>
+                          )}
+
+                          <div className="flex justify-between items-center pt-2 border-t border-zinc-900/40">
+                            <button 
+                              type="button" 
+                              className={`flex items-center gap-1.5 text-[10px] font-bold transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ${
+                                isUpvoted ? 'text-brand-orange scale-105' : 'text-zinc-500 hover:text-zinc-300'
+                              }`} 
+                              onClick={() => handleUpvoteSuggestion(s.id)}
+                            >
+                              <ThumbsUp className={`w-3.5 h-3.5 transition-all duration-300 ease-out ${
+                                isUpvoted ? 'animate-upvote-pop fill-brand-orange text-brand-orange' : 'text-zinc-500'
+                              }`} /> 
+                              <span>{s.upvotes || 0} Upvotes</span>
+                            </button>
+
+                            <div className="flex gap-3">
+                              {isAuthor && !s.delete_pending && (
+                                <button 
+                                  type="button" 
+                                  className="flex items-center gap-1 text-[10px] font-bold text-brand-orange hover:text-brand-amber transition-colors cursor-pointer" 
+                                  onClick={() => {
+                                    setEditingSuggId(s.id);
+                                    setEditSuggTitle(s.title);
+                                    setEditSuggContent(s.content);
+                                  }}
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" /> 
+                                  <span>Edit</span>
+                                </button>
+                              )}
+
+                              {isAuthor && (s.edit_draft || s.delete_pending) ? (
+                                <button 
+                                  type="button" 
+                                  className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 hover:text-zinc-300 transition-colors cursor-pointer" 
+                                  onClick={() => handleCancelSuggestionRevision(s.id)}
+                                >
+                                  <X className="w-3.5 h-3.5" /> 
+                                  <span>Discard Changes</span>
+                                </button>
+                              ) : (
+                                (isAuthor || isAdmin) && (
+                                  <button 
+                                    type="button" 
+                                    className="flex items-center gap-1 text-[10px] font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer" 
+                                    onClick={() => handleDeleteSuggestion(s.id)}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" /> 
+                                    <span>Delete</span>
+                                  </button>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   );
                 })
@@ -991,6 +1107,18 @@ export const Community: React.FC<CommunityProps> = ({
                 >
                   <ShieldAlert className="w-3.5 h-3.5 text-brand-orange" /> 
                   <span>Moderate User</span>
+                </button>
+              )}
+              {user && activeContextMenu.msg.username !== user.username && (
+                <button 
+                  className="w-full flex items-center gap-2.5 p-2 font-bold text-xs text-amber-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 transition-colors"
+                  onClick={() => {
+                    handleOpenReportModal && handleOpenReportModal('message', activeContextMenu.messageId, activeContextMenu.msg.message);
+                    setActiveContextMenu(null);
+                  }}
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> 
+                  <span>Report Message</span>
                 </button>
               )}
             </motion.div>
