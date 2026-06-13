@@ -88,7 +88,7 @@ export const gameService = {
   },
 
   async adminCreateCode(body: any, token?: string) {
-    const res = await apiFetch('/api/xp-codes', {
+    const res = await apiFetch('/api/admin/xp-codes', {
       method: 'POST',
       body: JSON.stringify(body),
     }, token);
