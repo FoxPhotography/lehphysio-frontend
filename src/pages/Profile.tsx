@@ -876,6 +876,8 @@ export const Profile: React.FC<ProfileProps> = ({
                     height: renderedHeight,
                     left,
                     top,
+                    maxWidth: 'none',
+                    maxHeight: 'none',
                   }}
                   draggable={false}
                 />
