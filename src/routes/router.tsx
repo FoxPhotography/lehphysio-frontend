@@ -533,6 +533,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           showConfirm={showConfirm}
           handleOpenModerationModal={handleOpenModerationModal}
           setCurrentPage={setCurrentPage}
+          navigateToEpisode={navigateToEpisode}
         />
       );
     }

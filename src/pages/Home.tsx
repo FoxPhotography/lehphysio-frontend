@@ -565,7 +565,7 @@ export const Home: React.FC<HomeProps> = ({
   };
 
   return (
-    <div className="space-y-10 pt-20 md:pt-6 pb-20 max-w-4xl mx-auto px-4">
+    <div className="space-y-10 pt-20 xl:pt-6 pb-20 max-w-4xl mx-auto px-4">
       {/* Banner alerts */}
       {loginReward && loginReward.daily_login && (
         <motion.div 
@@ -1237,7 +1237,7 @@ export const Home: React.FC<HomeProps> = ({
                                   }}
                                   className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-amber-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
                                 >
-                                  <AlertTriangle className="w-3.5 h-3.5" />
+                                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
                                   <span>Report Post</span>
                                 </button>
                               )}

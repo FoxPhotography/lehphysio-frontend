@@ -39,7 +39,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-18 bg-zinc-950/95 border-t border-zinc-900/60 z-[100] flex justify-around items-center lg:hidden pb-safe backdrop-blur-md shadow-2xl">
+    <nav className="fixed bottom-0 left-0 right-0 h-18 bg-zinc-950/95 border-t border-zinc-900/60 z-[100] flex justify-around items-center xl:hidden pb-safe backdrop-blur-md shadow-2xl">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = currentPage === item.page || (item.page === 'episodes' && currentPage === 'episode-detail') || (item.page === 'games' && currentPage === 'play-game') || (item.page === 'profile' && currentPage === 'login') || (item.page === 'profile' && currentPage === 'register');

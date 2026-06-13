@@ -85,7 +85,7 @@ export const Games: React.FC<GamesProps> = ({
   }, [gameTab]);
 
   return (
-    <div className="space-y-6 pt-20 md:pt-6 max-w-4xl mx-auto px-4 pb-24 md:pb-6 text-left">
+    <div className="space-y-6 pt-20 xl:pt-6 max-w-4xl mx-auto px-4 pb-24 xl:pb-6 text-left">
       {/* Page Header */}
       <div className="flex items-center gap-2.5">
         <Gamepad2 className="w-6 h-6 text-brand-orange" />

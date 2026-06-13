@@ -176,7 +176,7 @@ body.keyboard-open nav {
 }
 
 /* Position notification panel next to sidebar on desktop */
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   :root {
     --notification-panel-left: 296px;
     --notification-panel-right: auto;

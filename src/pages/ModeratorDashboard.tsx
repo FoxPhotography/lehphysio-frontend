@@ -27,6 +27,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { PremiumDateTimePicker } from '../components/PremiumDateTimePicker';
+import { useNotifications } from '../context/NotificationContext';
 
 interface ModeratorDashboardProps {
   user: any;
@@ -35,6 +36,7 @@ interface ModeratorDashboardProps {
   showConfirm?: any;
   handleOpenModerationModal?: any;
   setCurrentPage: (page: string) => void;
+  navigateToEpisode?: (id: number) => void;
 }
 
 export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
@@ -44,6 +46,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
   showConfirm,
   handleOpenModerationModal,
   setCurrentPage,
+  navigateToEpisode,
 }) => {
   const [activeTab, setActiveTab] = useState<'posts' | 'revisions' | 'suggestions' | 'users' | 'reports' | 'qotd'>('posts');
   const [message, setMessage] = useState('');
@@ -178,6 +181,35 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       setMessage('Failed to process request due to a server error.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const { setDeepLinkTarget } = useNotifications();
+
+  const handleReportClick = (report: any) => {
+    if (report.target_type === 'post') {
+      setDeepLinkTarget({ type: 'post', postId: report.target_id });
+      setCurrentPage('home');
+    } else if (report.target_type === 'comment') {
+      if (report.comment_type === 'post_comment') {
+        setDeepLinkTarget({
+          type: 'comment',
+          commentId: report.target_id,
+          postId: report.parent_id
+        });
+        setCurrentPage('home');
+      } else if (report.comment_type === 'episode_comment') {
+        setDeepLinkTarget({
+          type: 'episode_comment',
+          commentId: report.target_id
+        });
+        if (navigateToEpisode) {
+          navigateToEpisode(report.parent_id);
+        }
+      }
+    } else if (report.target_type === 'message') {
+      setDeepLinkTarget({ type: 'chat_message', messageId: report.target_id });
+      setCurrentPage('community');
     }
   };
 
@@ -494,7 +526,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-3xl mx-auto px-4 pt-20 md:pt-6 space-y-5 pb-16"
+      className="w-full max-w-3xl mx-auto px-4 pt-20 xl:pt-6 space-y-5 pb-16"
     >
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -1057,20 +1089,29 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                       <p className="text-xs text-zinc-200 mt-1 font-medium italic">"{report.reason}"</p>
                     </div>
 
-                    <div className="p-3.5 rounded-xl bg-zinc-950/40 border border-white/5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center border border-white/5">
-                          {report.target_user?.avatar_url ? (
-                            <img src={report.target_user.avatar_url} alt={report.target_user.username} className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="text-[9px] font-bold text-zinc-400">
-                              {report.target_user?.username ? report.target_user.username[0].toUpperCase() : '?'}
-                            </span>
-                          )}
+                    <div 
+                      onClick={() => handleReportClick(report)}
+                      className="p-3.5 rounded-xl bg-zinc-950/40 border border-white/5 hover:border-brand-orange/40 hover:bg-zinc-950/60 cursor-pointer transition-all group"
+                      title="Click to view content"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center border border-white/5">
+                            {report.target_user?.avatar_url ? (
+                              <img src={report.target_user.avatar_url} alt={report.target_user.username} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-[9px] font-bold text-zinc-400">
+                                {report.target_user?.username ? report.target_user.username[0].toUpperCase() : '?'}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-zinc-400">
+                            Author: <span className="text-white font-bold">@{report.target_user?.username || 'Unknown'}</span>
+                          </p>
                         </div>
-                        <p className="text-[10px] text-zinc-400">
-                          Author: <span className="text-white font-bold">@{report.target_user?.username || 'Unknown'}</span>
-                        </p>
+                        <span className="text-[9.5px] font-bold text-brand-orange opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                          <Eye className="w-3.5 h-3.5" /> View Content
+                        </span>
                       </div>
                       <p className="text-xs text-zinc-300 leading-relaxed bg-zinc-900/50 p-2.5 rounded-lg border border-white/5 whitespace-pre-line font-mono">
                         {report.content_preview || <span className="text-zinc-600 italic">No content preview available.</span>}
@@ -1079,7 +1120,13 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   </div>
 
                   {report.status === 'pending' && (
-                    <div className="flex gap-2.5 pt-3 border-t border-white/5">
+                    <div className="flex flex-wrap sm:flex-nowrap gap-2.5 pt-3 border-t border-white/5">
+                      <button
+                        onClick={() => handleReportClick(report)}
+                        className="flex-1 bg-brand-orange/10 hover:bg-brand-orange/20 text-brand-orange font-bold text-xs py-2.5 rounded-xl cursor-pointer border border-brand-orange/30 transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <Eye className="w-4 h-4" /> Go to Content
+                      </button>
                       <button
                         onClick={() => handleResolveReport(report.id, 'dismiss')}
                         className="flex-1 bg-zinc-850 hover:bg-zinc-800 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer border border-white/10 transition-all flex items-center justify-center gap-1.5"

@@ -360,7 +360,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-xl mx-auto px-4 pt-20 md:pt-6 pb-6"
+        className="w-full max-w-xl mx-auto px-4 pt-20 xl:pt-6 pb-6"
       >
         <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
 
@@ -511,7 +511,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-xl mx-auto px-3 pt-20 md:pt-4 pb-4"
+        className="w-full max-w-xl mx-auto px-3 pt-20 xl:pt-4 pb-4"
       >
         <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
 
@@ -686,7 +686,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-md mx-auto px-4 pt-20 md:pt-8 pb-8"
+        className="w-full max-w-md mx-auto px-4 pt-20 xl:pt-8 pb-8"
       >
         <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
 

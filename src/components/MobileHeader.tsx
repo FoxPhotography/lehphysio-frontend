@@ -15,7 +15,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   user
 }) => {
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-zinc-950/90 border-b border-zinc-900/60 z-[100] flex items-center justify-between px-6 lg:hidden backdrop-blur-md">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-zinc-950/90 border-b border-zinc-900/60 z-[100] flex items-center justify-between px-6 xl:hidden backdrop-blur-md">
       <a 
         href="#" 
         className="flex items-center justify-center hover:opacity-90 transition-opacity" 

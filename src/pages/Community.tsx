@@ -360,13 +360,13 @@ export const Community: React.FC<CommunityProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-0 md:px-4 pt-20 md:pt-4 pb-0 md:pb-20 text-left md:h-auto"
+    <div className="w-full max-w-none px-0 pb-0 text-left md:h-[calc(100vh-136px)] xl:h-screen pt-20 md:pt-16 xl:pt-0"
       style={{
         height: window.innerWidth < 768
           ? `${viewportHeight - (isInputFocused ? 0 : 72)}px`
           : undefined
       }}>
-      <div className="glass-card p-0 md:p-6 flex flex-col h-full md:h-[650px] relative overflow-hidden border-0 md:border border-zinc-900/60 rounded-none md:rounded-2xl">
+      <div className="glass-card p-0 md:p-4 flex flex-col h-full relative overflow-hidden border-0 rounded-none">
         
         {/* Sub tab switcher */}
         <div className="flex gap-2 mb-3 p-3 md:p-0 shrink-0">

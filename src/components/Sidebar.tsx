@@ -66,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="fixed top-0 left-0 bottom-0 w-[280px] bg-zinc-950/80 border-r border-zinc-900/60 p-8 flex flex-col z-50 hidden lg:flex backdrop-blur-md">
+    <aside className="fixed top-0 left-0 bottom-0 w-[280px] bg-zinc-950/80 border-r border-zinc-900/60 p-8 flex flex-col z-50 hidden xl:flex backdrop-blur-md">
       {/* Logo */}
       <a 
         href="#" 

@@ -66,7 +66,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
       />
 
       {/* Main Column Wrapper */}
-      <div className="app-body-wrapper">
+      <div className="app-body-wrapper xl:pl-[280px]">
         {/* Offline Banner */}
         {isOffline && (
           <div className="bg-red-600/90 backdrop-blur-md text-white text-center py-1.5 px-4 text-[11px] font-black flex items-center justify-center gap-2 z-[999] border-b border-red-500/20 shadow-lg shrink-0">

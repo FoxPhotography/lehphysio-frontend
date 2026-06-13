@@ -298,7 +298,7 @@ export const Profile: React.FC<ProfileProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-lg mx-auto px-4 pt-20 md:pt-6 pb-24 md:pb-6 space-y-4"
+      className="w-full max-w-lg mx-auto px-4 pt-20 xl:pt-6 pb-24 md:pb-6 space-y-4"
     >
       {/* ── Profile Card ──────────────────────────────────────────────── */}
       <div className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-6">
