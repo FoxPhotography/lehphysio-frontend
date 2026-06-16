@@ -40,42 +40,7 @@ interface RewardsProps {
 }
 
 // ─── Static cosmetic items ─────────────────────────────────────────────────────
-const STATIC_ITEMS = [
-  {
-    id: 'gold-glow',
-    name: 'Golden Glowing Frame',
-    cost: 500,
-    description: 'A radiant gold glow that surrounds your avatar.',
-    previewClass: 'avatar-frame-gold-glow',
-    color: '#FFD700',
-  },
-  {
-    id: 'neon-ring',
-    name: 'Neon Blue Ring',
-    cost: 800,
-    description: 'Electric neon ring for a futuristic look.',
-    previewClass: 'avatar-frame-neon-ring',
-    color: '#00ffff',
-  },
-  {
-    id: 'neuro-specialist',
-    name: 'Title: Neuro Specialist',
-    cost: 1500,
-    description: 'Display the Neuro Specialist title on your profile.',
-    previewClass: '',
-    color: '#a78bfa',
-    isTitle: true,
-  },
-  {
-    id: 'diagnosis-legend',
-    name: 'Title: Diagnosis Legend',
-    cost: 2000,
-    description: 'Showcase the Diagnosis Legend title across the app.',
-    previewClass: '',
-    color: '#f59e0b',
-    isTitle: true,
-  },
-];
+const STATIC_ITEMS: any[] = [];
 
 // ─── Shop Item Card ────────────────────────────────────────────────────────────
 const ShopCard: React.FC<{

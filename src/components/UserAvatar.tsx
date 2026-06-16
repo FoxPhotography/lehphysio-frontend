@@ -21,8 +21,6 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   style = {}
 }) => {
   const getFrameClass = (frame: string | null | undefined) => {
-    if (frame === 'gold-glow') return 'avatar-frame-gold-glow';
-    if (frame === 'neon-ring') return 'avatar-frame-neon-ring';
     return '';
   };
 

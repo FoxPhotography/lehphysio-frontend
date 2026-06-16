@@ -702,37 +702,7 @@ export const Profile: React.FC<ProfileProps> = ({
                     />
                   </FrameOption>
 
-                  {/* Gold Glow */}
-                  <FrameOption
-                    label="Gold Glow"
-                    equipped={equippedFrame === 'gold-glow'}
-                    locked={!unlockedCosmetics.includes('gold-glow')}
-                    onClick={() => handleEquipFrame('gold-glow')}
-                    accent="yellow"
-                  >
-                    <UserAvatar
-                      username={user.username}
-                      avatarUrl={user.avatar_url}
-                      equippedFrame="gold-glow"
-                      size={48}
-                    />
-                  </FrameOption>
 
-                  {/* Neon Ring */}
-                  <FrameOption
-                    label="Neon Ring"
-                    equipped={equippedFrame === 'neon-ring'}
-                    locked={!unlockedCosmetics.includes('neon-ring')}
-                    onClick={() => handleEquipFrame('neon-ring')}
-                    accent="cyan"
-                  >
-                    <UserAvatar
-                      username={user.username}
-                      avatarUrl={user.avatar_url}
-                      equippedFrame="neon-ring"
-                      size={48}
-                    />
-                  </FrameOption>
 
                   {/* Database frames */}
                   {framesList.map((f: any) => {
@@ -781,49 +751,7 @@ export const Profile: React.FC<ProfileProps> = ({
                     No Title
                   </motion.button>
 
-                  {/* Neuro Specialist */}
-                  {unlockedCosmetics.includes('neuro-specialist') && (
-                    <motion.button
-                      whileHover={{ scale: 1.04 }}
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => {
-                        const val = 'Neuro Specialist';
-                        setEquippedTitle(val);
-                        localStorage.setItem('eq_title', val);
-                        handleUpdateProfile(undefined, undefined, undefined, val);
-                        setShowDecorationPicker(false);
-                      }}
-                      className={`px-4 py-2 rounded-xl text-[12px] font-bold border transition-all ${
-                        equippedTitle === 'Neuro Specialist' || equippedTitle === 'Neuro Specialist 🧠'
-                          ? 'border-violet-500/60 bg-violet-500/10 text-violet-400'
-                          : 'border-white/10 bg-white/3 text-zinc-400 hover:text-white hover:border-white/20'
-                      }`}
-                    >
-                      Neuro Specialist
-                    </motion.button>
-                  )}
 
-                  {/* Diagnosis Legend */}
-                  {unlockedCosmetics.includes('diagnosis-legend') && (
-                    <motion.button
-                      whileHover={{ scale: 1.04 }}
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => {
-                        const val = 'Diagnosis Legend';
-                        setEquippedTitle(val);
-                        localStorage.setItem('eq_title', val);
-                        handleUpdateProfile(undefined, undefined, undefined, val);
-                        setShowDecorationPicker(false);
-                      }}
-                      className={`px-4 py-2 rounded-xl text-[12px] font-bold border transition-all ${
-                        equippedTitle === 'Diagnosis Legend' || equippedTitle === 'Diagnosis Legend 👑'
-                          ? 'border-amber-500/60 bg-amber-500/10 text-amber-400'
-                          : 'border-white/10 bg-white/3 text-zinc-400 hover:text-white hover:border-white/20'
-                      }`}
-                    >
-                      Diagnosis Legend
-                    </motion.button>
-                  )}
                 </div>
               </div>
             </motion.div>

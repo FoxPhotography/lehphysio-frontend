@@ -303,6 +303,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setEquippedTitle(data.user.equipped_title);
           localStorage.setItem('eq_title', data.user.equipped_title);
         }
+        if (data.user.unlocked_cosmetics) {
+          setUnlockedCosmetics(data.user.unlocked_cosmetics);
+          localStorage.setItem('cosmetics', JSON.stringify(data.user.unlocked_cosmetics));
+        }
         if (data.rewards) {
           const totalXpEarned = (data.rewards.daily_login ? (xpSettings.daily_login || 10) : 0) + 
                                (data.rewards.streak_bonus ? (xpSettings.streak_bonus || 70) : 0);
@@ -606,12 +610,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleLogout = () => {
     setToken('');
     setUser(null);
+    setEquippedFrame('none');
+    setEquippedTitle('none');
+    setUnlockedCosmetics([]);
+    localStorage.removeItem('token');
+    localStorage.removeItem('eq_frame');
+    localStorage.removeItem('eq_title');
+    localStorage.removeItem('cosmetics');
     changePage('home');
   };
 
   const getAvatarFrameClass = () => {
-    if (equippedFrame === 'gold-glow') return 'avatar-frame-gold-glow';
-    if (equippedFrame === 'neon-ring') return 'avatar-frame-neon-ring';
     return '';
   };
 
