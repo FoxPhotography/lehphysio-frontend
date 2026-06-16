@@ -285,116 +285,91 @@ export const useGames = () => {
   };
 
   // Spin Wheel Operations
-  const handleSpinWheelClick = () => {
+  const handleSpinWheelClick = async () => {
     if (isSpinning) return;
-    setIsSpinning(true);
-    const randomDegree = 1440 + Math.floor(Math.random() * 720);
-    const startAngle = wheelRotation;
-    const newRot = startAngle + randomDegree;
-    playChatSound('start');
-
-    const startTime = performance.now();
-    const duration = 5000;
-    let lastSegmentIndex = Math.floor((startAngle - 15) / 30);
-    let lastTickTime = 0;
-
-    const animateTicks = (now: number) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easeProgress = 1 - Math.pow(1 - progress, 5);
-      const currentAngle = startAngle + easeProgress * randomDegree;
-      setWheelRotation(currentAngle);
-
-      const currentSegmentIndex = Math.floor((currentAngle - 15) / 30);
-      if (currentSegmentIndex !== lastSegmentIndex) {
-        const timeNow = performance.now();
-        const minThrottle = progress > 0.8 ? 80 : 35; 
-        if (timeNow - lastTickTime > minThrottle) {
-          playChatSound('tick');
-          lastTickTime = timeNow;
-        }
-        lastSegmentIndex = currentSegmentIndex;
-      }
-
-      if (progress < 1) {
-        requestAnimationFrame(animateTicks);
-      }
-    };
-    requestAnimationFrame(animateTicks);
-
-    setTimeout(() => {
-      setWheelRotation(newRot);
-      const actualDeg = (360 - (newRot % 360)) % 360;
-      const segs = [
-        'Mystery Box 🎁', 
-        '+5 XP ⚡', 
-        '+30 XP ⚡', 
-        '+100 XP ⚡', 
-        'Try Again 🍀', 
-        '+15 XP ⚡', 
-        '+5 XP ⚡', 
-        '+50 XP ⚡', 
-        'Try Again 🍀', 
-        '+20 XP ⚡', 
-        '+10 XP ⚡', 
-        '+5 XP ⚡'
-      ];
-      const prizeIdx = Math.round(actualDeg / 30) % 12;
-      const prize = segs[prizeIdx];
-
-      showToast(`Spin Wheel: You won ${prize}`);
-      let xpAmt = 0;
-      if (prize.includes('XP') || prize.includes('Mystery')) {
-        playChatSound('win');
-        const match = prize.match(/\+(\d+)\s*XP/);
-        if (match) {
-          xpAmt = parseInt(match[1], 10);
-        } else if (prize.includes('Mystery')) {
-          xpAmt = 40;
-        }
-        if (xpAmt > 0) {
-          triggerXpPopup(xpAmt);
-        }
-      } else {
-        playChatSound('error');
-      }
-      if (prize.includes('Try Again')) {
-        claimSpinWheelReward(0, prize);
-      } else {
-        const todayStr = getLocalDateString();
-        // Optimistically set locally
-        claimSpinWheelReward(xpAmt, prize);
-      }
-    }, 5000);
-  };
-
-  const claimSpinWheelReward = async (amount: number, prizeLabel?: string) => {
     if (!token) {
-      setIsSpinning(false);
+      showToast('Please login to play 🔐');
       return;
     }
-    const todayStr = getLocalDateString();
+    setIsSpinning(true);
+
     try {
       const res = await fetch(`${API_BASE || window.location.origin}/api/rewards/spin-wheel`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ xpAmount: amount, clientDate: todayStr, prizeLabel })
+        }
       });
       const data = await res.json();
-      if (res.ok) {
-        if (data.try_again) {
-          showToast('Try Again! You get another spin! 🍀');
-        }
-        fetchUserProfile();
-      } else {
-        showToast(data.error || 'Failed to claim spin wheel reward.');
+      if (!res.ok) {
+        showToast(data.error || 'Failed to spin the wheel.');
+        setIsSpinning(false);
+        return;
       }
+
+      const { prizeIndex, prizeLabel, xpAmount, try_again } = data;
+
+      // Animate the wheel to land on prizeIndex
+      const targetDeg = (12 - prizeIndex) * 30 % 360;
+      const startAngle = wheelRotation;
+      const randomRotations = 1440; // 4 full spins
+      const newRot = startAngle + randomRotations + ((targetDeg - (startAngle % 360) + 360) % 360);
+
+      playChatSound('start');
+
+      const startTime = performance.now();
+      const duration = 5000;
+      let lastSegmentIndex = Math.floor((startAngle - 15) / 30);
+      let lastTickTime = 0;
+
+      const animateTicks = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeProgress = 1 - Math.pow(1 - progress, 5);
+        const currentAngle = startAngle + easeProgress * (newRot - startAngle);
+        setWheelRotation(currentAngle);
+
+        const currentSegmentIndex = Math.floor((currentAngle - 15) / 30);
+        if (currentSegmentIndex !== lastSegmentIndex) {
+          const timeNow = performance.now();
+          const minThrottle = progress > 0.8 ? 80 : 35; 
+          if (timeNow - lastTickTime > minThrottle) {
+            playChatSound('tick');
+            lastTickTime = timeNow;
+          }
+          lastSegmentIndex = currentSegmentIndex;
+        }
+
+        if (progress < 1) {
+          requestAnimationFrame(animateTicks);
+        }
+      };
+      requestAnimationFrame(animateTicks);
+
+      setTimeout(() => {
+        setWheelRotation(newRot);
+        
+        // Show results
+        if (try_again) {
+          showToast('Try Again! You get another spin! 🍀');
+        } else {
+          showToast(`Spin Wheel: You won ${prizeLabel}`);
+          if (xpAmount > 0) {
+            playChatSound('win');
+            triggerXpPopup(xpAmount);
+          } else {
+            playChatSound('error');
+          }
+        }
+        
+        // Refresh profile to update XP immediately
+        fetchUserProfile();
+        setIsSpinning(false);
+      }, duration);
+
     } catch (err) {
       showToast('Connection error.');
-    } finally {
       setIsSpinning(false);
     }
   };

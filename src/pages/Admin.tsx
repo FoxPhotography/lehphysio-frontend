@@ -493,6 +493,8 @@ export const Admin: React.FC<AdminProps> = ({
   const [frameFile, setFrameFile] = useState<File | null>(null);
   const [frameUploading, setFrameUploading] = useState(false);
   const [frameError, setFrameError] = useState('');
+  const [editingFrameId, setEditingFrameId] = useState<any | null>(null);
+  const [editingFramePrice, setEditingFramePrice] = useState<number>(0);
 
   const fetchAdminFrames = async () => {
     try {
@@ -548,6 +550,33 @@ export const Admin: React.FC<AdminProps> = ({
       setFrameError(e.message || 'An error occurred.');
     }
     setFrameUploading(false);
+  };
+
+  const handleUpdateFramePrice = async (frameId: any, newPrice: number) => {
+    if (newPrice < 0) {
+      setFrameError('Price must be 0 or greater.');
+      return;
+    }
+    setFrameError('');
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/frames/${frameId}/price`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ price: newPrice })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFrameError(data.error || 'Failed to update price.');
+      } else {
+        setEditingFrameId(null);
+        fetchAdminFrames();
+      }
+    } catch {
+      setFrameError('Failed to connect to server.');
+    }
   };
 
   const handleDeleteFrame = (frameId: string) => {
@@ -1100,18 +1129,67 @@ export const Admin: React.FC<AdminProps> = ({
               <p className="text-center text-zinc-600 text-[13px] py-8">No frames uploaded yet.</p>
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                {adminFrames.map((f: any) => (
-                  <div key={f._id} className="rounded-xl border border-white/8 bg-white/2 p-3 flex flex-col items-center gap-2 text-center">
-                    <div className="w-14 h-14 rounded-xl bg-black/30 overflow-hidden flex items-center justify-center">
-                      <img src={f.image_url} alt={f.name} className="w-full h-full object-contain" />
+                {adminFrames.map((f: any) => {
+                  const isEditing = editingFrameId === f._id;
+                  return (
+                    <div key={f._id} className="rounded-xl border border-white/8 bg-white/2 p-3 flex flex-col items-center gap-2 text-center">
+                      <div className="w-14 h-14 rounded-xl bg-black/30 overflow-hidden flex items-center justify-center">
+                        <img src={f.image_url} alt={f.name} className="w-full h-full object-contain" />
+                      </div>
+                      <p className="text-[11px] font-bold text-white leading-tight">{f.name}</p>
+                      
+                      {isEditing ? (
+                        <div className="space-y-1.5 w-full">
+                          <input
+                            type="number"
+                            value={editingFramePrice}
+                            onChange={(e) => setEditingFramePrice(Math.max(0, Number(e.target.value)))}
+                            className="w-full px-2 py-1 text-[11px] rounded bg-white/5 border border-white/10 text-white text-center focus:outline-none focus:border-orange-500/60"
+                            min={0}
+                          />
+                          <div className="flex gap-1 justify-center w-full">
+                            <AdminBtn
+                              size="sm"
+                              variant="success"
+                              onClick={() => handleUpdateFramePrice(f._id, editingFramePrice)}
+                              className="px-2 py-1 text-[9px] flex-1 justify-center"
+                            >
+                              Save
+                            </AdminBtn>
+                            <AdminBtn
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setEditingFrameId(null)}
+                              className="px-2 py-1 text-[9px] flex-1 justify-center"
+                            >
+                              Cancel
+                            </AdminBtn>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <p className="text-[10px] text-orange-400 font-bold">{f.price.toLocaleString()} XP</p>
+                          <button
+                            onClick={() => {
+                              setEditingFrameId(f._id);
+                              setEditingFramePrice(f.price);
+                            }}
+                            className="p-1 rounded hover:bg-white/5 text-zinc-400 hover:text-white transition-all cursor-pointer"
+                            title="Edit Price"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+
+                      {!isEditing && (
+                        <AdminBtn size="sm" variant="danger" onClick={() => handleDeleteFrame(f._id)} className="w-full justify-center text-[10px] py-1 mt-1">
+                          <Trash2 className="w-3 h-3" /> Delete
+                        </AdminBtn>
+                      )}
                     </div>
-                    <p className="text-[11px] font-bold text-white leading-tight">{f.name}</p>
-                    <p className="text-[10px] text-orange-400 font-bold">{f.price.toLocaleString()} XP</p>
-                    <AdminBtn size="sm" variant="danger" onClick={() => handleDeleteFrame(f._id)} className="w-full justify-center">
-                      <Trash2 className="w-3 h-3" />
-                    </AdminBtn>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </SectionCard>
