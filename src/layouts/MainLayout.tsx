@@ -128,7 +128,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
                   </button>
                 </div>
                 <p className="text-[11px] text-zinc-400 font-medium leading-relaxed mt-1">
-                  Install Leh Physio? Now!
+                  Install the official Leh Physio app for a better experience.
                 </p>
               </div>
             </div>
@@ -175,7 +175,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
                   </button>
                 </div>
                 <p className="text-[11px] text-zinc-400 font-bold leading-relaxed mt-1">
-                  Install Leh Physio? Now!
+                  Install the official Leh Physio app for a better experience.
                 </p>
               </div>
             </div>

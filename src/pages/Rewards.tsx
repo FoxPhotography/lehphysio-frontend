@@ -33,7 +33,7 @@ interface RewardsProps {
   triggerXpPopup: (amount: number) => void;
   claimMockReward: (amount: number) => void;
   unlockedCosmetics: string[];
-  handleShopPurchase: (itemId: string, cost: number) => void;
+  handleShopPurchase: (item: any) => void;
   hasOpenedBoxToday: boolean;
   handleClaimSurpriseBox: () => void;
   handleBuyFrame?: (frameId: string, price: number) => Promise<boolean>;
@@ -394,7 +394,7 @@ export const Rewards: React.FC<RewardsProps> = ({
                 owned={owned}
                 canAfford={!!canAfford}
                 previewContent={previewContent}
-                onBuy={() => !owned && handleShopPurchase(item.id, item.cost)}
+                onBuy={() => !owned && handleShopPurchase({ id: item.id, cost: item.cost, type: item.isTitle ? 'title' : 'frame' })}
               />
             );
           })}
