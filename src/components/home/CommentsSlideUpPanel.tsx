@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { communityService } from '../../services/communityService';
 import { formatMentions } from '../../utils/mentions';
-import { EmojiPickerPopover } from '../common/EmojiPickerPopover';
 
 interface CommentItem {
   id: number;
