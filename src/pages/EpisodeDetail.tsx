@@ -515,7 +515,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                             textarea.selectionEnd = newCursor;
                             setCommentInput(nextVal);
                           } else {
-                            setCommentInput((prev: any) => (prev || '') + emoji);
+                            setCommentInput(commentInput + emoji);
                           }
                         }}
                         position="top-left"
