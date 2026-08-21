@@ -354,7 +354,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             ref={chatInputRef}
             type="text"
             className="w-full px-3.5 py-2 pr-9 text-[13px] rounded-xl bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-brand-orange/60 transition-colors font-medium"
-            placeholder="Type a message..."
+            placeholder={room.status === 'playing' && !room.roundWinner ? "Type your guess or message in English..." : "Type a message..."}
             value={chatMessage}
             onChange={(e) => setChatMessage(e.target.value)}
             onFocus={() => setShowChatEmojiPicker(false)}
@@ -644,35 +644,6 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             </motion.p>
           </AnimatePresence>
         </div>
-
-        {/* Answer Form (Active Guessing only) */}
-        <AnimatePresence>
-          {!room.roundWinner && (
-            <motion.form
-              initial={{ opacity: 1 }}
-              exit={{ opacity: 0, height: 0 }}
-              onSubmit={handleSubmitGameAnswer}
-              className="flex gap-2 pt-1"
-            >
-              <input
-                type="text"
-                autoFocus
-                className="flex-1 min-w-0 px-4 py-3 text-sm rounded-2xl bg-zinc-900 border border-zinc-750 text-white placeholder-zinc-500 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 transition-all font-semibold"
-                placeholder="Type structure name in English..."
-                value={submittedGameAnswer}
-                onChange={(e) => setSubmittedGameAnswer(e.target.value)}
-              />
-              <motion.button
-                type="submit"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="px-5 py-3 rounded-2xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-sm hover:opacity-90 cursor-pointer shadow-orange-glow transition-all shrink-0"
-              >
-                Submit
-              </motion.button>
-            </motion.form>
-          )}
-        </AnimatePresence>
 
         {/* Intermission Banner */}
         <AnimatePresence>
