@@ -213,9 +213,11 @@ export const Community: React.FC<CommunityProps> = ({
     };
   }, []);
 
-  // Manage keyboard-open body class to hide bottom navigation globally
+  const isKeyboardOrEmojiOpen = (isInputFocused || showChatEmojiPicker) && (typeof window !== 'undefined' && window.innerWidth < 768);
+
+  // Manage keyboard-open body class to hide header and bottom navigation globally on mobile
   useEffect(() => {
-    if (isInputFocused && window.innerWidth < 768) {
+    if (isKeyboardOrEmojiOpen) {
       document.body.classList.add('keyboard-open');
     } else {
       document.body.classList.remove('keyboard-open');
@@ -223,7 +225,7 @@ export const Community: React.FC<CommunityProps> = ({
     return () => {
       document.body.classList.remove('keyboard-open');
     };
-  }, [isInputFocused]);
+  }, [isKeyboardOrEmojiOpen]);
 
   // Lock body scroll on mobile for community page to prevent overscroll bounce/chaining
   useEffect(() => {
@@ -370,16 +372,20 @@ export const Community: React.FC<CommunityProps> = ({
   };
 
   return (
-    <div className="w-full max-w-none px-0 pb-0 text-left md:h-[calc(100vh-136px)] xl:h-screen pt-20 md:pt-16 xl:pt-0"
+    <div 
+      className={`w-full max-w-none px-0 pb-0 text-left md:h-[calc(100vh-136px)] xl:h-screen ${
+        isKeyboardOrEmojiOpen ? 'pt-1 md:pt-16' : 'pt-20 md:pt-16'
+      } xl:pt-0 transition-all duration-150`}
       style={{
         height: window.innerWidth < 768
-          ? `${viewportHeight - (isInputFocused ? 0 : 72)}px`
+          ? `${viewportHeight - (isKeyboardOrEmojiOpen ? 0 : 72)}px`
           : undefined
-      }}>
+      }}
+    >
       <div className="glass-card p-0 md:p-4 flex flex-col h-full relative overflow-hidden border-0 rounded-none">
         
-        {/* Sub tab switcher */}
-        <div className="flex gap-2 mb-3 p-3 md:p-0 shrink-0">
+        {/* Sub tab switcher (Hidden on mobile when typing to maximize message reading area) */}
+        <div className={`${isKeyboardOrEmojiOpen ? 'hidden md:flex' : 'flex'} gap-2 mb-3 p-3 md:p-0 shrink-0`}>
           <button 
             type="button" 
             className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 ${
@@ -422,7 +428,7 @@ export const Community: React.FC<CommunityProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between mb-2 border-b border-zinc-900 pb-2 mx-3 md:mx-0 shrink-0">
+              <div className={`${isKeyboardOrEmojiOpen ? 'hidden md:flex' : 'flex'} items-center justify-between mb-2 border-b border-zinc-900 pb-2 mx-3 md:mx-0 shrink-0`}>
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-brand-orange" />
                   <h3 className="text-sm font-black text-white">Chat Feed</h3>

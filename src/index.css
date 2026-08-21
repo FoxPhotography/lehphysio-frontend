@@ -139,8 +139,9 @@
   transform: translateY(-2px);
 }
 
-/* Hide bottom navigation on mobile when virtual keyboard is active */
-body.keyboard-open nav {
+/* Hide bottom navigation and mobile header on mobile when virtual keyboard / emoji is active */
+body.keyboard-open nav,
+body.keyboard-open header {
   display: none !important;
 }
 
