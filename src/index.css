@@ -139,9 +139,8 @@
   transform: translateY(-2px);
 }
 
-/* Hide bottom navigation and mobile header on mobile when virtual keyboard / emoji is active */
-body.keyboard-open nav,
-body.keyboard-open header {
+/* Hide bottom navigation on mobile when virtual keyboard is active */
+body.keyboard-open nav {
   display: none !important;
 }
 
@@ -213,3 +212,20 @@ body.keyboard-open header {
 @utility animate-upvote-pop {
   animation: upvotePop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+
+/* Clean Minimal Emoji Picker */
+.EmojiPickerReact .epr-emoji-category-label,
+.EmojiPickerReact .epr-search-container,
+.EmojiPickerReact .epr-skin-tones {
+  display: none !important;
+}
+
+.EmojiPickerReact .epr-header {
+  padding: 0 !important;
+  border-bottom: none !important;
+}
+
+.EmojiPickerReact .epr-body {
+  padding-top: 4px !important;
+}
+

@@ -21,7 +21,7 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
   position = 'top-right',
   className = '',
   width = 320,
-  height = 300,
+  height = 280,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -60,20 +60,30 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
         {isOpen && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: typeof height === 'number' ? height : 300, opacity: 1 }}
+            animate={{ height: typeof height === 'number' ? height : 280, opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.22, ease: 'easeInOut' }}
-            className={`w-full overflow-hidden border-t border-zinc-800/80 bg-zinc-950 flex justify-center [&_.EmojiPickerReact]:!border-0 [&_.EmojiPickerReact]:!bg-transparent [&_.EmojiPickerReact]:!w-full [&_.EmojiPickerReact]:!rounded-none ${className}`}
+            className={`w-full overflow-hidden border-t border-zinc-800/80 bg-zinc-950 flex justify-center 
+              [&_.EmojiPickerReact]:!border-0 
+              [&_.EmojiPickerReact]:!bg-transparent 
+              [&_.EmojiPickerReact]:!w-full 
+              [&_.EmojiPickerReact]:!rounded-none
+              [&_.epr-emoji-category-label]:!hidden
+              [&_.epr-search-container]:!hidden
+              [&_.epr-header]:!hidden
+              [&_.epr-skin-tones]:!hidden
+              ${className}`}
           >
             <EmojiPicker
               onEmojiClick={handleEmojiClick}
               theme={Theme.DARK}
               emojiStyle={EmojiStyle.APPLE}
+              searchDisabled={true}
+              skinTonesDisabled={true}
               autoFocusSearch={false}
               lazyLoadEmojis={true}
-              searchPlaceHolder="بحث عن إيموجي..."
               width="100%"
-              height={typeof height === 'number' ? height : 300}
+              height={typeof height === 'number' ? height : 280}
               previewConfig={{
                 showPreview: false,
               }}
@@ -111,16 +121,22 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.92, y: position.startsWith('top') ? 10 : -10 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          className={`absolute ${getPositionClasses()} z-[10001] shadow-2xl rounded-2xl overflow-hidden border border-zinc-800/90 bg-zinc-950/95 backdrop-blur-xl ${className}`}
+          className={`absolute ${getPositionClasses()} z-[10001] shadow-2xl rounded-2xl overflow-hidden border border-zinc-800/90 bg-zinc-950/95 backdrop-blur-xl 
+            [&_.epr-emoji-category-label]:!hidden 
+            [&_.epr-search-container]:!hidden 
+            [&_.epr-header]:!hidden 
+            [&_.epr-skin-tones]:!hidden 
+            ${className}`}
           onClick={(e) => e.stopPropagation()}
         >
           <EmojiPicker
             onEmojiClick={handleEmojiClick}
             theme={Theme.DARK}
             emojiStyle={EmojiStyle.APPLE}
+            searchDisabled={true}
+            skinTonesDisabled={true}
             autoFocusSearch={false}
             lazyLoadEmojis={true}
-            searchPlaceHolder="بحث عن إيموجي..."
             width={width}
             height={height}
             previewConfig={{
