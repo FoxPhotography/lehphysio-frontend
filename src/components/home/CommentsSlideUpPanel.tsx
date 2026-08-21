@@ -14,7 +14,8 @@ import {
   Loader2, 
   MessageSquare,
   ChevronDown,
-  Smile
+  Smile,
+  Keyboard
 } from 'lucide-react';
 import { communityService } from '../../services/communityService';
 import { formatMentions } from '../../utils/mentions';
@@ -721,15 +722,23 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                   <div className="relative shrink-0">
                     <button
                       type="button"
-                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      onClick={() => {
+                        if (showEmojiPicker) {
+                          setShowEmojiPicker(false);
+                          if (inputRef.current) inputRef.current.focus();
+                        } else {
+                          if (inputRef.current) inputRef.current.blur();
+                          setShowEmojiPicker(true);
+                        }
+                      }}
                       className={`w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition-all border ${
                         showEmojiPicker 
                           ? 'bg-brand-orange text-black border-brand-orange shadow-orange-glow' 
                           : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-400 hover:text-brand-orange'
                       }`}
-                      title="Insert Emoji"
+                      title={showEmojiPicker ? 'Switch to Keyboard' : 'Insert Emoji'}
                     >
-                      <Smile className="w-5 h-5" />
+                      {showEmojiPicker ? <Keyboard className="w-5 h-5" /> : <Smile className="w-5 h-5" />}
                     </button>
 
                     <EmojiPickerPopover
@@ -737,8 +746,6 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                       onClose={() => setShowEmojiPicker(false)}
                       onEmojiSelect={(emoji) => {
                         handleAddEmoji(emoji);
-                        setShowEmojiPicker(false);
-                        if (inputRef.current) inputRef.current.focus();
                       }}
                       position="top-right"
                     />

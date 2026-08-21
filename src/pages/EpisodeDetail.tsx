@@ -20,7 +20,8 @@ import {
   CheckCircle,
   AlertCircle,
   AlertTriangle,
-  Smile
+  Smile,
+  Keyboard
 } from 'lucide-react';
 import { EmojiPickerPopover } from '../components/common/EmojiPickerPopover';
 import { formatMentions } from '../utils/mentions';
@@ -465,12 +466,22 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                     <div className="relative">
                       <button
                         type="button"
-                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        className="p-1.5 text-zinc-400 hover:text-brand-orange hover:bg-zinc-800/60 rounded-xl cursor-pointer transition-colors flex items-center gap-1.5 text-xs font-semibold"
-                        title="Insert Emoji"
+                        onClick={() => {
+                          if (showEmojiPicker) {
+                            setShowEmojiPicker(false);
+                            document.getElementById('episode-comment-input')?.focus();
+                          } else {
+                            document.getElementById('episode-comment-input')?.blur();
+                            setShowEmojiPicker(true);
+                          }
+                        }}
+                        className={`p-1.5 rounded-xl cursor-pointer transition-colors flex items-center gap-1.5 text-xs font-semibold ${
+                          showEmojiPicker ? 'text-brand-orange bg-zinc-800/80 shadow-xs' : 'text-zinc-400 hover:text-brand-orange hover:bg-zinc-800/60'
+                        }`}
+                        title={showEmojiPicker ? 'Switch to Keyboard' : 'Insert Emoji'}
                       >
-                        <Smile className="w-4.5 h-4.5" />
-                        <span className="text-[11px] text-zinc-400">Emoji</span>
+                        {showEmojiPicker ? <Keyboard className="w-4.5 h-4.5" /> : <Smile className="w-4.5 h-4.5" />}
+                        <span className="text-[11px] text-zinc-400">{showEmojiPicker ? 'Keyboard' : 'Emoji'}</span>
                       </button>
 
                       <EmojiPickerPopover
@@ -478,8 +489,6 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                         onClose={() => setShowEmojiPicker(false)}
                         onEmojiSelect={(emoji) => {
                           setCommentInput(commentInput + emoji);
-                          setShowEmojiPicker(false);
-                          document.getElementById('episode-comment-input')?.focus();
                         }}
                         position="top-left"
                       />
@@ -532,20 +541,6 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                         <div 
                           id={`comment-${c.id}`}
                           className="glass-card p-5 text-left border border-zinc-900/60 relative group/comment"
-                          onContextMenu={(e) => {
-                            if (user) {
-                              e.preventDefault();
-                              setContextMenu({ 
-                                x: e.clientX, 
-                                y: e.clientY, 
-                                commentId: c.id, 
-                                content: c.content, 
-                                isOwner: c.user_id === user.id || c.username === user.username,
-                                commentUserId: c.user_id,
-                                commentUsername: c.username
-                              });
-                            }
-                          }}
                         >
                           <div className="flex justify-between items-center mb-3">
                             <div className="flex items-center gap-3">
@@ -578,9 +573,10 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  const rect = e.currentTarget.getBoundingClientRect();
                                   setContextMenu({ 
-                                    x: e.clientX, 
-                                    y: e.clientY, 
+                                    x: rect.left, 
+                                    y: rect.bottom + 4, 
                                     commentId: c.id, 
                                     content: c.content, 
                                     isOwner: c.user_id === user.id || c.username === user.username,
@@ -588,8 +584,8 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                                     commentUsername: c.username
                                   });
                                 }}
-                                className="text-zinc-500 hover:text-white cursor-pointer opacity-0 group-hover/comment:opacity-100 transition-opacity"
-                                title="More Options"
+                                className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800/60 cursor-pointer transition-colors"
+                                title="Comment Options"
                               >
                                 <MoreVertical className="w-4 h-4" />
                               </button>
@@ -684,9 +680,10 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                                             <button
                                               onClick={(e) => {
                                                 e.stopPropagation();
+                                                const rect = e.currentTarget.getBoundingClientRect();
                                                 setContextMenu({ 
-                                                  x: e.clientX, 
-                                                  y: e.clientY, 
+                                                  x: rect.left, 
+                                                  y: rect.bottom + 4, 
                                                   commentId: r.id, 
                                                   content: r.content, 
                                                   isOwner: r.user_id === user.id || r.username === user.username,
@@ -694,8 +691,8 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                                                   commentUsername: r.username
                                                 });
                                               }}
-                                              className="text-zinc-600 hover:text-white cursor-pointer opacity-0 group-hover/reply:opacity-100 transition-opacity"
-                                              title="More Options"
+                                              className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800/60 cursor-pointer transition-colors"
+                                              title="Reply Options"
                                             >
                                               <MoreVertical className="w-3.5 h-3.5" />
                                             </button>
@@ -759,7 +756,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
       {/* Context Menu for comments */}
       <AnimatePresence>
         {contextMenu && (
-          <div className="fixed inset-0 z-[999]" onClick={() => setContextMenu(null)}>
+          <div className="fixed inset-0 z-[999] bg-black/30 backdrop-blur-2xs" onClick={() => setContextMenu(null)}>
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -767,10 +764,10 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
               transition={{ duration: 0.15 }}
               style={{
                 position: 'fixed',
-                top: contextMenu.y,
-                left: contextMenu.x,
+                top: Math.min(contextMenu.y, typeof window !== 'undefined' ? window.innerHeight - 140 : contextMenu.y),
+                left: Math.max(12, Math.min(contextMenu.x - 110, typeof window !== 'undefined' ? window.innerWidth - 160 : contextMenu.x)),
               }}
-              className="bg-zinc-950 border border-zinc-800 rounded-xl p-1.5 flex flex-col gap-0.5 min-w-[130px] shadow-2xl z-[1000]"
+              className="bg-zinc-950 border border-zinc-800/90 rounded-2xl p-1.5 flex flex-col gap-0.5 min-w-[150px] shadow-2xl z-[1000] backdrop-blur-xl"
               onClick={(e) => e.stopPropagation()}
             >
               {user && (contextMenu.isOwner || user.role === 'moderator' || user.role === 'admin' || user.role === 'owner') ? (

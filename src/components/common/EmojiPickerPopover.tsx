@@ -72,37 +72,44 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
     <AnimatePresence>
       {isOpen && (
         <>
-          {position === 'centered' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={onClose}
-              className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9999]"
-            />
-          )}
+          {/* Backdrop on mobile */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className={`fixed inset-0 bg-black/60 backdrop-blur-xs z-[9999] ${position === 'centered' ? '' : 'md:hidden'}`}
+          />
           <motion.div
             ref={containerRef}
-            initial={{ opacity: 0, scale: 0.92, y: position.startsWith('top') ? 10 : -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: position.startsWith('top') ? 10 : -10 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className={`${position === 'centered' ? 'fixed' : 'absolute'} ${getPositionClasses()} z-[10001] shadow-2xl rounded-2xl overflow-hidden border border-zinc-800/90 bg-zinc-950/95 backdrop-blur-xl ${className}`}
+            className={`z-[10001] shadow-2xl overflow-hidden border border-zinc-800/90 bg-zinc-950/98 backdrop-blur-2xl 
+              max-md:fixed max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:w-full max-md:rounded-t-3xl max-md:rounded-b-none max-md:border-b-0
+              md:rounded-2xl md:${position === 'centered' ? 'fixed' : 'absolute'} md:${getPositionClasses()} ${className}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <EmojiPicker
-              onEmojiClick={handleEmojiClick}
-              theme={Theme.DARK}
-              emojiStyle={EmojiStyle.APPLE}
-              autoFocusSearch={false}
-              lazyLoadEmojis={true}
-              searchPlaceHolder="Search emoji..."
-              width={width}
-              height={height}
-              previewConfig={{
-                showPreview: false,
-              }}
-            />
+            {/* Mobile drag / close header bar */}
+            <div className="md:hidden flex items-center justify-between px-4 py-2 border-b border-zinc-800/60 bg-zinc-900/60">
+              <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto" />
+            </div>
+            <div className="w-full flex justify-center [&_.EmojiPickerReact]:!border-0 [&_.EmojiPickerReact]:!bg-transparent [&_.EmojiPickerReact]:!w-full">
+              <EmojiPicker
+                onEmojiClick={handleEmojiClick}
+                theme={Theme.DARK}
+                emojiStyle={EmojiStyle.APPLE}
+                autoFocusSearch={false}
+                lazyLoadEmojis={true}
+                searchPlaceHolder="بحث عن إيموجي..."
+                width="100%"
+                height={typeof window !== 'undefined' && window.innerWidth < 768 ? 320 : height}
+                previewConfig={{
+                  showPreview: false,
+                }}
+              />
+            </div>
           </motion.div>
         </>
       )}

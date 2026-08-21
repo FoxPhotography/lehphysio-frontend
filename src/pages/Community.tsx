@@ -23,6 +23,7 @@ import {
   Heart,
   Flame,
   Smile,
+  Keyboard,
   Sparkles,
   Frown,
   Zap,
@@ -83,16 +84,28 @@ const stripEmojis = (str: string) => {
   return str.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, '').trim();
 };
 
-// Map emoji characters to Lucide icons to satisfy Requirement 3 (no emojis in UI) and 4 (exclusively Lucide)
+const EMOJI_MAP: Record<string, string> = {
+  'like': '👍',
+  'thumbsup': '👍',
+  'heart': '❤️',
+  'love': '❤️',
+  'fire': '🔥',
+  'flame': '🔥',
+  'joy': '😂',
+  'laugh': '😂',
+  'smile': '😊',
+  'clap': '👏',
+  'sad': '😢',
+  'frown': '😢',
+  'cry': '😢',
+  'wow': '😮',
+  'skull': '💀',
+  '100': '💯'
+};
+
 const renderReactionIcon = (emoji: string) => {
-  const iconClass = "w-3.5 h-3.5 fill-current";
-  if (emoji === '👍') return <ThumbsUp className="w-3 h-3" />;
-  if (emoji === '❤️') return <Heart className={`${iconClass} text-red-500`} />;
-  if (emoji === '🔥') return <Flame className={`${iconClass} text-brand-orange`} />;
-  if (emoji === '😂') return <Smile className="w-3.5 h-3.5 text-yellow-300" />;
-  if (emoji === '👏') return <Sparkles className="w-3.5 h-3.5 text-yellow-400" />;
-  if (emoji === '😢') return <Frown className="w-3.5 h-3.5 text-blue-400" />;
-  return <span>{emoji}</span>;
+  const actualEmoji = EMOJI_MAP[emoji?.toLowerCase?.()] || emoji;
+  return <span className="text-xs md:text-sm leading-none inline-block transform hover:scale-110 transition-transform">{actualEmoji}</span>;
 };
 
 export const Community: React.FC<CommunityProps> = ({
@@ -766,11 +779,23 @@ export const Community: React.FC<CommunityProps> = ({
                     <div className="relative shrink-0 mb-1">
                       <button
                         type="button"
-                        onClick={() => setShowChatEmojiPicker(!showChatEmojiPicker)}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-zinc-400 hover:text-brand-orange hover:bg-zinc-800/60 cursor-pointer transition-colors"
-                        title="Insert Emoji"
+                        onClick={() => {
+                          if (showChatEmojiPicker) {
+                            setShowChatEmojiPicker(false);
+                            const el = document.getElementById('community-chat-input');
+                            if (el) el.focus();
+                          } else {
+                            const el = document.getElementById('community-chat-input');
+                            if (el) el.blur();
+                            setShowChatEmojiPicker(true);
+                          }
+                        }}
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors ${
+                          showChatEmojiPicker ? 'text-brand-orange bg-zinc-800/80 shadow-xs' : 'text-zinc-400 hover:text-brand-orange hover:bg-zinc-800/60'
+                        }`}
+                        title={showChatEmojiPicker ? 'Switch to Keyboard' : 'Insert Emoji'}
                       >
-                        <Smile className="w-4.5 h-4.5" />
+                        {showChatEmojiPicker ? <Keyboard className="w-4.5 h-4.5" /> : <Smile className="w-4.5 h-4.5" />}
                       </button>
 
                       <EmojiPickerPopover
@@ -778,9 +803,6 @@ export const Community: React.FC<CommunityProps> = ({
                         onClose={() => setShowChatEmojiPicker(false)}
                         onEmojiSelect={(emoji) => {
                           setChatInput(chatInput + emoji);
-                          setShowChatEmojiPicker(false);
-                          const el = document.getElementById('community-chat-input');
-                          if (el) el.focus();
                         }}
                         position="top-right"
                       />
