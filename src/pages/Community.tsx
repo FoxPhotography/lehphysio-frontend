@@ -374,18 +374,33 @@ export const Community: React.FC<CommunityProps> = ({
   useEffect(() => {
     if (isChatKeyboardActive && typeof window !== 'undefined' && window.innerWidth < 768) {
       document.body.classList.add('chat-keyboard-active');
+      
+      // Instantly scroll feed to bottom to keep newest messages visible above keyboard
+      const scrollToBottomNow = () => {
+        const el = document.getElementById('pl-chat-feed');
+        if (el) el.scrollTop = el.scrollHeight;
+      };
+      
+      scrollToBottomNow();
+      const t1 = setTimeout(scrollToBottomNow, 80);
+      const t2 = setTimeout(scrollToBottomNow, 220);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        document.body.classList.remove('chat-keyboard-active');
+      };
     } else {
       document.body.classList.remove('chat-keyboard-active');
     }
     return () => {
       document.body.classList.remove('chat-keyboard-active');
     };
-  }, [isChatKeyboardActive]);
+  }, [isChatKeyboardActive, viewportHeight]);
 
   return (
     <div 
       className={`w-full max-w-none px-0 pb-0 text-left md:h-[calc(100vh-136px)] xl:h-screen transition-all duration-200 ${
-        isChatKeyboardActive ? 'pt-1 md:pt-16 xl:pt-0' : 'pt-20 md:pt-16 xl:pt-0'
+        isChatKeyboardActive ? 'pt-3 md:pt-16 xl:pt-0' : 'pt-20 md:pt-16 xl:pt-0'
       }`}
       style={{
         height: window.innerWidth < 768
@@ -488,6 +503,9 @@ export const Community: React.FC<CommunityProps> = ({
                   <span>جاري تحميل الرسائل السابقة...</span>
                 </div>
               )}
+
+              {/* Natural bottom-anchor spacer for few messages */}
+              <div className="flex-1 min-h-0" />
 
               {chatMessages.map((msg: any) => {
                 const isMyMsg = user && msg.username === user.username;
