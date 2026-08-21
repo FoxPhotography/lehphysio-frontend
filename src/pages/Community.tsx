@@ -25,8 +25,10 @@ import {
   Sparkles,
   Frown,
   Zap,
-  AlertTriangle
+  AlertTriangle,
+  Plus
 } from 'lucide-react';
+import { EmojiPickerPopover } from '../components/common/EmojiPickerPopover';
 
 interface CommunityProps {
   user: any;
@@ -161,6 +163,11 @@ export const Community: React.FC<CommunityProps> = ({
   const [mentionStartIndex, setMentionStartIndex] = useState(-1);
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [activeSuggestionIdx, setActiveSuggestionIdx] = useState(0);
+
+  // Emoji picker states
+  const [showChatEmojiPicker, setShowChatEmojiPicker] = useState(false);
+  const [reactionPickerMsgId, setReactionPickerMsgId] = useState<number | null>(null);
+
   const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
 
   const selectedMessages = chatMessages.filter(msg => selectedMessageIds.includes(msg.id));
@@ -725,7 +732,7 @@ export const Community: React.FC<CommunityProps> = ({
                   }}
                   className="flex gap-2.5 items-end py-2"
                 >
-                  <div className="flex-1 relative flex items-end bg-zinc-900/40 border border-zinc-800/80 focus-within:border-brand-orange/60 focus-within:ring-1 focus-within:ring-brand-orange/20 rounded-2xl transition-all duration-200 px-3.5">
+                  <div className="flex-1 relative flex items-center bg-zinc-900/40 border border-zinc-800/80 focus-within:border-brand-orange/60 focus-within:ring-1 focus-within:ring-brand-orange/20 rounded-2xl transition-all duration-200 px-3.5 gap-2">
                     <textarea
                       id="community-chat-input"
                       name="chatMessage"
@@ -764,6 +771,30 @@ export const Community: React.FC<CommunityProps> = ({
                       }}
                       rows={1}
                     />
+
+                    {/* Emoji Trigger Button */}
+                    <div className="relative shrink-0 mb-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowChatEmojiPicker(!showChatEmojiPicker)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-zinc-400 hover:text-brand-orange hover:bg-zinc-800/60 cursor-pointer transition-colors"
+                        title="Insert Emoji"
+                      >
+                        <Smile className="w-4.5 h-4.5" />
+                      </button>
+
+                      <EmojiPickerPopover
+                        isOpen={showChatEmojiPicker}
+                        onClose={() => setShowChatEmojiPicker(false)}
+                        onEmojiSelect={(emoji) => {
+                          setChatInput(chatInput + emoji);
+                          setShowChatEmojiPicker(false);
+                          const el = document.getElementById('community-chat-input');
+                          if (el) el.focus();
+                        }}
+                        position="top-right"
+                      />
+                    </div>
                   </div>
                   <button 
                     type="submit" 
@@ -1031,7 +1062,7 @@ export const Community: React.FC<CommunityProps> = ({
                 {['👍', '❤️', '🔥', '😂', '👏', '😢'].map((emoji) => (
                   <button
                     key={emoji}
-                    className="p-1 text-xs hover:scale-12ability hover:bg-zinc-800 rounded-lg cursor-pointer transition-transform"
+                    className="p-1 text-xs hover:scale-125 hover:bg-zinc-800 rounded-lg cursor-pointer transition-transform"
                     onClick={() => {
                       handleToggleReaction(activeContextMenu.messageId, emoji);
                       setActiveContextMenu(null);
@@ -1040,6 +1071,17 @@ export const Community: React.FC<CommunityProps> = ({
                     {emoji}
                   </button>
                 ))}
+                <button
+                  type="button"
+                  className="p-1 text-xs text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg cursor-pointer transition-colors flex items-center justify-center"
+                  title="More Emojis"
+                  onClick={() => {
+                    setReactionPickerMsgId(activeContextMenu.messageId);
+                    setActiveContextMenu(null);
+                  }}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
               </div>
 
               {/* Action buttons */}
@@ -1125,6 +1167,19 @@ export const Community: React.FC<CommunityProps> = ({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Reactions Custom Emoji Picker Modal */}
+      <EmojiPickerPopover
+        isOpen={reactionPickerMsgId !== null}
+        onClose={() => setReactionPickerMsgId(null)}
+        onEmojiSelect={(emoji) => {
+          if (reactionPickerMsgId) {
+            handleToggleReaction(reactionPickerMsgId, emoji);
+          }
+          setReactionPickerMsgId(null);
+        }}
+        position="centered"
+      />
     </div>
   );
 };

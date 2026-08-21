@@ -20,9 +20,11 @@ import {
   Loader2,
   Zap,
   UserMinus,
+  Smile,
 } from 'lucide-react';
 import { playChatSound, copyToClipboard } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
+import { EmojiPickerPopover } from '../components/common/EmojiPickerPopover';
 
 // ─── Confetti Particle System ──────────────────────────────────────────────────
 const ConfettiEffect: React.FC<{ active: boolean; onComplete: () => void }> = ({
@@ -175,6 +177,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   setActiveGameRoom,
 }) => {
   const [chatMessage, setChatMessage] = useState('');
+  const [showChatEmojiPicker, setShowChatEmojiPicker] = useState(false);
   const [confettiActive, setConfettiActive] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const prevWinnerRef = useRef<string | null>(null);
@@ -306,10 +309,28 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   // ─── Chat Box ─────────────────────────────────────────────────────────────────
   const renderChatBox = (maxH = '160px') => (
     <div className="mt-4 rounded-xl border border-white/8 bg-black/40 p-3">
-      <div className="flex items-center gap-2 mb-2">
-        <MessageSquare className="w-3.5 h-3.5 text-zinc-500" />
-        <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Room Chat</span>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-3.5 h-3.5 text-zinc-500" />
+          <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Room Chat</span>
+        </div>
+
+        {/* Quick in-game emojis */}
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+          {['🔥', '👏', '😂', '💀', '🧠', '⚡', '🏆', '😱'].map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => setChatMessage(prev => prev + emoji)}
+              className="text-xs hover:scale-125 active:scale-95 transition-transform cursor-pointer px-1 py-0.5"
+              title={emoji}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
       </div>
+
       <div
         className="flex flex-col gap-1.5 overflow-y-auto pr-1 mb-2 scrollbar-thin scrollbar-thumb-white/10"
         style={{ maxHeight: maxH }}
@@ -334,19 +355,44 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         ))}
         <div ref={chatEndRef} />
       </div>
-      <form onSubmit={handleSendChatMessage} className="flex gap-2">
-        <input
-          type="text"
-          className="flex-1 min-w-0 px-3 py-2 text-[13px] rounded-lg bg-white/5 border border-white/10 text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500/60 transition-colors"
-          placeholder="Type a message..."
-          value={chatMessage}
-          onChange={(e) => setChatMessage(e.target.value)}
-        />
+
+      <form onSubmit={handleSendChatMessage} className="flex gap-2 relative">
+        <div className="flex-1 relative flex items-center">
+          <input
+            type="text"
+            className="w-full px-3 py-2 pr-9 text-[13px] rounded-lg bg-white/5 border border-white/10 text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500/60 transition-colors"
+            placeholder="Type a message..."
+            value={chatMessage}
+            onChange={(e) => setChatMessage(e.target.value)}
+          />
+
+          <div className="absolute right-1.5 flex items-center">
+            <button
+              type="button"
+              onClick={() => setShowChatEmojiPicker(!showChatEmojiPicker)}
+              className="p-1 text-zinc-400 hover:text-orange-400 hover:bg-white/10 rounded-md cursor-pointer transition-colors"
+              title="Insert Emoji"
+            >
+              <Smile className="w-4 h-4" />
+            </button>
+
+            <EmojiPickerPopover
+              isOpen={showChatEmojiPicker}
+              onClose={() => setShowChatEmojiPicker(false)}
+              onEmojiSelect={(emoji) => {
+                setChatMessage(prev => prev + emoji);
+                setShowChatEmojiPicker(false);
+              }}
+              position="top-right"
+            />
+          </div>
+        </div>
+
         <motion.button
           type="submit"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="px-3 py-2 rounded-lg bg-orange-500 text-black font-bold text-[13px] flex items-center gap-1.5 hover:bg-orange-400 transition-colors"
+          className="px-3 py-2 rounded-lg bg-orange-500 text-black font-bold text-[13px] flex items-center gap-1.5 hover:bg-orange-400 transition-colors shrink-0"
         >
           <Send className="w-3.5 h-3.5" />
         </motion.button>

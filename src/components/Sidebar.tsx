@@ -192,7 +192,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* User Section */}
       <div className="border-t border-zinc-900/60 pt-6 mt-auto">
         {user ? (
-          <div className="flex items-center gap-3 p-2 bg-zinc-900/20 rounded-2xl border border-zinc-900/40">
+          <button 
+            type="button"
+            onClick={() => setCurrentPage('profile')}
+            className={`w-full flex items-center gap-3 p-2.5 rounded-2xl border transition-all duration-200 cursor-pointer text-left group ${
+              currentPage === 'profile'
+                ? 'bg-brand-orange/10 border-brand-orange/40 shadow-orange-glow'
+                : 'bg-zinc-900/20 border-zinc-900/40 hover:bg-zinc-900/60 hover:border-zinc-800 active:scale-[0.98]'
+            }`}
+            title="Go to Profile"
+          >
             <UserAvatar 
               username={user.username} 
               avatarUrl={user.avatar_url} 
@@ -200,7 +209,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               size={40} 
             />
             <div className="min-w-0 flex-1">
-              <div className="font-extrabold text-sm text-white truncate">
+              <div className="font-extrabold text-sm text-white truncate group-hover:text-brand-orange transition-colors">
                 {user.username}
               </div>
               <div className="text-[10px] text-zinc-500 font-medium tracking-wide flex items-center gap-1 uppercase">
@@ -214,7 +223,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 )}
               </div>
             </div>
-          </div>
+          </button>
         ) : (
           <div className="flex flex-col gap-2">
             <button 

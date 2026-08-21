@@ -13,6 +13,18 @@ export const communityService = {
     return res;
   },
 
+  async fetchPostById(postId: number, token?: string) {
+    const res = await apiFetch(`/api/community/posts/${postId}`, {}, token);
+    return res;
+  },
+
+  async sharePost(postId: number, token?: string) {
+    const res = await apiFetch(`/api/community/posts/${postId}/share`, {
+      method: 'POST',
+    }, token);
+    return res;
+  },
+
   async createPost(title: string, content: string, imageUrl: string, isNews: boolean = false, token?: string) {
     const res = await apiFetch('/api/community/posts', {
       method: 'POST',

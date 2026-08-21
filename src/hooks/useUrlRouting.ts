@@ -6,10 +6,12 @@ interface UseUrlRoutingProps {
   setCurrentPage: (page: string) => void;
   setCommunityTab: (tab: 'feed' | 'chat') => void;
   setSelectedEpisodeId: (id: number | null) => void;
+  setSelectedPostId?: (id: number | null) => void;
   setEpisodeDetailLoading: (loading: boolean) => void;
   fetchEpisodeDetail: (id: number) => Promise<void>;
   gamesHook: any;
   showToast: (msg: string) => void;
+  openCommentsPanel?: (postId: number) => void;
 }
 
 export const useUrlRouting = ({
@@ -17,10 +19,12 @@ export const useUrlRouting = ({
   setCurrentPage,
   setCommunityTab,
   setSelectedEpisodeId,
+  setSelectedPostId,
   setEpisodeDetailLoading,
   fetchEpisodeDetail,
   gamesHook,
   showToast,
+  openCommentsPanel,
 }: UseUrlRoutingProps) => {
   const handleUrlRouting = () => {
     const path = window.location.pathname;
@@ -34,7 +38,7 @@ export const useUrlRouting = ({
       let contentId: number | null = null;
       
       const epMatch = path.match(/^\/episodes\/(\d+)/);
-      const postMatch = path.match(/^\/post\/(\d+)/);
+      const postMatch = path.match(/^\/posts?\/(\d+)/);
       if (epMatch) {
         contentType = 'episode';
         contentId = parseInt(epMatch[1]);
@@ -77,6 +81,14 @@ export const useUrlRouting = ({
       window.history.replaceState({}, document.title, newUrl);
     }
 
+    // Check for comments panel deep linking
+    const commentsParam = params.get('comments');
+    const hashCommentsMatch = window.location.hash.match(/#comments-(\d+)/);
+    const targetCommentsPostId = commentsParam ? parseInt(commentsParam, 10) : (hashCommentsMatch ? parseInt(hashCommentsMatch[1], 10) : null);
+    if (targetCommentsPostId && !isNaN(targetCommentsPostId) && openCommentsPanel) {
+      openCommentsPanel(targetCommentsPostId);
+    }
+
     // Path parsing
     if (path === '/' || path === '') {
       setCurrentPage('home');
@@ -96,8 +108,19 @@ export const useUrlRouting = ({
       } else {
         setCurrentPage('episodes');
       }
-    } else if (path.startsWith('/post/')) {
-      setCurrentPage('home');
+    } else if (path.startsWith('/post/') || path.startsWith('/posts/')) {
+      const match = path.match(/^\/posts?\/(\d+)/);
+      if (match) {
+        const id = parseInt(match[1], 10);
+        if (!isNaN(id)) {
+          if (setSelectedPostId) setSelectedPostId(id);
+          setCurrentPage('post-detail');
+        } else {
+          setCurrentPage('home');
+        }
+      } else {
+        setCurrentPage('home');
+      }
     } else if (path === '/games') {
       setCurrentPage('games');
     } else if (path.startsWith('/game/')) {
@@ -134,6 +157,8 @@ export const useUrlRouting = ({
       setCurrentPage('admin');
     } else if (path === '/moderation') {
       setCurrentPage('moderator-dashboard');
+    } else if (path === '/news') {
+      setCurrentPage('news');
     } else {
       setCurrentPage('home');
     }

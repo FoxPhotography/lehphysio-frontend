@@ -50,58 +50,87 @@ const ShopCard: React.FC<{
   owned: boolean;
   canAfford: boolean;
   buying?: boolean;
+  userXp?: number;
   previewContent: React.ReactNode;
   onBuy: () => void;
-}> = ({ name, cost, color, owned, canAfford, buying, previewContent, onBuy }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    whileHover={{ y: -2 }}
-    className={`rounded-2xl border p-4 flex flex-col items-center gap-3 transition-colors ${
-      owned
-        ? 'border-emerald-500/25 bg-emerald-500/5'
-        : 'border-white/8 bg-zinc-900/60 hover:border-white/15'
-    }`}
-  >
-    {/* Preview */}
-    <div className="w-16 h-16 rounded-2xl bg-black/40 border border-white/8 flex items-center justify-center overflow-hidden">
-      {previewContent}
-    </div>
+}> = ({ name, cost, color, owned, canAfford, buying, userXp = 0, previewContent, onBuy }) => {
+  const progressPct = Math.min(100, Math.round((userXp / cost) * 100));
 
-    {/* Name */}
-    <div className="text-center">
-      <p className="text-[13px] font-bold text-white leading-tight">{name}</p>
-      <p className="text-[12px] font-black mt-0.5" style={{ color: color || '#f97316' }}>
-        {cost.toLocaleString()} XP
-      </p>
-    </div>
-
-    {/* Buy Button */}
-    <motion.button
-      whileHover={{ scale: owned || buying ? 1 : 1.04 }}
-      whileTap={{ scale: owned || buying ? 1 : 0.96 }}
-      onClick={onBuy}
-      disabled={owned || buying || !canAfford}
-      className={`w-full py-2 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 transition-all ${
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
+      className={`rounded-2xl border p-4 flex flex-col items-center gap-3 transition-all relative overflow-hidden ${
         owned
-          ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 cursor-default'
-          : !canAfford
-          ? 'bg-white/5 border border-white/8 text-zinc-600 cursor-not-allowed'
-          : 'bg-orange-500 text-black hover:bg-orange-400'
+          ? 'border-emerald-500/25 bg-emerald-500/5'
+          : canAfford
+          ? 'border-orange-500/40 bg-orange-500/5 shadow-orange-glow/10'
+          : 'border-white/8 bg-zinc-900/60 hover:border-white/15'
       }`}
     >
-      {buying ? (
-        <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Buying...</>
-      ) : owned ? (
-        <><CheckCircle className="w-3.5 h-3.5" /> Owned</>
-      ) : !canAfford ? (
-        <><Lock className="w-3.5 h-3.5" /> Not enough XP</>
-      ) : (
-        'Buy'
-      )}
-    </motion.button>
-  </motion.div>
-);
+      {/* Preview */}
+      <div className="w-16 h-16 rounded-2xl bg-black/40 border border-white/8 flex items-center justify-center overflow-hidden relative">
+        {previewContent}
+      </div>
+
+      {/* Name & Milestone Requirement */}
+      <div className="text-center w-full">
+        <p className="text-[13px] font-black text-white leading-tight truncate">{name}</p>
+        <div className="flex items-center justify-center gap-1 mt-1">
+          <span className="text-[11px] font-extrabold text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full">
+            {cost.toLocaleString()} XP Milestone
+          </span>
+        </div>
+
+        {/* Milestone Progress Bar for locked items */}
+        {!owned && (
+          <div className="mt-2.5 w-full">
+            <div className="flex justify-between items-center text-[10px] font-bold text-zinc-400 mb-1">
+              <span>{Math.min(userXp, cost).toLocaleString()} XP</span>
+              <span className={canAfford ? 'text-emerald-400' : 'text-zinc-500'}>{progressPct}%</span>
+            </div>
+            <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  canAfford 
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400' 
+                    : 'bg-gradient-to-r from-orange-500 to-amber-400'
+                }`}
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Unlock / Status Button */}
+      <motion.button
+        whileHover={{ scale: owned || buying ? 1 : 1.04 }}
+        whileTap={{ scale: owned || buying ? 1 : 0.96 }}
+        onClick={onBuy}
+        disabled={owned || buying || !canAfford}
+        className={`w-full py-2.5 rounded-xl text-[12px] font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+          owned
+            ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 cursor-default'
+            : !canAfford
+            ? 'bg-white/5 border border-white/8 text-zinc-500 cursor-not-allowed'
+            : 'bg-gradient-to-r from-orange-500 to-amber-500 text-black shadow-orange-glow hover:shadow-orange-intense'
+        }`}
+      >
+        {buying ? (
+          <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Unlocking...</>
+        ) : owned ? (
+          <><CheckCircle className="w-3.5 h-3.5" /> Unlocked</>
+        ) : !canAfford ? (
+          <><Lock className="w-3.5 h-3.5" /> Requires {cost.toLocaleString()} XP</>
+        ) : (
+          <><Sparkles className="w-3.5 h-3.5 fill-black" /> Unlock for Free</>
+        )}
+      </motion.button>
+    </motion.div>
+  );
+};
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export const Rewards: React.FC<RewardsProps> = ({
@@ -319,11 +348,18 @@ export const Rewards: React.FC<RewardsProps> = ({
         </div>
       </section>
 
-      {/* ── Cosmetics Shop ─────────────────────────────────────────── */}
-      <section>
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-4 h-4 text-orange-400" />
-          <h2 className="text-[15px] font-black text-white">Cosmetics Shop</h2>
+      {/* ── Avatar Frame Milestones ─────────────────────────────────── */}
+      <section className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-orange-400" />
+            <h2 className="text-[15px] font-black text-white">Avatar Frame Milestones</h2>
+          </div>
+          <div className="text-[11px] font-bold text-zinc-400 bg-zinc-900/80 border border-zinc-800 px-3 py-1 rounded-xl flex items-center gap-1.5 self-start sm:self-auto">
+            <span>✨ Unlocking frames</span>
+            <strong className="text-orange-400">never deducts</strong>
+            <span>your XP!</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -358,6 +394,7 @@ export const Rewards: React.FC<RewardsProps> = ({
                 color={item.color}
                 owned={owned}
                 canAfford={!!canAfford}
+                userXp={user?.total_xp || 0}
                 previewContent={previewContent}
                 onBuy={() => !owned && handleShopPurchase({ id: item.id, cost: item.cost, type: item.isTitle ? 'title' : 'frame' })}
               />
@@ -387,6 +424,7 @@ export const Rewards: React.FC<RewardsProps> = ({
                 owned={owned}
                 canAfford={!!canAfford}
                 buying={isBuying}
+                userXp={user?.total_xp || 0}
                 previewContent={previewContent}
                 onBuy={() => !owned && !buyingFrameId && handleFrameBuy(String(f._id))}
               />

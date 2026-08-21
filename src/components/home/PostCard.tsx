@@ -38,6 +38,7 @@ interface PostCardProps {
   showToast: (msg: string) => void;
   handleOpenReportModal?: (type: 'post' | 'comment' | 'message', id: number, preview?: string) => void;
   triggerXpPopup?: (amount: number) => void;
+  onOpenComments?: (postId: number, authorName?: string) => void;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({
@@ -55,6 +56,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   showToast,
   handleOpenReportModal,
   triggerXpPopup,
+  onOpenComments,
 }) => {
   const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
   const [openPostMenu, setOpenPostMenu] = useState(false);
@@ -419,10 +421,14 @@ export const PostCard: React.FC<PostCardProps> = ({
             <span>{post.likes_count}</span>
           </button>
           <button 
-            className={`flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer ${post.pending ? 'opacity-50 cursor-not-allowed' : ''}`} 
+            className={`flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-brand-orange transition-colors cursor-pointer ${post.pending ? 'opacity-50 cursor-not-allowed' : ''}`} 
             onClick={() => {
               if (post.pending) return;
-              setIsCommentsExpanded(!isCommentsExpanded);
+              if (onOpenComments) {
+                onOpenComments(post.id, post.username);
+              } else {
+                setIsCommentsExpanded(!isCommentsExpanded);
+              }
             }}
             disabled={post.pending}
           >
@@ -442,18 +448,20 @@ export const PostCard: React.FC<PostCardProps> = ({
           </button>
         </div>
 
-        {/* Expandable comments thread list */}
-        <CommentsSection
-          postId={post.id}
-          user={user}
-          usernames={usernames}
-          deepLinkTarget={deepLinkTarget}
-          setDeepLinkTarget={setDeepLinkTarget}
-          triggerXpPopup={triggerXpPopup}
-          showToast={showToast}
-          handleOpenReportModal={handleOpenReportModal}
-          isExpanded={isCommentsExpanded}
-        />
+        {/* Fallback inline expandable comments thread list if slide-up not supplied */}
+        {!onOpenComments && (
+          <CommentsSection
+            postId={post.id}
+            user={user}
+            usernames={usernames}
+            deepLinkTarget={deepLinkTarget}
+            setDeepLinkTarget={setDeepLinkTarget}
+            triggerXpPopup={triggerXpPopup}
+            showToast={showToast}
+            handleOpenReportModal={handleOpenReportModal}
+            isExpanded={isCommentsExpanded}
+          />
+        )}
       </div>
 
       {/* Immersive Lightbox Modal */}

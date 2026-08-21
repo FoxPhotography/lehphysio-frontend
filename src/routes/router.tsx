@@ -3,6 +3,7 @@ import { Home } from '../pages/Home';
 import { News } from '../pages/News';
 import { Episodes } from '../pages/Episodes';
 import { EpisodeDetail } from '../pages/EpisodeDetail';
+import { PostDetail } from '../pages/PostDetail';
 import { Community } from '../pages/Community';
 import { Games } from '../pages/Games';
 import { PlayGame } from '../pages/PlayGame';
@@ -33,6 +34,9 @@ interface AppRouterProps {
   handleCancelPostRevision: (id: number) => void;
   communityPosts: any[];
   episodes: any[];
+  selectedPostId?: number | null;
+  onOpenComments?: (postId: number, authorName?: string) => void;
+  handleSharePost?: (id: number) => void;
   handleLikeEpisode: (id: number) => Promise<void>;
   handleShareEpisode: (id: number) => void;
   navigateToEpisode: (id: number) => void;
@@ -138,6 +142,9 @@ export const AppRouter: React.FC<AppRouterProps> = ({
   handleLikePost,
   handleDeletePost,
   handleCancelPostRevision,
+  selectedPostId,
+  onOpenComments,
+  handleSharePost,
   episodes,
   handleLikeEpisode,
   handleShareEpisode,
@@ -245,7 +252,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           handleLikePost={handleLikePost}
           handleDeletePost={handleDeletePost}
           handleCancelPostRevision={handleCancelPostRevision}
-          handleSharePost={(id) => showToast('Post link copied to clipboard! 🔗')}
+          handleSharePost={handleSharePost || ((id) => showToast('Post link copied to clipboard! 🔗'))}
           handleUploadImage={handleUploadImage}
           usernames={usernamesDirectory}
           showToast={showToast}
@@ -260,6 +267,26 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           hasMorePosts={hasMorePosts}
           isRefreshingFeed={isRefreshingFeed}
           handleOpenReportModal={handleOpenReportModal}
+          onOpenComments={onOpenComments}
+        />
+      );
+    case 'post-detail':
+      return (
+        <PostDetail
+          postId={selectedPostId || null}
+          user={user}
+          usernames={usernamesDirectory}
+          setCurrentPage={setCurrentPage}
+          showToast={showToast}
+          handleLikePost={handleLikePost}
+          handleDeletePost={handleDeletePost}
+          handleCancelPostRevision={handleCancelPostRevision}
+          handleEditPost={handleEditPost}
+          handleUploadImage={handleUploadImage}
+          handleOpenReportModal={handleOpenReportModal}
+          triggerXpPopup={triggerXpPopup}
+          onOpenComments={onOpenComments || (() => {})}
+          communityPosts={communityPosts}
         />
       );
     case 'news':
@@ -269,12 +296,13 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           newsPosts={newsPosts}
           handleLikePost={handleLikePost}
           handleDeletePost={handleDeletePost}
-          handleSharePost={(id) => showToast('Post link copied to clipboard! 🔗')}
+          handleSharePost={handleSharePost || ((id) => showToast('Post link copied to clipboard! 🔗'))}
           handleUploadImage={handleUploadImage}
           handleEditPost={handleEditPost}
           setCurrentPage={setCurrentPage}
           showToast={showToast}
           equippedFrame={equippedFrame}
+          onOpenComments={onOpenComments}
         />
       );
     case 'episodes':

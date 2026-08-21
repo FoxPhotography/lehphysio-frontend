@@ -19,8 +19,10 @@ import {
   Brain,
   CheckCircle,
   AlertCircle,
-  AlertTriangle
+  AlertTriangle,
+  Smile
 } from 'lucide-react';
+import { EmojiPickerPopover } from '../components/common/EmojiPickerPopover';
 import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
 import { useNotifications } from '../context/NotificationContext';
 
@@ -93,6 +95,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
   const [editCommentText, setEditCommentText] = useState('');
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; commentId: number; content: string; isOwner: boolean; commentUserId?: number; commentUsername?: string } | null>(null);
   const [activeSuggestionIdx, setActiveSuggestionIdx] = useState(0);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
   const { episode, quiz, has_solved_quiz, likes_count, shares_count, has_liked, comments = [] } = episodeDetail || {};
@@ -468,26 +471,51 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                     );
                   })()}
 
-                  <div className="flex justify-end gap-2 items-center">
-                    {replyingToComment && (
-                      <button className="border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-[10px] py-2 px-4 rounded-xl cursor-pointer transition-all" onClick={() => setReplyingToComment(null)}>Cancel</button>
-                    )}
-                    <button 
-                      className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-[10px] py-2 px-4 rounded-xl cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-md disabled:opacity-50"
-                      onClick={() => {
-                        handleEpisodeInteract('comment', commentInput, replyingToComment?.id);
-                        setMentionSearchText(null);
-                        const el = document.getElementById('episode-comment-input');
-                        if (el) el.style.height = 'auto';
-                      }} 
-                      disabled={!commentInput.trim() || episodeInteracting}
-                    >
-                      {episodeInteracting ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        replyingToComment ? 'Reply' : 'Post'
+                  <div className="flex justify-between gap-2 items-center">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        className="p-1.5 text-zinc-400 hover:text-brand-orange hover:bg-zinc-800/60 rounded-xl cursor-pointer transition-colors flex items-center gap-1.5 text-xs font-semibold"
+                        title="Insert Emoji"
+                      >
+                        <Smile className="w-4.5 h-4.5" />
+                        <span className="text-[11px] text-zinc-400">Emoji</span>
+                      </button>
+
+                      <EmojiPickerPopover
+                        isOpen={showEmojiPicker}
+                        onClose={() => setShowEmojiPicker(false)}
+                        onEmojiSelect={(emoji) => {
+                          setCommentInput(commentInput + emoji);
+                          setShowEmojiPicker(false);
+                          document.getElementById('episode-comment-input')?.focus();
+                        }}
+                        position="top-left"
+                      />
+                    </div>
+
+                    <div className="flex gap-2 items-center">
+                      {replyingToComment && (
+                        <button className="border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-[10px] py-2 px-4 rounded-xl cursor-pointer transition-all" onClick={() => setReplyingToComment(null)}>Cancel</button>
                       )}
-                    </button>
+                      <button 
+                        className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-[10px] py-2 px-4 rounded-xl cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-md disabled:opacity-50"
+                        onClick={() => {
+                          handleEpisodeInteract('comment', commentInput, replyingToComment?.id);
+                          setMentionSearchText(null);
+                          const el = document.getElementById('episode-comment-input');
+                          if (el) el.style.height = 'auto';
+                        }} 
+                        disabled={!commentInput.trim() || episodeInteracting}
+                      >
+                        {episodeInteracting ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          replyingToComment ? 'Reply' : 'Post'
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : (

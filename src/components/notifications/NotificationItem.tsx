@@ -33,6 +33,10 @@ const TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
   user_banned: <Lock className="w-3 h-3" />,
   user_unbanned: <Unlock className="w-3 h-3" />,
   user_role_updated: <UserPlus className="w-3 h-3" />,
+  moderation_post_pending: <FileText className="w-3 h-3" />,
+  moderation_post_edited: <FileText className="w-3 h-3" />,
+  moderation_suggestion_pending: <FileText className="w-3 h-3" />,
+  moderation_report_pending: <Shield className="w-3 h-3" />,
 };
 
 const TYPE_ACCENT: Record<NotificationType, string> = {
@@ -55,6 +59,10 @@ const TYPE_ACCENT: Record<NotificationType, string> = {
   user_banned: '#ef4444',
   user_unbanned: '#10b981',
   user_role_updated: '#f26522',
+  moderation_post_pending: '#f59e0b',
+  moderation_post_edited: '#f59e0b',
+  moderation_suggestion_pending: '#f59e0b',
+  moderation_report_pending: '#ef4444',
 };
 
 function timeAgo(dateStr: string): string {

@@ -1531,7 +1531,7 @@ const XP_SETTING_METADATA: Record<string, { label: string; desc: string; icon: R
   comment_like:  { label: 'Comment Liked',        desc: 'XP awarded for liking someone else\'s comment.',               icon: <ThumbsUp  className="w-4 h-4" /> },
   daily_login:   { label: 'Daily Login Reward',   desc: 'XP awarded for logging in each day.',                          icon: <CheckCircle className="w-4 h-4" /> },
   streak_bonus:  { label: '7-Day Streak Bonus',   desc: 'Extra XP awarded when user reaches a 7-day login streak.',     icon: <Settings  className="w-4 h-4" /> },
-  game_play:     { label: 'Memory Game Play',     desc: 'XP awarded for completing the single-player match game.',       icon: <Settings  className="w-4 h-4" /> },
+  game_play:     { label: 'Memory Game Play',     desc: 'XP awarded for completing the single-player match game (Limit: 3 daily rewarded wins).',       icon: <Settings  className="w-4 h-4" /> },
   referral:      { label: 'Shared Link Visit',    desc: 'XP awarded when a visitor visits user\'s shared link.',        icon: <Users     className="w-4 h-4" /> },
   surprise_box:  { label: 'Surprise Box Claim',   desc: 'XP awarded when opening the daily surprise box.',              icon: <Settings  className="w-4 h-4" /> },
   poll_vote:     { label: 'Daily Poll Vote',      desc: 'XP awarded for voting in the daily dashboard poll.',            icon: <CheckCircle className="w-4 h-4" /> },

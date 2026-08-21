@@ -700,6 +700,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const epId = params?.id || '';
       path = `/episodes/${epId}`;
     }
+    else if (page === 'post-detail') {
+      const postId = params?.id || '';
+      path = `/post/${postId}`;
+    }
     else if (page === 'community') path = '/chat';
     else if (page === 'games') path = '/games';
     else if (page === 'play-game') {

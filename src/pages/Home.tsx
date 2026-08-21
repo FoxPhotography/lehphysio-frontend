@@ -51,6 +51,7 @@ interface HomeProps {
   hasMorePosts?: boolean;
   isRefreshingFeed?: boolean;
   handleOpenReportModal?: (type: 'post' | 'comment' | 'message', id: number, preview?: string) => void;
+  onOpenComments?: (postId: number, authorName?: string) => void;
 }
 
 export const Home: React.FC<HomeProps> = ({
@@ -83,7 +84,8 @@ export const Home: React.FC<HomeProps> = ({
   isLoadingOlderPosts = false,
   hasMorePosts = true,
   isRefreshingFeed = false,
-  handleOpenReportModal
+  handleOpenReportModal,
+  onOpenComments,
 }) => {
   const activeStreak = user?.streak_count || 0;
   const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
@@ -488,6 +490,7 @@ export const Home: React.FC<HomeProps> = ({
                 showToast={showToast}
                 handleOpenReportModal={handleOpenReportModal}
                 triggerXpPopup={triggerXpPopup}
+                onOpenComments={onOpenComments}
               />
             ))
           )}

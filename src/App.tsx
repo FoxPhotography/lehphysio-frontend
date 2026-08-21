@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { playChatSound, getNameColor, getLocalDateString } from './utils/helpers';
+import { playChatSound, getNameColor, getLocalDateString, copyToClipboard } from './utils/helpers';
 import { ShieldAlert, AlertTriangle } from 'lucide-react';
 
 // Services
@@ -25,6 +25,7 @@ import { useAppAuth } from './hooks/useAppAuth';
 // Layout & Routing
 import { MainLayout } from './layouts/MainLayout';
 import { AppRouter } from './routes/router';
+import { CommentsSlideUpPanel } from './components/home/CommentsSlideUpPanel';
 
 const getUserId = (user: any, token: string): string | null => {
   if (user?.id) return String(user.id);
@@ -175,6 +176,58 @@ function InnerApp() {
   const [moderationAction, setModerationAction] = useState('mute');
   const [moderationDuration, setModerationDuration] = useState('1d');
 
+  // Post Details & Comments Sheet State
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+  const [activeCommentsPost, setActiveCommentsPost] = useState<{ id: number; author?: string } | null>(null);
+  const [isCommentsPanelOpen, setIsCommentsPanelOpen] = useState(false);
+
+  const handleOpenCommentsPanel = (postId: number, authorName?: string) => {
+    setActiveCommentsPost({ id: postId, author: authorName });
+    setIsCommentsPanelOpen(true);
+  };
+
+  const handleCloseCommentsPanel = () => {
+    setIsCommentsPanelOpen(false);
+  };
+
+  const handleCommentCountChange = (postId: number, delta: number) => {
+    setCommunityPosts(prev => prev.map(p => 
+      p.id === postId ? { ...p, comments_count: Math.max(0, (p.comments_count || 0) + delta) } : p
+    ));
+    setNewsPosts(prev => prev.map(p => 
+      p.id === postId ? { ...p, comments_count: Math.max(0, (p.comments_count || 0) + delta) } : p
+    ));
+  };
+
+  const handleSharePost = async (postId: number) => {
+    const ref = user ? user.username : '';
+    const shareLink = `${window.location.origin}/post/${postId}${ref ? '?ref=' + ref : ''}`;
+    const targetPost = communityPosts.find(p => p.id === postId) || newsPosts.find(p => p.id === postId);
+    const postTitle = targetPost?.title || 'LehPhysio Community Post';
+    const postText = targetPost?.content ? `${targetPost.content.substring(0, 100)}...` : 'Check out this post on LehPhysio!';
+
+    // Always copy link to clipboard reliably
+    try {
+      await copyToClipboard(shareLink);
+      showToast('Post link copied to clipboard! 🔗');
+    } catch {
+      showToast('Post link copied to clipboard! 🔗');
+    }
+
+    // Open native share sheet on mobile or desktop browsers if supported
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: postTitle,
+          text: postText,
+          url: shareLink
+        });
+      } catch {
+        // Share cancelled or closed by user
+      }
+    }
+  };
+
   // Hooks bindings
   const [communityTab, setCommunityTab] = useState<'feed' | 'chat'>('feed');
   const chatHook = useChat(communityTab);
@@ -185,10 +238,12 @@ function InnerApp() {
     setCurrentPage,
     setCommunityTab,
     setSelectedEpisodeId,
+    setSelectedPostId,
     setEpisodeDetailLoading,
     fetchEpisodeDetail,
     gamesHook,
     showToast,
+    openCommentsPanel: handleOpenCommentsPanel,
   });
 
   // Initial Fetching & Routing Setup
@@ -1801,6 +1856,9 @@ function InnerApp() {
         handleLikePost={handleLikePost}
         handleDeletePost={handleDeletePost}
         handleCancelPostRevision={handleCancelPostRevision}
+        selectedPostId={selectedPostId}
+        onOpenComments={handleOpenCommentsPanel}
+        handleSharePost={handleSharePost}
         episodes={episodes}
         handleLikeEpisode={handleLikeEpisode}
         handleShareEpisode={handleShareEpisode}
@@ -1886,6 +1944,18 @@ function InnerApp() {
         handleAdminDeleteUser={handleAdminDeleteUser}
         apiBase={API_BASE}
         handleOpenReportModal={handleOpenReportModal}
+      />
+      <CommentsSlideUpPanel
+        isOpen={isCommentsPanelOpen}
+        onClose={handleCloseCommentsPanel}
+        postId={activeCommentsPost?.id || null}
+        postAuthorName={activeCommentsPost?.author}
+        user={user}
+        usernames={usernamesDirectory}
+        triggerXpPopup={triggerXpPopup}
+        showToast={showToast}
+        handleOpenReportModal={handleOpenReportModal}
+        onCommentCountChange={handleCommentCountChange}
       />
       {renderModerationModal()}
       {renderReportModal()}

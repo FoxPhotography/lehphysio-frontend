@@ -37,6 +37,7 @@ interface NewsProps {
   setCurrentPage: (page: string) => void;
   showToast: (msg: string) => void;
   equippedFrame?: string;
+  onOpenComments?: (postId: number, authorName?: string) => void;
 }
 
 const stripEmojis = (str: string) => {
@@ -54,7 +55,8 @@ export const News: React.FC<NewsProps> = ({
   handleEditPost,
   setCurrentPage,
   showToast,
-  equippedFrame
+  equippedFrame,
+  onOpenComments,
 }) => {
   // Composer states (only for Admin publishing news directly from News Page)
   const [newPostContent, setNewPostContent] = useState('');
@@ -568,7 +570,13 @@ export const News: React.FC<NewsProps> = ({
                 </button>
 
                 <button
-                  onClick={() => toggleComments(post.id)}
+                  onClick={() => {
+                    if (onOpenComments) {
+                      onOpenComments(post.id, post.username);
+                    } else {
+                      toggleComments(post.id);
+                    }
+                  }}
                   className={`flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer border-none bg-transparent outline-none ${
                     expandedComments[post.id] !== undefined ? 'text-brand-orange' : 'text-zinc-500 hover:text-brand-orange'
                   }`}

@@ -282,7 +282,7 @@ export const Games: React.FC<GamesProps> = ({
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-zinc-900/60">
                   <span className="text-[11px] font-extrabold text-brand-orange bg-brand-orange/10 px-2 py-0.5 rounded-full">
-                    +{xpSettings.game_play || 50} XP
+                    +{xpSettings.game_play || 20} XP (Max 3/day)
                   </span>
                   <button 
                     className="bg-zinc-900 border border-zinc-800 text-white font-extrabold text-[10px] py-2 px-4 rounded-xl cursor-pointer hover:border-brand-orange hover:bg-brand-orange/5 active:scale-95 transition-all flex items-center gap-1"
