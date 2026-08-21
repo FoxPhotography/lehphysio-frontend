@@ -731,8 +731,8 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           ))}
         </div>
 
-        {/* Show Chat ONLY during Intermission (Between Rounds) */}
-        {room.roundWinner && renderChatBox('130px')}
+        {/* Live Answer Feed & Chat */}
+        {renderChatBox('140px')}
       </div>
     );
   }
