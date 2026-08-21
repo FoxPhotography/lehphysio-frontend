@@ -27,6 +27,7 @@ import {
   Search,
   Calendar,
   Clock,
+  Sparkles,
 } from 'lucide-react';
 import { setFramesCache } from '../utils/helpers';
 import { API_BASE } from '../services/api';
@@ -799,12 +800,25 @@ export const Admin: React.FC<AdminProps> = ({
 
               {/* Secret Code Section */}
               <div className="rounded-xl border border-dashed border-white/15 bg-white/2 p-4 space-y-3">
-                <p className="text-[12px] font-black text-orange-400 flex items-center gap-1.5">
-                  <Key className="w-4 h-4" /> Episode Secret Code (Optional)
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-[12px] font-black text-orange-400 flex items-center gap-1.5">
+                    <Key className="w-4 h-4" /> Episode Secret Code (Optional)
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const rand = Math.floor(1000 + Math.random() * 9000);
+                      setAdminEpisodeForm((p: any) => ({ ...p, code: `EP-${rand}` }));
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-400 hover:bg-orange-500/25 text-[11px] font-bold cursor-pointer transition-colors"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>Generate Code</span>
+                  </button>
+                </div>
                 <AdminInput
                   label="Code Name"
-                  placeholder="EPXX_SECRET"
+                  placeholder="e.g. EP-4892"
                   value={adminEpisodeForm.code || ''}
                   onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code: e.target.value }))}
                 />
@@ -893,13 +907,31 @@ export const Admin: React.FC<AdminProps> = ({
             <SectionTitle icon={<Key className="w-4 h-4" />} label="Create XP Code" />
             <form onSubmit={handleAdminCreateCode} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <AdminInput
-                  label="Code Name"
-                  placeholder="FACEBOOK50"
-                  value={adminCodeForm.code}
-                  onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, code: e.target.value }))}
-                  required
-                />
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Code Name</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const prefix = adminCodeForm.type === 'episode' ? 'EP' : 'LEH';
+                        const rand = Math.floor(1000 + Math.random() * 9000);
+                        setAdminCodeForm((p: any) => ({ ...p, code: `${prefix}-${rand}` }));
+                      }}
+                      className="flex items-center gap-1 text-[11px] font-bold text-orange-400 hover:text-orange-300 cursor-pointer"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>Generate</span>
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="e.g. LEH-4921"
+                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 text-[13px] focus:outline-none focus:border-orange-500/60 transition-colors font-bold uppercase"
+                    value={adminCodeForm.code}
+                    onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, code: e.target.value }))}
+                    required
+                  />
+                </div>
                 <AdminInput
                   label="XP Amount"
                   type="number"
@@ -908,14 +940,15 @@ export const Admin: React.FC<AdminProps> = ({
                   required
                 />
               </div>
-              <div className="grid grid-cols-3 gap-3">
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <AdminSelect
                   label="Type"
                   value={adminCodeForm.type}
                   onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, type: e.target.value }))}
                 >
-                  <option value="social" className="bg-zinc-900">Social Media</option>
-                  <option value="episode" className="bg-zinc-900">Episode</option>
+                  <option value="social" className="bg-zinc-900">Social Media / Global</option>
+                  <option value="episode" className="bg-zinc-900">Episode Code</option>
                 </AdminSelect>
                 <AdminInput
                   label="Max Uses"
@@ -931,6 +964,22 @@ export const Admin: React.FC<AdminProps> = ({
                   onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, expiry_date: e.target.value }))}
                 />
               </div>
+
+              {adminCodeForm.type === 'episode' && (
+                <AdminSelect
+                  label="Target Episode (Code will only work in this episode or in the shop)"
+                  value={adminCodeForm.episode_id || ''}
+                  onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, episode_id: e.target.value }))}
+                >
+                  <option value="" className="bg-zinc-900">Universal Episode Code (Any Episode)</option>
+                  {episodes.map((ep: any) => (
+                    <option key={ep.id} value={ep.id} className="bg-zinc-900">
+                      Episode #{ep.id}: {ep.title_en || ep.title_ar}
+                    </option>
+                  ))}
+                </AdminSelect>
+              )}
+
               <AdminBtn type="submit" disabled={adminSubmitting} className="w-full justify-center">
                 <Plus className="w-4 h-4" /> Create Code
               </AdminBtn>
@@ -940,12 +989,12 @@ export const Admin: React.FC<AdminProps> = ({
           <SectionCard>
             <SectionTitle icon={<Key className="w-4 h-4" />} label="All XP Codes" count={adminCodes.length} />
             <div className="overflow-x-auto">
-              <table className="w-full text-[12px] min-w-[520px]">
+              <table className="w-full text-[12px] min-w-[560px]">
                 <thead>
                   <tr className="border-b border-white/8 text-left text-zinc-500">
                     <th className="pb-2 pr-3 font-bold">Code</th>
                     <th className="pb-2 pr-3 font-bold">XP</th>
-                    <th className="pb-2 pr-3 font-bold">Type</th>
+                    <th className="pb-2 pr-3 font-bold">Type / Target</th>
                     <th className="pb-2 pr-3 font-bold">Uses</th>
                     <th className="pb-2 pr-3 font-bold">Expires</th>
                     <th className="pb-2 font-bold text-center">Action</th>
@@ -960,9 +1009,25 @@ export const Admin: React.FC<AdminProps> = ({
                     const isExpired = c.expiry_date && new Date(c.expiry_date) < new Date();
                     return (
                       <tr key={c.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
-                        <td className="py-2.5 pr-3 font-bold text-white">{c.code}</td>
+                        <td className="py-2.5 pr-3 font-bold text-white font-mono">{c.code}</td>
                         <td className="py-2.5 pr-3 text-orange-400 font-bold">+{c.xp_reward}</td>
-                        <td className="py-2.5 pr-3 capitalize text-zinc-400">{c.type}</td>
+                        <td className="py-2.5 pr-3 text-zinc-300">
+                          {c.type === 'episode' ? (
+                            c.episode_id ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-bold">
+                                Episode #{c.episode_id}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/30 text-blue-300 text-[11px] font-bold">
+                                Episode (Any)
+                              </span>
+                            )
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400 text-[11px] font-bold">
+                              Social Media
+                            </span>
+                          )}
+                        </td>
                         <td className="py-2.5 pr-3 text-zinc-400">{c.current_uses}/{c.max_uses}</td>
                         <td className={`py-2.5 pr-3 ${isExpired ? 'text-red-400' : 'text-zinc-400'}`}>
                           {c.expiry_date ? new Date(c.expiry_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Never'}

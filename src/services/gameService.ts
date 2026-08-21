@@ -66,10 +66,10 @@ export const gameService = {
     return res;
   },
 
-  async redeemXpCode(code: string, token?: string) {
+  async redeemXpCode(code: string, token?: string, episodeId?: number) {
     const res = await apiFetch('/api/xp-codes/redeem', {
       method: 'POST',
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code, episode_id: episodeId }),
     }, token);
     return res;
   },

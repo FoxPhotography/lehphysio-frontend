@@ -38,7 +38,7 @@ interface EpisodeDetailProps {
   handleQuizSubmit: (quizId: number) => void;
   redeemError: string;
   redeemSuccess: string;
-  handleRedeem: (e: React.FormEvent) => void;
+  handleRedeem: (e: React.FormEvent, episodeId?: number) => void;
   secretCode: string;
   setSecretCode: (code: string) => void;
   quizAnswer: number | null;
@@ -251,7 +251,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
             <p className="text-[10px] text-zinc-500 font-semibold mt-1">Enter the secret code hidden in the specific minute to get XP.</p>
           </div>
 
-          <form onSubmit={handleRedeem} className="space-y-3.5">
+          <form onSubmit={(e) => handleRedeem(e, episode?.id)} className="space-y-3.5">
             {redeemError && (
               <div className="text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/20 p-2.5 rounded-xl flex items-center gap-1.5">
                 <AlertCircle className="w-4 h-4 shrink-0" />

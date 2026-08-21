@@ -167,7 +167,7 @@ function InnerApp() {
   });
   const [adminSubmitting, setAdminSubmitting] = useState(false);
   const [adminMessage, setAdminMessage] = useState('');
-  const [adminCodeForm, setAdminCodeForm] = useState({ code: '', xp_reward: 50, type: 'social', max_uses: 1000, expiry_date: '' });
+  const [adminCodeForm, setAdminCodeForm] = useState({ code: '', xp_reward: 50, type: 'social', episode_id: '', max_uses: 1000, expiry_date: '' });
   const [adminSuggestions, setAdminSuggestions] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
 
@@ -608,6 +608,7 @@ function InnerApp() {
         code: adminCodeForm.code,
         xp_reward: Number(adminCodeForm.xp_reward),
         type: adminCodeForm.type,
+        episode_id: adminCodeForm.type === 'episode' && adminCodeForm.episode_id ? Number(adminCodeForm.episode_id) : null,
         max_uses: Number(adminCodeForm.max_uses),
         expiry_date: adminCodeForm.expiry_date || null
       }, token);
@@ -616,7 +617,7 @@ function InnerApp() {
       if (res.ok) {
         showToast('XP Code created successfully! 🔑');
         fetchAdminCodes();
-        setAdminCodeForm({ code: '', xp_reward: 50, type: 'social', max_uses: 1000, expiry_date: '' });
+        setAdminCodeForm({ code: '', xp_reward: 50, type: 'social', episode_id: '', max_uses: 1000, expiry_date: '' });
       }
     } catch (err) {
       setAdminMessage('Failed to connect to the server.');
@@ -906,8 +907,8 @@ function InnerApp() {
     }
   };
 
-  const handleRedeem = async (e: any) => {
-    e.preventDefault();
+  const handleRedeem = async (e: any, episodeId?: number) => {
+    if (e && e.preventDefault) e.preventDefault();
     setRedeemError('');
     setRedeemSuccess('');
     if (!token) {
@@ -915,7 +916,7 @@ function InnerApp() {
       return;
     }
     try {
-      const res = await gameService.redeemXpCode(secretCode, token);
+      const res = await gameService.redeemXpCode(secretCode, token, episodeId);
       const data = await res.json();
       if (res.ok) {
         setRedeemSuccess(data.message);
