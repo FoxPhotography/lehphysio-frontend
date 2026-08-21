@@ -179,7 +179,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   const [showChatEmojiPicker, setShowChatEmojiPicker] = useState(false);
   const [confettiActive, setConfettiActive] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
-  const chatInputRef = useRef<HTMLInputElement | null>(null);
+  const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
   const prevWinnerRef = useRef<string | null>(null);
   const prevStatusRef = useRef<string | null>(null);
 
@@ -266,6 +266,9 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     if (!chatMessage.trim() || !token) return;
     const msg = chatMessage;
     setChatMessage('');
+    if (chatInputRef.current) {
+      chatInputRef.current.style.height = 'auto';
+    }
     try {
       const res = await fetch(`${apiBase}/api/games/chat`, {
         method: 'POST',
@@ -308,9 +311,9 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   };
 
   // ─── Clean Room Chat Box ───────────────────────────────────────────────────────
-  const renderChatBox = (maxH = '140px') => (
-    <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/40 backdrop-blur-md p-3 text-left">
-      <div className="flex items-center justify-between mb-2 px-1">
+  const renderChatBox = (maxH = '130px') => (
+    <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/40 backdrop-blur-md p-3 text-left flex flex-col shrink-0">
+      <div className="flex items-center justify-between mb-1.5 px-1">
         <div className="flex items-center gap-1.5">
           <MessageSquare className="w-3.5 h-3.5 text-zinc-400" />
           <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">Room Chat</span>
@@ -322,8 +325,8 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         style={{ maxHeight: maxH }}
       >
         {(!room.answersLog || room.answersLog.length === 0) ? (
-          <div className="text-zinc-600 text-[11px] font-semibold py-3 text-center">
-            No messages yet. Say hi to players! 👋
+          <div className="text-zinc-600 text-[11px] font-semibold py-2.5 text-center">
+            No messages yet. Say hi or guess the structure! 👋
           </div>
         ) : (
           room.answersLog.map((log: any, idx: number) => (
@@ -348,18 +351,40 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         <div ref={chatEndRef} />
       </div>
 
-      <form onSubmit={handleSendChatMessage} className="flex gap-2 items-center">
-        <div className="flex-1 relative flex items-center">
-          <input
+      <form onSubmit={handleSendChatMessage} autoComplete="off" data-lpignore="true" data-form-type="other" className="flex gap-2 items-end">
+        <div className="flex-1 relative flex items-center bg-zinc-950 border border-zinc-800 focus-within:border-brand-orange/60 rounded-xl px-3 py-1 transition-colors min-h-[44px]">
+          <textarea
             ref={chatInputRef}
-            type="text"
-            className="w-full px-3.5 py-2 pr-9 text-[13px] rounded-xl bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-brand-orange/60 transition-colors font-medium"
-            placeholder={room.status === 'playing' && !room.roundWinner ? "Type your guess or message in English..." : "Type a message..."}
+            dir="auto"
+            rows={1}
+            autoComplete="off"
+            autoCorrect="on"
+            autoCapitalize="sentences"
+            spellCheck="true"
+            inputMode="text"
+            enterKeyHint="send"
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            className="w-full bg-transparent text-[14px] text-white placeholder-zinc-500 focus:outline-none resize-none overflow-y-auto leading-relaxed py-1.5 pr-8 min-h-[32px] max-h-[85px] font-medium"
+            placeholder={room.status === 'playing' && !room.roundWinner ? "Type your guess or message..." : "Type a message..."}
             value={chatMessage}
-            onChange={(e) => setChatMessage(e.target.value)}
+            onChange={(e) => {
+              setChatMessage(e.target.value);
+              e.target.style.height = 'auto';
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 85)}px`;
+            }}
             onFocus={() => setShowChatEmojiPicker(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const form = e.currentTarget.form;
+                if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+              }
+            }}
           />
-          <div className="absolute right-1">
+          <div className="absolute right-1.5 bottom-1.5">
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
@@ -385,7 +410,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           type="submit"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-[13px] flex items-center justify-center hover:opacity-90 transition-all shrink-0 cursor-pointer shadow-md"
+          className="h-11 w-11 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-[13px] flex items-center justify-center hover:opacity-90 transition-all shrink-0 cursor-pointer shadow-md mb-0.5"
         >
           <Send className="w-4 h-4" />
         </motion.button>
@@ -407,6 +432,8 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             input.selectionStart = newCursor;
             input.selectionEnd = newCursor;
             setChatMessage(nextVal);
+            input.style.height = 'auto';
+            input.style.height = `${Math.min(input.scrollHeight, 85)}px`;
           } else {
             setChatMessage((prev) => prev + emoji);
           }
@@ -567,7 +594,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     const timerColor = timeLeft <= 5 ? 'text-red-400 animate-pulse' : timeLeft <= 10 ? 'text-amber-400' : 'text-white';
 
     return (
-      <div className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-20 px-4 max-w-xl mx-auto text-left space-y-4">
+      <div className="w-full max-w-xl mx-auto text-left pt-20 xl:pt-8 pb-8 px-4 flex flex-col space-y-3">
         <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
 
         {/* Top Arena Header Bar */}
