@@ -4,6 +4,7 @@ import { getNameColor, getFrameImage } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
 import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
 import { useNotifications } from '../context/NotificationContext';
+import { formatMentions } from '../utils/mentions';
 import { 
   MessageSquare, 
   Lightbulb, 
@@ -289,18 +290,7 @@ export const Community: React.FC<CommunityProps> = ({
   }, []);
 
   const renderTextWithMentions = (text: string) => {
-    if (!text) return '';
-    const parts = text.split(/(@\w+)/g);
-    return parts.map((part, idx) => {
-      if (part.startsWith('@')) {
-        return (
-          <span key={idx} className="text-yellow-400 font-extrabold">
-            {part}
-          </span>
-        );
-      }
-      return part;
-    });
+    return formatMentions(text, usernames, 'text-yellow-400 font-extrabold hover:underline cursor-pointer transition-colors');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

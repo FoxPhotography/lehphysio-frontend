@@ -4,6 +4,7 @@ import { HighlightWrapper } from '../notifications/HighlightWrapper';
 import { UserAvatar } from '../UserAvatar';
 import { Loader2, CornerUpLeft, X, Heart, MoreVertical, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { API_BASE } from '../../services/api';
+import { formatMentions } from '../../utils/mentions';
 
 interface CommentsSectionProps {
   postId: number;
@@ -260,18 +261,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
   };
 
   const renderTextWithMentions = (text: string) => {
-    if (!text) return '';
-    const parts = text.split(/(@\w+)/g);
-    return parts.map((part, idx) => {
-      if (part.startsWith('@')) {
-        return (
-          <span key={idx} className="text-yellow-400 font-extrabold">
-            {part}
-          </span>
-        );
-      }
-      return part;
-    });
+    return formatMentions(text, usernames, 'text-yellow-400 font-extrabold hover:underline cursor-pointer transition-colors');
   };
 
   if (!isExpanded) return null;

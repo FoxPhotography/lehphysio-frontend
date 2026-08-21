@@ -16,8 +16,8 @@ import {
   ChevronDown,
   Smile
 } from 'lucide-react';
-import { EmojiPickerPopover } from '../common/EmojiPickerPopover';
 import { communityService } from '../../services/communityService';
+import { formatMentions } from '../../utils/mentions';
 
 interface CommentItem {
   id: number;
@@ -352,18 +352,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
 
   // Render text with highlight mentions
   const renderFormattedText = (text: string) => {
-    if (!text) return '';
-    const parts = text.split(/(@\w+)/g);
-    return parts.map((part, idx) => {
-      if (part.startsWith('@')) {
-        return (
-          <span key={idx} className="text-brand-orange font-extrabold hover:underline cursor-pointer">
-            {part}
-          </span>
-        );
-      }
-      return part;
-    });
+    return formatMentions(text, usernames, 'text-brand-orange font-extrabold hover:underline cursor-pointer transition-colors');
   };
 
   // Render a single comment row

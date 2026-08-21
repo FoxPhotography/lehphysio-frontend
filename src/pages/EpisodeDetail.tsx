@@ -23,6 +23,7 @@ import {
   Smile
 } from 'lucide-react';
 import { EmojiPickerPopover } from '../components/common/EmojiPickerPopover';
+import { formatMentions } from '../utils/mentions';
 import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
 import { useNotifications } from '../context/NotificationContext';
 
@@ -142,18 +143,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
   }, [comments, deepLinkTarget, setDeepLinkTarget]);
 
   const renderTextWithMentions = (text: string) => {
-    if (!text) return '';
-    const parts = text.split(/(@\w+)/g);
-    return parts.map((part, idx) => {
-      if (part.startsWith('@')) {
-        return (
-          <span key={idx} className="text-yellow-400 font-extrabold">
-            {part}
-          </span>
-        );
-      }
-      return part;
-    });
+    return formatMentions(text, usernames, 'text-yellow-400 font-extrabold hover:underline cursor-pointer transition-colors');
   };
 
   if (episodeDetailLoading) {
