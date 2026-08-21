@@ -3,12 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { HighlightWrapper } from '../notifications/HighlightWrapper';
 import { UserAvatar } from '../UserAvatar';
 import { Loader2, CornerUpLeft, X, Heart, MoreVertical, Edit2, Trash2, AlertTriangle } from 'lucide-react';
-
-const API_BASE = import.meta.env.VITE_API_BASE || (
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') 
-    ? `http://${window.location.hostname}:5000` 
-    : ''
-);
+import { API_BASE } from '../../services/api';
 
 interface CommentsSectionProps {
   postId: number;
