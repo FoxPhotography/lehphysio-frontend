@@ -492,7 +492,20 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                         isOpen={showEmojiPicker}
                         onClose={() => setShowEmojiPicker(false)}
                         onEmojiSelect={(emoji) => {
-                          setCommentInput(commentInput + emoji);
+                          const textarea = document.getElementById('episode-comment-input') as HTMLTextAreaElement | null;
+                          if (textarea) {
+                            const start = textarea.selectionStart ?? textarea.value.length;
+                            const end = textarea.selectionEnd ?? textarea.value.length;
+                            const currentVal = textarea.value;
+                            const nextVal = currentVal.substring(0, start) + emoji + currentVal.substring(end);
+                            textarea.value = nextVal;
+                            const newCursor = start + emoji.length;
+                            textarea.selectionStart = newCursor;
+                            textarea.selectionEnd = newCursor;
+                            setCommentInput(nextVal);
+                          } else {
+                            setCommentInput((prev: any) => (prev || '') + emoji);
+                          }
                         }}
                         position="top-left"
                       />

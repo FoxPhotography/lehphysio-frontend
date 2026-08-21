@@ -748,7 +748,20 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                       isOpen={showEmojiPicker}
                       onClose={() => setShowEmojiPicker(false)}
                       onEmojiSelect={(emoji) => {
-                        handleAddEmoji(emoji);
+                        if (inputRef.current) {
+                          const input = inputRef.current;
+                          const start = input.selectionStart ?? input.value.length;
+                          const end = input.selectionEnd ?? input.value.length;
+                          const currentVal = input.value;
+                          const nextVal = currentVal.substring(0, start) + emoji + currentVal.substring(end);
+                          input.value = nextVal;
+                          const newCursor = start + emoji.length;
+                          input.selectionStart = newCursor;
+                          input.selectionEnd = newCursor;
+                          setCommentText(nextVal);
+                        } else {
+                          setCommentText((prev) => prev + emoji);
+                        }
                       }}
                       position="top-right"
                     />

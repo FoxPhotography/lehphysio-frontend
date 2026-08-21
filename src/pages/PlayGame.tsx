@@ -396,7 +396,20 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         isOpen={showChatEmojiPicker}
         onClose={() => setShowChatEmojiPicker(false)}
         onEmojiSelect={(emoji) => {
-          setChatMessage((prev) => prev + emoji);
+          if (chatInputRef.current) {
+            const input = chatInputRef.current;
+            const start = input.selectionStart ?? input.value.length;
+            const end = input.selectionEnd ?? input.value.length;
+            const currentVal = input.value;
+            const nextVal = currentVal.substring(0, start) + emoji + currentVal.substring(end);
+            input.value = nextVal;
+            const newCursor = start + emoji.length;
+            input.selectionStart = newCursor;
+            input.selectionEnd = newCursor;
+            setChatMessage(nextVal);
+          } else {
+            setChatMessage((prev) => prev + emoji);
+          }
         }}
         variant="drawer"
         height={260}

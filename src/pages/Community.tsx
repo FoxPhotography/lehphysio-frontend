@@ -48,7 +48,7 @@ interface CommunityProps {
   editingMessage: any;
   setEditingMessage: (val: any) => void;
   chatInput: string;
-  setChatInput: (val: string) => void;
+  setChatInput: (val: string | ((prev: string) => string)) => void;
   handleSendChatMessage: (e: React.FormEvent) => void;
   setCurrentPage: (page: string) => void;
   activeContextMenu: any;
@@ -352,6 +352,23 @@ export const Community: React.FC<CommunityProps> = ({
         inputEl.setSelectionRange(selectionStart, selectionStart);
       }
     }, 50);
+  };
+
+  const handleInsertEmoji = (emoji: string) => {
+    const textarea = document.getElementById('community-chat-input') as HTMLTextAreaElement | null;
+    if (textarea) {
+      const start = textarea.selectionStart ?? textarea.value.length;
+      const end = textarea.selectionEnd ?? textarea.value.length;
+      const currentVal = textarea.value;
+      const nextVal = currentVal.substring(0, start) + emoji + currentVal.substring(end);
+      textarea.value = nextVal;
+      const newCursor = start + emoji.length;
+      textarea.selectionStart = newCursor;
+      textarea.selectionEnd = newCursor;
+      setChatInput(nextVal);
+    } else {
+      setChatInput((prev: string) => (prev || '') + emoji);
+    }
   };
 
   const submitSuggestion = (e: React.FormEvent) => {
@@ -821,9 +838,7 @@ export const Community: React.FC<CommunityProps> = ({
               <EmojiPickerPopover
                 isOpen={showChatEmojiPicker}
                 onClose={() => setShowChatEmojiPicker(false)}
-                onEmojiSelect={(emoji) => {
-                  setChatInput(chatInput + emoji);
-                }}
+                onEmojiSelect={handleInsertEmoji}
                 variant="drawer"
                 height={280}
               />
