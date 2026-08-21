@@ -711,6 +711,17 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                     <input
                       ref={inputRef}
                       type="text"
+                      dir="auto"
+                      autoComplete="off"
+                      autoCorrect="on"
+                      autoCapitalize="sentences"
+                      spellCheck="true"
+                      inputMode="text"
+                      enterKeyHint="send"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
+                      data-form-type="other"
                       value={commentText}
                       onChange={handleInputChange}
                       onFocus={() => setShowEmojiPicker(false)}

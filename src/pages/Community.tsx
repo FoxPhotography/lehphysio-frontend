@@ -750,15 +750,26 @@ export const Community: React.FC<CommunityProps> = ({
                     const el = document.getElementById('community-chat-input');
                     if (el) el.style.height = 'auto';
                   }}
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-form-type="other"
                   className="flex gap-2.5 items-end py-2"
                 >
                   <div className="flex-1 relative flex items-center bg-zinc-900/40 border border-zinc-800/80 focus-within:border-brand-orange/60 focus-within:ring-1 focus-within:ring-brand-orange/20 rounded-2xl transition-all duration-200 px-3.5 gap-2">
                     <textarea
                       id="community-chat-input"
                       name="chatMessage"
+                      dir="auto"
                       autoComplete="off"
                       autoCorrect="on"
+                      autoCapitalize="sentences"
                       spellCheck="true"
+                      inputMode="text"
+                      enterKeyHint="send"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
+                      data-form-type="other"
                       className="w-full bg-transparent text-white py-2.5 text-xs md:text-sm font-semibold placeholder-zinc-500 outline-none resize-none min-h-[40px] max-h-[140px] leading-relaxed"
                       placeholder={editingMessage ? "Edit your message here..." : "Type a message..."}
                       value={chatInput}

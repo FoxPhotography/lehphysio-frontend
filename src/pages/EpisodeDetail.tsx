@@ -369,6 +369,17 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                   )}
                   <textarea
                     id="episode-comment-input"
+                    dir="auto"
+                    autoComplete="off"
+                    autoCorrect="on"
+                    autoCapitalize="sentences"
+                    spellCheck="true"
+                    inputMode="text"
+                    enterKeyHint="send"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-bwignore="true"
+                    data-form-type="other"
                     className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl p-3.5 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none min-h-[50px] maxHeight-[120px]"
                     placeholder={replyingToComment ? `Reply to @${replyingToComment.username}...` : "Add your medical insight here..."}
                     value={commentInput}
