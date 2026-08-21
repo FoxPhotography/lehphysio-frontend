@@ -121,9 +121,9 @@ interface PlayGameProps {
   user: any;
   handleLeaveGameRoom: () => void;
   handleStartGame: () => void;
-  handleSubmitGameAnswer: (e: React.FormEvent) => void;
-  submittedGameAnswer: string;
-  setSubmittedGameAnswer: (val: string) => void;
+  handleSubmitGameAnswer?: (e: React.FormEvent) => void;
+  submittedGameAnswer?: string;
+  setSubmittedGameAnswer?: (val: string) => void;
   handleNextRound: () => void;
   handlePlayAgain: () => void;
   showToast: (msg: string) => void;
@@ -165,9 +165,6 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   user,
   handleLeaveGameRoom,
   handleStartGame,
-  handleSubmitGameAnswer,
-  submittedGameAnswer,
-  setSubmittedGameAnswer,
   handleNextRound,
   handlePlayAgain,
   showToast,
@@ -178,10 +175,43 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   const [chatMessage, setChatMessage] = useState('');
   const [showChatEmojiPicker, setShowChatEmojiPicker] = useState(false);
   const [confettiActive, setConfettiActive] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
   const prevWinnerRef = useRef<string | null>(null);
   const prevStatusRef = useRef<string | null>(null);
+
+  // Track exact visual viewport height for tight mobile keyboard docking
+  useEffect(() => {
+    if (!window.visualViewport) return undefined;
+
+    const handleResize = () => {
+      if (window.visualViewport) {
+        setViewportHeight(window.visualViewport.height);
+      }
+    };
+
+    window.visualViewport.addEventListener('resize', handleResize);
+    window.visualViewport.addEventListener('scroll', handleResize);
+    setViewportHeight(window.visualViewport.height);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('scroll', handleResize);
+    };
+  }, []);
+
+  // Manage keyboard-open state
+  useEffect(() => {
+    if (isInputFocused && window.innerWidth < 768) {
+      document.body.classList.add('keyboard-open');
+    } else {
+      document.body.classList.remove('keyboard-open');
+    }
+    return () => document.body.classList.remove('keyboard-open');
+  }, [isInputFocused]);
 
   // Local timer ticker
   const [, setTick] = useState(0);
@@ -311,9 +341,9 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   };
 
   // ─── Clean Room Chat Box ───────────────────────────────────────────────────────
-  const renderChatBox = (maxH = '130px') => (
-    <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/40 backdrop-blur-md p-3 text-left flex flex-col shrink-0">
-      <div className="flex items-center justify-between mb-1.5 px-1">
+  const renderChatBox = (isFlex = false) => (
+    <div className={`rounded-2xl border border-zinc-800/70 bg-zinc-900/40 backdrop-blur-md p-3 text-left flex flex-col ${isFlex ? 'flex-1 min-h-0' : 'shrink-0'}`}>
+      <div className="flex items-center justify-between mb-1 px-1 shrink-0">
         <div className="flex items-center gap-1.5">
           <MessageSquare className="w-3.5 h-3.5 text-zinc-400" />
           <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">Room Chat</span>
@@ -321,11 +351,10 @@ export const PlayGame: React.FC<PlayGameProps> = ({
       </div>
 
       <div
-        className="flex flex-col gap-1.5 overflow-y-auto pr-1 mb-2 scrollbar-thin scrollbar-thumb-white/10"
-        style={{ maxHeight: maxH }}
+        className="flex-1 min-h-[50px] max-h-[110px] md:max-h-[150px] flex flex-col gap-1.5 overflow-y-auto pr-1 mb-2 scrollbar-thin scrollbar-thumb-white/10"
       >
         {(!room.answersLog || room.answersLog.length === 0) ? (
-          <div className="text-zinc-600 text-[11px] font-semibold py-2.5 text-center">
+          <div className="text-zinc-600 text-[11px] font-semibold py-2 text-center">
             No messages yet. Say hi or guess the structure! 👋
           </div>
         ) : (
@@ -351,7 +380,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         <div ref={chatEndRef} />
       </div>
 
-      <form onSubmit={handleSendChatMessage} autoComplete="off" data-lpignore="true" data-form-type="other" className="flex gap-2 items-end">
+      <form onSubmit={handleSendChatMessage} autoComplete="off" data-lpignore="true" data-form-type="other" className="flex gap-2 items-end shrink-0">
         <div className="flex-1 relative flex items-center bg-zinc-950 border border-zinc-800 focus-within:border-brand-orange/60 rounded-xl px-3 py-1 transition-colors min-h-[44px]">
           <textarea
             ref={chatInputRef}
@@ -367,15 +396,19 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             data-1p-ignore="true"
             data-bwignore="true"
             data-form-type="other"
-            className="w-full bg-transparent text-[14px] text-white placeholder-zinc-500 focus:outline-none resize-none overflow-y-auto leading-relaxed py-1.5 pr-8 min-h-[32px] max-h-[85px] font-medium"
+            className="w-full bg-transparent text-[14px] text-white placeholder-zinc-500 focus:outline-none resize-none overflow-y-auto leading-relaxed py-1.5 pr-8 min-h-[32px] max-h-[75px] font-medium"
             placeholder={room.status === 'playing' && !room.roundWinner ? "Type your guess or message..." : "Type a message..."}
             value={chatMessage}
             onChange={(e) => {
               setChatMessage(e.target.value);
               e.target.style.height = 'auto';
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 85)}px`;
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 75)}px`;
             }}
-            onFocus={() => setShowChatEmojiPicker(false)}
+            onFocus={() => {
+              setIsInputFocused(true);
+              setShowChatEmojiPicker(false);
+            }}
+            onBlur={() => setIsInputFocused(false)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -433,7 +466,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             input.selectionEnd = newCursor;
             setChatMessage(nextVal);
             input.style.height = 'auto';
-            input.style.height = `${Math.min(input.scrollHeight, 85)}px`;
+            input.style.height = `${Math.min(input.scrollHeight, 75)}px`;
           } else {
             setChatMessage((prev) => prev + emoji);
           }
@@ -447,110 +480,117 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   // ─── WAITING ROOM / LOBBY (FLAT FULL PAGE) ────────────────────────────────────
   if (room.status === 'waiting') {
     return (
-      <div className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-32 px-4 max-w-xl mx-auto text-left space-y-4">
+      <div 
+        className="w-full max-w-xl mx-auto text-left pt-18 xl:pt-8 pb-4 px-3 flex flex-col justify-between overflow-hidden"
+        style={{
+          height: window.innerWidth < 768 ? `${viewportHeight}px` : undefined
+        }}
+      >
         <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
 
-        {/* Top Header Bar */}
-        <div className="flex items-center justify-between gap-3 pt-1">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-[10px] font-extrabold uppercase tracking-wider mb-1">
-              <Loader2 className="w-3 h-3 animate-spin" />
-              <span>Waiting for Players</span>
+        {/* Scrollable upper area */}
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-0.5">
+          {/* Top Header Bar */}
+          <div className="flex items-center justify-between gap-3 pt-0.5">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-[10px] font-extrabold uppercase tracking-wider mb-0.5">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                <span>Waiting for Players</span>
+              </div>
+              <h2 className="text-lg font-black text-white">Anatomy Online Challenge</h2>
             </div>
-            <h2 className="text-xl font-black text-white">Anatomy Online Challenge</h2>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleLeaveGameRoom}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/10 cursor-pointer transition-colors shrink-0"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Leave</span>
+            </motion.button>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={handleLeaveGameRoom}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/10 cursor-pointer transition-colors shrink-0"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Leave</span>
-          </motion.button>
+
+          {/* Room Code Card */}
+          <div className="text-center py-3.5 bg-zinc-900/50 rounded-2xl border border-zinc-800/70">
+            <p className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-widest mb-1">Room Code</p>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={async () => {
+                await copyToClipboard(room.code);
+                showToast(`تم نسخ كود الغرفة: ${room.code} 📋`);
+                playChatSound('success');
+              }}
+              className="inline-flex items-center gap-2.5 px-5 py-2 rounded-2xl bg-zinc-950 border border-zinc-700/80 hover:border-brand-orange text-white cursor-pointer transition-all shadow-md"
+            >
+              <span className="text-2xl font-black tracking-[5px] text-brand-orange font-mono">{room.code}</span>
+              <Copy className="w-4 h-4 text-zinc-400" />
+            </motion.button>
+            <p className="text-[10px] text-zinc-500 mt-1.5 font-medium">Click to copy and share with friends</p>
+          </div>
+
+          {/* Invite Link Bar */}
+          <div className="flex gap-2">
+            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-zinc-900/50 border border-zinc-800/70 min-w-0">
+              <Link className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+              <span className="text-[11px] text-zinc-400 truncate font-mono">{inviteUrl}</span>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleCopyInviteUrl}
+              className="px-3.5 py-2 rounded-xl bg-brand-orange/15 border border-brand-orange/30 text-brand-orange text-xs font-black hover:bg-brand-orange/25 cursor-pointer transition-colors shrink-0"
+            >
+              Copy
+            </motion.button>
+          </div>
+
+          {/* Connected Players Section */}
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <Users className="w-4 h-4 text-brand-orange" />
+              <span className="text-xs font-black text-zinc-200">Connected Players ({room.players.length})</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {room.players.map((p: any) => (
+                <motion.div
+                  key={p.username}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl bg-zinc-900/50 border border-zinc-800/70"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <UserAvatar 
+                      username={p.username} 
+                      avatarUrl={p.avatar_url} 
+                      equippedFrame={p.equipped_frame} 
+                      size={26} 
+                    />
+                    <span className="text-xs font-extrabold text-white truncate">@{p.username}</span>
+                  </div>
+                  {p.username === room.host ? (
+                    <span className="px-1.5 py-0.5 rounded-md bg-brand-orange text-black text-[9px] font-black shrink-0">HOST</span>
+                  ) : (
+                    isHost && (
+                      <button
+                        onClick={() => handleKickPlayer(p.username)}
+                        title="Kick Player"
+                        className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg cursor-pointer transition-colors shrink-0"
+                      >
+                        <UserMinus className="w-3.5 h-3.5" />
+                      </button>
+                    )
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Room Code Card */}
-        <div className="text-center py-5 bg-zinc-900/50 rounded-2xl border border-zinc-800/70">
-          <p className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-widest mb-1.5">Room Code</p>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={async () => {
-              await copyToClipboard(room.code);
-              showToast(`تم نسخ كود الغرفة: ${room.code} 📋`);
-              playChatSound('success');
-            }}
-            className="inline-flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-zinc-950 border border-zinc-700/80 hover:border-brand-orange text-white cursor-pointer transition-all shadow-md"
-          >
-            <span className="text-3xl font-black tracking-[6px] text-brand-orange font-mono">{room.code}</span>
-            <Copy className="w-4 h-4 text-zinc-400" />
-          </motion.button>
-          <p className="text-[11px] text-zinc-500 mt-2 font-medium">Click to copy and share with friends</p>
-        </div>
+        {/* Bottom Area: Chat & Start Button */}
+        <div className="space-y-2 pt-2 shrink-0">
+          {renderChatBox(false)}
 
-        {/* Invite Link Bar */}
-        <div className="flex gap-2">
-          <div className="flex-1 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-zinc-900/50 border border-zinc-800/70 min-w-0">
-            <Link className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-            <span className="text-[11px] text-zinc-400 truncate font-mono">{inviteUrl}</span>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={handleCopyInviteUrl}
-            className="px-4 py-2.5 rounded-xl bg-brand-orange/15 border border-brand-orange/30 text-brand-orange text-xs font-black hover:bg-brand-orange/25 cursor-pointer transition-colors shrink-0"
-          >
-            Copy
-          </motion.button>
-        </div>
-
-        {/* Connected Players Section */}
-        <div>
-          <div className="flex items-center gap-2 mb-2.5">
-            <Users className="w-4 h-4 text-brand-orange" />
-            <span className="text-xs font-black text-zinc-200">Connected Players ({room.players.length})</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {room.players.map((p: any) => (
-              <motion.div
-                key={p.username}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-zinc-900/50 border border-zinc-800/70"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <UserAvatar 
-                    username={p.username} 
-                    avatarUrl={p.avatar_url} 
-                    equippedFrame={p.equipped_frame} 
-                    size={28} 
-                  />
-                  <span className="text-xs font-extrabold text-white truncate">@{p.username}</span>
-                </div>
-                {p.username === room.host ? (
-                  <span className="px-1.5 py-0.5 rounded-md bg-brand-orange text-black text-[9px] font-black shrink-0">HOST</span>
-                ) : (
-                  isHost && (
-                    <button
-                      onClick={() => handleKickPlayer(p.username)}
-                      title="Kick Player"
-                      className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg cursor-pointer transition-colors shrink-0"
-                    >
-                      <UserMinus className="w-3.5 h-3.5" />
-                    </button>
-                  )
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        {/* Room Chat */}
-        {renderChatBox('120px')}
-
-        {/* Start Button */}
-        <div className="pt-2">
           {isHost ? (
             <motion.button
               whileHover={{ scale: room.players.length < 2 ? 1 : 1.02 }}
@@ -564,18 +604,18 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                 }
               }}
               disabled={room.players.length < 2}
-              className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-sm md:text-base cursor-pointer transition-all shadow-lg ${
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-black text-sm cursor-pointer transition-all shadow-md ${
                 room.players.length < 2
                   ? 'bg-zinc-900 text-zinc-600 cursor-not-allowed border border-zinc-850'
                   : 'bg-gradient-to-r from-brand-orange to-brand-amber text-black shadow-orange-glow hover:shadow-orange-intense'
               }`}
             >
-              <Play className="w-5 h-5 fill-current" />
+              <Play className="w-4 h-4 fill-current" />
               <span>Start Challenge</span>
               {room.players.length < 2 && <span className="text-xs font-medium ml-1">(Need 2+ players)</span>}
             </motion.button>
           ) : (
-            <div className="flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 text-zinc-400">
+            <div className="flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 text-zinc-400">
               <Loader2 className="w-4 h-4 animate-spin text-brand-orange" />
               <span className="text-xs font-bold">Waiting for host to start the challenge...</span>
             </div>
@@ -585,7 +625,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     );
   }
 
-  // ─── PLAYING STATE (FLAT FULL PAGE) ───────────────────────────────────────────
+  // ─── PLAYING STATE (TIGHT MOBILE VIEWPORT DOCKED) ──────────────────────────────
   if (room.status === 'playing') {
     const question = room.currentQuestion;
     const myScore = room.players.find((p: any) => p.username === user?.username)?.score || 0;
@@ -594,38 +634,43 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     const timerColor = timeLeft <= 5 ? 'text-red-400 animate-pulse' : timeLeft <= 10 ? 'text-amber-400' : 'text-white';
 
     return (
-      <div className="w-full max-w-xl mx-auto text-left pt-20 xl:pt-8 pb-8 px-4 flex flex-col space-y-3">
+      <div 
+        className="w-full max-w-xl mx-auto text-left pt-18 xl:pt-8 pb-3 px-3 flex flex-col justify-between overflow-hidden"
+        style={{
+          height: window.innerWidth < 768 ? `${viewportHeight}px` : undefined
+        }}
+      >
         <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
 
         {/* Top Arena Header Bar */}
-        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/70 gap-2">
+        <div className="flex items-center justify-between pb-1.5 border-b border-zinc-800/70 gap-2 shrink-0">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 text-brand-orange text-[10px] font-black uppercase tracking-wider mb-1">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 text-brand-orange text-[10px] font-black uppercase tracking-wider mb-0.5">
               Round {room.currentRound} of {room.rounds}
             </div>
-            <h3 className="text-base font-black text-white flex items-center gap-1.5">
+            <h3 className="text-sm md:text-base font-black text-white flex items-center gap-1.5">
               <Zap className="w-4 h-4 text-brand-orange fill-current" />
               <span>Guess the Structure</span>
             </h3>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {/* Timer */}
-            <div className="flex flex-col items-center px-3 py-1 rounded-xl bg-zinc-900 border border-zinc-800 min-w-[54px]">
-              <Timer className="w-3.5 h-3.5 text-zinc-500 mb-0.5" />
-              <span className={`text-base font-black font-mono leading-none ${timerColor}`}>
+            <div className="flex flex-col items-center px-2.5 py-1 rounded-xl bg-zinc-900 border border-zinc-800 min-w-[48px]">
+              <Timer className="w-3 h-3 text-zinc-500 mb-0.5" />
+              <span className={`text-sm md:text-base font-black font-mono leading-none ${timerColor}`}>
                 {room.roundWinner ? '—' : `${timeLeft}s`}
               </span>
             </div>
             {/* My Score */}
-            <div className="flex flex-col items-center px-3 py-1 rounded-xl bg-zinc-900 border border-zinc-800 min-w-[54px]">
-              <Star className="w-3.5 h-3.5 text-brand-amber fill-current mb-0.5" />
-              <span className="text-base font-black font-mono text-white leading-none">{myScore}</span>
+            <div className="flex flex-col items-center px-2.5 py-1 rounded-xl bg-zinc-900 border border-zinc-800 min-w-[48px]">
+              <Star className="w-3 h-3 text-brand-amber fill-current mb-0.5" />
+              <span className="text-sm md:text-base font-black font-mono text-white leading-none">{myScore}</span>
             </div>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleLeaveGameRoom}
-              className="p-2 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 cursor-pointer transition-colors"
+              className="p-1.5 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 cursor-pointer transition-colors"
               title="Leave game"
             >
               <LogOut className="w-4 h-4" />
@@ -635,7 +680,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
 
         {/* Timer Progress Bar */}
         {!room.roundWinner && (
-          <div className="h-1.5 rounded-full bg-zinc-900 overflow-hidden border border-zinc-800">
+          <div className="h-1 rounded-full bg-zinc-900 overflow-hidden border border-zinc-800 shrink-0 my-1">
             <motion.div
               className={`h-full rounded-full ${timeLeft <= 5 ? 'bg-red-500' : timeLeft <= 10 ? 'bg-amber-500' : 'bg-brand-orange'}`}
               style={{ width: `${timerPct}%` }}
@@ -644,13 +689,13 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           </div>
         )}
 
-        {/* Question Card */}
-        <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/80 p-4 space-y-2">
+        {/* Question Card (Fixed at top - always visible!) */}
+        <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/80 p-3 shrink-0 space-y-1.5">
           <div className="flex gap-2">
-            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black border border-brand-orange/30 bg-brand-orange/10 text-brand-orange uppercase">
+            <span className="px-2 py-0.5 rounded-md text-[9px] font-black border border-brand-orange/30 bg-brand-orange/10 text-brand-orange uppercase">
               {getTypeLabel(question?.type)}
             </span>
-            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold border border-zinc-700/60 bg-zinc-800/60 text-zinc-300">
+            <span className="px-2 py-0.5 rounded-md text-[9px] font-bold border border-zinc-700/60 bg-zinc-800/60 text-zinc-300">
               Hint {currentHintIdx + 1} / 4
             </span>
           </div>
@@ -660,12 +705,12 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              className="text-sm md:text-base font-bold leading-relaxed text-zinc-100"
+              className="text-xs md:text-sm font-bold leading-relaxed text-zinc-100"
             >
               {room.roundWinner ? (
                 <>
                   <span className="text-zinc-400 font-normal">Answer: </span>
-                  <span className="text-emerald-400 font-extrabold text-lg">{question?.structure}</span>
+                  <span className="text-emerald-400 font-extrabold text-base">{question?.structure}</span>
                 </>
               ) : currentHint}
             </motion.p>
@@ -679,9 +724,9 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="rounded-2xl border border-brand-orange/30 bg-brand-orange/5 p-4 text-center space-y-1.5"
+              className="rounded-2xl border border-brand-orange/30 bg-brand-orange/5 p-3 text-center space-y-1 shrink-0 my-1"
             >
-              <h4 className="text-sm md:text-base font-black text-brand-amber">
+              <h4 className="text-xs md:text-sm font-black text-brand-amber">
                 {room.roundWinner === 'timeout'
                   ? '⏱️ Time is up!'
                   : `🎉 @${room.roundWinner} answered correctly!`}
@@ -694,7 +739,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleNextRound}
-                  className="mt-3 w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-sm cursor-pointer shadow-md"
+                  className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs cursor-pointer shadow-md"
                 >
                   {room.currentRound < room.rounds ? (
                     <>
@@ -714,23 +759,23 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         </AnimatePresence>
 
         {/* Players Scores Row */}
-        <div className="flex flex-wrap gap-2 pt-1">
+        <div className="flex flex-wrap gap-1.5 shrink-0 my-1">
           {room.players.map((p: any) => (
-            <div key={p.username} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/80 border border-zinc-800">
+            <div key={p.username} className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-zinc-900/80 border border-zinc-800">
               <UserAvatar 
                 username={p.username} 
                 avatarUrl={p.avatar_url} 
                 equippedFrame={p.equipped_frame} 
-                size={20} 
+                size={18} 
               />
-              <span className="text-xs font-bold text-zinc-300">@{p.username}</span>
-              <span className="text-xs font-black text-brand-orange font-mono">{p.score}</span>
+              <span className="text-[11px] font-bold text-zinc-300">@{p.username}</span>
+              <span className="text-[11px] font-black text-brand-orange font-mono">{p.score}</span>
             </div>
           ))}
         </div>
 
-        {/* Live Answer Feed & Chat */}
-        {renderChatBox('140px')}
+        {/* Live Answer Feed & Chat docked right at bottom */}
+        {renderChatBox(true)}
       </div>
     );
   }
@@ -740,85 +785,93 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     const sorted = [...room.players].sort((a, b) => b.score - a.score);
 
     return (
-      <div className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-32 px-4 max-w-md mx-auto text-left space-y-4">
+      <div 
+        className="w-full max-w-md mx-auto text-left pt-18 xl:pt-8 pb-4 px-3 flex flex-col justify-between overflow-hidden"
+        style={{
+          height: window.innerWidth < 768 ? `${viewportHeight}px` : undefined
+        }}
+      >
         <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
 
-        {/* Trophy Icon */}
-        <div className="text-center pt-2">
-          <motion.div
-            initial={{ scale: 0, rotate: -10 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-            className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-500/20 to-brand-orange/20 border border-amber-500/40 flex items-center justify-center mx-auto shadow-orange-glow mb-3"
-          >
-            <Trophy className="w-10 h-10 text-brand-amber fill-current" />
-          </motion.div>
-
-          <h2 className="text-2xl font-black text-white">Challenge Ended</h2>
-          <p className="text-xs text-zinc-400 mt-1">
-            <span className="text-brand-amber font-black">@{room.finalWinner || 'Nobody'}</span> was crowned champion! 👑
-          </p>
-        </div>
-
-        {/* Final Leaderboard */}
-        <div className="space-y-2 text-left">
-          {sorted.map((p: any, idx: number) => (
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-0.5">
+          {/* Trophy Icon */}
+          <div className="text-center pt-1">
             <motion.div
-              key={p.username}
-              initial={{ opacity: 0, x: -16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 + idx * 0.07 }}
-              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border ${
-                idx === 0
-                  ? 'bg-amber-500/10 border-amber-500/30'
-                  : 'bg-zinc-900/60 border-zinc-800/60'
-              }`}
+              initial={{ scale: 0, rotate: -10 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
+              className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-brand-orange/20 border border-amber-500/40 flex items-center justify-center mx-auto shadow-orange-glow mb-2"
             >
-              <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
-                idx === 0 ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-black shadow-xs' :
-                idx === 1 ? 'bg-zinc-400 text-black' :
-                idx === 2 ? 'bg-amber-800 text-white' :
-                'bg-zinc-800 text-zinc-400'
-              }`}>
-                {idx === 0 ? <Crown className="w-3.5 h-3.5 fill-current" /> : idx + 1}
-              </span>
-              <UserAvatar 
-                username={p.username} 
-                avatarUrl={p.avatar_url} 
-                equippedFrame={p.equipped_frame} 
-                size={28} 
-              />
-              <span className="flex-1 text-xs font-black text-white">@{p.username}</span>
-              <span className="text-xs font-black text-brand-orange font-mono">{p.score} pts</span>
+              <Trophy className="w-8 h-8 text-brand-amber fill-current" />
             </motion.div>
-          ))}
+
+            <h2 className="text-xl font-black text-white">Challenge Ended</h2>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              <span className="text-brand-amber font-black">@{room.finalWinner || 'Nobody'}</span> was crowned champion! 👑
+            </p>
+          </div>
+
+          {/* Final Leaderboard */}
+          <div className="space-y-1.5 text-left">
+            {sorted.map((p: any, idx: number) => (
+              <motion.div
+                key={p.username}
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 + idx * 0.07 }}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border ${
+                  idx === 0
+                    ? 'bg-amber-500/10 border-amber-500/30'
+                    : 'bg-zinc-900/60 border-zinc-800/60'
+                }`}
+              >
+                <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black shrink-0 ${
+                  idx === 0 ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-black shadow-xs' :
+                  idx === 1 ? 'bg-zinc-400 text-black' :
+                  idx === 2 ? 'bg-amber-800 text-white' :
+                  'bg-zinc-800 text-zinc-400'
+                }`}>
+                  {idx === 0 ? <Crown className="w-3 h-3 fill-current" /> : idx + 1}
+                </span>
+                <UserAvatar 
+                  username={p.username} 
+                  avatarUrl={p.avatar_url} 
+                  equippedFrame={p.equipped_frame} 
+                  size={24} 
+                />
+                <span className="flex-1 text-xs font-black text-white">@{p.username}</span>
+                <span className="text-xs font-black text-brand-orange font-mono">{p.score} pts</span>
+              </motion.div>
+            ))}
+          </div>
         </div>
 
-        {/* Chat in Finished screen */}
-        {renderChatBox('100px')}
+        {/* Chat & Actions */}
+        <div className="space-y-2 pt-2 shrink-0">
+          {renderChatBox(false)}
 
-        {/* Actions */}
-        <div className="flex flex-col gap-2.5 pt-2">
-          {isHost && (
+          <div className="flex flex-col gap-1.5">
+            {isHost && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handlePlayAgain}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-black text-xs hover:bg-emerald-500/25 cursor-pointer transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Play Again (Same Room)</span>
+              </motion.button>
+            )}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handlePlayAgain}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-black text-xs md:text-sm hover:bg-emerald-500/25 cursor-pointer transition-colors"
+              onClick={handleLeaveGameRoom}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-500/20 text-red-400 font-black text-xs hover:bg-red-500/10 cursor-pointer transition-colors"
             >
-              <RotateCcw className="w-4 h-4" />
-              <span>Play Again (Same Room)</span>
+              <LogOut className="w-4 h-4" />
+              <span>Leave Room</span>
             </motion.button>
-          )}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleLeaveGameRoom}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-red-500/20 text-red-400 font-black text-xs md:text-sm hover:bg-red-500/10 cursor-pointer transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Leave Room</span>
-          </motion.button>
+          </div>
         </div>
       </div>
     );
