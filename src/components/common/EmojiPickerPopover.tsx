@@ -6,6 +6,7 @@ interface EmojiPickerPopoverProps {
   isOpen: boolean;
   onClose: () => void;
   onEmojiSelect: (emoji: string) => void;
+  variant?: 'drawer' | 'popover';
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'centered';
   className?: string;
   width?: number | string;
@@ -16,16 +17,17 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
   isOpen,
   onClose,
   onEmojiSelect,
+  variant = 'drawer',
   position = 'top-right',
   className = '',
   width = 320,
-  height = 380,
+  height = 300,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close when clicking outside
+  // Close when clicking outside on popover mode
   useEffect(() => {
-    if (!isOpen) return () => {};
+    if (!isOpen || variant === 'drawer') return () => {};
 
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -45,12 +47,44 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, variant, onClose]);
 
   const handleEmojiClick = (emojiData: EmojiClickData) => {
     onEmojiSelect(emojiData.emoji);
   };
 
+  // ─── DRAWER VARIANT (In-flow keyboard replacement under the input form) ────────
+  if (variant === 'drawer') {
+    return (
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: typeof height === 'number' ? height : 300, opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: 'easeInOut' }}
+            className={`w-full overflow-hidden border-t border-zinc-800/80 bg-zinc-950 flex justify-center [&_.EmojiPickerReact]:!border-0 [&_.EmojiPickerReact]:!bg-transparent [&_.EmojiPickerReact]:!w-full [&_.EmojiPickerReact]:!rounded-none ${className}`}
+          >
+            <EmojiPicker
+              onEmojiClick={handleEmojiClick}
+              theme={Theme.DARK}
+              emojiStyle={EmojiStyle.APPLE}
+              autoFocusSearch={false}
+              lazyLoadEmojis={true}
+              searchPlaceHolder="بحث عن إيموجي..."
+              width="100%"
+              height={typeof height === 'number' ? height : 300}
+              previewConfig={{
+                showPreview: false,
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  }
+
+  // ─── POPOVER VARIANT (Floating dropdown) ───────────────────────────────────────
   const getPositionClasses = () => {
     switch (position) {
       case 'top-right':
@@ -71,47 +105,29 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop on mobile */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className={`fixed inset-0 bg-black/60 backdrop-blur-xs z-[9999] ${position === 'centered' ? '' : 'md:hidden'}`}
+        <motion.div
+          ref={containerRef}
+          initial={{ opacity: 0, scale: 0.92, y: position.startsWith('top') ? 10 : -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.92, y: position.startsWith('top') ? 10 : -10 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          className={`absolute ${getPositionClasses()} z-[10001] shadow-2xl rounded-2xl overflow-hidden border border-zinc-800/90 bg-zinc-950/95 backdrop-blur-xl ${className}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <EmojiPicker
+            onEmojiClick={handleEmojiClick}
+            theme={Theme.DARK}
+            emojiStyle={EmojiStyle.APPLE}
+            autoFocusSearch={false}
+            lazyLoadEmojis={true}
+            searchPlaceHolder="بحث عن إيموجي..."
+            width={width}
+            height={height}
+            previewConfig={{
+              showPreview: false,
+            }}
           />
-          <motion.div
-            ref={containerRef}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
-            className={`z-[10001] shadow-2xl overflow-hidden border border-zinc-800/90 bg-zinc-950/98 backdrop-blur-2xl 
-              max-md:fixed max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:w-full max-md:rounded-t-3xl max-md:rounded-b-none max-md:border-b-0
-              md:rounded-2xl md:${position === 'centered' ? 'fixed' : 'absolute'} md:${getPositionClasses()} ${className}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Mobile drag / close header bar */}
-            <div className="md:hidden flex items-center justify-between px-4 py-2 border-b border-zinc-800/60 bg-zinc-900/60">
-              <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto" />
-            </div>
-            <div className="w-full flex justify-center [&_.EmojiPickerReact]:!border-0 [&_.EmojiPickerReact]:!bg-transparent [&_.EmojiPickerReact]:!w-full">
-              <EmojiPicker
-                onEmojiClick={handleEmojiClick}
-                theme={Theme.DARK}
-                emojiStyle={EmojiStyle.APPLE}
-                autoFocusSearch={false}
-                lazyLoadEmojis={true}
-                searchPlaceHolder="بحث عن إيموجي..."
-                width="100%"
-                height={typeof window !== 'undefined' && window.innerWidth < 768 ? 320 : height}
-                previewConfig={{
-                  showPreview: false,
-                }}
-              />
-            </div>
-          </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

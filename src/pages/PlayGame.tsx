@@ -309,7 +309,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
 
   // ─── Clean Room Chat Box ───────────────────────────────────────────────────────
   const renderChatBox = (maxH = '140px') => (
-    <div className="mt-4 rounded-2xl border border-white/8 bg-zinc-950/70 backdrop-blur-md p-3 text-left">
+    <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/40 backdrop-blur-md p-3 text-left">
       <div className="flex items-center justify-between mb-2 px-1">
         <div className="flex items-center gap-1.5">
           <MessageSquare className="w-3.5 h-3.5 text-zinc-400" />
@@ -353,7 +353,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           <input
             ref={chatInputRef}
             type="text"
-            className="w-full px-3.5 py-2 pr-9 text-[13px] rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-brand-orange/60 transition-colors"
+            className="w-full px-3.5 py-2 pr-9 text-[13px] rounded-xl bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-brand-orange/60 transition-colors font-medium"
             placeholder="Type a message..."
             value={chatMessage}
             onChange={(e) => setChatMessage(e.target.value)}
@@ -375,14 +375,6 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             >
               {showChatEmojiPicker ? <Keyboard className="w-4 h-4 text-brand-orange" /> : <Smile className="w-4 h-4" />}
             </button>
-            <EmojiPickerPopover
-              isOpen={showChatEmojiPicker}
-              onClose={() => setShowChatEmojiPicker(false)}
-              onEmojiSelect={(emoji) => {
-                setChatMessage((prev) => prev + emoji);
-              }}
-              position="top-right"
-            />
           </div>
         </div>
 
@@ -395,159 +387,162 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           <Send className="w-4 h-4" />
         </motion.button>
       </form>
+
+      {/* Inline Drawer below chat input */}
+      <EmojiPickerPopover
+        isOpen={showChatEmojiPicker}
+        onClose={() => setShowChatEmojiPicker(false)}
+        onEmojiSelect={(emoji) => {
+          setChatMessage((prev) => prev + emoji);
+        }}
+        variant="drawer"
+        height={260}
+      />
     </div>
   );
 
-  // ─── WAITING ROOM / LOBBY ─────────────────────────────────────────────────────
+  // ─── WAITING ROOM / LOBBY (FLAT FULL PAGE) ────────────────────────────────────
   if (room.status === 'waiting') {
     return (
-      <div className="w-full min-h-[100dvh] overflow-y-auto pb-32 pt-4 md:pt-6 px-3.5 flex justify-center text-left">
+      <div className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-32 px-4 max-w-xl mx-auto text-left space-y-4">
         <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
 
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-xl space-y-4"
-        >
-          <div className="rounded-3xl border border-zinc-800/80 bg-zinc-950/80 backdrop-blur-2xl p-5 md:p-6 shadow-2xl space-y-5">
-            {/* Header */}
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-[10px] font-extrabold uppercase tracking-wider mb-1.5">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  <span>Waiting for Players</span>
-                </div>
-                <h2 className="text-lg md:text-xl font-black text-white">Anatomy Online Challenge</h2>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={handleLeaveGameRoom}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/10 cursor-pointer transition-colors shrink-0"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Leave</span>
-              </motion.button>
+        {/* Top Header Bar */}
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-[10px] font-extrabold uppercase tracking-wider mb-1">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span>Waiting for Players</span>
             </div>
-
-            {/* Room Code */}
-            <div className="text-center py-4 bg-zinc-900/40 rounded-2xl border border-zinc-800/50">
-              <p className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-widest mb-1.5">Room Code</p>
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={async () => {
-                  await copyToClipboard(room.code);
-                  showToast(`تم نسخ كود الغرفة: ${room.code} 📋`);
-                  playChatSound('success');
-                }}
-                className="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-2xl bg-zinc-900 border border-zinc-700/60 hover:border-brand-orange text-white cursor-pointer transition-all shadow-md"
-              >
-                <span className="text-2xl md:text-3xl font-black tracking-[6px] text-brand-orange font-mono">{room.code}</span>
-                <Copy className="w-4 h-4 text-zinc-400" />
-              </motion.button>
-              <p className="text-[11px] text-zinc-500 mt-2 font-medium">Click to copy and share with friends</p>
-            </div>
-
-            {/* Invite Link */}
-            <div className="flex gap-2">
-              <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 min-w-0">
-                <Link className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                <span className="text-[11px] text-zinc-400 truncate font-mono">{inviteUrl}</span>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={handleCopyInviteUrl}
-                className="px-4 py-2.5 rounded-xl bg-brand-orange/15 border border-brand-orange/30 text-brand-orange text-xs font-black hover:bg-brand-orange/25 cursor-pointer transition-colors shrink-0"
-              >
-                Copy
-              </motion.button>
-            </div>
-
-            {/* Connected Players */}
-            <div>
-              <div className="flex items-center gap-2 mb-2.5">
-                <Users className="w-4 h-4 text-brand-orange" />
-                <span className="text-xs font-black text-zinc-200">Connected Players ({room.players.length})</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {room.players.map((p: any) => (
-                  <motion.div
-                    key={p.username}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-zinc-900/60 border border-zinc-800/60"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <UserAvatar 
-                        username={p.username} 
-                        avatarUrl={p.avatar_url} 
-                        equippedFrame={p.equipped_frame} 
-                        size={28} 
-                      />
-                      <span className="text-xs font-extrabold text-white truncate">@{p.username}</span>
-                    </div>
-                    {p.username === room.host ? (
-                      <span className="px-1.5 py-0.5 rounded-md bg-brand-orange text-black text-[9px] font-black shrink-0">HOST</span>
-                    ) : (
-                      isHost && (
-                        <button
-                          onClick={() => handleKickPlayer(p.username)}
-                          title="Kick Player"
-                          className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg cursor-pointer transition-colors shrink-0"
-                        >
-                          <UserMinus className="w-3.5 h-3.5" />
-                        </button>
-                      )
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* Lobby Chat */}
-            {renderChatBox('120px')}
-
-            {/* Start Button */}
-            <div className="pt-2">
-              {isHost ? (
-                <motion.button
-                  whileHover={{ scale: room.players.length < 2 ? 1 : 1.02 }}
-                  whileTap={{ scale: room.players.length < 2 ? 1 : 0.98 }}
-                  onClick={() => {
-                    if (room.players.length < 2) {
-                      showToast('You need at least 2 players to start the challenge!');
-                      playChatSound('error');
-                    } else {
-                      handleStartGame();
-                    }
-                  }}
-                  disabled={room.players.length < 2}
-                  className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black text-sm md:text-base cursor-pointer transition-all shadow-lg ${
-                    room.players.length < 2
-                      ? 'bg-zinc-800/40 text-zinc-500 cursor-not-allowed border border-zinc-800'
-                      : 'bg-gradient-to-r from-brand-orange to-brand-amber text-black shadow-orange-glow hover:shadow-orange-intense'
-                  }`}
-                >
-                  <Play className="w-5 h-5 fill-current" />
-                  <span>Start Challenge</span>
-                  {room.players.length < 2 && <span className="text-xs font-medium ml-1">(Need 2+ players)</span>}
-                </motion.button>
-              ) : (
-                <div className="flex items-center justify-center gap-2.5 py-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 text-zinc-400">
-                  <Loader2 className="w-4 h-4 animate-spin text-brand-orange" />
-                  <span className="text-xs font-bold">Waiting for host to start the challenge...</span>
-                </div>
-              )}
-            </div>
+            <h2 className="text-xl font-black text-white">Anatomy Online Challenge</h2>
           </div>
-        </motion.div>
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={handleLeaveGameRoom}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/10 cursor-pointer transition-colors shrink-0"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Leave</span>
+          </motion.button>
+        </div>
+
+        {/* Room Code Card */}
+        <div className="text-center py-5 bg-zinc-900/50 rounded-2xl border border-zinc-800/70">
+          <p className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-widest mb-1.5">Room Code</p>
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={async () => {
+              await copyToClipboard(room.code);
+              showToast(`تم نسخ كود الغرفة: ${room.code} 📋`);
+              playChatSound('success');
+            }}
+            className="inline-flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-zinc-950 border border-zinc-700/80 hover:border-brand-orange text-white cursor-pointer transition-all shadow-md"
+          >
+            <span className="text-3xl font-black tracking-[6px] text-brand-orange font-mono">{room.code}</span>
+            <Copy className="w-4 h-4 text-zinc-400" />
+          </motion.button>
+          <p className="text-[11px] text-zinc-500 mt-2 font-medium">Click to copy and share with friends</p>
+        </div>
+
+        {/* Invite Link Bar */}
+        <div className="flex gap-2">
+          <div className="flex-1 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-zinc-900/50 border border-zinc-800/70 min-w-0">
+            <Link className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+            <span className="text-[11px] text-zinc-400 truncate font-mono">{inviteUrl}</span>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={handleCopyInviteUrl}
+            className="px-4 py-2.5 rounded-xl bg-brand-orange/15 border border-brand-orange/30 text-brand-orange text-xs font-black hover:bg-brand-orange/25 cursor-pointer transition-colors shrink-0"
+          >
+            Copy
+          </motion.button>
+        </div>
+
+        {/* Connected Players Section */}
+        <div>
+          <div className="flex items-center gap-2 mb-2.5">
+            <Users className="w-4 h-4 text-brand-orange" />
+            <span className="text-xs font-black text-zinc-200">Connected Players ({room.players.length})</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {room.players.map((p: any) => (
+              <motion.div
+                key={p.username}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-zinc-900/50 border border-zinc-800/70"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <UserAvatar 
+                    username={p.username} 
+                    avatarUrl={p.avatar_url} 
+                    equippedFrame={p.equipped_frame} 
+                    size={28} 
+                  />
+                  <span className="text-xs font-extrabold text-white truncate">@{p.username}</span>
+                </div>
+                {p.username === room.host ? (
+                  <span className="px-1.5 py-0.5 rounded-md bg-brand-orange text-black text-[9px] font-black shrink-0">HOST</span>
+                ) : (
+                  isHost && (
+                    <button
+                      onClick={() => handleKickPlayer(p.username)}
+                      title="Kick Player"
+                      className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg cursor-pointer transition-colors shrink-0"
+                    >
+                      <UserMinus className="w-3.5 h-3.5" />
+                    </button>
+                  )
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Room Chat */}
+        {renderChatBox('120px')}
+
+        {/* Start Button */}
+        <div className="pt-2">
+          {isHost ? (
+            <motion.button
+              whileHover={{ scale: room.players.length < 2 ? 1 : 1.02 }}
+              whileTap={{ scale: room.players.length < 2 ? 1 : 0.98 }}
+              onClick={() => {
+                if (room.players.length < 2) {
+                  showToast('You need at least 2 players to start the challenge!');
+                  playChatSound('error');
+                } else {
+                  handleStartGame();
+                }
+              }}
+              disabled={room.players.length < 2}
+              className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-sm md:text-base cursor-pointer transition-all shadow-lg ${
+                room.players.length < 2
+                  ? 'bg-zinc-900 text-zinc-600 cursor-not-allowed border border-zinc-850'
+                  : 'bg-gradient-to-r from-brand-orange to-brand-amber text-black shadow-orange-glow hover:shadow-orange-intense'
+              }`}
+            >
+              <Play className="w-5 h-5 fill-current" />
+              <span>Start Challenge</span>
+              {room.players.length < 2 && <span className="text-xs font-medium ml-1">(Need 2+ players)</span>}
+            </motion.button>
+          ) : (
+            <div className="flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 text-zinc-400">
+              <Loader2 className="w-4 h-4 animate-spin text-brand-orange" />
+              <span className="text-xs font-bold">Waiting for host to start the challenge...</span>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
-  // ─── PLAYING STATE ────────────────────────────────────────────────────────────
+  // ─── PLAYING STATE (FLAT FULL PAGE) ───────────────────────────────────────────
   if (room.status === 'playing') {
     const question = room.currentQuestion;
     const myScore = room.players.find((p: any) => p.username === user?.username)?.score || 0;
@@ -556,277 +551,261 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     const timerColor = timeLeft <= 5 ? 'text-red-400 animate-pulse' : timeLeft <= 10 ? 'text-amber-400' : 'text-white';
 
     return (
-      <div className="w-full min-h-[100dvh] overflow-y-auto pb-20 pt-4 md:pt-6 px-3.5 flex justify-center text-left">
+      <div className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-20 px-4 max-w-xl mx-auto text-left space-y-4">
         <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
 
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-xl space-y-4"
-        >
-          <div className="rounded-3xl border border-zinc-800/80 bg-zinc-950/85 backdrop-blur-2xl p-4 md:p-6 shadow-2xl space-y-4">
-            {/* Arena Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-800/60 gap-2">
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 text-brand-orange text-[10px] font-black uppercase tracking-wider mb-1">
-                  Round {room.currentRound} of {room.rounds}
-                </div>
-                <h3 className="text-sm md:text-base font-black text-white flex items-center gap-1.5">
-                  <Zap className="w-4 h-4 text-brand-orange fill-current" />
-                  <span>Guess the Structure</span>
-                </h3>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Timer */}
-                <div className="flex flex-col items-center px-3 py-1 rounded-xl bg-zinc-900 border border-zinc-800 min-w-[54px]">
-                  <Timer className="w-3.5 h-3.5 text-zinc-500 mb-0.5" />
-                  <span className={`text-base font-black font-mono leading-none ${timerColor}`}>
-                    {room.roundWinner ? '—' : `${timeLeft}s`}
-                  </span>
-                </div>
-                {/* My Score */}
-                <div className="flex flex-col items-center px-3 py-1 rounded-xl bg-zinc-900 border border-zinc-800 min-w-[54px]">
-                  <Star className="w-3.5 h-3.5 text-brand-amber fill-current mb-0.5" />
-                  <span className="text-base font-black font-mono text-white leading-none">{myScore}</span>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleLeaveGameRoom}
-                  className="p-2 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 cursor-pointer transition-colors"
-                  title="Leave game"
-                >
-                  <LogOut className="w-4 h-4" />
-                </motion.button>
-              </div>
+        {/* Top Arena Header Bar */}
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/70 gap-2">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 text-brand-orange text-[10px] font-black uppercase tracking-wider mb-1">
+              Round {room.currentRound} of {room.rounds}
             </div>
-
-            {/* Timer Progress Bar */}
-            {!room.roundWinner && (
-              <div className="h-1.5 rounded-full bg-zinc-900 overflow-hidden border border-zinc-800">
-                <motion.div
-                  className={`h-full rounded-full ${timeLeft <= 5 ? 'bg-red-500' : timeLeft <= 10 ? 'bg-amber-500' : 'bg-brand-orange'}`}
-                  style={{ width: `${timerPct}%` }}
-                  transition={{ duration: 0.25 }}
-                />
-              </div>
-            )}
-
-            {/* Question Card */}
-            <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/80 p-4.5 space-y-2.5">
-              <div className="flex gap-2">
-                <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black border border-brand-orange/30 bg-brand-orange/10 text-brand-orange uppercase">
-                  {getTypeLabel(question?.type)}
-                </span>
-                <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold border border-zinc-700/60 bg-zinc-800/60 text-zinc-300">
-                  Hint {currentHintIdx + 1} / 4
-                </span>
-              </div>
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={room.roundWinner ? 'answer' : currentHintIdx}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  className="text-sm md:text-base font-bold leading-relaxed text-zinc-100"
-                >
-                  {room.roundWinner ? (
-                    <>
-                      <span className="text-zinc-400 font-normal">Answer: </span>
-                      <span className="text-emerald-400 font-extrabold text-lg">{question?.structure}</span>
-                    </>
-                  ) : currentHint}
-                </motion.p>
-              </AnimatePresence>
-            </div>
-
-            {/* Answer Form (Active Guessing) */}
-            <AnimatePresence>
-              {!room.roundWinner && (
-                <motion.form
-                  initial={{ opacity: 1 }}
-                  exit={{ opacity: 0, height: 0 }}
-                  onSubmit={handleSubmitGameAnswer}
-                  className="flex gap-2 pt-1"
-                >
-                  <input
-                    type="text"
-                    autoFocus
-                    className="flex-1 min-w-0 px-4 py-3 text-sm rounded-2xl bg-zinc-900 border border-zinc-700/70 text-white placeholder-zinc-500 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 transition-all font-semibold"
-                    placeholder="Type structure name in English..."
-                    value={submittedGameAnswer}
-                    onChange={(e) => setSubmittedGameAnswer(e.target.value)}
-                  />
-                  <motion.button
-                    type="submit"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="px-5 py-3 rounded-2xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-sm hover:opacity-90 cursor-pointer shadow-orange-glow transition-all shrink-0"
-                  >
-                    Submit
-                  </motion.button>
-                </motion.form>
-              )}
-            </AnimatePresence>
-
-            {/* Intermission Banner */}
-            <AnimatePresence>
-              {room.roundWinner && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="rounded-2xl border border-brand-orange/30 bg-brand-orange/5 p-4 text-center space-y-1.5"
-                >
-                  <h4 className="text-sm md:text-base font-black text-brand-amber">
-                    {room.roundWinner === 'timeout'
-                      ? '⏱️ Time is up!'
-                      : `🎉 @${room.roundWinner} answered correctly!`}
-                  </h4>
-                  <p className="text-xs text-zinc-300">
-                    Correct answer: <strong className="text-emerald-400 font-extrabold">{question?.structure}</strong>
-                  </p>
-                  {isHost && (
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleNextRound}
-                      className="mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs md:text-sm cursor-pointer shadow-md"
-                    >
-                      {room.currentRound < room.rounds ? (
-                        <>
-                          <span>Next Round</span>
-                          <ChevronRight className="w-4 h-4" />
-                        </>
-                      ) : (
-                        <>
-                          <span>Final Results</span>
-                          <Trophy className="w-4 h-4 fill-current" />
-                        </>
-                      )}
-                    </motion.button>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Players Scores Row */}
-            <div className="flex flex-wrap gap-2 pt-1">
-              {room.players.map((p: any) => (
-                <div key={p.username} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/80 border border-zinc-800">
-                  <UserAvatar 
-                    username={p.username} 
-                    avatarUrl={p.avatar_url} 
-                    equippedFrame={p.equipped_frame} 
-                    size={20} 
-                  />
-                  <span className="text-xs font-bold text-zinc-300">@{p.username}</span>
-                  <span className="text-xs font-black text-brand-orange font-mono">{p.score}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Show Chat ONLY during Intermission (Between Rounds) */}
-            {room.roundWinner && renderChatBox('120px')}
+            <h3 className="text-base font-black text-white flex items-center gap-1.5">
+              <Zap className="w-4 h-4 text-brand-orange fill-current" />
+              <span>Guess the Structure</span>
+            </h3>
           </div>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // ─── FINISHED STATE ───────────────────────────────────────────────────────────
-  if (room.status === 'finished') {
-    const sorted = [...room.players].sort((a, b) => b.score - a.score);
-
-    return (
-      <div className="w-full min-h-[100dvh] overflow-y-auto pb-32 pt-4 md:pt-8 px-3.5 flex justify-center text-left">
-        <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md space-y-4"
-        >
-          <div className="rounded-3xl border border-zinc-800/80 bg-zinc-950/85 backdrop-blur-2xl p-6 text-center shadow-2xl space-y-4">
-            {/* Trophy Icon */}
-            <motion.div
-              initial={{ scale: 0, rotate: -10 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-              className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-500/20 to-brand-orange/20 border border-amber-500/40 flex items-center justify-center mx-auto shadow-orange-glow"
+          <div className="flex items-center gap-2">
+            {/* Timer */}
+            <div className="flex flex-col items-center px-3 py-1 rounded-xl bg-zinc-900 border border-zinc-800 min-w-[54px]">
+              <Timer className="w-3.5 h-3.5 text-zinc-500 mb-0.5" />
+              <span className={`text-base font-black font-mono leading-none ${timerColor}`}>
+                {room.roundWinner ? '—' : `${timeLeft}s`}
+              </span>
+            </div>
+            {/* My Score */}
+            <div className="flex flex-col items-center px-3 py-1 rounded-xl bg-zinc-900 border border-zinc-800 min-w-[54px]">
+              <Star className="w-3.5 h-3.5 text-brand-amber fill-current mb-0.5" />
+              <span className="text-base font-black font-mono text-white leading-none">{myScore}</span>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLeaveGameRoom}
+              className="p-2 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 cursor-pointer transition-colors"
+              title="Leave game"
             >
-              <Trophy className="w-10 h-10 text-brand-amber fill-current" />
-            </motion.div>
+              <LogOut className="w-4 h-4" />
+            </motion.button>
+          </div>
+        </div>
 
-            <div>
-              <h2 className="text-2xl font-black text-white">Challenge Ended</h2>
-              <p className="text-xs text-zinc-400 mt-1">
-                <span className="text-brand-amber font-black">@{room.finalWinner || 'Nobody'}</span> was crowned champion! 👑
+        {/* Timer Progress Bar */}
+        {!room.roundWinner && (
+          <div className="h-1.5 rounded-full bg-zinc-900 overflow-hidden border border-zinc-800">
+            <motion.div
+              className={`h-full rounded-full ${timeLeft <= 5 ? 'bg-red-500' : timeLeft <= 10 ? 'bg-amber-500' : 'bg-brand-orange'}`}
+              style={{ width: `${timerPct}%` }}
+              transition={{ duration: 0.25 }}
+            />
+          </div>
+        )}
+
+        {/* Question Card */}
+        <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/80 p-4 space-y-2">
+          <div className="flex gap-2">
+            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black border border-brand-orange/30 bg-brand-orange/10 text-brand-orange uppercase">
+              {getTypeLabel(question?.type)}
+            </span>
+            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold border border-zinc-700/60 bg-zinc-800/60 text-zinc-300">
+              Hint {currentHintIdx + 1} / 4
+            </span>
+          </div>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={room.roundWinner ? 'answer' : currentHintIdx}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="text-sm md:text-base font-bold leading-relaxed text-zinc-100"
+            >
+              {room.roundWinner ? (
+                <>
+                  <span className="text-zinc-400 font-normal">Answer: </span>
+                  <span className="text-emerald-400 font-extrabold text-lg">{question?.structure}</span>
+                </>
+              ) : currentHint}
+            </motion.p>
+          </AnimatePresence>
+        </div>
+
+        {/* Answer Form (Active Guessing only) */}
+        <AnimatePresence>
+          {!room.roundWinner && (
+            <motion.form
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0, height: 0 }}
+              onSubmit={handleSubmitGameAnswer}
+              className="flex gap-2 pt-1"
+            >
+              <input
+                type="text"
+                autoFocus
+                className="flex-1 min-w-0 px-4 py-3 text-sm rounded-2xl bg-zinc-900 border border-zinc-750 text-white placeholder-zinc-500 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 transition-all font-semibold"
+                placeholder="Type structure name in English..."
+                value={submittedGameAnswer}
+                onChange={(e) => setSubmittedGameAnswer(e.target.value)}
+              />
+              <motion.button
+                type="submit"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="px-5 py-3 rounded-2xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-sm hover:opacity-90 cursor-pointer shadow-orange-glow transition-all shrink-0"
+              >
+                Submit
+              </motion.button>
+            </motion.form>
+          )}
+        </AnimatePresence>
+
+        {/* Intermission Banner */}
+        <AnimatePresence>
+          {room.roundWinner && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="rounded-2xl border border-brand-orange/30 bg-brand-orange/5 p-4 text-center space-y-1.5"
+            >
+              <h4 className="text-sm md:text-base font-black text-brand-amber">
+                {room.roundWinner === 'timeout'
+                  ? '⏱️ Time is up!'
+                  : `🎉 @${room.roundWinner} answered correctly!`}
+              </h4>
+              <p className="text-xs text-zinc-300">
+                Correct answer: <strong className="text-emerald-400 font-extrabold">{question?.structure}</strong>
               </p>
-            </div>
-
-            {/* Final Leaderboard */}
-            <div className="space-y-2 text-left">
-              {sorted.map((p: any, idx: number) => (
-                <motion.div
-                  key={p.username}
-                  initial={{ opacity: 0, x: -16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 + idx * 0.07 }}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border ${
-                    idx === 0
-                      ? 'bg-amber-500/10 border-amber-500/30'
-                      : 'bg-zinc-900/60 border-zinc-800/60'
-                  }`}
-                >
-                  <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
-                    idx === 0 ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-black shadow-xs' :
-                    idx === 1 ? 'bg-zinc-400 text-black' :
-                    idx === 2 ? 'bg-amber-800 text-white' :
-                    'bg-zinc-800 text-zinc-400'
-                  }`}>
-                    {idx === 0 ? <Crown className="w-3.5 h-3.5 fill-current" /> : idx + 1}
-                  </span>
-                  <UserAvatar 
-                    username={p.username} 
-                    avatarUrl={p.avatar_url} 
-                    equippedFrame={p.equipped_frame} 
-                    size={28} 
-                  />
-                  <span className="flex-1 text-xs font-black text-white">@{p.username}</span>
-                  <span className="text-xs font-black text-brand-orange font-mono">{p.score} pts</span>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Chat in Finished screen */}
-            {renderChatBox('100px')}
-
-            {/* Actions */}
-            <div className="flex flex-col gap-2.5 pt-2">
               {isHost && (
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={handlePlayAgain}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-black text-xs md:text-sm hover:bg-emerald-500/25 cursor-pointer transition-colors"
+                  onClick={handleNextRound}
+                  className="mt-3 w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-sm cursor-pointer shadow-md"
                 >
-                  <RotateCcw className="w-4 h-4" />
-                  <span>Play Again (Same Room)</span>
+                  {room.currentRound < room.rounds ? (
+                    <>
+                      <span>Next Round</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </>
+                  ) : (
+                    <>
+                      <span>Final Results</span>
+                      <Trophy className="w-4 h-4 fill-current" />
+                    </>
+                  )}
                 </motion.button>
               )}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleLeaveGameRoom}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-red-500/20 text-red-400 font-black text-xs md:text-sm hover:bg-red-500/10 cursor-pointer transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Leave Room</span>
-              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Players Scores Row */}
+        <div className="flex flex-wrap gap-2 pt-1">
+          {room.players.map((p: any) => (
+            <div key={p.username} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/80 border border-zinc-800">
+              <UserAvatar 
+                username={p.username} 
+                avatarUrl={p.avatar_url} 
+                equippedFrame={p.equipped_frame} 
+                size={20} 
+              />
+              <span className="text-xs font-bold text-zinc-300">@{p.username}</span>
+              <span className="text-xs font-black text-brand-orange font-mono">{p.score}</span>
             </div>
-          </div>
-        </motion.div>
+          ))}
+        </div>
+
+        {/* Show Chat ONLY during Intermission (Between Rounds) */}
+        {room.roundWinner && renderChatBox('130px')}
+      </div>
+    );
+  }
+
+  // ─── FINISHED STATE (FLAT FULL PAGE) ──────────────────────────────────────────
+  if (room.status === 'finished') {
+    const sorted = [...room.players].sort((a, b) => b.score - a.score);
+
+    return (
+      <div className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-32 px-4 max-w-md mx-auto text-left space-y-4">
+        <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
+
+        {/* Trophy Icon */}
+        <div className="text-center pt-2">
+          <motion.div
+            initial={{ scale: 0, rotate: -10 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
+            className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-500/20 to-brand-orange/20 border border-amber-500/40 flex items-center justify-center mx-auto shadow-orange-glow mb-3"
+          >
+            <Trophy className="w-10 h-10 text-brand-amber fill-current" />
+          </motion.div>
+
+          <h2 className="text-2xl font-black text-white">Challenge Ended</h2>
+          <p className="text-xs text-zinc-400 mt-1">
+            <span className="text-brand-amber font-black">@{room.finalWinner || 'Nobody'}</span> was crowned champion! 👑
+          </p>
+        </div>
+
+        {/* Final Leaderboard */}
+        <div className="space-y-2 text-left">
+          {sorted.map((p: any, idx: number) => (
+            <motion.div
+              key={p.username}
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 + idx * 0.07 }}
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border ${
+                idx === 0
+                  ? 'bg-amber-500/10 border-amber-500/30'
+                  : 'bg-zinc-900/60 border-zinc-800/60'
+              }`}
+            >
+              <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
+                idx === 0 ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-black shadow-xs' :
+                idx === 1 ? 'bg-zinc-400 text-black' :
+                idx === 2 ? 'bg-amber-800 text-white' :
+                'bg-zinc-800 text-zinc-400'
+              }`}>
+                {idx === 0 ? <Crown className="w-3.5 h-3.5 fill-current" /> : idx + 1}
+              </span>
+              <UserAvatar 
+                username={p.username} 
+                avatarUrl={p.avatar_url} 
+                equippedFrame={p.equipped_frame} 
+                size={28} 
+              />
+              <span className="flex-1 text-xs font-black text-white">@{p.username}</span>
+              <span className="text-xs font-black text-brand-orange font-mono">{p.score} pts</span>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Chat in Finished screen */}
+        {renderChatBox('100px')}
+
+        {/* Actions */}
+        <div className="flex flex-col gap-2.5 pt-2">
+          {isHost && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handlePlayAgain}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-black text-xs md:text-sm hover:bg-emerald-500/25 cursor-pointer transition-colors"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>Play Again (Same Room)</span>
+            </motion.button>
+          )}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleLeaveGameRoom}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-red-500/20 text-red-400 font-black text-xs md:text-sm hover:bg-red-500/10 cursor-pointer transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Leave Room</span>
+          </motion.button>
+        </div>
       </div>
     );
   }

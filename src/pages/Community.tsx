@@ -797,15 +797,6 @@ export const Community: React.FC<CommunityProps> = ({
                       >
                         {showChatEmojiPicker ? <Keyboard className="w-4.5 h-4.5" /> : <Smile className="w-4.5 h-4.5" />}
                       </button>
-
-                      <EmojiPickerPopover
-                        isOpen={showChatEmojiPicker}
-                        onClose={() => setShowChatEmojiPicker(false)}
-                        onEmojiSelect={(emoji) => {
-                          setChatInput(chatInput + emoji);
-                        }}
-                        position="top-right"
-                      />
                     </div>
                   </div>
                   <button 
@@ -821,17 +812,28 @@ export const Community: React.FC<CommunityProps> = ({
                   Please <button onClick={() => setCurrentPage('login')} className="text-brand-orange hover:text-brand-amber font-black cursor-pointer underline">Login</button> to participate in the live chat.
                 </div>
               )}
+
+              {/* Seamless Inline Emoji Drawer */}
+              <EmojiPickerPopover
+                isOpen={showChatEmojiPicker}
+                onClose={() => setShowChatEmojiPicker(false)}
+                onEmojiSelect={(emoji) => {
+                  setChatInput(chatInput + emoji);
+                }}
+                variant="drawer"
+                height={280}
+              />
             </div>
 
             {/* Scroll bottom btn */}
             <AnimatePresence>
-              {showScrollDownBtn && (
+              {showScrollDownBtn && !showChatEmojiPicker && (
                 <motion.button
                   initial={{ opacity: 0, y: 10, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.8 }}
                   onClick={handleScrollToBottom}
-                  className="absolute left-6 w-9 h-9 rounded-full bg-zinc-950/90 border border-brand-orange flex items-center justify-center text-white cursor-pointer z-[25] shadow-orange-glow transition-all active:scale-90 bottom-[68px]"
+                  className="absolute left-6 w-9 h-9 rounded-full bg-zinc-950/90 border border-brand-orange flex items-center justify-center text-white cursor-pointer z-[25] shadow-orange-glow transition-all active:scale-90 bottom-[75px]"
                   title="Scroll to bottom"
                 >
                   <ChevronDown className="w-4 h-4 animate-bounce" />
