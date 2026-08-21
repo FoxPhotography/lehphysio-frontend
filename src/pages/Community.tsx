@@ -369,49 +369,17 @@ export const Community: React.FC<CommunityProps> = ({
     }
   };
 
-  const isChatKeyboardActive = (isInputFocused || showChatEmojiPicker) && activeSubTab === 'chat';
-
-  useEffect(() => {
-    if (isChatKeyboardActive && typeof window !== 'undefined' && window.innerWidth < 768) {
-      document.body.classList.add('chat-keyboard-active');
-      
-      // Instantly scroll feed to bottom to keep newest messages visible above keyboard
-      const scrollToBottomNow = () => {
-        const el = document.getElementById('pl-chat-feed');
-        if (el) el.scrollTop = el.scrollHeight;
-      };
-      
-      scrollToBottomNow();
-      const t1 = setTimeout(scrollToBottomNow, 80);
-      const t2 = setTimeout(scrollToBottomNow, 220);
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-        document.body.classList.remove('chat-keyboard-active');
-      };
-    } else {
-      document.body.classList.remove('chat-keyboard-active');
-    }
-    return () => {
-      document.body.classList.remove('chat-keyboard-active');
-    };
-  }, [isChatKeyboardActive, viewportHeight]);
-
   return (
-    <div 
-      className={`w-full max-w-none px-0 pb-0 text-left md:h-[calc(100vh-136px)] xl:h-screen transition-all duration-200 ${
-        isChatKeyboardActive ? 'pt-3 md:pt-16 xl:pt-0' : 'pt-20 md:pt-16 xl:pt-0'
-      }`}
+    <div className="w-full max-w-none px-0 pb-0 text-left md:h-[calc(100vh-136px)] xl:h-screen pt-20 md:pt-16 xl:pt-0"
       style={{
         height: window.innerWidth < 768
-          ? `${viewportHeight - (isChatKeyboardActive ? 0 : 72)}px`
+          ? `${viewportHeight - (isInputFocused ? 0 : 72)}px`
           : undefined
-      }}
-    >
+      }}>
       <div className="glass-card p-0 md:p-4 flex flex-col h-full relative overflow-hidden border-0 rounded-none">
         
-        {/* Sub tab switcher - hidden on mobile when typing or emoji is open */}
-        <div className={`gap-2 mb-3 p-3 md:p-0 shrink-0 ${isChatKeyboardActive ? 'hidden md:flex' : 'flex'}`}>
+        {/* Sub tab switcher */}
+        <div className="flex gap-2 mb-3 p-3 md:p-0 shrink-0">
           <button 
             type="button" 
             className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 ${
@@ -442,7 +410,7 @@ export const Community: React.FC<CommunityProps> = ({
 
         {activeSubTab === 'chat' ? (
           <>
-            {/* Multi-select bar or Standard Header - hidden on mobile when typing or emoji is open */}
+            {/* Multi-select bar or Standard Header */}
             {isMultiSelectMode ? (
               <div className="flex justify-between items-center bg-brand-orange/10 border border-brand-orange/20 rounded-xl p-3 mb-3 mx-3 md:mx-0 shrink-0">
                 <span className="text-xs font-black text-white">Selected {selectedMessageIds.length} messages</span>
@@ -454,7 +422,7 @@ export const Community: React.FC<CommunityProps> = ({
                 </div>
               </div>
             ) : (
-              <div className={`items-center justify-between mb-2 border-b border-zinc-900 pb-2 mx-3 md:mx-0 shrink-0 ${isChatKeyboardActive ? 'hidden md:flex' : 'flex'}`}>
+              <div className="flex items-center justify-between mb-2 border-b border-zinc-900 pb-2 mx-3 md:mx-0 shrink-0">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-brand-orange" />
                   <h3 className="text-sm font-black text-white">Chat Feed</h3>
@@ -503,9 +471,6 @@ export const Community: React.FC<CommunityProps> = ({
                   <span>جاري تحميل الرسائل السابقة...</span>
                 </div>
               )}
-
-              {/* Natural bottom-anchor spacer for few messages */}
-              <div className="flex-1 min-h-0" />
 
               {chatMessages.map((msg: any) => {
                 const isMyMsg = user && msg.username === user.username;
