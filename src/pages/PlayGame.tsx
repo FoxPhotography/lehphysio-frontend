@@ -357,11 +357,14 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             placeholder="Type a message..."
             value={chatMessage}
             onChange={(e) => setChatMessage(e.target.value)}
+            onFocus={() => setShowChatEmojiPicker(false)}
           />
           <div className="absolute right-1">
             <button
               type="button"
-              onClick={() => {
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
                 if (showChatEmojiPicker) {
                   setShowChatEmojiPicker(false);
                   chatInputRef.current?.focus();

@@ -372,6 +372,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                     className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl p-3.5 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none min-h-[50px] maxHeight-[120px]"
                     placeholder={replyingToComment ? `Reply to @${replyingToComment.username}...` : "Add your medical insight here..."}
                     value={commentInput}
+                    onFocus={() => setShowEmojiPicker(false)}
                     onChange={(e) => {
                       const text = e.target.value;
                       setCommentInput(text);
@@ -466,12 +467,15 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                     <div className="relative">
                       <button
                         type="button"
-                        onClick={() => {
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const el = document.getElementById('episode-comment-input');
                           if (showEmojiPicker) {
                             setShowEmojiPicker(false);
-                            document.getElementById('episode-comment-input')?.focus();
+                            el?.focus();
                           } else {
-                            document.getElementById('episode-comment-input')?.blur();
+                            el?.blur();
                             setShowEmojiPicker(true);
                           }
                         }}

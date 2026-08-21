@@ -713,6 +713,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                       type="text"
                       value={commentText}
                       onChange={handleInputChange}
+                      onFocus={() => setShowEmojiPicker(false)}
                       placeholder={replyingTo ? `Reply to @${replyingTo.username}...` : 'Write a comment... (Type @ to mention)'}
                       className="w-full bg-zinc-900/80 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-full py-2.5 pl-4 pr-4 text-xs font-semibold placeholder-zinc-500 outline-none transition-all"
                     />
@@ -722,7 +723,9 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                   <div className="relative shrink-0">
                     <button
                       type="button"
-                      onClick={() => {
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={(e) => {
+                        e.preventDefault();
                         if (showEmojiPicker) {
                           setShowEmojiPicker(false);
                           if (inputRef.current) inputRef.current.focus();
