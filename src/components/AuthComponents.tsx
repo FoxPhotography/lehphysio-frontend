@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Lock, ArrowRight, AlertCircle } from 'lucide-react';
+import { User, Lock, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 // ─── Reusable Auth Layout ──────────────────────────────────────────────────────
 export const AuthLayout: React.FC<{
@@ -91,7 +91,7 @@ export const AuthLink: React.FC<{ onClick: () => void; children: React.ReactNode
   <button
     type="button"
     onClick={onClick}
-    className="text-orange-400 font-bold hover:text-orange-300 transition-colors"
+    className="text-orange-400 font-bold hover:text-orange-300 transition-colors cursor-pointer"
   >
     {children}
   </button>
@@ -110,7 +110,7 @@ export const AuthSubmitButton: React.FC<{
     onClick={onClick}
     whileHover={disabled ? {} : { scale: 1.02 }}
     whileTap={disabled ? {} : { scale: 0.98 }}
-    className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-black text-[14px] hover:from-orange-400 hover:to-amber-400 transition-colors shadow-lg shadow-orange-500/15 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+    className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-black text-[14px] hover:from-orange-400 hover:to-amber-400 transition-colors shadow-lg shadow-orange-500/15 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
   >
     {label}
     {icon || <ArrowRight className="w-4 h-4" />}
@@ -120,14 +120,35 @@ export const AuthSubmitButton: React.FC<{
 // ─── Input Field ───────────────────────────────────────────────────────────────
 export const AuthInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & {
   icon?: React.ReactNode;
-}> = ({ icon, className, ...props }) => (
-  <div className="relative">
-    {icon && (
-      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600">{icon}</div>
-    )}
-    <input
-      {...props}
-      className={`w-full py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 text-[14px] focus:outline-none focus:border-orange-500/60 transition-colors ${icon ? 'pl-10 pr-4' : 'px-4'} ${className || ''}`}
-    />
-  </div>
-);
+}> = ({ icon, className, type, ...props }) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = type === 'password';
+  const effectiveType = isPassword ? (showPassword ? 'text' : 'password') : type;
+
+  return (
+    <div className="relative">
+      {icon && (
+        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">{icon}</div>
+      )}
+      <input
+        type={effectiveType}
+        {...props}
+        className={`w-full py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 text-[14px] focus:outline-none focus:border-orange-500/60 focus:ring-1 focus:ring-orange-500/30 transition-all ${
+          icon ? 'pl-10' : 'pl-4'
+        } ${isPassword ? 'pr-11' : 'pr-4'} ${className || ''}`}
+      />
+      {isPassword && (
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => setShowPassword((prev) => !prev)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-orange-400 focus:text-orange-400 transition-colors p-1 rounded-lg cursor-pointer flex items-center justify-center"
+          title={showPassword ? 'Hide password' : 'Show password'}
+          aria-label={showPassword ? 'Hide password' : 'Show password'}
+        >
+          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
+      )}
+    </div>
+  );
+};
