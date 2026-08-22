@@ -179,7 +179,6 @@ export const Community: React.FC<CommunityProps> = ({
   const [activeSuggestionIdx, setActiveSuggestionIdx] = useState(0);
 
   // Emoji picker states
-  const [showChatEmojiPicker, setShowChatEmojiPicker] = useState(false);
   const [reactionPickerMsgId, setReactionPickerMsgId] = useState<number | null>(null);
 
   const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
@@ -352,23 +351,6 @@ export const Community: React.FC<CommunityProps> = ({
         inputEl.setSelectionRange(selectionStart, selectionStart);
       }
     }, 50);
-  };
-
-  const handleInsertEmoji = (emoji: string) => {
-    const textarea = document.getElementById('community-chat-input') as HTMLTextAreaElement | null;
-    if (textarea) {
-      const start = textarea.selectionStart ?? textarea.value.length;
-      const end = textarea.selectionEnd ?? textarea.value.length;
-      const currentVal = textarea.value;
-      const nextVal = currentVal.substring(0, start) + emoji + currentVal.substring(end);
-      textarea.value = nextVal;
-      const newCursor = start + emoji.length;
-      textarea.selectionStart = newCursor;
-      textarea.selectionEnd = newCursor;
-      setChatInput(nextVal);
-    } else {
-      setChatInput((prev: string) => (prev || '') + emoji);
-    }
   };
 
   const submitSuggestion = (e: React.FormEvent) => {
@@ -776,7 +758,6 @@ export const Community: React.FC<CommunityProps> = ({
                       onChange={handleInputChange}
                       onFocus={() => {
                         setIsInputFocused(true);
-                        setShowChatEmojiPicker(false);
                       }}
                       onBlur={() => setIsInputFocused(false)}
                       onKeyDown={(e) => {
@@ -805,31 +786,6 @@ export const Community: React.FC<CommunityProps> = ({
                       }}
                       rows={1}
                     />
-
-                    {/* Emoji Trigger Button */}
-                    <div className="relative shrink-0 mb-1">
-                      <button
-                        type="button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const el = document.getElementById('community-chat-input');
-                          if (showChatEmojiPicker) {
-                            setShowChatEmojiPicker(false);
-                            el?.focus();
-                          } else {
-                            el?.blur();
-                            setShowChatEmojiPicker(true);
-                          }
-                        }}
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors ${
-                          showChatEmojiPicker ? 'text-brand-orange bg-zinc-800/80 shadow-xs' : 'text-zinc-400 hover:text-brand-orange hover:bg-zinc-800/60'
-                        }`}
-                        title={showChatEmojiPicker ? 'Switch to Keyboard' : 'Insert Emoji'}
-                      >
-                        {showChatEmojiPicker ? <Keyboard className="w-4.5 h-4.5" /> : <Smile className="w-4.5 h-4.5" />}
-                      </button>
-                    </div>
                   </div>
                   <button 
                     type="submit" 
@@ -844,20 +800,11 @@ export const Community: React.FC<CommunityProps> = ({
                   Please <button onClick={() => setCurrentPage('login')} className="text-brand-orange hover:text-brand-amber font-black cursor-pointer underline">Login</button> to participate in the live chat.
                 </div>
               )}
-
-              {/* Seamless Inline Emoji Drawer */}
-              <EmojiPickerPopover
-                isOpen={showChatEmojiPicker}
-                onClose={() => setShowChatEmojiPicker(false)}
-                onEmojiSelect={handleInsertEmoji}
-                variant="drawer"
-                height={280}
-              />
             </div>
 
             {/* Scroll bottom btn */}
             <AnimatePresence>
-              {showScrollDownBtn && !showChatEmojiPicker && (
+              {showScrollDownBtn && (
                 <motion.button
                   initial={{ opacity: 0, y: 10, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}

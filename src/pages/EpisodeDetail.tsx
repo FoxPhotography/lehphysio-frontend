@@ -19,11 +19,8 @@ import {
   Brain,
   CheckCircle,
   AlertCircle,
-  AlertTriangle,
-  Smile,
-  Keyboard
+  AlertTriangle
 } from 'lucide-react';
-import { EmojiPickerPopover } from '../components/common/EmojiPickerPopover';
 import { formatMentions } from '../utils/mentions';
 import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
 import { useNotifications } from '../context/NotificationContext';
@@ -97,7 +94,6 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
   const [editCommentText, setEditCommentText] = useState('');
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; commentId: number; content: string; isOwner: boolean; commentUserId?: number; commentUsername?: string } | null>(null);
   const [activeSuggestionIdx, setActiveSuggestionIdx] = useState(0);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
   const { episode, quiz, has_solved_quiz, likes_count, shares_count, has_liked, comments = [] } = episodeDetail || {};
@@ -382,7 +378,6 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                     className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl p-3.5 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none min-h-[50px] maxHeight-[120px]"
                     placeholder={replyingToComment ? `Reply to @${replyingToComment.username}...` : "Add your medical insight here..."}
                     value={commentInput}
-                    onFocus={() => setShowEmojiPicker(false)}
                     onChange={(e) => {
                       const text = e.target.value;
                       setCommentInput(text);
@@ -473,54 +468,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                     );
                   })()}
 
-                  <div className="flex justify-between gap-2 items-center">
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const el = document.getElementById('episode-comment-input');
-                          if (showEmojiPicker) {
-                            setShowEmojiPicker(false);
-                            el?.focus();
-                          } else {
-                            el?.blur();
-                            setShowEmojiPicker(true);
-                          }
-                        }}
-                        className={`p-1.5 rounded-xl cursor-pointer transition-colors flex items-center gap-1.5 text-xs font-semibold ${
-                          showEmojiPicker ? 'text-brand-orange bg-zinc-800/80 shadow-xs' : 'text-zinc-400 hover:text-brand-orange hover:bg-zinc-800/60'
-                        }`}
-                        title={showEmojiPicker ? 'Switch to Keyboard' : 'Insert Emoji'}
-                      >
-                        {showEmojiPicker ? <Keyboard className="w-4.5 h-4.5" /> : <Smile className="w-4.5 h-4.5" />}
-                        <span className="text-[11px] text-zinc-400">{showEmojiPicker ? 'Keyboard' : 'Emoji'}</span>
-                      </button>
-
-                      <EmojiPickerPopover
-                        isOpen={showEmojiPicker}
-                        onClose={() => setShowEmojiPicker(false)}
-                        onEmojiSelect={(emoji) => {
-                          const textarea = document.getElementById('episode-comment-input') as HTMLTextAreaElement | null;
-                          if (textarea) {
-                            const start = textarea.selectionStart ?? textarea.value.length;
-                            const end = textarea.selectionEnd ?? textarea.value.length;
-                            const currentVal = textarea.value;
-                            const nextVal = currentVal.substring(0, start) + emoji + currentVal.substring(end);
-                            textarea.value = nextVal;
-                            const newCursor = start + emoji.length;
-                            textarea.selectionStart = newCursor;
-                            textarea.selectionEnd = newCursor;
-                            setCommentInput(nextVal);
-                          } else {
-                            setCommentInput(commentInput + emoji);
-                          }
-                        }}
-                        position="top-left"
-                      />
-                    </div>
-
+                  <div className="flex justify-end gap-2 items-center">
                     <div className="flex gap-2 items-center">
                       {replyingToComment && (
                         <button className="border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-[10px] py-2 px-4 rounded-xl cursor-pointer transition-all" onClick={() => setReplyingToComment(null)}>Cancel</button>

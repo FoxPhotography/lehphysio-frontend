@@ -19,13 +19,10 @@ import {
   RotateCcw,
   Loader2,
   Zap,
-  UserMinus,
-  Smile,
-  Keyboard,
+  UserMinus
 } from 'lucide-react';
 import { playChatSound, copyToClipboard } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
-import { EmojiPickerPopover } from '../components/common/EmojiPickerPopover';
 
 // ─── Confetti Particle System ──────────────────────────────────────────────────
 const ConfettiEffect: React.FC<{ active: boolean; onComplete: () => void }> = ({
@@ -176,7 +173,6 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   setActiveGameRoom,
 }) => {
   const [chatMessage, setChatMessage] = useState('');
-  const [showChatEmojiPicker, setShowChatEmojiPicker] = useState(false);
   const [confettiActive, setConfettiActive] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -367,7 +363,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             data-1p-ignore="true"
             data-bwignore="true"
             data-form-type="other"
-            className="w-full bg-transparent text-[14px] text-white placeholder-zinc-500 focus:outline-none resize-none overflow-y-auto leading-relaxed py-1.5 pr-8 min-h-[32px] max-h-[85px] font-medium"
+            className="w-full bg-transparent text-[14px] text-white placeholder-zinc-500 focus:outline-none resize-none overflow-y-auto leading-relaxed py-1.5 px-3 min-h-[32px] max-h-[85px] font-medium"
             placeholder={room.status === 'playing' && !room.roundWinner ? "Type your guess or message..." : "Type a message..."}
             value={chatMessage}
             onChange={(e) => {
@@ -375,7 +371,6 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               e.target.style.height = 'auto';
               e.target.style.height = `${Math.min(e.target.scrollHeight, 85)}px`;
             }}
-            onFocus={() => setShowChatEmojiPicker(false)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -384,26 +379,6 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               }
             }}
           />
-          <div className="absolute right-1.5 bottom-1.5">
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={(e) => {
-                e.preventDefault();
-                if (showChatEmojiPicker) {
-                  setShowChatEmojiPicker(false);
-                  chatInputRef.current?.focus();
-                } else {
-                  chatInputRef.current?.blur();
-                  setShowChatEmojiPicker(true);
-                }
-              }}
-              className="p-1 text-zinc-400 hover:text-brand-orange cursor-pointer transition-colors"
-              title={showChatEmojiPicker ? 'Keyboard' : 'Emoji'}
-            >
-              {showChatEmojiPicker ? <Keyboard className="w-4 h-4 text-brand-orange" /> : <Smile className="w-4 h-4" />}
-            </button>
-          </div>
         </div>
 
         <motion.button
@@ -415,32 +390,6 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           <Send className="w-4 h-4" />
         </motion.button>
       </form>
-
-      {/* Inline Drawer below chat input */}
-      <EmojiPickerPopover
-        isOpen={showChatEmojiPicker}
-        onClose={() => setShowChatEmojiPicker(false)}
-        onEmojiSelect={(emoji) => {
-          if (chatInputRef.current) {
-            const input = chatInputRef.current;
-            const start = input.selectionStart ?? input.value.length;
-            const end = input.selectionEnd ?? input.value.length;
-            const currentVal = input.value;
-            const nextVal = currentVal.substring(0, start) + emoji + currentVal.substring(end);
-            input.value = nextVal;
-            const newCursor = start + emoji.length;
-            input.selectionStart = newCursor;
-            input.selectionEnd = newCursor;
-            setChatMessage(nextVal);
-            input.style.height = 'auto';
-            input.style.height = `${Math.min(input.scrollHeight, 85)}px`;
-          } else {
-            setChatMessage((prev) => prev + emoji);
-          }
-        }}
-        variant="drawer"
-        height={260}
-      />
     </div>
   );
 

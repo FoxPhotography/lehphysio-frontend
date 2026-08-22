@@ -3,7 +3,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Tajawal', 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Tajawal', 'Outfit', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', system-ui, -apple-system, sans-serif;
   --color-brand-orange: #FF6A00;
   --color-brand-amber: #FFB000;
   

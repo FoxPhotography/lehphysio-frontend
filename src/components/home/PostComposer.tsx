@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { X, Image as ImageIcon, Loader2, Send, Smile } from 'lucide-react';
+import { X, Image as ImageIcon, Loader2, Send } from 'lucide-react';
 import { UserAvatar } from '../UserAvatar';
-import { EmojiPickerPopover } from '../common/EmojiPickerPopover';
 
 interface PostComposerProps {
   user: any;
@@ -21,7 +20,6 @@ export const PostComposer: React.FC<PostComposerProps> = ({
   const [uploadedImageUrl, setUploadedImageUrl] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   if (!user) return null;
 
@@ -87,28 +85,6 @@ export const PostComposer: React.FC<PostComposerProps> = ({
               <span>{isUploadingImage ? 'Uploading...' : 'Add Image'}</span>
               <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" disabled={isUploadingImage} />
             </label>
-
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-[10px] py-2 px-3 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
-                title="Insert Emoji"
-              >
-                <Smile className="w-3.5 h-3.5 text-brand-orange" />
-                <span>Emoji</span>
-              </button>
-
-              <EmojiPickerPopover
-                isOpen={showEmojiPicker}
-                onClose={() => setShowEmojiPicker(false)}
-                onEmojiSelect={(emoji) => {
-                  setNewPostContent(newPostContent + emoji);
-                  setShowEmojiPicker(false);
-                }}
-                position="top-left"
-              />
-            </div>
           </div>
           
           <button 

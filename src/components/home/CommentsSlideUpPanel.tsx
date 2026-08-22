@@ -13,13 +13,10 @@ import {
   AlertTriangle, 
   Loader2, 
   MessageSquare,
-  ChevronDown,
-  Smile,
-  Keyboard
+  ChevronDown
 } from 'lucide-react';
 import { communityService } from '../../services/communityService';
 import { formatMentions } from '../../utils/mentions';
-import { EmojiPickerPopover } from '../common/EmojiPickerPopover';
 
 interface CommentItem {
   id: number;
@@ -70,7 +67,6 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{ id: number; username: string } | null>(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
   // Mentions autocomplete
   const [mentionSearch, setMentionSearch] = useState<string | null>(null);
@@ -725,57 +721,8 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                       data-form-type="other"
                       value={commentText}
                       onChange={handleInputChange}
-                      onFocus={() => setShowEmojiPicker(false)}
                       placeholder={replyingTo ? `Reply to @${replyingTo.username}...` : 'Write a comment... (Type @ to mention)'}
                       className="w-full bg-zinc-900/80 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-full py-2.5 pl-4 pr-4 text-xs font-semibold placeholder-zinc-500 outline-none transition-all"
-                    />
-                  </div>
-
-                  {/* Emoji Picker Button (Next to Send button) */}
-                  <div className="relative shrink-0">
-                    <button
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (showEmojiPicker) {
-                          setShowEmojiPicker(false);
-                          if (inputRef.current) inputRef.current.focus();
-                        } else {
-                          if (inputRef.current) inputRef.current.blur();
-                          setShowEmojiPicker(true);
-                        }
-                      }}
-                      className={`w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition-all border ${
-                        showEmojiPicker 
-                          ? 'bg-brand-orange text-black border-brand-orange shadow-orange-glow' 
-                          : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-400 hover:text-brand-orange'
-                      }`}
-                      title={showEmojiPicker ? 'Switch to Keyboard' : 'Insert Emoji'}
-                    >
-                      {showEmojiPicker ? <Keyboard className="w-5 h-5" /> : <Smile className="w-5 h-5" />}
-                    </button>
-
-                    <EmojiPickerPopover
-                      isOpen={showEmojiPicker}
-                      onClose={() => setShowEmojiPicker(false)}
-                      onEmojiSelect={(emoji) => {
-                        if (inputRef.current) {
-                          const input = inputRef.current;
-                          const start = input.selectionStart ?? input.value.length;
-                          const end = input.selectionEnd ?? input.value.length;
-                          const currentVal = input.value;
-                          const nextVal = currentVal.substring(0, start) + emoji + currentVal.substring(end);
-                          input.value = nextVal;
-                          const newCursor = start + emoji.length;
-                          input.selectionStart = newCursor;
-                          input.selectionEnd = newCursor;
-                          setCommentText(nextVal);
-                        } else {
-                          setCommentText((prev) => prev + emoji);
-                        }
-                      }}
-                      position="top-right"
                     />
                   </div>
 
