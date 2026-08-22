@@ -288,7 +288,7 @@ export const useAppSockets = ({
           feedCacheService.set(`user_profile_${currentId}`, updated);
           return updated;
         });
-        if (data.xp_earned) {
+        if (data.xp_earned && !(window as any).__isSpinningWheel) {
           triggerXpPopup(data.xp_earned, true);
         }
       }

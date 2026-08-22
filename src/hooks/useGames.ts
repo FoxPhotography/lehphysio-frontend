@@ -294,6 +294,7 @@ export const useGames = () => {
       return;
     }
     setIsSpinning(true);
+    (window as any).__isSpinningWheel = true;
 
     try {
       const res = await fetch(`${API_BASE || window.location.origin}/api/rewards/spin-wheel`, {
@@ -307,6 +308,7 @@ export const useGames = () => {
       if (!res.ok) {
         showToast(data.error || 'Failed to spin the wheel.');
         setIsSpinning(false);
+        (window as any).__isSpinningWheel = false;
         return;
       }
 
@@ -350,6 +352,7 @@ export const useGames = () => {
       requestAnimationFrame(animateTicks);
 
       setTimeout(() => {
+        (window as any).__isSpinningWheel = false;
         setWheelRotation(newRot);
         
         // Show results
@@ -373,6 +376,7 @@ export const useGames = () => {
     } catch (err) {
       showToast('Connection error.');
       setIsSpinning(false);
+      (window as any).__isSpinningWheel = false;
     }
   };
 
