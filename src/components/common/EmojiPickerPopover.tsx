@@ -17,17 +17,21 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
   isOpen,
   onClose,
   onEmojiSelect,
-  variant = 'drawer',
-  position = 'top-right',
+  variant,
+  position,
   className = '',
-  width = 320,
-  height = 280,
+  width = 330,
+  height = 320,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // If variant is explicitly specified, use it. Otherwise, if position is specified, use 'popover', else 'popover'.
+  const activeVariant = variant || (position ? 'popover' : 'popover');
+  const activePosition = position || 'top-left';
+
   // Close when clicking outside on popover mode
   useEffect(() => {
-    if (!isOpen || variant === 'drawer') return () => {};
+    if (!isOpen || activeVariant === 'drawer') return () => {};
 
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -47,14 +51,14 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, variant, onClose]);
+  }, [isOpen, activeVariant, onClose]);
 
   const handleEmojiClick = (emojiData: EmojiClickData) => {
     onEmojiSelect(emojiData.emoji);
   };
 
-  // ─── DRAWER VARIANT (In-flow keyboard replacement under the input form) ────────
-  if (variant === 'drawer') {
+  // ─── DRAWER VARIANT (In-flow full-width keyboard replacement) ────────
+  if (activeVariant === 'drawer') {
     return (
       <AnimatePresence>
         {isOpen && (
@@ -63,7 +67,7 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
             animate={{ height: typeof height === 'number' ? height : 280, opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.22, ease: 'easeInOut' }}
-            className={`w-full overflow-hidden border-t border-zinc-800/80 bg-zinc-950 flex justify-center 
+            className={`w-full min-w-[280px] overflow-hidden border-t border-zinc-800/80 bg-zinc-950 flex justify-center 
               [&_.EmojiPickerReact]:!border-0 
               [&_.EmojiPickerReact]:!bg-transparent 
               [&_.EmojiPickerReact]:!w-full 
@@ -96,7 +100,7 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
 
   // ─── POPOVER VARIANT (Floating dropdown) ───────────────────────────────────────
   const getPositionClasses = () => {
-    switch (position) {
+    switch (activePosition) {
       case 'top-right':
         return 'bottom-full right-0 mb-2';
       case 'top-left':
@@ -108,7 +112,7 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
       case 'centered':
         return 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[10000]';
       default:
-        return 'bottom-full right-0 mb-2';
+        return 'bottom-full left-0 mb-2';
     }
   };
 
@@ -117,11 +121,14 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
       {isOpen && (
         <motion.div
           ref={containerRef}
-          initial={{ opacity: 0, scale: 0.92, y: position.startsWith('top') ? 10 : -10 }}
+          initial={{ opacity: 0, scale: 0.94, y: activePosition.startsWith('top') ? 8 : -8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.92, y: position.startsWith('top') ? 10 : -10 }}
+          exit={{ opacity: 0, scale: 0.94, y: activePosition.startsWith('top') ? 8 : -8 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          className={`absolute ${getPositionClasses()} z-[10001] shadow-2xl rounded-2xl overflow-hidden border border-zinc-800/90 bg-zinc-950/95 backdrop-blur-xl 
+          className={`absolute ${getPositionClasses()} z-[10001] shadow-2xl rounded-2xl overflow-hidden border border-zinc-800/90 bg-zinc-950/95 backdrop-blur-xl w-[320px] sm:w-[350px] max-w-[calc(100vw-32px)]
+            [&_.EmojiPickerReact]:!border-0 
+            [&_.EmojiPickerReact]:!bg-transparent 
+            [&_.EmojiPickerReact]:!w-full 
             [&_.epr-emoji-category-label]:!hidden 
             [&_.epr-search-container]:!hidden 
             [&_.epr-header]:!hidden 
@@ -137,7 +144,7 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
             skinTonesDisabled={true}
             autoFocusSearch={false}
             lazyLoadEmojis={true}
-            width={width}
+            width="100%"
             height={height}
             previewConfig={{
               showPreview: false,
