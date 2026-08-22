@@ -16,6 +16,7 @@ import {
   Star,
   LayoutDashboard,
   ZoomIn,
+  Settings,
 } from 'lucide-react';
 import { UserAvatar } from '../components/UserAvatar';
 import { setFramesCache } from '../utils/helpers';
@@ -574,7 +575,7 @@ export const Profile: React.FC<ProfileProps> = ({
           onClick={() => setShowDecorationPicker(true)}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-bold text-[14px] hover:from-orange-400 hover:to-amber-400 transition-colors mb-3 shadow-lg shadow-orange-500/15"
         >
-          <Sparkles className="w-4 h-4" />
+          <Settings className="w-4 h-4" />
           Change Profile Decoration
         </motion.button>
 
