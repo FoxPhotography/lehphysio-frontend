@@ -17,7 +17,8 @@ import {
   Check,
   Zap,
   Sparkles,
-  Volume2
+  Volume2,
+  Newspaper
 } from 'lucide-react';
 import { API_BASE } from '../services/api';
 
@@ -282,7 +283,7 @@ export const News: React.FC<NewsProps> = ({
           </button>
           <div>
             <h1 className="text-xl md:text-2xl font-black bg-gradient-to-r from-white via-zinc-100 to-zinc-400 bg-clip-text text-transparent tracking-tight flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-brand-orange shrink-0 animate-pulse" />
+              <Newspaper className="w-5 h-5 text-brand-orange shrink-0 animate-pulse" />
               <span>الأخبار والبيانات الرسمية</span>
             </h1>
             <p className="text-xs text-zinc-500 font-semibold mt-1">المصدر المعتمد لجميع إعلانات منصة @LehPhysio</p>
