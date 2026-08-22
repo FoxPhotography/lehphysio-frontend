@@ -323,6 +323,7 @@ export const Admin: React.FC<AdminProps> = ({
   }, [adminSection, auditFilters.action, auditFilters.targetType, auditFilters.dateRange, auditFilters.startDate, auditFilters.endDate]);
 
   const EMPTY_EPISODE = {
+    episode_number: '',
     title_ar: '', title_en: '', description: '', thumbnail_url: '',
     youtube_url: '', quiz_question: '', quiz_options: ['', '', '', ''],
     quiz_correct: 0, code: '', code_max_uses: 200, code_expiry: ''
@@ -370,6 +371,9 @@ export const Admin: React.FC<AdminProps> = ({
       thumbnail_url: thumbnailUrl,
       youtube_url: adminEpisodeForm.youtube_url,
     };
+    if (adminEpisodeForm.episode_number && !editingEpisodeId) {
+      body.episode_number = Number(adminEpisodeForm.episode_number);
+    }
     if (adminEpisodeForm.quiz_question) {
       body.quiz = {
         question: adminEpisodeForm.quiz_question,
@@ -420,6 +424,7 @@ export const Admin: React.FC<AdminProps> = ({
       if (res.ok) {
         setEditingEpisodeId(episodeId);
         setAdminEpisodeForm({
+          episode_number: String(data.episode.id || data.episode._id || episodeId),
           title_ar: data.episode.title_ar || '',
           title_en: data.episode.title_en || '',
           description: data.episode.description || '',
@@ -706,24 +711,33 @@ export const Admin: React.FC<AdminProps> = ({
           <SectionCard>
             <SectionTitle
               icon={<Video className="w-4 h-4" />}
-              label={editingEpisodeId ? `Edit Episode: ${adminEpisodeForm.title_en}` : 'Publish New Episode'}
+              label={editingEpisodeId ? `Edit Episode: ${adminEpisodeForm.title_ar}` : 'Publish New Episode'}
             />
             <form onSubmit={handleEpisodeSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <AdminInput
-                  label="Title (Arabic)"
-                  placeholder="العنوان بالعربي"
-                  value={adminEpisodeForm.title_ar}
-                  onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, title_ar: e.target.value }))}
-                  required
-                />
-                <AdminInput
-                  label="Title (English)"
-                  placeholder="Episode title in English"
-                  value={adminEpisodeForm.title_en}
-                  onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, title_en: e.target.value }))}
-                  required
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="space-y-1.5 sm:col-span-1">
+                  <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                    Episode # {editingEpisodeId ? '(Fixed)' : '(Optional)'}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    disabled={!!editingEpisodeId}
+                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 text-[13px] focus:outline-none focus:border-orange-500/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-bold"
+                    placeholder={editingEpisodeId ? `#${editingEpisodeId}` : "Auto"}
+                    value={adminEpisodeForm.episode_number || ''}
+                    onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, episode_number: e.target.value }))}
+                  />
+                </div>
+                <div className="sm:col-span-3">
+                  <AdminInput
+                    label="Episode Title (عنوان الحلقة)"
+                    placeholder="مثال: ليه فيزيو؟ 🎙️ الحلقة 6 | أسرار العلاج الطبيعي"
+                    value={adminEpisodeForm.title_ar}
+                    onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, title_ar: e.target.value, title_en: e.target.value }))}
+                    required
+                  />
+                </div>
               </div>
 
               <AdminTextarea
@@ -865,10 +879,13 @@ export const Admin: React.FC<AdminProps> = ({
                 {episodes.map((ep: any) => (
                   <div key={ep.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/3 border border-white/8 hover:border-white/12 transition-colors">
                     {ep.thumbnail_url && (
-                      <img src={ep.thumbnail_url} alt={ep.title_en} className="w-14 h-8 rounded-lg object-cover flex-shrink-0" />
+                      <img src={ep.thumbnail_url} alt={ep.title_ar || ep.title_en} className="w-14 h-8 rounded-lg object-cover flex-shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-bold text-white truncate">{ep.title_en}</p>
+                      <p className="text-[13px] font-bold text-white truncate">
+                        <span className="text-orange-400 font-mono mr-1.5 font-bold">#{ep.id}</span>
+                        {ep.title_ar || ep.title_en}
+                      </p>
                       <p className="text-[11px] text-zinc-500 truncate">
                         {ep.description ? ep.description.substring(0, 70) + '...' : 'No description'}
                       </p>
@@ -886,7 +903,7 @@ export const Admin: React.FC<AdminProps> = ({
                       <AdminBtn
                         size="sm"
                         variant="danger"
-                        onClick={() => handleDeleteEpisode(ep.id, ep.title_en)}
+                        onClick={() => handleDeleteEpisode(ep.id, ep.title_ar || ep.title_en)}
                       >
                         <Trash2 className="w-3 h-3" />
                         Del
@@ -974,7 +991,7 @@ export const Admin: React.FC<AdminProps> = ({
                   <option value="" className="bg-zinc-900">Universal Episode Code (Any Episode)</option>
                   {episodes.map((ep: any) => (
                     <option key={ep.id} value={ep.id} className="bg-zinc-900">
-                      Episode #{ep.id}: {ep.title_en || ep.title_ar}
+                      Episode #{ep.id}: {ep.title_ar || ep.title_en}
                     </option>
                   ))}
                 </AdminSelect>

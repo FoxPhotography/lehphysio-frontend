@@ -161,6 +161,7 @@ function InnerApp() {
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminCodes, setAdminCodes] = useState([]);
   const [adminEpisodeForm, setAdminEpisodeForm] = useState({
+    episode_number: '',
     title_ar: '', title_en: '', description: '', thumbnail_url: '', youtube_url: '',
     quiz_question: '', quiz_options: ['', '', '', ''], quiz_correct: 0,
     code: '', code_max_uses: 200, code_expiry: ''

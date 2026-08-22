@@ -20,7 +20,7 @@ export interface User {
 export interface Episode {
   id: number;
   title_ar: string;
-  title_en: string;
+  title_en?: string;
   description: string;
   thumbnail_url: string;
   youtube_url: string;

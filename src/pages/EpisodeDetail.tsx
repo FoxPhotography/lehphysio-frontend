@@ -184,7 +184,6 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
           </span>
           <div className="space-y-1">
             <h1 className="text-xl md:text-2xl font-black text-white leading-tight">{episode.title_ar}</h1>
-            <h2 className="text-xs md:text-sm font-semibold text-zinc-400 tracking-wide uppercase">{episode.title_en}</h2>
           </div>
 
           <div className="flex gap-4 pt-2">
@@ -233,7 +232,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
               allowFullScreen
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               loading="lazy"
-              title={`Episode ${episode.id}: ${episode.title_en}`}
+              title={`Episode ${episode.id}: ${episode.title_ar}`}
             />
           </div>
         </section>
