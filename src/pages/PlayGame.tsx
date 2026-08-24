@@ -638,24 +638,15 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               <p className="text-xs text-zinc-300">
                 Correct answer: <strong className="text-emerald-400 font-extrabold">{question?.structure}</strong>
               </p>
-              {isHost && (
+              {isHost && room.currentRound < room.rounds && (
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleNextRound}
                   className="mt-3 w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-sm cursor-pointer shadow-md"
                 >
-                  {room.currentRound < room.rounds ? (
-                    <>
-                      <span>Next Round</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </>
-                  ) : (
-                    <>
-                      <span>Final Results</span>
-                      <Trophy className="w-4 h-4 fill-current" />
-                    </>
-                  )}
+                  <span>Next Round</span>
+                  <ChevronRight className="w-4 h-4" />
                 </motion.button>
               )}
             </motion.div>
