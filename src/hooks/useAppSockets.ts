@@ -32,6 +32,7 @@ interface UseAppSocketsProps {
   setEpisodes: React.Dispatch<React.SetStateAction<any[]>>;
   setSuggestions: React.Dispatch<React.SetStateAction<any[]>>;
   setAdminSuggestions: React.Dispatch<React.SetStateAction<any[]>>;
+  setAdminCodes?: React.Dispatch<React.SetStateAction<any[]>>;
   setLeaderboard: React.Dispatch<React.SetStateAction<any[]>>;
   setDailyQuestion: React.Dispatch<React.SetStateAction<any>>;
   fetchDailyQuestion: () => void;
@@ -56,6 +57,7 @@ export const useAppSockets = ({
   setEpisodes,
   setSuggestions,
   setAdminSuggestions,
+  setAdminCodes,
   setLeaderboard,
   setDailyQuestion,
   fetchDailyQuestion,
@@ -241,6 +243,30 @@ export const useAppSockets = ({
       setAdminSuggestions(prev => prev.filter(s => String(s.id) !== String(data.id)));
     };
 
+    const handleXpCodeCreated = (newCode: any) => {
+      console.log('[Socket] xp_code_created received:', newCode);
+      if (!setAdminCodes) return;
+      const codeObj = {
+        ...newCode,
+        id: newCode.id ?? newCode._id,
+        isNewHighlight: true
+      };
+      setAdminCodes(prev => {
+        const idStr = String(codeObj.id);
+        const exists = prev.some(c => String(c.id ?? c._id) === idStr || (c.code && c.code === codeObj.code));
+        if (exists) {
+          return prev.map(c => (String(c.id ?? c._id) === idStr || (c.code && c.code === codeObj.code)) ? { ...c, ...codeObj } : c);
+        }
+        return [codeObj, ...prev];
+      });
+    };
+
+    const handleXpCodeDeleted = (data: { id: any; code?: string }) => {
+      console.log('[Socket] xp_code_deleted received:', data);
+      if (!setAdminCodes) return;
+      setAdminCodes(prev => prev.filter(c => String(c.id ?? c._id) !== String(data.id) && (!data.code || c.code !== data.code)));
+    };
+
     socket.on('post_created', handlePostCreated);
     socket.on('post_updated', handlePostUpdated);
     socket.on('post_deleted', handlePostDeleted);
@@ -253,6 +279,8 @@ export const useAppSockets = ({
     socket.on('suggestion_created', handleSuggestionCreated);
     socket.on('suggestion_updated', handleSuggestionUpdated);
     socket.on('suggestion_deleted', handleSuggestionDeleted);
+    socket.on('xp_code_created', handleXpCodeCreated);
+    socket.on('xp_code_deleted', handleXpCodeDeleted);
 
     return () => {
       socket.off('post_created', handlePostCreated);
@@ -267,8 +295,10 @@ export const useAppSockets = ({
       socket.off('suggestion_created', handleSuggestionCreated);
       socket.off('suggestion_updated', handleSuggestionUpdated);
       socket.off('suggestion_deleted', handleSuggestionDeleted);
+      socket.off('xp_code_created', handleXpCodeCreated);
+      socket.off('xp_code_deleted', handleXpCodeDeleted);
     };
-  }, [socket, user, token]);
+  }, [socket, user, token, setAdminCodes]);
 
   // Socket listeners for real-time hero cards and XP/level/rank updates
   useEffect(() => {

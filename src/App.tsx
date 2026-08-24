@@ -359,6 +359,7 @@ function InnerApp() {
     setEpisodes,
     setSuggestions,
     setAdminSuggestions,
+    setAdminCodes,
     setLeaderboard,
     setDailyQuestion,
     fetchDailyQuestion,
@@ -617,7 +618,23 @@ function InnerApp() {
       setAdminMessage(data.message || data.error);
       if (res.ok) {
         showToast('XP Code created successfully! 🔑');
-        fetchAdminCodes();
+        if (data.code) {
+          const newCodeObj = {
+            ...data.code,
+            id: data.code.id ?? data.code._id ?? data.id,
+            isNewHighlight: true
+          };
+          setAdminCodes((prev: any[]) => {
+            const idStr = String(newCodeObj.id);
+            const exists = prev.some(c => String(c.id ?? c._id) === idStr || (c.code && c.code === newCodeObj.code));
+            if (exists) {
+              return prev.map(c => (String(c.id ?? c._id) === idStr || (c.code && c.code === newCodeObj.code)) ? { ...c, ...newCodeObj } : c);
+            }
+            return [newCodeObj, ...prev];
+          });
+        } else {
+          fetchAdminCodes();
+        }
         setAdminCodeForm({ code: '', xp_reward: 50, type: 'social', episode_id: '', max_uses: 1000, expiry_date: '' });
       }
     } catch (err) {
@@ -1550,7 +1567,7 @@ function InnerApp() {
     );
   };
 
-  const handleAdminDeleteCode = (codeId: number, codeName: string) => {
+  const handleAdminDeleteCode = (codeId: number | string, codeName: string) => {
     showConfirm(
       'Delete XP Code',
       `Are you sure you want to delete the XP Code "${codeName}"? This action cannot be undone.`,
@@ -1561,7 +1578,7 @@ function InnerApp() {
           const data = await res.json();
           if (res.ok) {
             showToast(data.message || 'XP Code deleted successfully.');
-            fetchAdminCodes();
+            setAdminCodes((prev: any[]) => prev.filter(c => String(c.id ?? c._id) !== String(codeId)));
           } else {
             showToast(data.error || 'Failed to delete XP Code.');
           }
@@ -1629,6 +1646,7 @@ function InnerApp() {
         showToast('Episode created successfully! 🎬');
         fetchEpisodes();
         setAdminEpisodeForm({
+          episode_number: '',
           title_ar: '', title_en: '', description: '', thumbnail_url: '', youtube_url: '',
           quiz_question: '', quiz_options: ['', '', '', ''], quiz_correct: 0,
           code: '', code_max_uses: 200, code_expiry: ''

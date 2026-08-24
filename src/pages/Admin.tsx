@@ -51,7 +51,7 @@ interface AdminProps {
   handleAdminCreateCode: (e: React.FormEvent) => void;
   handleAdminUpdateUserRole: (userId: number, role: string) => Promise<void>;
   handleAdminUpdateSuggestionStatus: (suggestionId: number, status: 'approved' | 'rejected') => void;
-  handleAdminDeleteCode: (codeId: number, codeName: string) => void;
+  handleAdminDeleteCode: (codeId: number | string, codeName: string) => void;
   handleOpenModerationModal: (username: string, userId: number) => void;
   handleAdminDeleteUser: (userId: number, username: string) => void;
   user: any;
@@ -1023,10 +1023,29 @@ export const Admin: React.FC<AdminProps> = ({
                       <td colSpan={6} className="text-center py-6 text-zinc-600">No XP codes yet.</td>
                     </tr>
                   ) : adminCodes.map((c: any) => {
+                    const codeId = c.id ?? c._id;
                     const isExpired = c.expiry_date && new Date(c.expiry_date) < new Date();
+                    const isHighlighted = c.isNewHighlight;
                     return (
-                      <tr key={c.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
-                        <td className="py-2.5 pr-3 font-bold text-white font-mono">{c.code}</td>
+                      <tr 
+                        key={codeId} 
+                        className={`border-b transition-all duration-500 ${
+                          isHighlighted
+                            ? 'bg-gradient-to-r from-orange-500/20 via-amber-500/10 to-transparent border-orange-500/40 shadow-[inset_0_0_15px_rgba(249,115,22,0.15)]'
+                            : 'border-white/4 hover:bg-white/2'
+                        }`}
+                      >
+                        <td className="py-2.5 pr-3 font-bold text-white font-mono">
+                          <div className="flex items-center gap-2">
+                            <span>{c.code}</span>
+                            {isHighlighted && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[10px] font-black uppercase tracking-wider animate-pulse shadow-sm">
+                                <Sparkles className="w-2.5 h-2.5" />
+                                NEW
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="py-2.5 pr-3 text-orange-400 font-bold">+{c.xp_reward}</td>
                         <td className="py-2.5 pr-3 text-zinc-300">
                           {c.type === 'episode' ? (
@@ -1051,7 +1070,7 @@ export const Admin: React.FC<AdminProps> = ({
                           {isExpired && ' (Expired)'}
                         </td>
                         <td className="py-2.5 text-center">
-                          <AdminBtn size="sm" variant="danger" onClick={() => handleAdminDeleteCode(c.id, c.code)}>
+                          <AdminBtn size="sm" variant="danger" onClick={() => handleAdminDeleteCode(codeId, c.code)}>
                             <Trash2 className="w-3 h-3" />
                           </AdminBtn>
                         </td>

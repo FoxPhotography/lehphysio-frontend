@@ -95,7 +95,7 @@ export const gameService = {
     return res;
   },
 
-  async adminDeleteCode(codeId: number, token?: string) {
+  async adminDeleteCode(codeId: number | string, token?: string) {
     const res = await apiFetch(`/api/admin/xp-codes/${codeId}`, {
       method: 'DELETE',
     }, token);

@@ -125,7 +125,7 @@ interface AppRouterProps {
   handleAdminCreateCode: (e: React.FormEvent) => Promise<void>;
   handleAdminUpdateUserRole: (userId: number, role: string) => Promise<void>;
   handleAdminUpdateSuggestionStatus: (suggestionId: number, status: 'approved' | 'rejected', action?: string, reason?: string) => Promise<void>;
-  handleAdminDeleteCode: (codeId: number, name: string) => void;
+  handleAdminDeleteCode: (codeId: number | string, name: string) => void;
   handleAdminDeleteUser: (userId: number, username: string) => void;
   apiBase: string;
 }
