@@ -34,10 +34,50 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
 
   useEffect(() => {
     let cancelled = false;
+    const show = (d: PublicProfileData) => {
+      if (cancelled) return;
+      setData(d);
+      setState('ok');
+      document.title = `${d.username} | ليه فيزيو؟`;
+    };
+
+    // Fallback while the API doesn't have /users/public yet (or is older than the app):
+    // build the card from the all-time leaderboard, which has every field we show.
+    const fromLeaderboard = async () => {
+      const r = await fetch(`${API_BASE}/api/leaderboard?tab=all-time`);
+      if (!r.ok) throw new Error('leaderboard');
+      const rows: any[] = await r.json();
+      const row = rows.find((u) => u.username?.toLowerCase() === username.toLowerCase());
+      if (!row) throw new Error('missing');
+      return {
+        username: row.username,
+        batch: row.batch ?? null,
+        role: 'user',
+        avatar_url: row.avatar_url ?? null,
+        equipped_frame: row.equipped_frame ?? 'none',
+        total_xp: row.xp ?? 0,
+        streak_count: row.streak_count ?? 0,
+        rank: row.rank,
+        global_rank: row.rank_num,
+      } as PublicProfileData;
+    };
+
     fetch(`${API_BASE}/api/users/public/${encodeURIComponent(username)}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((d) => { if (!cancelled) { setData(d); setState('ok'); document.title = `${d.username} | ليه فيزيو؟`; } })
-      .catch(() => { if (!cancelled) setState('missing'); });
+      .then(async (r) => {
+        if (r.ok) return show(await r.json());
+        if (r.status === 404) {
+          const body = await r.json().catch(() => ({}));
+          // A real "user not found" from the new endpoint vs. the old API not knowing the route
+          if (body?.error === 'User not found.') throw new Error('missing');
+        }
+        show(await fromLeaderboard());
+      })
+      .catch(async (e) => {
+        if (e?.message !== 'missing') {
+          try { return show(await fromLeaderboard()); } catch { /* fall through */ }
+        }
+        if (!cancelled) setState('missing');
+      });
     return () => { cancelled = true; };
   }, [username]);
 
