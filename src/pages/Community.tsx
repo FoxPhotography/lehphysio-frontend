@@ -429,7 +429,7 @@ export const Community: React.FC<CommunityProps> = ({
       <div className="glass-card p-0 md:p-4 flex flex-col h-full relative overflow-hidden border-0 rounded-none">
         
         {/* Sub tab switcher */}
-        <div className="flex gap-2 mb-3 p-3 md:p-0 shrink-0">
+        <div className="flex gap-2 p-3 md:p-0 md:mb-3 shrink-0 border-b border-zinc-900/80 md:border-0">
           <button 
             type="button" 
             className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 ${
@@ -439,9 +439,26 @@ export const Community: React.FC<CommunityProps> = ({
             }`} 
             onClick={() => setActiveSubTab('chat')}
           >
-            <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+            {isRefreshingChat ? (
+              <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" aria-label="بنحدّث" />
+            ) : (
+              <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+            )}
             <span className="hidden sm:inline">الشات العام</span>
             <span className="sm:hidden">الشات</span>
+            <span
+              className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-black ${
+                activeSubTab === 'chat' ? 'bg-black/15 text-black' : 'bg-emerald-500/10 text-emerald-400'
+              }`}
+              aria-label={`${onlineCount} أونلاين`}
+              title={`${onlineCount} أونلاين`}
+            >
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${activeSubTab === 'chat' ? 'bg-emerald-700' : 'bg-emerald-500'}`} />
+              </span>
+              <span dir="ltr" className="tabular-nums">{onlineCount}</span>
+            </span>
           </button>
           <button 
             type="button" 
@@ -463,7 +480,7 @@ export const Community: React.FC<CommunityProps> = ({
             {/* Multi-select bar or Standard Header */}
             {isMultiSelectMode ? (
               <div className="flex justify-between items-center bg-brand-orange/10 border border-brand-orange/20 rounded-xl p-3 mb-3 mx-3 md:mx-0 shrink-0">
-                <span className="text-xs font-black text-white">Selected {selectedMessageIds.length} messages</span>
+                <span className="text-xs font-black text-white">اتحدد {selectedMessageIds.length} رسالة</span>
                 <div className="flex gap-2">
                   {canDeleteSelected && (
                     <button className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-2xs py-1.5 px-3 rounded-lg cursor-pointer" onClick={handleBulkDeleteMessages} disabled={selectedMessageIds.length === 0}>حذف</button>
@@ -471,27 +488,7 @@ export const Community: React.FC<CommunityProps> = ({
                   <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-2xs py-1.5 px-3 rounded-lg cursor-pointer" onClick={() => { setIsMultiSelectMode(false); setSelectedMessageIds([]); }}>إلغاء</button>
                 </div>
               </div>
-            ) : (
-              <div className="flex items-center justify-between mb-2 border-b border-zinc-900 pb-2 mx-3 md:mx-0 shrink-0">
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-brand-orange" />
-                  <h3 className="text-sm font-black text-white">الشات</h3>
-                  {isRefreshingChat && (
-                    <div className="flex items-center gap-1.5 text-2xs text-zinc-500 font-bold uppercase tracking-wider animate-pulse ms-2">
-                      <div className="w-3.5 h-3.5 border-2 border-brand-orange border-t-transparent rounded-full animate-spin" />
-                      <span>بنحدّث…</span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 text-2xs text-brand-orange font-extrabold uppercase tracking-wider">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                  </span>
-                  <span>{onlineCount} أونلاين</span>
-                </div>
-              </div>
-            )}
+            ) : null}
 
             {/* Chat Messages Feed */}
             <div 
