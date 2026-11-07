@@ -665,7 +665,7 @@ export const Admin: React.FC<AdminProps> = ({
         <div>
           <h1 className="text-xl font-black text-white leading-tight">لوحة الإدارة</h1>
           <p className="text-xs text-zinc-500">
-            {user?.role === 'owner' ? 'Owner' : 'Admin'} Panel
+            {user?.role === 'owner' ? 'لوحة المالك' : 'لوحة الأدمن'}
           </p>
         </div>
       </div>
@@ -1119,7 +1119,7 @@ export const Admin: React.FC<AdminProps> = ({
                           u.role === 'moderator' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25' :
                           'bg-white/5 text-zinc-500 border border-white/10'
                         }`}>
-                          {u.role === 'user' ? 'Student' : u.role === 'moderator' ? 'Moderator' : u.role === 'admin' ? 'Admin' : 'Owner'}
+                          {u.role === 'user' ? 'طالب' : u.role === 'moderator' ? 'مشرف' : u.role === 'admin' ? 'أدمن' : 'المالك'}
                         </span>
                         {u.role === 'owner' && (
                           <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-2xs font-black uppercase tracking-wider animate-pulse">
