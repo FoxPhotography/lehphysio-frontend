@@ -475,7 +475,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                     equippedFrame={p.equipped_frame} 
                     size={28} 
                   />
-                  <span className="text-xs font-extrabold text-white truncate">@{p.username}</span>
+                  <span className="text-xs font-extrabold text-white truncate"><bdi dir="ltr">@{p.username}</bdi></span>
                 </div>
                 {p.username === room.host ? (
                   <span className="px-1.5 py-0.5 rounded-md bg-brand-orange text-black text-2xs font-black shrink-0">HOST</span>
@@ -663,7 +663,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                 equippedFrame={p.equipped_frame} 
                 size={20} 
               />
-              <span className="text-xs font-bold text-zinc-300">@{p.username}</span>
+              <span className="text-xs font-bold text-zinc-300"><bdi dir="ltr">@{p.username}</bdi></span>
               <span className="text-xs font-black text-brand-orange font-mono">{p.score}</span>
             </div>
           ))}
@@ -728,7 +728,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                 equippedFrame={p.equipped_frame} 
                 size={28} 
               />
-              <span className="flex-1 text-xs font-black text-white">@{p.username}</span>
+              <span className="flex-1 text-xs font-black text-white"><bdi dir="ltr">@{p.username}</bdi></span>
               <span className="text-xs font-black text-brand-orange font-mono">{p.score} pts</span>
             </m.div>
           ))}

@@ -132,7 +132,7 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
             <div className="space-y-2">
               <h4 className="text-sm font-bold text-white">تأكيد تغيير الصلاحية</h4>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                متأكد إنك عايز تغيّر صلاحية <span className="text-white font-bold">@{targetUser.username}</span>'s role from{' '}
+                متأكد إنك عايز تغيّر صلاحية <span className="text-white font-bold"><bdi dir="ltr">@{targetUser.username}</bdi></span>'s role from{' '}
                 <span className="text-orange-400 font-bold">{roleLabels[targetUser.role]}</span> to{' '}
                 <span className="text-orange-400 font-bold">{roleLabels[confirmRole]}</span>?
               </p>
@@ -157,7 +157,7 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
           <div className="space-y-4 text-start">
             <div>
               <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">المستخدم</p>
-              <p className="text-sm font-black text-white mt-0.5">@{targetUser.username}</p>
+              <p className="text-sm font-black text-white mt-0.5"><bdi dir="ltr">@{targetUser.username}</bdi></p>
               <p className="text-xs text-zinc-400 mt-0.5 flex items-center gap-1.5">
                 Current Role:{' '}
                 <span className={`px-1.5 py-0.5 rounded text-2xs font-black uppercase border ${

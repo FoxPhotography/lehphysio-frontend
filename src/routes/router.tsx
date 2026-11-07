@@ -599,6 +599,8 @@ export const AppRouter: React.FC<AppRouterProps> = ({
     case 'moderator-dashboard': {
       const ROLE_WEIGHTS = { user: 0, moderator: 1, admin: 2, owner: 3 };
       const userWeight = user ? (ROLE_WEIGHTS[user.role] || 0) : 0;
+      // Still loading the signed-in user after a deep link: wait instead of bouncing home
+      if (!user && token) return <PageSkeleton />;
       if (userWeight < 1) {
         setTimeout(() => setCurrentPage('home'), 0);
         return null;
@@ -618,6 +620,8 @@ export const AppRouter: React.FC<AppRouterProps> = ({
     case 'admin': {
       const ROLE_WEIGHTS = { user: 0, moderator: 1, admin: 2, owner: 3 };
       const userWeight = user ? (ROLE_WEIGHTS[user.role] || 0) : 0;
+      // Still loading the signed-in user after a deep link: wait instead of bouncing home
+      if (!user && token) return <PageSkeleton />;
       if (userWeight < 2) {
         setTimeout(() => setCurrentPage('home'), 0);
         return null;

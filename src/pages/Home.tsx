@@ -367,7 +367,7 @@ export const Home: React.FC<HomeProps> = ({
                     <div className="w-5 h-5 rounded-full overflow-hidden border border-white/10 shrink-0">
                       <img src={post.avatar_url ? cld(post.avatar_url, { w: 20, h: 20, crop: 'fill' }) : '/icon-192.webp'} alt="" loading="lazy" className="w-full h-full object-cover" />
                     </div>
-                    <span className="text-2xs font-black text-zinc-300 truncate max-w-[120px]">@{post.username}</span>
+                    <span className="text-2xs font-black text-zinc-300 truncate max-w-[120px]"><bdi dir="ltr">@{post.username}</bdi></span>
                   </div>
                   <span className="text-2xs font-extrabold text-brand-orange group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">اقرا التفاصيل ←</span>
                 </div>

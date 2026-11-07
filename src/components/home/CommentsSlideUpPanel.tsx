@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { textDir } from '../../utils/format';
 import { m, AnimatePresence, PanInfo } from 'framer-motion';
 import { HighlightWrapper } from '../notifications/HighlightWrapper';
 import { UserAvatar } from '../UserAvatar';
@@ -494,7 +495,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                   </div>
                 </div>
               ) : (
-                <p dir="auto" className="text-xs text-zinc-200 font-medium leading-relaxed whitespace-pre-wrap break-words">
+                <p dir={textDir(c.content)} className="text-xs text-zinc-200 font-medium leading-relaxed whitespace-pre-wrap break-words">
                   {renderFormattedText(c.content)}
                 </p>
               )}
@@ -603,7 +604,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                     </h3>
                     {postAuthorName && (
                       <p className="text-2xs text-zinc-500 font-semibold">
-                        Post by @{postAuthorName}
+                        Post by <bdi dir="ltr">@{postAuthorName}</bdi>
                       </p>
                     )}
                   </div>
@@ -663,7 +664,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                       }`}
                     >
                       <UserAvatar username={u.username} avatarUrl={u.avatar_url} size={22} />
-                      <span className="text-xs font-bold">@{u.username}</span>
+                      <span className="text-xs font-bold"><bdi dir="ltr">@{u.username}</bdi></span>
                     </div>
                   ))}
                 </m.div>
@@ -681,7 +682,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                 >
                   <div className="flex items-center gap-1.5 text-brand-orange font-bold">
                     <CornerUpLeft className="rtl:-scale-x-100 w-3.5 h-3.5" />
-                    <span>Replying to @{replyingTo.username}</span>
+                    <span>Replying to <bdi dir="ltr">@{replyingTo.username}</bdi></span>
                   </div>
                   <button
                     onClick={() => setReplyingTo(null)}

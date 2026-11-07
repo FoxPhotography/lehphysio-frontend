@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { textDir } from '../../utils/format';
 import { m, AnimatePresence } from 'framer-motion';
 import { HighlightWrapper } from '../notifications/HighlightWrapper';
 import { UserAvatar } from '../UserAvatar';
@@ -297,7 +298,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center mb-1">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-extrabold text-brand-orange">@{c.username}</span>
+                            <span className="text-xs font-extrabold text-brand-orange"><bdi dir="ltr">@{c.username}</bdi></span>
                             <span className="text-2xs font-bold bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-md">{c.batch}</span>
                           </div>
                           
@@ -335,7 +336,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                             </div>
                           </div>
                         ) : (
-                          <p dir="auto" className="text-xs text-zinc-200 font-medium leading-relaxed mb-2 pe-1">{renderTextWithMentions(c.content)}</p>
+                          <p dir={textDir(c.content)} className="text-xs text-zinc-200 font-medium leading-relaxed mb-2 pe-1">{renderTextWithMentions(c.content)}</p>
                         )}
 
                         <div className="flex gap-4 items-center">
@@ -371,7 +372,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                                 <UserAvatar username={r.username} avatarUrl={r.avatar_url} equippedFrame={r.equipped_frame} size={22} />
                                 <div className="flex-1 min-w-0">
                                   <div className="flex justify-between items-center mb-0.5">
-                                    <span className="text-xs font-bold text-zinc-400">@{r.username}</span>
+                                    <span className="text-xs font-bold text-zinc-400"><bdi dir="ltr">@{r.username}</bdi></span>
                                     <div className="flex items-center gap-2">
                                       <span className="text-2xs text-zinc-600 font-semibold">
                                         {new Date(r.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
@@ -406,7 +407,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                                       </div>
                                     </div>
                                   ) : (
-                                    <p dir="auto" className="text-xs text-zinc-300 font-medium leading-relaxed pe-1 mt-0.5">{renderTextWithMentions(r.content)}</p>
+                                    <p dir={textDir(r.content)} className="text-xs text-zinc-300 font-medium leading-relaxed pe-1 mt-0.5">{renderTextWithMentions(r.content)}</p>
                                   )}
 
                                   <div className="flex gap-2 items-center mt-1">
@@ -438,7 +439,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                 <div className="flex items-center justify-between bg-brand-orange/5 border-s-2 border-brand-orange rounded-xl px-3 py-2 mb-3 text-xs font-bold text-brand-orange">
                   <div className="flex items-center gap-1.5">
                     <CornerUpLeft className="rtl:-scale-x-100 w-3.5 h-3.5 shrink-0" />
-                    <span>بترد على <strong>@{replyingToComment.username}</strong></span>
+                    <span>بترد على <strong><bdi dir="ltr">@{replyingToComment.username}</bdi></strong></span>
                   </div>
                   <button 
                     onClick={() => setReplyingToComment(null)}
@@ -465,7 +466,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                         }`}
                       >
                         <UserAvatar username={u.username} avatarUrl={u.avatar_url} equippedFrame={u.equipped_frame} size={20} />
-                        <span>@{u.username}</span>
+                        <span><bdi dir="ltr">@{u.username}</bdi></span>
                       </div>
                     ))}
                   </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { textDir } from '../utils/format';
 import { m, AnimatePresence } from 'framer-motion';
 import { getNameColor, getFrameImage } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
@@ -615,14 +616,14 @@ export const Community: React.FC<CommunityProps> = ({
                               isMyMsg ? 'bg-black/10 text-zinc-800' : 'bg-black/30 text-zinc-400'
                             }`}>
                               <div className={`font-black ${isMyMsg ? 'text-black' : 'text-brand-orange'}`}>
-                                @{msg.reply_to.username}
+                                <bdi dir="ltr">@{msg.reply_to.username}</bdi>
                               </div>
                               <div dir="auto" className="truncate mt-0.5">{msg.reply_to.message}</div>
                             </div>
                           )}
 
                           <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1 w-full min-w-0">
-                            <p dir="auto" className="whitespace-pre-wrap break-words [word-break:break-word] leading-relaxed min-w-0">
+                            <p dir={textDir(msg.message)} className="whitespace-pre-wrap break-words [word-break:break-word] leading-relaxed min-w-0">
                               {renderTextWithMentions(msg.message)}
                             </p>
                             
@@ -691,7 +692,7 @@ export const Community: React.FC<CommunityProps> = ({
               {replyingTo && (
                 <div className="flex justify-between items-center bg-brand-orange/5 border-s-2 border-brand-orange rounded-xl px-3 py-2.5 mb-2 text-xs font-bold text-brand-orange">
                   <div className="truncate pe-4">
-                    <span>بترد على <strong>@{replyingTo.username}</strong>: </span>
+                    <span>بترد على <strong><bdi dir="ltr">@{replyingTo.username}</bdi></strong>: </span>
                     <span dir="auto" className="text-zinc-500 font-medium">{replyingTo.message}</span>
                   </div>
                   <button onClick={() => setReplyingTo(null)} className="text-zinc-500 hover:text-white cursor-pointer shrink-0">
@@ -724,7 +725,7 @@ export const Community: React.FC<CommunityProps> = ({
                       >
                         <UserAvatar username={u.username} avatarUrl={u.avatar_url} equippedFrame={u.equipped_frame} size={24} />
                         <div className="flex flex-col text-start">
-                           <span className="text-brand-orange font-black">@{u.username}</span>
+                           <span className="text-brand-orange font-black"><bdi dir="ltr">@{u.username}</bdi></span>
                            <span className="text-2xs text-zinc-500">{u.role === 'owner' ? 'المالك' : u.role === 'admin' ? 'أدمن' : 'طالب'}</span>
                         </div>
                       </button>
@@ -974,7 +975,7 @@ export const Community: React.FC<CommunityProps> = ({
                                 {s.title}
                               </h4>
                               <span className="text-2xs text-zinc-500 font-semibold block mt-0.5">
-                                By @{s.username} · {new Date(s.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                                By <bdi dir="ltr">@{s.username}</bdi> · {new Date(s.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                               </span>
                             </div>
                             <span className={`text-2xs font-black px-2.5 py-0.5 rounded-full uppercase border ${statusColor} ${statusBg}`}>

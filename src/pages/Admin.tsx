@@ -218,14 +218,14 @@ export const Admin: React.FC<AdminProps> = ({
 
   // Dynamic Tabs
   const tabs = [
-    { id: 'episodes',   label: 'Episodes',    icon: <Video    className="w-3.5 h-3.5" /> },
-    { id: 'codes',      label: 'XP Codes',    icon: <Key      className="w-3.5 h-3.5" /> },
-    { id: 'users',      label: 'Users',       icon: <Users    className="w-3.5 h-3.5" /> },
-    { id: 'frames',     label: 'Frames',      icon: <Frame    className="w-3.5 h-3.5" /> },
-    { id: 'xp_settings',label: 'XP Settings', icon: <Settings className="w-3.5 h-3.5" /> },
-    { id: 'system_profile', label: 'News Profile', icon: <User className="w-3.5 h-3.5" /> },
+    { id: 'episodes',   label: 'الحلقات',    icon: <Video    className="w-3.5 h-3.5" /> },
+    { id: 'codes',      label: 'أكواد XP',    icon: <Key      className="w-3.5 h-3.5" /> },
+    { id: 'users',      label: 'المستخدمين',       icon: <Users    className="w-3.5 h-3.5" /> },
+    { id: 'frames',     label: 'الفريمات',      icon: <Frame    className="w-3.5 h-3.5" /> },
+    { id: 'xp_settings',label: 'إعدادات XP', icon: <Settings className="w-3.5 h-3.5" /> },
+    { id: 'system_profile', label: 'الحساب الرسمي', icon: <User className="w-3.5 h-3.5" /> },
     ...(user?.role === 'owner' ? [
-      { id: 'audit_logs', label: 'Audit Logs', icon: <ShieldAlert className="w-3.5 h-3.5" /> }
+      { id: 'audit_logs', label: 'سجل العمليات', icon: <ShieldAlert className="w-3.5 h-3.5" /> }
     ] : [])
   ];
 
@@ -302,14 +302,14 @@ export const Admin: React.FC<AdminProps> = ({
           });
           const data = await res.json();
           if (res.ok) {
-            setAdminMessage('Log entry deleted successfully.');
+            setAdminMessage('السجل اتمسح.');
             setSelectedLog(null);
             fetchAuditLogs(false);
           } else {
             setAdminMessage(data.error || 'Failed to delete log entry.');
           }
         } catch (err) {
-          setAdminMessage('Connection failed.');
+          setAdminMessage('الاتصال فشل.');
         }
       },
       undefined, 'Delete', 'Cancel', 'danger'
@@ -350,13 +350,13 @@ export const Admin: React.FC<AdminProps> = ({
         if (uploadRes.ok) {
           thumbnailUrl = uploadData.url;
         } else {
-          setAdminMessage(uploadData.error || 'Image upload failed.');
+          setAdminMessage(uploadData.error || 'رفع الصورة فشل.');
           setThumbnailUploading(false);
           setAdminSubmitting(false);
           return;
         }
       } catch {
-        setAdminMessage('Image upload failed.');
+        setAdminMessage('رفع الصورة فشل.');
         setThumbnailUploading(false);
         setAdminSubmitting(false);
         return;
@@ -408,7 +408,7 @@ export const Admin: React.FC<AdminProps> = ({
         if (fetchEpisodes) fetchEpisodes();
       }
     } catch {
-      setAdminMessage('Connection to server failed.');
+      setAdminMessage('مش قادرين نوصل للسيرفر.');
     }
     setAdminSubmitting(false);
   };
@@ -442,7 +442,7 @@ export const Admin: React.FC<AdminProps> = ({
         setAdminMessage(data.error || 'Failed to fetch episode details.');
       }
     } catch {
-      setAdminMessage('Failed to connect to server.');
+      setAdminMessage('مش قادرين نوصل للسيرفر.');
     }
     setEditingLoading(false);
   };
@@ -466,7 +466,7 @@ export const Admin: React.FC<AdminProps> = ({
         setAdminMessage(data.message || data.error);
         if (res.ok && fetchEpisodes) fetchEpisodes();
       } catch {
-        setAdminMessage('Failed to delete episode.');
+        setAdminMessage('معرفناش نمسح الحلقة.');
       }
     };
 
@@ -527,7 +527,7 @@ export const Admin: React.FC<AdminProps> = ({
       });
       const uploadData = await uploadRes.json();
       if (!uploadRes.ok) {
-        setFrameError(uploadData.error || 'Image upload failed.');
+        setFrameError(uploadData.error || 'رفع الصورة فشل.');
         setFrameUploading(false);
         return;
       }
@@ -574,7 +574,7 @@ export const Admin: React.FC<AdminProps> = ({
         fetchAdminFrames();
       }
     } catch {
-      setFrameError('Failed to connect to server.');
+      setFrameError('مش قادرين نوصل للسيرفر.');
     }
   };
 
@@ -628,22 +628,22 @@ export const Admin: React.FC<AdminProps> = ({
                 <img src={URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-cover" />
               </div>
               <p className="text-xs font-bold text-white">{file.name}</p>
-              <p className="text-2xs text-zinc-500">Click to change</p>
+              <p className="text-2xs text-zinc-500">اضغط للتغيير</p>
             </>
           ) : existingUrl ? (
             <>
               <div className={`${aspectRatio === '16/9' ? 'aspect-video' : 'aspect-square'} w-full max-w-[200px] overflow-hidden rounded-lg`}>
                 <img src={existingUrl} alt="Current" className="w-full h-full object-cover" />
               </div>
-              <p className="text-2xs text-zinc-500">Current image — click to replace</p>
+              <p className="text-2xs text-zinc-500">الصورة الحالية — اضغط للتغيير</p>
             </>
           ) : (
             <>
               <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
                 <ImagePlus className="w-6 h-6 text-orange-400" />
               </div>
-              <p className="text-[13px] font-bold text-white">Upload Image</p>
-              <p className="text-xs text-zinc-500">Click or drag &amp; drop</p>
+              <p className="text-[13px] font-bold text-white">ارفع صورة</p>
+              <p className="text-xs text-zinc-500">اضغط أو اسحب الصورة هنا</p>
             </>
           )}
         </div>
@@ -663,7 +663,7 @@ export const Admin: React.FC<AdminProps> = ({
           <ShieldCheck className="w-5 h-5 text-orange-400" />
         </div>
         <div>
-          <h1 className="text-xl font-black text-white leading-tight">Admin Dashboard</h1>
+          <h1 className="text-xl font-black text-white leading-tight">لوحة الإدارة</h1>
           <p className="text-xs text-zinc-500">
             {user?.role === 'owner' ? 'Owner' : 'Admin'} Panel
           </p>
@@ -711,13 +711,13 @@ export const Admin: React.FC<AdminProps> = ({
           <SectionCard>
             <SectionTitle
               icon={<Video className="w-4 h-4" />}
-              label={editingEpisodeId ? `Edit Episode: ${adminEpisodeForm.title_ar}` : 'Publish New Episode'}
+              label={editingEpisodeId ? `تعديل: ${adminEpisodeForm.title_ar}` : 'انشر حلقة جديدة'}
             />
             <form onSubmit={handleEpisodeSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="space-y-1.5 sm:col-span-1">
                   <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                    Episode # {editingEpisodeId ? '(Fixed)' : '(Optional)'}
+                    رقم الحلقة {editingEpisodeId ? '(ثابت)' : '(اختياري)'}
                   </label>
                   <input
                     type="number"
@@ -731,7 +731,7 @@ export const Admin: React.FC<AdminProps> = ({
                 </div>
                 <div className="sm:col-span-3">
                   <AdminInput
-                    label="Episode Title (عنوان الحلقة)"
+                    label="عنوان الحلقة"
                     placeholder="مثال: ليه فيزيو؟ 🎙️ الحلقة 6 | أسرار العلاج الطبيعي"
                     value={adminEpisodeForm.title_ar}
                     onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, title_ar: e.target.value, title_en: e.target.value }))}
@@ -741,7 +741,7 @@ export const Admin: React.FC<AdminProps> = ({
               </div>
 
               <AdminTextarea
-                label="Description"
+                label="ملخص الحلقة والفصول"
                 placeholder={"ملخص الحلقة… وكل سطر فيه وقت يبقى فصل، مثلًا:\n03:15 بداية الحوار\n12:40 نصايح للتدريب"}
                 rows={3}
                 value={adminEpisodeForm.description}
@@ -749,7 +749,7 @@ export const Admin: React.FC<AdminProps> = ({
               />
 
               <FileUploadBox
-                label="Thumbnail (16:9 recommended)"
+                label="الصورة المصغّرة (16:9)"
                 file={thumbnailFile}
                 onChange={setThumbnailFile}
                 aspectRatio="16/9"
@@ -757,7 +757,7 @@ export const Admin: React.FC<AdminProps> = ({
               />
 
               <AdminInput
-                label="YouTube URL"
+                label="لينك يوتيوب"
                 type="url"
                 placeholder="https://www.youtube.com/watch?v=..."
                 value={adminEpisodeForm.youtube_url}
@@ -767,16 +767,16 @@ export const Admin: React.FC<AdminProps> = ({
               {/* Quiz Section */}
               <div className="rounded-xl border border-dashed border-white/15 bg-white/2 p-4 space-y-3">
                 <p className="text-xs font-black text-orange-400 flex items-center gap-1.5">
-                  <CheckCircle className="w-4 h-4" /> Interactive Quiz (Optional)
+                  <CheckCircle className="w-4 h-4" /> كويز تفاعلي (اختياري)
                 </p>
                 <AdminInput
-                  label="Quiz Question"
-                  placeholder="What is the first line of defense for...?"
+                  label="سؤال الكويز"
+                  placeholder="مثلًا: إيه أول خط دفاع في…؟"
                   value={adminEpisodeForm.quiz_question || ''}
                   onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, quiz_question: e.target.value }))}
                 />
                 <div className="space-y-2">
-                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Options</p>
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">الاختيارات</p>
                   {[0, 1, 2, 3].map((idx) => (
                     <div key={idx} className="flex items-center gap-2">
                       <span className={`w-6 h-6 rounded-full flex items-center justify-center text-2xs font-black flex-shrink-0 ${
@@ -803,7 +803,7 @@ export const Admin: React.FC<AdminProps> = ({
                             ? 'bg-emerald-500 border-emerald-500 text-black'
                             : 'border-white/15 text-zinc-600 hover:border-emerald-500/50'
                         }`}
-                        title="Mark as correct"
+                        title="الإجابة الصح"
                       >
                         {adminEpisodeForm.quiz_correct === idx ? <CheckCircle className="w-3 h-3 mx-auto" /> : <span>?</span>}
                       </button>
@@ -816,7 +816,7 @@ export const Admin: React.FC<AdminProps> = ({
               <div className="rounded-xl border border-dashed border-white/15 bg-white/2 p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-black text-orange-400 flex items-center gap-1.5">
-                    <Key className="w-4 h-4" /> Episode Secret Code (Optional)
+                    <Key className="w-4 h-4" /> الكود السري للحلقة (اختياري)
                   </p>
                   <button
                     type="button"
@@ -827,7 +827,7 @@ export const Admin: React.FC<AdminProps> = ({
                     className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-400 hover:bg-orange-500/25 text-xs font-bold cursor-pointer transition-colors"
                   >
                     <Sparkles className="w-3 h-3" />
-                    <span>Generate Code</span>
+                    <span>اعمل كود</span>
                   </button>
                 </div>
                 <AdminInput
@@ -838,13 +838,13 @@ export const Admin: React.FC<AdminProps> = ({
                 />
                 <div className="grid grid-cols-2 gap-3">
                   <AdminInput
-                    label="Max Uses"
+                    label="أقصى عدد استخدام"
                     type="number"
                     value={adminEpisodeForm.code_max_uses || 200}
                     onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code_max_uses: Number(e.target.value) }))}
                   />
                   <AdminInput
-                    label="Expiry Date"
+                    label="تاريخ الانتهاء"
                     type="date"
                     value={adminEpisodeForm.code_expiry || ''}
                     onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code_expiry: e.target.value }))}
@@ -862,7 +862,7 @@ export const Admin: React.FC<AdminProps> = ({
                 </AdminBtn>
                 {editingEpisodeId && (
                   <AdminBtn type="button" variant="ghost" onClick={handleCancelEditEpisode}>
-                    Cancel
+                    إلغاء
                   </AdminBtn>
                 )}
               </div>
@@ -871,9 +871,9 @@ export const Admin: React.FC<AdminProps> = ({
 
           {/* Existing Episodes List */}
           <SectionCard>
-            <SectionTitle icon={<Video className="w-4 h-4" />} label="Manage Episodes" count={episodes.length} />
+            <SectionTitle icon={<Video className="w-4 h-4" />} label="إدارة الحلقات" count={episodes.length} />
             {episodes.length === 0 ? (
-              <p className="text-center text-zinc-600 text-[13px] py-6">No episodes published yet.</p>
+              <p className="text-center text-zinc-600 text-[13px] py-6">مفيش حلقات منشورة لسه.</p>
             ) : (
               <div className="space-y-2">
                 {episodes.map((ep: any) => (
@@ -906,7 +906,7 @@ export const Admin: React.FC<AdminProps> = ({
                         onClick={() => handleDeleteEpisode(ep.id, ep.title_ar || ep.title_en)}
                       >
                         <Trash2 className="w-3 h-3" />
-                        Del
+                        حذف
                       </AdminBtn>
                     </div>
                   </div>
@@ -921,12 +921,12 @@ export const Admin: React.FC<AdminProps> = ({
       {adminSection === 'codes' && (
         <div className="space-y-5">
           <SectionCard>
-            <SectionTitle icon={<Key className="w-4 h-4" />} label="Create XP Code" />
+            <SectionTitle icon={<Key className="w-4 h-4" />} label="اعمل كود XP" />
             <form onSubmit={handleAdminCreateCode} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Code Name</label>
+                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">اسم الكود</label>
                     <button
                       type="button"
                       onClick={() => {
@@ -937,12 +937,12 @@ export const Admin: React.FC<AdminProps> = ({
                       className="flex items-center gap-1 text-xs font-bold text-orange-400 hover:text-orange-300 cursor-pointer"
                     >
                       <Sparkles className="w-3 h-3" />
-                      <span>Generate</span>
+                      <span>توليد</span>
                     </button>
                   </div>
                   <input
                     type="text"
-                    placeholder="e.g. LEH-4921"
+                    placeholder="مثلًا LEH-4921"
                     className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 text-[13px] focus:outline-none focus:border-orange-500/60 transition-colors font-bold uppercase"
                     value={adminCodeForm.code}
                     onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, code: e.target.value }))}
@@ -950,7 +950,7 @@ export const Admin: React.FC<AdminProps> = ({
                   />
                 </div>
                 <AdminInput
-                  label="XP Amount"
+                  label="قيمة XP"
                   type="number"
                   value={adminCodeForm.xp_reward}
                   onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, xp_reward: Number(e.target.value) }))}
@@ -960,22 +960,22 @@ export const Admin: React.FC<AdminProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <AdminSelect
-                  label="Type"
+                  label="النوع"
                   value={adminCodeForm.type}
                   onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, type: e.target.value }))}
                 >
-                  <option value="social" className="bg-zinc-900">Social Media / Global</option>
-                  <option value="episode" className="bg-zinc-900">Episode Code</option>
+                  <option value="social" className="bg-zinc-900">سوشيال ميديا / عام</option>
+                  <option value="episode" className="bg-zinc-900">كود حلقة</option>
                 </AdminSelect>
                 <AdminInput
-                  label="Max Uses"
+                  label="أقصى عدد استخدام"
                   type="number"
                   value={adminCodeForm.max_uses}
                   onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, max_uses: Number(e.target.value) }))}
                   required
                 />
                 <AdminInput
-                  label="Expiry Date"
+                  label="تاريخ الانتهاء"
                   type="date"
                   value={adminCodeForm.expiry_date}
                   onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, expiry_date: e.target.value }))}
@@ -984,43 +984,43 @@ export const Admin: React.FC<AdminProps> = ({
 
               {adminCodeForm.type === 'episode' && (
                 <AdminSelect
-                  label="Target Episode (Code will only work in this episode or in the shop)"
+                  label="الحلقة (الكود هيشتغل فيها أو في المتجر بس)"
                   value={adminCodeForm.episode_id || ''}
                   onChange={(e) => setAdminCodeForm((p: any) => ({ ...p, episode_id: e.target.value }))}
                 >
-                  <option value="" className="bg-zinc-900">Universal Episode Code (Any Episode)</option>
+                  <option value="" className="bg-zinc-900">كود لأي حلقة</option>
                   {episodes.map((ep: any) => (
                     <option key={ep.id} value={ep.id} className="bg-zinc-900">
-                      Episode #{ep.id}: {ep.title_ar || ep.title_en}
+                      حلقة {ep.id}: {ep.title_ar || ep.title_en}
                     </option>
                   ))}
                 </AdminSelect>
               )}
 
               <AdminBtn type="submit" disabled={adminSubmitting} className="w-full justify-center">
-                <Plus className="w-4 h-4" /> Create Code
+                <Plus className="w-4 h-4" /> اعمل الكود
               </AdminBtn>
             </form>
           </SectionCard>
 
           <SectionCard>
-            <SectionTitle icon={<Key className="w-4 h-4" />} label="All XP Codes" count={adminCodes.length} />
+            <SectionTitle icon={<Key className="w-4 h-4" />} label="كل أكواد XP" count={adminCodes.length} />
             <div className="overflow-x-auto">
               <table className="w-full text-xs min-w-[560px]">
                 <thead>
                   <tr className="border-b border-white/8 text-start text-zinc-500">
-                    <th className="pb-2 pe-3 font-bold">Code</th>
+                    <th className="pb-2 pe-3 font-bold">الكود</th>
                     <th className="pb-2 pe-3 font-bold">XP</th>
-                    <th className="pb-2 pe-3 font-bold">Type / Target</th>
-                    <th className="pb-2 pe-3 font-bold">Uses</th>
-                    <th className="pb-2 pe-3 font-bold">Expires</th>
-                    <th className="pb-2 font-bold text-center">Action</th>
+                    <th className="pb-2 pe-3 font-bold">النوع / الهدف</th>
+                    <th className="pb-2 pe-3 font-bold">الاستخدام</th>
+                    <th className="pb-2 pe-3 font-bold">ينتهي</th>
+                    <th className="pb-2 font-bold text-center">إجراء</th>
                   </tr>
                 </thead>
                 <tbody>
                   {adminCodes.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="text-center py-6 text-zinc-600">No XP codes yet.</td>
+                      <td colSpan={6} className="text-center py-6 text-zinc-600">مفيش أكواد XP لسه.</td>
                     </tr>
                   ) : adminCodes.map((c: any) => {
                     const codeId = c.id ?? c._id;
@@ -1041,7 +1041,7 @@ export const Admin: React.FC<AdminProps> = ({
                             {isHighlighted && (
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-orange-500 to-amber-500 text-white text-2xs font-black uppercase tracking-wider animate-pulse shadow-sm">
                                 <Sparkles className="w-2.5 h-2.5" />
-                                NEW
+                                جديد
                               </span>
                             )}
                           </div>
@@ -1051,16 +1051,16 @@ export const Admin: React.FC<AdminProps> = ({
                           {c.type === 'episode' ? (
                             c.episode_id ? (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold">
-                                Episode #{c.episode_id}
+                                حلقة {c.episode_id}
                               </span>
                             ) : (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-bold">
-                                Episode (Any)
+                                أي حلقة
                               </span>
                             )
                           ) : (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400 text-xs font-bold">
-                              Social Media
+                              سوشيال ميديا
                             </span>
                           )}
                         </td>
@@ -1087,27 +1087,27 @@ export const Admin: React.FC<AdminProps> = ({
       {/* ── 3. USERS ───────────────────────────────────────────────────────── */}
       {adminSection === 'users' && (
         <SectionCard>
-          <SectionTitle icon={<Users className="w-4 h-4" />} label="Registered Members" count={adminUsers.length} />
+          <SectionTitle icon={<Users className="w-4 h-4" />} label="الأعضاء" count={adminUsers.length} />
           <div className="overflow-x-auto">
             <table className="w-full text-xs min-w-[600px]">
               <thead>
                 <tr className="border-b border-white/8 text-start text-zinc-500">
-                  <th className="pb-2 pe-3 font-bold">User</th>
-                  <th className="pb-2 pe-3 font-bold">Email</th>
-                  <th className="pb-2 pe-3 font-bold">Batch</th>
+                  <th className="pb-2 pe-3 font-bold">المستخدم</th>
+                  <th className="pb-2 pe-3 font-bold">الإيميل</th>
+                  <th className="pb-2 pe-3 font-bold">الدفعة</th>
                   <th className="pb-2 pe-3 font-bold">XP</th>
-                  <th className="pb-2 pe-3 font-bold">Role</th>
-                  <th className="pb-2 font-bold text-center">Actions</th>
+                  <th className="pb-2 pe-3 font-bold">الصلاحية</th>
+                  <th className="pb-2 font-bold text-center">إجراءات</th>
                 </tr>
               </thead>
               <tbody>
                 {adminUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-6 text-zinc-600">No users in database.</td>
+                    <td colSpan={6} className="text-center py-6 text-zinc-600">مفيش مستخدمين.</td>
                   </tr>
                 ) : adminUsers.map((u: any) => (
                   <tr key={u.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
-                    <td className="py-2.5 pe-3 font-bold text-white">@{u.username}</td>
+                    <td className="py-2.5 pe-3 font-bold text-white"><bdi dir="ltr">@{u.username}</bdi></td>
                     <td className="py-2.5 pe-3 text-zinc-500">{u.email}</td>
                     <td className="py-2.5 pe-3 text-zinc-400">{u.batch}</td>
                     <td className="py-2.5 pe-3 text-orange-400 font-bold">{u.total_xp?.toLocaleString()}</td>
@@ -1123,7 +1123,7 @@ export const Admin: React.FC<AdminProps> = ({
                         </span>
                         {u.role === 'owner' && (
                           <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-2xs font-black uppercase tracking-wider animate-pulse">
-                            Protected
+                            محمي
                           </span>
                         )}
                       </div>
@@ -1143,14 +1143,14 @@ export const Admin: React.FC<AdminProps> = ({
                             <>
                               {canChangeRole && (
                                 <AdminBtn size="sm" variant="ghost" onClick={() => setSelectedRoleUser({ id: u.id, username: u.username, role: u.role })}>
-                                  <RefreshCw className="w-3 h-3" /> Role
+                                  <RefreshCw className="w-3 h-3" /> الصلاحية
                                 </AdminBtn>
                               )}
                               {canModerate && (
                                 <AdminBtn size="sm" onClick={() => handleOpenModerationModal(u.username, u.id)}
                                   className="bg-amber-500/10 border border-amber-500/25 text-amber-400 hover:bg-amber-500/20"
                                 >
-                                  Moderate
+                                  إجراء
                                 </AdminBtn>
                               )}
                               {canDelete && (
@@ -1177,7 +1177,7 @@ export const Admin: React.FC<AdminProps> = ({
       {adminSection === 'frames' && (
         <div className="space-y-5">
           <SectionCard>
-            <SectionTitle icon={<Frame className="w-4 h-4" />} label="Upload New Frame" />
+            <SectionTitle icon={<Frame className="w-4 h-4" />} label="ارفع فريم جديد" />
             {frameError && (
               <div className="mb-3 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
                 {frameError}
@@ -1186,13 +1186,13 @@ export const Admin: React.FC<AdminProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <AdminInput
-                  label="Frame Name"
-                  placeholder="Legendary Flame"
+                  label="اسم الفريم"
+                  placeholder="مثلًا: لهب أسطوري"
                   value={frameName}
                   onChange={(e) => setFrameName(e.target.value)}
                 />
                 <AdminInput
-                  label="XP Price"
+                  label="السعر بالـ XP"
                   type="number"
                   placeholder="500"
                   value={framePrice || ''}
@@ -1201,7 +1201,7 @@ export const Admin: React.FC<AdminProps> = ({
                 />
               </div>
               <FileUploadBox
-                label="Frame PNG (transparent background)"
+                label="صورة الفريم PNG (خلفية شفافة)"
                 file={frameFile}
                 onChange={setFrameFile}
                 accept="image/png,image/webp,image/gif"
@@ -1212,15 +1212,15 @@ export const Admin: React.FC<AdminProps> = ({
                 disabled={frameUploading}
                 className="w-full justify-center"
               >
-                {frameUploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</> : <><Upload className="w-4 h-4" /> Upload Frame</>}
+                {frameUploading ? <><Loader2 className="w-4 h-4 animate-spin" /> بنرفع…</> : <><Upload className="w-4 h-4" /> ارفع الفريم</>}
               </AdminBtn>
             </div>
           </SectionCard>
 
           <SectionCard>
-            <SectionTitle icon={<Frame className="w-4 h-4" />} label="Existing Frames" count={adminFrames.length} />
+            <SectionTitle icon={<Frame className="w-4 h-4" />} label="الفريمات الموجودة" count={adminFrames.length} />
             {adminFrames.length === 0 ? (
-              <p className="text-center text-zinc-600 text-[13px] py-8">No frames uploaded yet.</p>
+              <p className="text-center text-zinc-600 text-[13px] py-8">مفيش فريمات لسه.</p>
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                 {adminFrames.map((f: any) => {
@@ -1248,7 +1248,7 @@ export const Admin: React.FC<AdminProps> = ({
                               onClick={() => handleUpdateFramePrice(f._id, editingFramePrice)}
                               className="px-2 py-1 text-2xs flex-1 justify-center"
                             >
-                              Save
+                              حفظ
                             </AdminBtn>
                             <AdminBtn
                               size="sm"
@@ -1256,7 +1256,7 @@ export const Admin: React.FC<AdminProps> = ({
                               onClick={() => setEditingFrameId(null)}
                               className="px-2 py-1 text-2xs flex-1 justify-center"
                             >
-                              Cancel
+                              إلغاء
                             </AdminBtn>
                           </div>
                         </div>
@@ -1269,7 +1269,7 @@ export const Admin: React.FC<AdminProps> = ({
                               setEditingFramePrice(f.price);
                             }}
                             className="p-1 rounded hover:bg-white/5 text-zinc-400 hover:text-white transition-all cursor-pointer"
-                            title="Edit Price"
+                            title="تعديل السعر"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
@@ -1278,7 +1278,7 @@ export const Admin: React.FC<AdminProps> = ({
 
                       {!isEditing && (
                         <AdminBtn size="sm" variant="danger" onClick={() => handleDeleteFrame(f._id)} className="w-full justify-center text-2xs py-1 mt-1">
-                          <Trash2 className="w-3 h-3" /> Delete
+                          <Trash2 className="w-3 h-3" /> حذف
                         </AdminBtn>
                       )}
                     </div>
@@ -1317,7 +1317,7 @@ export const Admin: React.FC<AdminProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Quick Timeline of last 5 entries */}
             <SectionCard className="lg:col-span-1">
-              <SectionTitle icon={<Clock className="w-4 h-4" />} label="Recent Activity Timeline" />
+              <SectionTitle icon={<Clock className="w-4 h-4" />} label="آخر النشاطات" />
               <div className="space-y-3 max-h-60 overflow-y-auto pe-1">
                 {auditLogs.slice(0, 5).map((log) => (
                   <div key={log.id} className="relative ps-4 border-s-2 border-orange-500/30 py-0.5 text-start">
@@ -1334,23 +1334,23 @@ export const Admin: React.FC<AdminProps> = ({
                   </div>
                 ))}
                 {auditLogs.length === 0 && (
-                  <p className="text-center text-zinc-650 text-xs py-4">No recent activity.</p>
+                  <p className="text-center text-zinc-650 text-xs py-4">مفيش نشاط حديث.</p>
                 )}
               </div>
             </SectionCard>
 
             {/* Filters panel */}
             <SectionCard className="lg:col-span-2">
-              <SectionTitle icon={<Settings className="w-4 h-4" />} label="Filters & Search" />
+              <SectionTitle icon={<Settings className="w-4 h-4" />} label="الفلاتر والبحث" />
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {/* Search username */}
                   <div className="space-y-1.5 text-start">
-                    <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">Search username / reason</label>
+                    <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">ابحث باسم المستخدم أو السبب</label>
                     <div className="relative">
                       <input
                         type="text"
-                        placeholder="Search..."
+                        placeholder="ابحث…"
                         value={auditFilters.search}
                         onChange={(e) => setAuditFilters(prev => ({ ...prev, search: e.target.value }))}
                         className="w-full ps-8 pe-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-650 text-xs focus:outline-none focus:border-orange-500/50"
@@ -1361,51 +1361,51 @@ export const Admin: React.FC<AdminProps> = ({
 
                   {/* Action filter */}
                   <AdminSelect
-                    label="Action Type"
+                    label="نوع الإجراء"
                     value={auditFilters.action}
                     onChange={(e) => setAuditFilters(prev => ({ ...prev, action: e.target.value }))}
                   >
-                    <option value="" className="bg-zinc-900">All Actions</option>
-                    <option value="promote" className="bg-zinc-900">Promote</option>
-                    <option value="demote" className="bg-zinc-900">Demote</option>
-                    <option value="mute" className="bg-zinc-900">Mute</option>
-                    <option value="unmute" className="bg-zinc-900">Unmute</option>
-                    <option value="ban" className="bg-zinc-900">Ban</option>
-                    <option value="unban" className="bg-zinc-900">Unban</option>
-                    <option value="approve_post" className="bg-zinc-900">Approve Post</option>
-                    <option value="reject_post" className="bg-zinc-900">Reject Post</option>
-                    <option value="approve_revision" className="bg-zinc-900">Approve Revision</option>
-                    <option value="reject_revision" className="bg-zinc-900">Reject Revision</option>
-                    <option value="delete_post" className="bg-zinc-900">Delete Post</option>
-                    <option value="approve_suggestion" className="bg-zinc-900">Approve Suggestion</option>
-                    <option value="reject_suggestion" className="bg-zinc-900">Reject Suggestion</option>
-                    <option value="delete_comment" className="bg-zinc-900">Delete Comment</option>
-                    <option value="delete_chat_message" className="bg-zinc-900">Delete Chat Message</option>
+                    <option value="" className="bg-zinc-900">كل الإجراءات</option>
+                    <option value="promote" className="bg-zinc-900">ترقية</option>
+                    <option value="demote" className="bg-zinc-900">تخفيض</option>
+                    <option value="mute" className="bg-zinc-900">كتم</option>
+                    <option value="unmute" className="bg-zinc-900">إلغاء الكتم</option>
+                    <option value="ban" className="bg-zinc-900">حظر</option>
+                    <option value="unban" className="bg-zinc-900">إلغاء الحظر</option>
+                    <option value="approve_post" className="bg-zinc-900">قبول بوست</option>
+                    <option value="reject_post" className="bg-zinc-900">رفض بوست</option>
+                    <option value="approve_revision" className="bg-zinc-900">قبول تعديل</option>
+                    <option value="reject_revision" className="bg-zinc-900">رفض تعديل</option>
+                    <option value="delete_post" className="bg-zinc-900">حذف بوست</option>
+                    <option value="approve_suggestion" className="bg-zinc-900">قبول اقتراح</option>
+                    <option value="reject_suggestion" className="bg-zinc-900">رفض اقتراح</option>
+                    <option value="delete_comment" className="bg-zinc-900">حذف تعليق</option>
+                    <option value="delete_chat_message" className="bg-zinc-900">حذف رسالة شات</option>
                   </AdminSelect>
 
                   {/* Date range filter */}
                   <AdminSelect
-                    label="Date Range"
+                    label="الفترة"
                     value={auditFilters.dateRange}
                     onChange={(e) => setAuditFilters(prev => ({ ...prev, dateRange: e.target.value }))}
                   >
-                    <option value="today" className="bg-zinc-900">Today</option>
-                    <option value="7days" className="bg-zinc-900">Last 7 Days</option>
-                    <option value="30days" className="bg-zinc-900">Last 30 Days</option>
-                    <option value="custom" className="bg-zinc-900">Custom Range</option>
+                    <option value="today" className="bg-zinc-900">النهارده</option>
+                    <option value="7days" className="bg-zinc-900">آخر 7 أيام</option>
+                    <option value="30days" className="bg-zinc-900">آخر 30 يوم</option>
+                    <option value="custom" className="bg-zinc-900">فترة مخصصة</option>
                   </AdminSelect>
                 </div>
 
                 {auditFilters.dateRange === 'custom' && (
                   <div className="grid grid-cols-2 gap-3 text-start">
                     <AdminInput
-                      label="Start Date"
+                      label="من"
                       type="date"
                       value={auditFilters.startDate}
                       onChange={(e) => setAuditFilters(prev => ({ ...prev, startDate: e.target.value }))}
                     />
                     <AdminInput
-                      label="End Date"
+                      label="إلى"
                       type="date"
                       value={auditFilters.endDate}
                       onChange={(e) => setAuditFilters(prev => ({ ...prev, endDate: e.target.value }))}
@@ -1425,10 +1425,10 @@ export const Admin: React.FC<AdminProps> = ({
                       page: 1,
                     });
                   }}>
-                    Reset Filters
+                    مسح الفلاتر
                   </AdminBtn>
                   <AdminBtn size="sm" onClick={() => fetchAuditLogs(false)}>
-                    <Search className="w-3 h-3" /> Search Logs
+                    <Search className="w-3 h-3" /> ابحث
                   </AdminBtn>
                 </div>
               </div>
@@ -1446,12 +1446,12 @@ export const Admin: React.FC<AdminProps> = ({
               <table className="w-full text-xs min-w-[650px] text-start">
                 <thead>
                   <tr className="border-b border-white/8 text-zinc-550">
-                    <th className="pb-2 pe-3 font-bold">Action</th>
-                    <th className="pb-2 pe-3 font-bold">Actor</th>
-                    <th className="pb-2 pe-3 font-bold">Role</th>
-                    <th className="pb-2 pe-3 font-bold">Target</th>
-                    <th className="pb-2 pe-3 font-bold">Date</th>
-                    <th className="pb-2 font-bold text-center">Details</th>
+                    <th className="pb-2 pe-3 font-bold">إجراء</th>
+                    <th className="pb-2 pe-3 font-bold">المنفّذ</th>
+                    <th className="pb-2 pe-3 font-bold">الصلاحية</th>
+                    <th className="pb-2 pe-3 font-bold">الهدف</th>
+                    <th className="pb-2 pe-3 font-bold">التاريخ</th>
+                    <th className="pb-2 font-bold text-center">التفاصيل</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1477,7 +1477,7 @@ export const Admin: React.FC<AdminProps> = ({
                         </td>
                         <td className="py-2.5 text-center">
                           <AdminBtn size="sm" variant="ghost" onClick={() => setSelectedLog(log)}>
-                            View
+                            عرض
                           </AdminBtn>
                         </td>
                       </tr>
@@ -1485,7 +1485,7 @@ export const Admin: React.FC<AdminProps> = ({
                   })}
                   {auditLogs.length === 0 && !auditLoading && (
                     <tr>
-                      <td colSpan={6} className="text-center py-8 text-zinc-650 font-bold">No log entries found matching filters.</td>
+                      <td colSpan={6} className="text-center py-8 text-zinc-650 font-bold">مفيش سجلات بالفلاتر دي.</td>
                     </tr>
                   )}
                 </tbody>
@@ -1519,7 +1519,7 @@ export const Admin: React.FC<AdminProps> = ({
                 <div className="flex items-center justify-between border-b border-white/5 pb-3">
                   <div className="flex items-center gap-2 text-orange-400">
                     <ShieldAlert className="w-5 h-5" />
-                    <h3 className="text-sm font-black uppercase tracking-wider">Log Entry Details</h3>
+                    <h3 className="text-sm font-black uppercase tracking-wider">تفاصيل السجل</h3>
                   </div>
                   <button onClick={() => setSelectedLog(null)} className="w-7 h-7 rounded-full flex items-center justify-center bg-white/5 border border-white/8 text-zinc-400 hover:text-white cursor-pointer transition-all">
                     <XCircle className="w-4 h-4" />
@@ -1529,40 +1529,40 @@ export const Admin: React.FC<AdminProps> = ({
                 <div className="space-y-4 text-start">
                   {/* Action summary */}
                   <div className="p-4 rounded-xl bg-orange-500/5 border border-orange-500/15">
-                    <p className="text-2xs text-orange-400 font-bold uppercase tracking-wider">Logged Action</p>
+                    <p className="text-2xs text-orange-400 font-bold uppercase tracking-wider">الإجراء</p>
                     <p className="text-base font-black text-white mt-1">{selectedLog.action}</p>
-                    <p className="text-xs text-zinc-450 mt-1">Status: Success</p>
+                    <p className="text-xs text-zinc-450 mt-1">الحالة: تم</p>
                   </div>
 
                   {/* Actor details */}
                   <div className="space-y-1">
-                    <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Actor</p>
+                    <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">المنفّذ</p>
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-white">
                         {(selectedLog.moderator?.username || 'S')[0].toUpperCase()}
                       </div>
                       <div>
                         <p className="text-xs font-bold text-white">@{selectedLog.moderator?.username || 'System'}</p>
-                        <p className="text-2xs text-zinc-500">Role: <span className="uppercase font-bold text-orange-400">{selectedLog.actor_role || selectedLog.moderator?.role}</span></p>
+                        <p className="text-2xs text-zinc-500">الصلاحية: <span className="uppercase font-bold text-orange-400">{selectedLog.actor_role || selectedLog.moderator?.role}</span></p>
                       </div>
                     </div>
                   </div>
 
                   {/* Target details */}
                   <div className="space-y-1">
-                    <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Target Entity</p>
+                    <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">العنصر المستهدف</p>
                     <div className="p-3 bg-white/3 rounded-xl border border-white/5 space-y-1 text-xs">
-                      <p className="text-white"><span className="text-zinc-500">Type:</span> <span className="capitalize font-bold">{selectedLog.target_type}</span></p>
+                      <p className="text-white"><span className="text-zinc-500">النوع:</span> <span className="capitalize font-bold">{selectedLog.target_type}</span></p>
                       <p className="text-white"><span className="text-zinc-500">ID:</span> {selectedLog.target_id || 'N/A'}</p>
                       {selectedLog.target_user && (
-                        <p className="text-white"><span className="text-zinc-500">Target User:</span> @{selectedLog.target_user.username} (ID: {selectedLog.target_user.id})</p>
+                        <p className="text-white"><span className="text-zinc-500">المستخدم المستهدف:</span> <bdi dir="ltr">@{selectedLog.target_user.username}</bdi> (ID: {selectedLog.target_user.id})</p>
                       )}
                     </div>
                   </div>
 
                   {/* Reason & details */}
                   <div className="space-y-1">
-                    <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Moderator Reason</p>
+                    <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">سبب المشرف</p>
                     <p className="text-xs text-zinc-300 bg-white/2 p-3 rounded-xl border border-white/5 leading-relaxed whitespace-pre-line">
                       {selectedLog.reason || 'No reason provided.'}
                     </p>
@@ -1570,7 +1570,7 @@ export const Admin: React.FC<AdminProps> = ({
 
                   {/* Technical Metadata */}
                   <div className="space-y-1">
-                    <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Additional Metadata</p>
+                    <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">بيانات إضافية</p>
                     <pre className="text-2xs text-orange-400/90 font-mono bg-black/60 p-3 rounded-xl border border-white/5 overflow-x-auto max-h-40">
                       {JSON.stringify(selectedLog.metadata || {}, null, 2)}
                     </pre>
@@ -1579,11 +1579,11 @@ export const Admin: React.FC<AdminProps> = ({
                   {/* IP Address & Time */}
                   <div className="grid grid-cols-2 gap-3 pt-2">
                     <div>
-                      <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">IP Address</p>
+                      <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">عنوان IP</p>
                       <p className="text-xs text-zinc-300 font-mono mt-0.5">{selectedLog.ip_address || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Timestamp</p>
+                      <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">الوقت</p>
                       <p className="text-xs text-zinc-300 mt-0.5">{new Date(selectedLog.created_at).toLocaleString()}</p>
                     </div>
                   </div>
@@ -1596,7 +1596,7 @@ export const Admin: React.FC<AdminProps> = ({
                   className="w-full justify-center"
                   onClick={() => handleSoftDeleteLog(selectedLog.id)}
                 >
-                  <Trash2 className="w-4 h-4" /> Delete Log Entry (Soft Delete)
+                  <Trash2 className="w-4 h-4" /> حذف السجل
                 </AdminBtn>
               </div>
             </m.div>
@@ -1664,7 +1664,7 @@ const XpSettingsManager: React.FC<{
       if (res.ok) setLocalSettings(data);
       else setError(data.error || 'Failed to fetch XP settings.');
     } catch {
-      setError('Connection to server failed.');
+      setError('مش قادرين نوصل للسيرفر.');
     }
     setLoading(false);
   };
@@ -1684,13 +1684,13 @@ const XpSettingsManager: React.FC<{
       });
       const data = await res.json();
       if (res.ok) {
-        setAdminMessage('XP settings updated successfully!');
+        setAdminMessage('إعدادات XP اتحفظت!');
         fetchXpSettings();
       } else {
         setError(data.error || 'Failed to update XP settings.');
       }
     } catch {
-      setError('Connection to server failed.');
+      setError('مش قادرين نوصل للسيرفر.');
     }
     setSaving(false);
   };
@@ -1699,7 +1699,7 @@ const XpSettingsManager: React.FC<{
     return (
       <div className="rounded-2xl border border-white/8 bg-zinc-900/60 p-8 text-center">
         <Loader2 className="w-8 h-8 animate-spin text-orange-400 mx-auto mb-2" />
-        <p className="text-zinc-500 text-[13px]">Loading XP Configuration...</p>
+        <p className="text-zinc-500 text-[13px]">بنحمّل إعدادات XP…</p>
       </div>
     );
   }
@@ -1710,7 +1710,7 @@ const XpSettingsManager: React.FC<{
         <div className="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/20 flex items-center justify-center text-orange-400">
           <Settings className="w-4 h-4" />
         </div>
-        <h3 className="text-[15px] font-black text-white">Global XP Reward Settings</h3>
+        <h3 className="text-[15px] font-black text-white">إعدادات مكافآت XP</h3>
       </div>
 
       {error && (
@@ -1757,7 +1757,7 @@ const XpSettingsManager: React.FC<{
             whileTap={{ scale: saving ? 1 : 0.98 }}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-black text-sm hover:from-orange-400 hover:to-amber-400 transition-colors disabled:opacity-60"
           >
-            {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : <><Save className="w-4 h-4" /> Save XP Settings</>}
+            {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> بنحفظ…</> : <><Save className="w-4 h-4" /> احفظ إعدادات XP</>}
           </m.button>
         </div>
       </form>
@@ -1803,7 +1803,7 @@ const SystemProfileConfig: React.FC<{
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setAdminMessage('Name is required.');
+      setAdminMessage('الاسم مطلوب.');
       return;
     }
     setSaving(true);
@@ -1841,13 +1841,13 @@ const SystemProfileConfig: React.FC<{
       });
       const data = await res.json();
       if (res.ok) {
-        setAdminMessage('Official system profile updated successfully! 🎉');
+        setAdminMessage('الحساب الرسمي اتحدّث! 🎉');
       } else {
         setAdminMessage(data.error || 'Failed to update profile settings.');
       }
     } catch (err) {
       console.error(err);
-      setAdminMessage('Connection failed.');
+      setAdminMessage('الاتصال فشل.');
     } finally {
       setSaving(false);
     }
@@ -1863,21 +1863,21 @@ const SystemProfileConfig: React.FC<{
 
   return (
     <SectionCard>
-      <SectionTitle icon={<ShieldCheck className="w-4 h-4 text-orange-400" />} label="Configure Official LehPhysio Profile" />
+      <SectionTitle icon={<ShieldCheck className="w-4 h-4 text-orange-400" />} label="الحساب الرسمي لليه فيزيو" />
       <p className="text-xs text-zinc-500 mb-4 leading-relaxed">
-        This profile name and avatar image will be automatically used when publishing news posts to the official feed. Only admins can publish these posts.
+        الاسم والصورة دول بيظهروا على الإعلانات الرسمية. الأدمن بس هو اللي بينشرها.
       </p>
       <form onSubmit={handleSave} className="space-y-4 text-start">
         <AdminInput
-          label="Official Display Name"
-          placeholder="e.g. LehPhysio"
+          label="الاسم الرسمي"
+          placeholder="مثلًا LehPhysio"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
         />
         
         <div className="space-y-1.5">
-          <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Official Avatar Image</p>
+          <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">الصورة الرسمية</p>
           <label className="block cursor-pointer">
             <input
               type="file"
@@ -1898,14 +1898,14 @@ const SystemProfileConfig: React.FC<{
                   <div className="w-16 h-16 rounded-full overflow-hidden border border-white/10">
                     <img src={avatarUrl} alt="LehPhysio" className="w-full h-full object-cover" />
                   </div>
-                  <p className="text-2xs text-zinc-500">Official avatar — click to replace</p>
+                  <p className="text-2xs text-zinc-500">الصورة الرسمية — اضغط للتغيير</p>
                 </>
               ) : (
                 <>
                   <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
                     <ImagePlus className="w-6 h-6 text-orange-400" />
                   </div>
-                  <p className="text-[13px] font-bold text-white">Upload Profile Photo</p>
+                  <p className="text-[13px] font-bold text-white">ارفع صورة</p>
                 </>
               )}
             </div>
@@ -1914,9 +1914,9 @@ const SystemProfileConfig: React.FC<{
 
         <AdminBtn type="submit" disabled={saving} className="w-full justify-center">
           {saving ? (
-            <><Loader2 className="w-4 h-4 animate-spin" /> Saving Changes...</>
+            <><Loader2 className="w-4 h-4 animate-spin" /> بنحفظ…</>
           ) : (
-            <><Save className="w-4 h-4" /> Save System Profile</>
+            <><Save className="w-4 h-4" /> احفظ الحساب الرسمي</>
           )}
         </AdminBtn>
       </form>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { textDir } from '../utils/format';
 import { EpisodeNotes } from '../components/common/EpisodeNotes';
 import { YouTubeFacade } from '../components/common/YouTubeFacade';
 import { Thumb } from '../components/common/Thumb';
@@ -346,7 +347,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                     <div className="flex items-center justify-between bg-brand-orange/5 border-s-2 border-brand-orange rounded-xl px-3 py-2 mb-1 text-xs font-bold text-brand-orange">
                       <div className="flex items-center gap-1.5">
                         <CornerUpLeft className="rtl:-scale-x-100 w-3.5 h-3.5 shrink-0" />
-                        <span>بترد على <strong>@{replyingToComment.username}</strong></span>
+                        <span>بترد على <strong><bdi dir="ltr">@{replyingToComment.username}</bdi></strong></span>
                       </div>
                       <button 
                         onClick={() => setReplyingToComment(null)}
@@ -455,7 +456,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                             }`}
                           >
                             <UserAvatar username={u.username} avatarUrl={u.avatar_url} equippedFrame={u.equipped_frame} size={20} />
-                            <span>@{u.username}</span>
+                            <span><bdi dir="ltr">@{u.username}</bdi></span>
                           </div>
                         ))}
                       </div>
@@ -521,7 +522,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                               />
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <span className="font-extrabold text-sm text-brand-orange">@{c.username}</span>
+                                  <span className="font-extrabold text-sm text-brand-orange"><bdi dir="ltr">@{c.username}</bdi></span>
                                   {user && ((user.role === 'admin' || user.role === 'owner') && c.user_id !== user.id) && (
                                     <button 
                                       onClick={() => handleOpenModerationModal(c.username, c.user_id)}
@@ -587,7 +588,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                               </div>
                             </div>
                           ) : (
-                            <p dir="auto" className="text-xs md:text-sm text-zinc-100 font-medium leading-relaxed">{renderTextWithMentions(c.content)}</p>
+                            <p dir={textDir(c.content)} className="text-xs md:text-sm text-zinc-100 font-medium leading-relaxed">{renderTextWithMentions(c.content)}</p>
                           )}
                           
                           <div className="flex gap-4 mt-4 pt-2 border-t border-zinc-900/40">
@@ -630,7 +631,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                                             equippedFrame={r.equipped_frame} 
                                             size={24} 
                                           />
-                                          <span className="text-xs font-extrabold text-zinc-400">@{r.username}</span>
+                                          <span className="text-xs font-extrabold text-zinc-400"><bdi dir="ltr">@{r.username}</bdi></span>
                                           {user && ((user.role === 'admin' || user.role === 'owner') && r.user_id !== user.id) && (
                                             <button 
                                               onClick={() => handleOpenModerationModal(r.username, r.user_id)}
@@ -695,7 +696,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                                           </div>
                                         </div>
                                       ) : (
-                                        <p dir="auto" className="text-xs text-zinc-300 font-medium leading-relaxed">{renderTextWithMentions(r.content)}</p>
+                                        <p dir={textDir(r.content)} className="text-xs text-zinc-300 font-medium leading-relaxed">{renderTextWithMentions(r.content)}</p>
                                       )}
 
                                       <button 

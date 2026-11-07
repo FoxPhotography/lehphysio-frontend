@@ -31,3 +31,15 @@ export const formatNumber = (n: number) => new Intl.NumberFormat('en-US').format
 
 /** "1 يوم" / "2 يوم" / "11 يوم" – simple, natural Egyptian counting for streak days. */
 export const daysLabel = (n: number) => (n === 1 ? 'يوم واحد' : n === 2 ? 'يومين' : `${n} أيام`);
+
+/**
+ * Direction for a message that may start with @mentions or emoji: decided by the first
+ * strong letter *after* removing mentions, so "@Mai أهلا" reads right-to-left.
+ */
+export function textDir(text: string | null | undefined): 'rtl' | 'ltr' | 'auto' {
+  if (!text) return 'auto';
+  const stripped = text.replace(/@[^\s@]+(?:\s[A-Z][\w-]*)*/g, ' ');
+  const m = stripped.match(/[A-Za-zÀ-ɏ]|[֐-ࣿיִ-﷿ﹰ-﻿]/);
+  if (!m) return 'auto';
+  return /[A-Za-zÀ-ɏ]/.test(m[0]) ? 'ltr' : 'rtl';
+}
