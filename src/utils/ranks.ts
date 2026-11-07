@@ -1,11 +1,11 @@
 /**
  * The single progression system: ranks by total XP (same thresholds as the backend).
- * Names follow a PT career ladder: first-year student → trainee → therapist → consultant → legend.
+ * Names follow a PT career ladder: amateur → trainee → therapist → consultant → legend.
  */
 export const RANKS = [
-  { tier: 1, min: 0, name: 'سنة أولى', emoji: '🧪' },
+  { tier: 1, min: 0, name: 'هاوي', emoji: '🧪' },
   { tier: 2, min: 500, name: 'متدرّب', emoji: '⚡' },
-  { tier: 3, min: 1500, name: 'معالج', emoji: '🦴' },
+  { tier: 3, min: 1500, name: 'ثيرابيست', emoji: '🦴' },
   { tier: 4, min: 3000, name: 'استشاري', emoji: '🧠' },
   { tier: 5, min: 6000, name: 'أسطورة فيزيو', emoji: '👑' },
 ] as const;
