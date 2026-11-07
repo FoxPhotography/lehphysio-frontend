@@ -1,22 +1,63 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Home } from '../pages/Home';
-import { News } from '../pages/News';
-import { Episodes } from '../pages/Episodes';
-import { EpisodeDetail } from '../pages/EpisodeDetail';
-import { PostDetail } from '../pages/PostDetail';
-import { Community } from '../pages/Community';
-import { Games } from '../pages/Games';
-import { PlayGame } from '../pages/PlayGame';
-import { Leaderboard } from '../pages/Leaderboard';
-import { Profile } from '../pages/Profile';
-import { Rewards } from '../pages/Rewards';
-import { Login } from '../pages/Login';
-import { Register } from '../pages/Register';
-import { Confirm } from '../pages/Confirm';
-import { ForgotPassword } from '../pages/ForgotPassword';
-import { ResetPassword } from '../pages/ResetPassword';
-import { Admin } from '../pages/Admin';
-import { ModeratorDashboard } from '../pages/ModeratorDashboard';
+import { PageSkeleton } from '../components/common/Skeleton';
+
+// Every page except Home is code-split: a visitor downloads only what they open.
+// Named exports are adapted to React.lazy's default-export contract.
+const named = <K extends string>(loader: () => Promise<Record<K, React.ComponentType<any>>>, key: K) =>
+  lazy(() => loader().then((m) => ({ default: m[key] })));
+
+export const pageLoaders = {
+  news: () => import('../pages/News'),
+  episodes: () => import('../pages/Episodes'),
+  episodeDetail: () => import('../pages/EpisodeDetail'),
+  postDetail: () => import('../pages/PostDetail'),
+  community: () => import('../pages/Community'),
+  games: () => import('../pages/Games'),
+  playGame: () => import('../pages/PlayGame'),
+  leaderboard: () => import('../pages/Leaderboard'),
+  profile: () => import('../pages/Profile'),
+  rewards: () => import('../pages/Rewards'),
+  login: () => import('../pages/Login'),
+  register: () => import('../pages/Register'),
+  confirm: () => import('../pages/Confirm'),
+  forgotPassword: () => import('../pages/ForgotPassword'),
+  resetPassword: () => import('../pages/ResetPassword'),
+  admin: () => import('../pages/Admin'),
+  moderator: () => import('../pages/ModeratorDashboard'),
+};
+
+const News = named(pageLoaders.news, 'News');
+const Episodes = named(pageLoaders.episodes, 'Episodes');
+const EpisodeDetail = named(pageLoaders.episodeDetail, 'EpisodeDetail');
+const PostDetail = named(pageLoaders.postDetail, 'PostDetail');
+const Community = named(pageLoaders.community, 'Community');
+const Games = named(pageLoaders.games, 'Games');
+const PlayGame = named(pageLoaders.playGame, 'PlayGame');
+const Leaderboard = named(pageLoaders.leaderboard, 'Leaderboard');
+const Profile = named(pageLoaders.profile, 'Profile');
+const Rewards = named(pageLoaders.rewards, 'Rewards');
+const Login = named(pageLoaders.login, 'Login');
+const Register = named(pageLoaders.register, 'Register');
+const Confirm = named(pageLoaders.confirm, 'Confirm');
+const ForgotPassword = named(pageLoaders.forgotPassword, 'ForgotPassword');
+const ResetPassword = named(pageLoaders.resetPassword, 'ResetPassword');
+const Admin = named(pageLoaders.admin, 'Admin');
+const ModeratorDashboard = named(pageLoaders.moderator, 'ModeratorDashboard');
+
+/** Warm the pages people open most, once the browser is idle after first paint. */
+export const prefetchCorePages = () => {
+  const run = () => {
+    pageLoaders.episodes();
+    pageLoaders.community();
+    pageLoaders.games();
+    pageLoaders.profile();
+    pageLoaders.leaderboard();
+  };
+  const w = window as any;
+  if (typeof w.requestIdleCallback === 'function') w.requestIdleCallback(run, { timeout: 4000 });
+  else setTimeout(run, 2500);
+};
 import { useAuth } from '../context/AuthContext';
 import { getLocalDateString } from '../utils/helpers';
 
@@ -233,6 +274,13 @@ export const AppRouter: React.FC<AppRouterProps> = ({
 }) => {
   const { currentPage, user, token, forgotEmail, equippedFrame, setEquippedFrame, equippedTitle, setEquippedTitle, unlockedCosmetics, setCurrentPage, handleLogout, handleUpdateProfile, handleUploadImage, isSubscribed, pushLoading, handleTogglePushNotifications, showToast, triggerXpPopup, xpSettings, fetchUserProfile, getAvatarFrameClass, showConfirm, usernamesDirectory, confirmEmail } = useAuth();
 
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      {renderPage()}
+    </Suspense>
+  );
+
+  function renderPage() {
   switch (currentPage) {
     case 'home':
       return (
@@ -606,5 +654,6 @@ export const AppRouter: React.FC<AppRouterProps> = ({
     }
     default:
       return null;
+  }
   }
 };

@@ -24,7 +24,7 @@ import { useAppAuth } from './hooks/useAppAuth';
 
 // Layout & Routing
 import { MainLayout } from './layouts/MainLayout';
-import { AppRouter } from './routes/router';
+import { AppRouter, prefetchCorePages } from './routes/router';
 import { CommentsSlideUpPanel } from './components/home/CommentsSlideUpPanel';
 
 const getUserId = (user: any, token: string): string | null => {
@@ -77,6 +77,7 @@ function InnerApp() {
     currentPage,
     setCurrentPage,
     changePage,
+    setPageFromUrl,
     showToast,
     showConfirm,
     triggerXpPopup,
@@ -237,6 +238,7 @@ function InnerApp() {
   const { handleUrlRouting } = useUrlRouting({
     token,
     setCurrentPage,
+    setPageFromUrl,
     setCommunityTab,
     setSelectedEpisodeId,
     setSelectedPostId,
@@ -246,6 +248,11 @@ function InnerApp() {
     showToast,
     openCommentsPanel: handleOpenCommentsPanel,
   });
+
+  // Warm the most-visited code-split pages after first paint
+  useEffect(() => {
+    prefetchCorePages();
+  }, []);
 
   // Initial Fetching & Routing Setup
   useEffect(() => {
@@ -1746,7 +1753,7 @@ function InnerApp() {
   const renderReportModal = () => {
     if (!reportTarget) return null;
     return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999] animate-fade-in">
         <div className="glass-card w-full max-w-md p-6 relative flex flex-col gap-5 border border-white/10 shadow-xl">
           <div className="flex items-center gap-3 text-red-450">
             <AlertTriangle className="w-6 h-6 shrink-0" />
@@ -1756,13 +1763,13 @@ function InnerApp() {
           <div className="flex flex-col gap-4 text-left">
             {reportTarget.preview && (
               <div className="p-3.5 rounded-xl bg-zinc-950/40 border border-white/5 max-h-24 overflow-y-auto">
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Content Preview</p>
+                <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Content Preview</p>
                 <p className="text-xs text-zinc-300 mt-1 leading-normal italic font-mono">"{reportTarget.preview}"</p>
               </div>
             )}
 
             <div>
-              <label className="text-[11px] font-black text-zinc-400 uppercase tracking-wider">Reason for Report</label>
+              <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">Reason for Report</label>
               <select 
                 value={reportReason} 
                 onChange={(e) => setReportReason(e.target.value)}
@@ -1799,7 +1806,7 @@ function InnerApp() {
   const renderModerationModal = () => {
     if (!moderationUser) return null;
     return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999] animate-fade-in">
         <div className="glass-card w-full max-w-md p-6 relative flex flex-col gap-5 border border-red-500/25 shadow-red-glow">
           <div className="flex items-center gap-3 text-red-500">
             <ShieldAlert className="w-6 h-6 shrink-0" />
@@ -1808,7 +1815,7 @@ function InnerApp() {
           
           <div className="flex flex-col gap-4 text-left">
             <div>
-              <label className="text-[11px] font-black text-zinc-400 uppercase tracking-wider">Action</label>
+              <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">Action</label>
               <select 
                 value={moderationAction} 
                 onChange={(e) => setModerationAction(e.target.value)}
@@ -1823,7 +1830,7 @@ function InnerApp() {
 
             {['mute', 'ban'].includes(moderationAction) && (
               <div>
-                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-wider">Duration</label>
+                <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">Duration</label>
                 <select 
                   value={moderationDuration} 
                   onChange={(e) => setModerationDuration(e.target.value)}

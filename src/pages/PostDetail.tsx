@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Loader2, Sparkles, MessageCircle, Heart, Share2, AlertCircle } from 'lucide-react';
 import { PostCard } from '../components/home/PostCard';
 import { communityService } from '../services/communityService';
@@ -127,7 +127,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
           <span>Back to Feed / العودة للرئيسية</span>
         </button>
 
-        <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
           Post Details
         </span>
       </div>
@@ -177,7 +177,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
 
       {/* Post View */}
       {post && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
@@ -217,7 +217,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
               Open Comments ({post.comments_count || 0}) 💬
             </button>
           </div>
-        </motion.div>
+        </m.div>
       )}
     </div>
   );

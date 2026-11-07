@@ -80,7 +80,7 @@ export const PostComposer: React.FC<PostComposerProps> = ({
 
         <div className="flex justify-between items-center pt-2">
           <div className="flex items-center gap-2">
-            <label className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-[10px] py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5">
+            <label className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-2xs py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5">
               <ImageIcon className="w-3.5 h-3.5 shrink-0" />
               <span>{isUploadingImage ? 'Uploading...' : 'Add Image'}</span>
               <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" disabled={isUploadingImage} />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Info } from 'lucide-react';
 
 interface ToastProps {
@@ -15,7 +15,7 @@ export const Toast: React.FC<ToastProps> = ({ message }) => {
     >
       <AnimatePresence>
         {message && (
-          <motion.div
+          <m.div
             key={message}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -27,7 +27,7 @@ export const Toast: React.FC<ToastProps> = ({ message }) => {
               <Info className="w-4 h-4" />
             </div>
             <span dir="auto" className="text-sm font-bold text-zinc-100 leading-normal">{message}</span>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

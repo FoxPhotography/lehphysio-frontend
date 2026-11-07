@@ -60,7 +60,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
         <AuthSuccess message={authSuccess} />
 
         <div className="space-y-1.5">
-          <label className="text-[12px] font-bold text-zinc-400 uppercase tracking-wider text-center block">
+          <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider text-center block">
             6-Digit Code
           </label>
           <OtpInput

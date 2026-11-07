@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Bell } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext';
 
@@ -32,7 +32,7 @@ export const NotificationBell: React.FC = () => {
       }}
       aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
     >
-      <motion.div
+      <m.div
         animate={shouldPulse ? {
           rotate: [0, -15, 12, -10, 8, -5, 0],
           scale: [1, 1.15, 1.1, 1.05, 1],
@@ -46,12 +46,12 @@ export const NotificationBell: React.FC = () => {
           }}
           strokeWidth={2.2}
         />
-      </motion.div>
+      </m.div>
 
       {/* Unread badge */}
       <AnimatePresence>
         {unreadCount > 0 && (
-          <motion.span
+          <m.span
             key="badge"
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -74,14 +74,14 @@ export const NotificationBell: React.FC = () => {
             }}
           >
             {displayCount}
-          </motion.span>
+          </m.span>
         )}
       </AnimatePresence>
 
       {/* Pulse ring on new notification */}
       <AnimatePresence>
         {shouldPulse && (
-          <motion.span
+          <m.span
             initial={{ scale: 0.8, opacity: 0.6 }}
             animate={{ scale: 2.2, opacity: 0 }}
             exit={{ opacity: 0 }}

@@ -16,6 +16,8 @@ interface AuthContextType {
   currentPage: string;
   setCurrentPage: (page: string) => void;
   changePage: (page: string, params?: any) => void;
+  /** Sets the page from the current URL without touching history (deep links, back/forward). */
+  setPageFromUrl: (page: string) => void;
   
   // Custom dialogs
   customModal: any;
@@ -91,8 +93,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const pageFromPath = (path: string): string => {
+  if (path === '/chat') return 'community';
+  if (path === '/episodes') return 'episodes';
+  if (/^\/episodes\/\d+/.test(path)) return 'episode-detail';
+  if (/^\/posts?\/\d+/.test(path)) return 'post-detail';
+  if (path === '/moderation') return 'moderator-dashboard';
+  const simple = ['games', 'leaderboard', 'rewards', 'profile', 'login', 'register', 'confirm', 'forgot-password', 'reset-password', 'admin', 'news'];
+  const seg = path.replace(/^\//, '');
+  return simple.includes(seg) ? seg : 'home';
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentPage, _setCurrentPage] = useState('home');
+  // Start on the page the URL points to, so deep links don't flash the home page first.
+  const [currentPage, _setCurrentPage] = useState(() => pageFromPath(window.location.pathname));
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [confirmEmail, setConfirmEmail] = useState(() => localStorage.getItem('confirmEmail') || '');
@@ -732,9 +746,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     else if (page === 'moderator-dashboard') path = '/moderation';
     else if (page === 'news') path = '/news';
     
-    if (window.location.pathname !== path) {
+    // Detail pages without an id keep the URL they already have instead of
+    // degrading to "/episodes/" or "/post/" (a broken, unshareable link).
+    const isIdlessDetail = /\/(episodes|post|game)\/$/.test(path);
+    if (!isIdlessDetail && window.location.pathname !== path) {
       window.history.pushState(null, '', path);
     }
+    if (page !== currentPage) window.scrollTo({ top: 0 });
     _setCurrentPage(page);
   };
 
@@ -742,10 +760,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     changePage(page);
   };
 
+  const setPageFromUrl = (page: string) => {
+    _setCurrentPage(page);
+  };
+
   return (
     <AuthContext.Provider value={{
       user, setUser, token, setToken, confirmEmail, setConfirmEmail, forgotEmail, setForgotEmail,
-      currentPage, setCurrentPage, changePage,
+      currentPage, setCurrentPage, changePage, setPageFromUrl,
       customModal, setCustomModal, showAlert, showConfirm,
       toastMessage, showToast,
       xpPopups, triggerXpPopup, xpSettings,

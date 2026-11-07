@@ -1,6 +1,6 @@
 import { cld } from '../../utils/image';
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { HighlightWrapper } from '../notifications/HighlightWrapper';
 import { UserAvatar } from '../UserAvatar';
 import { CommentsSection } from './CommentsSection';
@@ -169,28 +169,28 @@ export const PostCard: React.FC<PostCardProps> = ({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-extrabold text-sm text-white">{post.username}</span>
-                <span className="text-[9px] font-bold bg-brand-orange/15 text-brand-orange px-2 py-0.5 rounded-full">
+                <span className="text-2xs font-bold bg-brand-orange/15 text-brand-orange px-2 py-0.5 rounded-full">
                   {post.batch}
                 </span>
                 {hasPendingRevision && (
-                  <span className="text-[9px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/25 px-2 py-0.5 rounded-full">
+                  <span className="text-2xs font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/25 px-2 py-0.5 rounded-full">
                     Pending Review
                   </span>
                 )}
                 {isPendingPost && (
-                  <span className="text-[9px] font-black uppercase tracking-wider bg-yellow-500/15 text-yellow-400 border border-yellow-500/25 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-2xs font-black uppercase tracking-wider bg-yellow-500/15 text-yellow-400 border border-yellow-500/25 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Clock className="w-2.5 h-2.5" />
                     <span>Pending Approval</span>
                   </span>
                 )}
                 {isRejectedPost && (
-                  <span className="text-[9px] font-black uppercase tracking-wider bg-red-500/15 text-red-400 border border-red-500/25 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-2xs font-black uppercase tracking-wider bg-red-500/15 text-red-400 border border-red-500/25 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <XCircle className="w-2.5 h-2.5" />
                     <span>Rejected</span>
                   </span>
                 )}
               </div>
-              <span className="text-[10px] text-zinc-500 font-semibold mt-0.5 block">
+              <span className="text-2xs text-zinc-500 font-semibold mt-0.5 block">
                 {stripEmojis(post.rank.name_en)} · {new Date(post.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
               </span>
             </div>
@@ -203,7 +203,7 @@ export const PostCard: React.FC<PostCardProps> = ({
                   e.stopPropagation();
                   handleCancelPostRevision(post.id);
                 }}
-                className="border border-red-500/25 bg-red-500/5 hover:bg-red-500/10 text-red-400 font-bold text-[10px] py-1.5 px-3 rounded-xl cursor-pointer active:scale-95 transition-all"
+                className="border border-red-500/25 bg-red-500/5 hover:bg-red-500/10 text-red-400 font-bold text-2xs py-1.5 px-3 rounded-xl cursor-pointer active:scale-95 transition-all"
               >
                 Cancel Edit
               </button>
@@ -224,7 +224,7 @@ export const PostCard: React.FC<PostCardProps> = ({
                   {openPostMenu && (
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setOpenPostMenu(false)} />
-                      <motion.div
+                      <m.div
                         initial={{ opacity: 0, scale: 0.95, y: -5 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95, y: -5 }}
@@ -269,7 +269,7 @@ export const PostCard: React.FC<PostCardProps> = ({
                             <span>Report Post</span>
                           </button>
                         )}
-                      </motion.div>
+                      </m.div>
                     </>
                   )}
                 </AnimatePresence>
@@ -300,7 +300,7 @@ export const PostCard: React.FC<PostCardProps> = ({
             )}
 
             <div className="flex justify-between items-center">
-              <label className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-[10px] py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5">
+              <label className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-2xs py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5">
                 <ImageIcon className="w-3.5 h-3.5 shrink-0" />
                 <span>{isUploadingEditImage ? 'Uploading...' : 'Change Image'}</span>
                 <input 
@@ -314,7 +314,7 @@ export const PostCard: React.FC<PostCardProps> = ({
 
               <div className="flex gap-2">
                 <button 
-                  className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-[10px] py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all" 
+                  className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-2xs py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all" 
                   onClick={() => setIsEditing(false)}
                 >
                   Cancel
@@ -340,12 +340,12 @@ export const PostCard: React.FC<PostCardProps> = ({
             className="relative cursor-pointer select-none"
           >
             {post.title && (
-              <h3 className="text-sm font-black text-white mt-4 mb-2">
+              <h3 dir="auto" className="text-sm font-black text-white mt-4 mb-2">
                 {post.title}
               </h3>
             )}
 
-            <p className="text-xs md:text-sm text-zinc-200 font-medium leading-relaxed mt-3 whitespace-pre-wrap">
+            <p dir="auto" className="text-xs md:text-sm text-zinc-200 font-medium leading-relaxed mt-3 whitespace-pre-wrap">
               {post.content}
             </p>
 
@@ -369,7 +369,7 @@ export const PostCard: React.FC<PostCardProps> = ({
             )}
 
             {isPendingPost && (
-              <div className="mt-4 p-3 rounded-xl border border-yellow-500/10 bg-yellow-500/[0.02] flex items-center gap-2 text-yellow-400/80 font-bold text-[10px] uppercase tracking-wider">
+              <div className="mt-4 p-3 rounded-xl border border-yellow-500/10 bg-yellow-500/[0.02] flex items-center gap-2 text-yellow-400/80 font-bold text-2xs uppercase tracking-wider">
                 <Clock className="w-3.5 h-3.5 shrink-0" />
                 <span>Waiting for moderation approval...</span>
               </div>
@@ -377,7 +377,7 @@ export const PostCard: React.FC<PostCardProps> = ({
 
             {isRejectedPost && (
               <div className="mt-4 p-4 rounded-xl border border-red-500/20 bg-red-950/10 flex flex-col gap-1.5">
-                <div className="flex items-center gap-1.5 text-red-400 font-extrabold text-[10px] uppercase tracking-wide">
+                <div className="flex items-center gap-1.5 text-red-400 font-extrabold text-2xs uppercase tracking-wide">
                   <XCircle className="w-4 h-4 shrink-0" />
                   <span>Post Rejected</span>
                 </div>
@@ -386,7 +386,7 @@ export const PostCard: React.FC<PostCardProps> = ({
                     <strong>Reason:</strong> {post.rejection_reason}
                   </p>
                 )}
-                <p className="text-[10px] text-zinc-500 font-semibold leading-relaxed">
+                <p className="text-2xs text-zinc-500 font-semibold leading-relaxed">
                   You can edit this post to fix any issues and resubmit it.
                 </p>
               </div>
@@ -395,7 +395,7 @@ export const PostCard: React.FC<PostCardProps> = ({
             {/* Floating Heart Burst overlay */}
             <AnimatePresence>
               {floatingHearts.map(h => (
-                <motion.div 
+                <m.div 
                   key={h.id} 
                   initial={{ opacity: 0, scale: 0.3, y: 30 }}
                   animate={{ opacity: [0, 1, 1, 0], scale: [0.3, 1.4, 1.2, 0.9], y: -80 }}
@@ -404,7 +404,7 @@ export const PostCard: React.FC<PostCardProps> = ({
                   className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 pointer-events-none z-30 filter drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]"
                 >
                   <Heart className="w-16 h-16 fill-current" />
-                </motion.div>
+                </m.div>
               ))}
             </AnimatePresence>
           </div>
@@ -470,12 +470,12 @@ export const PostCard: React.FC<PostCardProps> = ({
       {/* Immersive Lightbox Modal */}
       <AnimatePresence>
         {activeLightboxImg && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setActiveLightboxImg(null)}
-            className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[99999] flex items-center justify-center p-4 cursor-zoom-out"
+            className="fixed inset-0 bg-black/95 z-[99999] flex items-center justify-center p-4 cursor-zoom-out"
           >
             {/* Close button */}
             <button
@@ -485,7 +485,7 @@ export const PostCard: React.FC<PostCardProps> = ({
               <X className="w-5 h-5" />
             </button>
 
-            <motion.img
+            <m.img
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -495,7 +495,7 @@ export const PostCard: React.FC<PostCardProps> = ({
               className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-zinc-800/40"
               onClick={(e) => e.stopPropagation()}
             />
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </HighlightWrapper>

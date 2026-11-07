@@ -1,6 +1,6 @@
 import React from 'react';
 import { Thumb } from '../components/common/Thumb';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Tv, Heart, MessageCircle, Share2, Key } from 'lucide-react';
 
 interface EpisodesProps {
@@ -28,7 +28,7 @@ export const Episodes: React.FC<EpisodesProps> = ({
         Watch the episodes to find the hidden secret code and solve the quiz to get +250 XP total per episode!
       </p>
       
-      <motion.div 
+      <m.div 
         initial="hidden"
         animate="show"
         variants={{
@@ -41,7 +41,7 @@ export const Episodes: React.FC<EpisodesProps> = ({
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
       >
         {episodes.map((ep: any, index: number) => (
-          <motion.div 
+          <m.div 
             key={ep.id}
             variants={{
               hidden: { opacity: 0, y: 20 },
@@ -53,13 +53,13 @@ export const Episodes: React.FC<EpisodesProps> = ({
             <div className="w-full aspect-[16/9] rounded-xl bg-zinc-900 relative overflow-hidden border border-zinc-800/40">
               <Thumb src={ep.thumbnail_url} width={420} eager={index === 0} />
               <div className="absolute inset-0 bg-black/20" />
-              <span className="absolute top-3 right-3 text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10">
+              <span className="absolute top-3 right-3 text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10">
                 Episode {ep.id}
               </span>
             </div>
             
             <div className="flex-1 space-y-2">
-              <h3 className="text-base font-black text-white leading-snug group-hover:text-brand-orange transition-colors duration-200">
+              <h3 dir="auto" className="text-base font-black text-white leading-snug group-hover:text-brand-orange transition-colors duration-200">
                 {ep.title_ar}
               </h3>
               <p className="text-zinc-400 text-xs font-semibold leading-relaxed line-clamp-2">
@@ -67,7 +67,7 @@ export const Episodes: React.FC<EpisodesProps> = ({
               </p>
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-zinc-900/60 text-[10px]">
+            <div className="flex items-center justify-between pt-3 border-t border-zinc-900/60 text-2xs">
               <span className="flex items-center gap-1.5 font-extrabold text-brand-amber">
                 <Key className="w-3.5 h-3.5 fill-current" />
                 <span>Secret Code + Quiz</span>
@@ -116,9 +116,9 @@ export const Episodes: React.FC<EpisodesProps> = ({
                 <span>{ep.shares_count || 0}</span>
               </button>
             </div>
-          </motion.div>
+          </m.div>
         ))}
-      </motion.div>
+      </m.div>
     </div>
   );
 };

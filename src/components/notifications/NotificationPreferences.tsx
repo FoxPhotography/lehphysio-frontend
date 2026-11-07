@@ -1,7 +1,7 @@
 import React from 'react';
 import type { NotificationPreferences } from '../../types';
 import { useNotifications } from '../../context/NotificationContext';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { ArrowLeft, MessageSquare, Reply, AtSign, Users, Shield } from 'lucide-react';
 
 const PREF_OPTIONS: {
@@ -46,7 +46,7 @@ export const NotificationPreferencesPanel: React.FC = () => {
   const { preferences, updatePreferences, setShowPreferences } = useNotifications();
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
@@ -95,7 +95,7 @@ export const NotificationPreferencesPanel: React.FC = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[13px] font-bold" style={{ color: 'var(--text-primary)' }}>{label}</p>
-                  <p className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>{description}</p>
+                  <p className="text-2xs font-medium" style={{ color: 'var(--text-muted)' }}>{description}</p>
                 </div>
               </div>
 
@@ -114,7 +114,7 @@ export const NotificationPreferencesPanel: React.FC = () => {
                       : 'rgba(255,255,255,0.1)',
                   }}
                 />
-                <motion.div
+                <m.div
                   animate={{ x: isEnabled ? 20 : 2 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   className="absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-md"
@@ -124,6 +124,6 @@ export const NotificationPreferencesPanel: React.FC = () => {
           );
         })}
       </div>
-    </motion.div>
+    </m.div>
   );
 };

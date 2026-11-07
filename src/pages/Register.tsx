@@ -91,7 +91,7 @@ export const Register: React.FC<RegisterProps> = ({
         <div className="relative">
           <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 pointer-events-none" />
           <select
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-[14px] focus:outline-none focus:border-orange-500/60 transition-colors appearance-none"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-orange-500/60 transition-colors appearance-none"
             value={registerForm.batch}
             onChange={(e) => setRegisterForm((prev: any) => ({ ...prev, batch: e.target.value }))}
           >

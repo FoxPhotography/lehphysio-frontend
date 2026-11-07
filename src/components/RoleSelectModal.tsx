@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, ShieldAlert, Users, X, Loader2, AlertTriangle } from 'lucide-react';
 
 interface RoleOption {
@@ -104,8 +104,8 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
-      <motion.div
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999] animate-fade-in">
+      <m.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
@@ -156,11 +156,11 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
         ) : (
           <div className="space-y-4 text-left">
             <div>
-              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Target User</p>
+              <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Target User</p>
               <p className="text-sm font-black text-white mt-0.5">@{targetUser.username}</p>
-              <p className="text-[11px] text-zinc-400 mt-0.5 flex items-center gap-1.5">
+              <p className="text-xs text-zinc-400 mt-0.5 flex items-center gap-1.5">
                 Current Role:{' '}
-                <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase border ${
+                <span className={`px-1.5 py-0.5 rounded text-2xs font-black uppercase border ${
                   allRoles.find(r => r.id === targetUser.role)?.badgeClass || 'bg-white/5 text-zinc-500'
                 }`}>
                   {roleLabels[targetUser.role] || targetUser.role}
@@ -169,7 +169,7 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
             </div>
 
             <div className="space-y-2">
-              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Select Assignable Role</p>
+              <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Select Assignable Role</p>
               
               {assignableRoles.length === 0 ? (
                 <p className="text-xs text-zinc-500 py-4 text-center italic">No roles are assignable for this user under hierarchy rules.</p>
@@ -186,7 +186,7 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
                       </div>
                       <div className="space-y-0.5 min-w-0">
                         <p className="text-xs font-bold text-white group-hover:text-orange-400 transition-colors">{role.label}</p>
-                        <p className="text-[10px] text-zinc-500 leading-normal">{role.description}</p>
+                        <p className="text-2xs text-zinc-500 leading-normal">{role.description}</p>
                       </div>
                     </button>
                   ))}
@@ -195,7 +195,7 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
             </div>
           </div>
         )}
-      </motion.div>
+      </m.div>
     </div>
   );
 };

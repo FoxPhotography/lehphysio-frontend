@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { User, Lock, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 // ─── Reusable Auth Layout ──────────────────────────────────────────────────────
@@ -14,7 +14,7 @@ export const AuthLayout: React.FC<{
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-orange-500/5 blur-[120px]" />
     </div>
 
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-[400px] relative"
@@ -29,10 +29,10 @@ export const AuthLayout: React.FC<{
       </div>
 
       {/* Card */}
-      <div className="rounded-2xl border border-white/8 bg-zinc-900/80 backdrop-blur-xl p-6 shadow-2xl">
+      <div className="rounded-2xl border border-white/8 bg-zinc-900/80 p-6 shadow-2xl">
         {children}
       </div>
-    </motion.div>
+    </m.div>
   </div>
 );
 
@@ -43,7 +43,7 @@ export const FormField: React.FC<{
   children: React.ReactNode;
 }> = ({ label, icon, children }) => (
   <div className="space-y-1.5">
-    <label className="flex items-center gap-1.5 text-[12px] font-bold text-zinc-400 uppercase tracking-wider">
+    <label className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 uppercase tracking-wider">
       {icon}
       {label}
     </label>
@@ -55,15 +55,15 @@ export const FormField: React.FC<{
 export const AuthError: React.FC<{ message: string }> = ({ message }) => (
   <AnimatePresence>
     {message && (
-      <motion.div
+      <m.div
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: 'auto' }}
         exit={{ opacity: 0, height: 0 }}
-        className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[12px] font-medium"
+        className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium"
       >
         <AlertCircle className="w-4 h-4 flex-shrink-0" />
         {message}
-      </motion.div>
+      </m.div>
     )}
   </AnimatePresence>
 );
@@ -72,14 +72,14 @@ export const AuthError: React.FC<{ message: string }> = ({ message }) => (
 export const AuthSuccess: React.FC<{ message: string }> = ({ message }) => (
   <AnimatePresence>
     {message && (
-      <motion.div
+      <m.div
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: 'auto' }}
         exit={{ opacity: 0, height: 0 }}
-        className="px-3 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[12px] font-medium"
+        className="px-3 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium"
       >
         {message}
-      </motion.div>
+      </m.div>
     )}
   </AnimatePresence>
 );
@@ -104,17 +104,17 @@ export const AuthSubmitButton: React.FC<{
   disabled?: boolean;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
 }> = ({ label, icon, disabled, onClick }) => (
-  <motion.button
+  <m.button
     type="submit"
     disabled={disabled}
     onClick={onClick}
     whileHover={disabled ? {} : { scale: 1.02 }}
     whileTap={disabled ? {} : { scale: 0.98 }}
-    className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-black text-[14px] hover:from-orange-400 hover:to-amber-400 transition-colors shadow-lg shadow-orange-500/15 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+    className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-black text-sm hover:from-orange-400 hover:to-amber-400 transition-colors shadow-lg shadow-orange-500/15 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
   >
     {label}
     {icon || <ArrowRight className="w-4 h-4" />}
-  </motion.button>
+  </m.button>
 );
 
 // ─── Input Field ───────────────────────────────────────────────────────────────
@@ -133,7 +133,7 @@ export const AuthInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & {
       <input
         type={effectiveType}
         {...props}
-        className={`w-full py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 text-[14px] focus:outline-none focus:border-orange-500/60 focus:ring-1 focus:ring-orange-500/30 transition-all ${
+        className={`w-full py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-orange-500/60 focus:ring-1 focus:ring-orange-500/30 transition-all ${
           icon ? 'pl-10' : 'pl-4'
         } ${isPassword ? 'pr-11' : 'pr-4'} ${className || ''}`}
       />

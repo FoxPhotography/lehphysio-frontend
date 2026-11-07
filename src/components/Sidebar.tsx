@@ -66,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="fixed top-0 left-0 bottom-0 w-[280px] bg-zinc-950/80 border-r border-zinc-900/60 p-8 flex flex-col z-50 hidden xl:flex backdrop-blur-md">
+    <aside className="fixed top-0 left-0 bottom-0 w-[280px] bg-zinc-950/80 border-r border-zinc-900/60 p-8 flex flex-col z-50 hidden xl:flex">
       {/* Logo */}
       <a
         href="/"
@@ -107,7 +107,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <span>{item.label}</span>
                   </span>
                   {item.badge && (
-                    <span className="bg-red-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-md">
+                    <span className="bg-red-500 text-white text-2xs font-extrabold px-2 py-0.5 rounded-full shadow-md">
                       {item.badge}
                     </span>
                   )}
@@ -200,7 +200,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="font-extrabold text-sm text-white truncate group-hover:text-brand-orange transition-colors">
                 {user.username}
               </div>
-              <div className="text-[10px] text-zinc-500 font-medium tracking-wide flex items-center gap-1 uppercase">
+              <div className="text-2xs text-zinc-500 font-medium tracking-wide flex items-center gap-1 uppercase">
                 {user.role === 'owner' || user.role === 'admin' ? (
                   <span className="flex items-center gap-0.5 text-brand-orange font-bold">
                     <ShieldCheck className="w-3 h-3" />

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 
 interface HighlightWrapperProps {
   children: React.ReactNode;
@@ -30,7 +30,7 @@ export const HighlightWrapper: React.FC<HighlightWrapperProps> = ({
   return (
     <div className={`relative ${className}`}>
       {active && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0.6, scale: 1.02 }}
           animate={{ opacity: 0, scale: 1 }}
           transition={{ duration: 3, ease: 'easeOut' }}

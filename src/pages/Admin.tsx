@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { RoleSelectModal } from '../components/RoleSelectModal';
 import {
   Video,
@@ -75,7 +75,7 @@ interface AdminProps {
 const SectionCard: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children, className = ''
 }) => (
-  <div className={`rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-5 ${className}`}>
+  <div className={`rounded-2xl border border-white/8 bg-zinc-900/60 p-5 ${className}`}>
     {children}
   </div>
 );
@@ -90,7 +90,7 @@ const SectionTitle: React.FC<{ icon: React.ReactNode; label: string; count?: num
     <h3 className="text-[15px] font-black text-white">
       {label}
       {count !== undefined && (
-        <span className="ml-2 px-1.5 py-0.5 rounded-md bg-orange-500/15 text-orange-400 text-[11px] font-bold">
+        <span className="ml-2 px-1.5 py-0.5 rounded-md bg-orange-500/15 text-orange-400 text-xs font-bold">
           {count}
         </span>
       )}
@@ -102,7 +102,7 @@ const AdminInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label
   label, className, ...props
 }) => (
   <div className="space-y-1.5">
-    {label && <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">{label}</label>}
+    {label && <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{label}</label>}
     <input
       {...props}
       className={`w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 text-[13px] focus:outline-none focus:border-orange-500/60 transition-colors ${className || ''}`}
@@ -114,7 +114,7 @@ const AdminSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { la
   label, children, className, ...props
 }) => (
   <div className="space-y-1.5">
-    {label && <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">{label}</label>}
+    {label && <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{label}</label>}
     <div className="relative">
       <select
         {...props}
@@ -131,7 +131,7 @@ const AdminTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> 
   label, className, ...props
 }) => (
   <div className="space-y-1.5">
-    {label && <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">{label}</label>}
+    {label && <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{label}</label>}
     <textarea
       {...props}
       className={`w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 text-[13px] focus:outline-none focus:border-orange-500/60 resize-none transition-colors ${className || ''}`}
@@ -150,18 +150,18 @@ const AdminBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
     success: 'bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/25',
   };
   const sizes = {
-    sm: 'px-3 py-1.5 text-[11px]',
+    sm: 'px-3 py-1.5 text-xs',
     md: 'px-4 py-2.5 text-[13px]',
   };
   return (
-    <motion.button
+    <m.button
       whileHover={{ scale: props.disabled ? 1 : 1.02 }}
       whileTap={{ scale: props.disabled ? 1 : 0.98 }}
       className={`rounded-xl font-bold transition-all flex items-center gap-1.5 ${variants[variant]} ${sizes[size]} disabled:opacity-50 disabled:cursor-not-allowed ${className || ''}`}
       {...(props as any)}
     >
       {children}
-    </motion.button>
+    </m.button>
   );
 };
 
@@ -613,7 +613,7 @@ export const Admin: React.FC<AdminProps> = ({
     label?: string;
   }> = ({ file, onChange, accept = 'image/*', aspectRatio = '16/9', existingUrl, label }) => (
     <div className="space-y-1.5">
-      {label && <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">{label}</p>}
+      {label && <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{label}</p>}
       <label className="block cursor-pointer">
         <input
           type="file"
@@ -627,15 +627,15 @@ export const Admin: React.FC<AdminProps> = ({
               <div className={`${aspectRatio === '16/9' ? 'aspect-video' : 'aspect-square'} w-full max-w-[200px] overflow-hidden rounded-lg`}>
                 <img src={URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-cover" />
               </div>
-              <p className="text-[12px] font-bold text-white">{file.name}</p>
-              <p className="text-[10px] text-zinc-500">Click to change</p>
+              <p className="text-xs font-bold text-white">{file.name}</p>
+              <p className="text-2xs text-zinc-500">Click to change</p>
             </>
           ) : existingUrl ? (
             <>
               <div className={`${aspectRatio === '16/9' ? 'aspect-video' : 'aspect-square'} w-full max-w-[200px] overflow-hidden rounded-lg`}>
                 <img src={existingUrl} alt="Current" className="w-full h-full object-cover" />
               </div>
-              <p className="text-[10px] text-zinc-500">Current image — click to replace</p>
+              <p className="text-2xs text-zinc-500">Current image — click to replace</p>
             </>
           ) : (
             <>
@@ -643,7 +643,7 @@ export const Admin: React.FC<AdminProps> = ({
                 <ImagePlus className="w-6 h-6 text-orange-400" />
               </div>
               <p className="text-[13px] font-bold text-white">Upload Image</p>
-              <p className="text-[11px] text-zinc-500">Click or drag &amp; drop</p>
+              <p className="text-xs text-zinc-500">Click or drag &amp; drop</p>
             </>
           )}
         </div>
@@ -652,7 +652,7 @@ export const Admin: React.FC<AdminProps> = ({
   );
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-3xl mx-auto px-4 xl:pt-6 space-y-5"
@@ -664,7 +664,7 @@ export const Admin: React.FC<AdminProps> = ({
         </div>
         <div>
           <h1 className="text-xl font-black text-white leading-tight">Admin Dashboard</h1>
-          <p className="text-[12px] text-zinc-500">
+          <p className="text-xs text-zinc-500">
             {user?.role === 'owner' ? 'Owner' : 'Admin'} Panel
           </p>
         </div>
@@ -673,12 +673,12 @@ export const Admin: React.FC<AdminProps> = ({
       {/* Tabs */}
       <div className="flex gap-1.5 flex-wrap">
         {tabs.map((tab) => (
-          <motion.button
+          <m.button
             key={tab.id}
             onClick={() => setAdminSection(tab.id)}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
               adminSection === tab.id
                 ? 'bg-orange-500 text-black shadow-md shadow-orange-500/20'
                 : 'bg-white/5 border border-white/8 text-zinc-400 hover:text-white hover:border-white/15'
@@ -686,14 +686,14 @@ export const Admin: React.FC<AdminProps> = ({
           >
             {tab.icon}
             {tab.label}
-          </motion.button>
+          </m.button>
         ))}
       </div>
 
       {/* Admin Message Banner */}
       <AnimatePresence>
         {adminMessage && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -701,7 +701,7 @@ export const Admin: React.FC<AdminProps> = ({
           >
             <AlertCircle className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
             {adminMessage}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
@@ -716,7 +716,7 @@ export const Admin: React.FC<AdminProps> = ({
             <form onSubmit={handleEpisodeSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="space-y-1.5 sm:col-span-1">
-                  <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
                     Episode # {editingEpisodeId ? '(Fixed)' : '(Optional)'}
                   </label>
                   <input
@@ -766,7 +766,7 @@ export const Admin: React.FC<AdminProps> = ({
 
               {/* Quiz Section */}
               <div className="rounded-xl border border-dashed border-white/15 bg-white/2 p-4 space-y-3">
-                <p className="text-[12px] font-black text-orange-400 flex items-center gap-1.5">
+                <p className="text-xs font-black text-orange-400 flex items-center gap-1.5">
                   <CheckCircle className="w-4 h-4" /> Interactive Quiz (Optional)
                 </p>
                 <AdminInput
@@ -776,10 +776,10 @@ export const Admin: React.FC<AdminProps> = ({
                   onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, quiz_question: e.target.value }))}
                 />
                 <div className="space-y-2">
-                  <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Options</p>
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Options</p>
                   {[0, 1, 2, 3].map((idx) => (
                     <div key={idx} className="flex items-center gap-2">
-                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0 ${
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-2xs font-black flex-shrink-0 ${
                         adminEpisodeForm.quiz_correct === idx ? 'bg-emerald-500 text-black' : 'bg-white/8 text-zinc-500'
                       }`}>
                         {idx + 1}
@@ -798,7 +798,7 @@ export const Admin: React.FC<AdminProps> = ({
                       <button
                         type="button"
                         onClick={() => setAdminEpisodeForm((p: any) => ({ ...p, quiz_correct: idx }))}
-                        className={`w-7 h-7 rounded-lg border text-[10px] font-black flex-shrink-0 transition-colors ${
+                        className={`w-7 h-7 rounded-lg border text-2xs font-black flex-shrink-0 transition-colors ${
                           adminEpisodeForm.quiz_correct === idx
                             ? 'bg-emerald-500 border-emerald-500 text-black'
                             : 'border-white/15 text-zinc-600 hover:border-emerald-500/50'
@@ -815,7 +815,7 @@ export const Admin: React.FC<AdminProps> = ({
               {/* Secret Code Section */}
               <div className="rounded-xl border border-dashed border-white/15 bg-white/2 p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-[12px] font-black text-orange-400 flex items-center gap-1.5">
+                  <p className="text-xs font-black text-orange-400 flex items-center gap-1.5">
                     <Key className="w-4 h-4" /> Episode Secret Code (Optional)
                   </p>
                   <button
@@ -824,7 +824,7 @@ export const Admin: React.FC<AdminProps> = ({
                       const rand = Math.floor(1000 + Math.random() * 9000);
                       setAdminEpisodeForm((p: any) => ({ ...p, code: `EP-${rand}` }));
                     }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-400 hover:bg-orange-500/25 text-[11px] font-bold cursor-pointer transition-colors"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-400 hover:bg-orange-500/25 text-xs font-bold cursor-pointer transition-colors"
                   >
                     <Sparkles className="w-3 h-3" />
                     <span>Generate Code</span>
@@ -886,7 +886,7 @@ export const Admin: React.FC<AdminProps> = ({
                         <span className="text-orange-400 font-mono mr-1.5 font-bold">#{ep.id}</span>
                         {ep.title_ar || ep.title_en}
                       </p>
-                      <p className="text-[11px] text-zinc-500 truncate">
+                      <p className="text-xs text-zinc-500 truncate">
                         {ep.description ? ep.description.substring(0, 70) + '...' : 'No description'}
                       </p>
                     </div>
@@ -926,7 +926,7 @@ export const Admin: React.FC<AdminProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Code Name</label>
+                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Code Name</label>
                     <button
                       type="button"
                       onClick={() => {
@@ -934,7 +934,7 @@ export const Admin: React.FC<AdminProps> = ({
                         const rand = Math.floor(1000 + Math.random() * 9000);
                         setAdminCodeForm((p: any) => ({ ...p, code: `${prefix}-${rand}` }));
                       }}
-                      className="flex items-center gap-1 text-[11px] font-bold text-orange-400 hover:text-orange-300 cursor-pointer"
+                      className="flex items-center gap-1 text-xs font-bold text-orange-400 hover:text-orange-300 cursor-pointer"
                     >
                       <Sparkles className="w-3 h-3" />
                       <span>Generate</span>
@@ -1006,7 +1006,7 @@ export const Admin: React.FC<AdminProps> = ({
           <SectionCard>
             <SectionTitle icon={<Key className="w-4 h-4" />} label="All XP Codes" count={adminCodes.length} />
             <div className="overflow-x-auto">
-              <table className="w-full text-[12px] min-w-[560px]">
+              <table className="w-full text-xs min-w-[560px]">
                 <thead>
                   <tr className="border-b border-white/8 text-left text-zinc-500">
                     <th className="pb-2 pr-3 font-bold">Code</th>
@@ -1039,7 +1039,7 @@ export const Admin: React.FC<AdminProps> = ({
                           <div className="flex items-center gap-2">
                             <span>{c.code}</span>
                             {isHighlighted && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[10px] font-black uppercase tracking-wider animate-pulse shadow-sm">
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-orange-500 to-amber-500 text-white text-2xs font-black uppercase tracking-wider animate-pulse shadow-sm">
                                 <Sparkles className="w-2.5 h-2.5" />
                                 NEW
                               </span>
@@ -1050,16 +1050,16 @@ export const Admin: React.FC<AdminProps> = ({
                         <td className="py-2.5 pr-3 text-zinc-300">
                           {c.type === 'episode' ? (
                             c.episode_id ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-bold">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold">
                                 Episode #{c.episode_id}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/30 text-blue-300 text-[11px] font-bold">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-bold">
                                 Episode (Any)
                               </span>
                             )
                           ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400 text-[11px] font-bold">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400 text-xs font-bold">
                               Social Media
                             </span>
                           )}
@@ -1089,7 +1089,7 @@ export const Admin: React.FC<AdminProps> = ({
         <SectionCard>
           <SectionTitle icon={<Users className="w-4 h-4" />} label="Registered Members" count={adminUsers.length} />
           <div className="overflow-x-auto">
-            <table className="w-full text-[12px] min-w-[600px]">
+            <table className="w-full text-xs min-w-[600px]">
               <thead>
                 <tr className="border-b border-white/8 text-left text-zinc-500">
                   <th className="pb-2 pr-3 font-bold">User</th>
@@ -1113,7 +1113,7 @@ export const Admin: React.FC<AdminProps> = ({
                     <td className="py-2.5 pr-3 text-orange-400 font-bold">{u.total_xp?.toLocaleString()}</td>
                     <td className="py-2.5 pr-3">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase ${
+                        <span className={`px-2 py-0.5 rounded-lg text-2xs font-black uppercase ${
                           u.role === 'owner' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/25' :
                           u.role === 'admin' ? 'bg-orange-500/15 text-orange-400 border border-orange-500/25' :
                           u.role === 'moderator' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25' :
@@ -1122,7 +1122,7 @@ export const Admin: React.FC<AdminProps> = ({
                           {u.role === 'user' ? 'Student' : u.role === 'moderator' ? 'Moderator' : u.role === 'admin' ? 'Admin' : 'Owner'}
                         </span>
                         {u.role === 'owner' && (
-                          <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] font-black uppercase tracking-wider animate-pulse">
+                          <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-2xs font-black uppercase tracking-wider animate-pulse">
                             Protected
                           </span>
                         )}
@@ -1179,7 +1179,7 @@ export const Admin: React.FC<AdminProps> = ({
           <SectionCard>
             <SectionTitle icon={<Frame className="w-4 h-4" />} label="Upload New Frame" />
             {frameError && (
-              <div className="mb-3 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[12px]">
+              <div className="mb-3 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
                 {frameError}
               </div>
             )}
@@ -1230,7 +1230,7 @@ export const Admin: React.FC<AdminProps> = ({
                       <div className="w-14 h-14 rounded-xl bg-black/30 overflow-hidden flex items-center justify-center">
                         <img src={f.image_url} alt={f.name} className="w-full h-full object-contain" />
                       </div>
-                      <p className="text-[11px] font-bold text-white leading-tight">{f.name}</p>
+                      <p className="text-xs font-bold text-white leading-tight">{f.name}</p>
                       
                       {isEditing ? (
                         <div className="space-y-1.5 w-full">
@@ -1238,7 +1238,7 @@ export const Admin: React.FC<AdminProps> = ({
                             type="number"
                             value={editingFramePrice}
                             onChange={(e) => setEditingFramePrice(Math.max(0, Number(e.target.value)))}
-                            className="w-full px-2 py-1 text-[11px] rounded bg-white/5 border border-white/10 text-white text-center focus:outline-none focus:border-orange-500/60"
+                            className="w-full px-2 py-1 text-xs rounded bg-white/5 border border-white/10 text-white text-center focus:outline-none focus:border-orange-500/60"
                             min={0}
                           />
                           <div className="flex gap-1 justify-center w-full">
@@ -1246,7 +1246,7 @@ export const Admin: React.FC<AdminProps> = ({
                               size="sm"
                               variant="success"
                               onClick={() => handleUpdateFramePrice(f._id, editingFramePrice)}
-                              className="px-2 py-1 text-[9px] flex-1 justify-center"
+                              className="px-2 py-1 text-2xs flex-1 justify-center"
                             >
                               Save
                             </AdminBtn>
@@ -1254,7 +1254,7 @@ export const Admin: React.FC<AdminProps> = ({
                               size="sm"
                               variant="ghost"
                               onClick={() => setEditingFrameId(null)}
-                              className="px-2 py-1 text-[9px] flex-1 justify-center"
+                              className="px-2 py-1 text-2xs flex-1 justify-center"
                             >
                               Cancel
                             </AdminBtn>
@@ -1262,7 +1262,7 @@ export const Admin: React.FC<AdminProps> = ({
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5 justify-center">
-                          <p className="text-[10px] text-orange-400 font-bold">{f.price.toLocaleString()} XP</p>
+                          <p className="text-2xs text-orange-400 font-bold">{f.price.toLocaleString()} XP</p>
                           <button
                             onClick={() => {
                               setEditingFrameId(f._id);
@@ -1277,7 +1277,7 @@ export const Admin: React.FC<AdminProps> = ({
                       )}
 
                       {!isEditing && (
-                        <AdminBtn size="sm" variant="danger" onClick={() => handleDeleteFrame(f._id)} className="w-full justify-center text-[10px] py-1 mt-1">
+                        <AdminBtn size="sm" variant="danger" onClick={() => handleDeleteFrame(f._id)} className="w-full justify-center text-2xs py-1 mt-1">
                           <Trash2 className="w-3 h-3" /> Delete
                         </AdminBtn>
                       )}
@@ -1322,13 +1322,13 @@ export const Admin: React.FC<AdminProps> = ({
                 {auditLogs.slice(0, 5).map((log) => (
                   <div key={log.id} className="relative pl-4 border-l-2 border-orange-500/30 py-0.5 text-left">
                     <div className="absolute w-2 h-2 rounded-full bg-orange-500 -left-[5px] top-1.5" />
-                    <p className="text-[10px] text-zinc-500 font-bold">
+                    <p className="text-2xs text-zinc-500 font-bold">
                       {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {new Date(log.created_at).toLocaleDateString()}
                     </p>
                     <p className="text-xs text-white font-bold leading-tight mt-0.5">
                       @{log.moderator?.username || 'System'}
                     </p>
-                    <p className="text-[10px] text-zinc-400 leading-normal truncate">
+                    <p className="text-2xs text-zinc-400 leading-normal truncate">
                       {log.action} on {log.target_type}
                     </p>
                   </div>
@@ -1346,7 +1346,7 @@ export const Admin: React.FC<AdminProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {/* Search username */}
                   <div className="space-y-1.5 text-left">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Search username / reason</label>
+                    <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">Search username / reason</label>
                     <div className="relative">
                       <input
                         type="text"
@@ -1443,7 +1443,7 @@ export const Admin: React.FC<AdminProps> = ({
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-[12px] min-w-[650px] text-left">
+              <table className="w-full text-xs min-w-[650px] text-left">
                 <thead>
                   <tr className="border-b border-white/8 text-zinc-550">
                     <th className="pb-2 pr-3 font-bold">Action</th>
@@ -1465,7 +1465,7 @@ export const Admin: React.FC<AdminProps> = ({
                           @{log.moderator?.username || 'System'}
                         </td>
                         <td className="py-2.5 pr-3">
-                          <span className="text-[10px] uppercase font-bold text-orange-400">
+                          <span className="text-2xs uppercase font-bold text-orange-400">
                             {log.actor_role || log.moderator?.role}
                           </span>
                         </td>
@@ -1506,8 +1506,8 @@ export const Admin: React.FC<AdminProps> = ({
       {/* Details Drawer for selected log entry */}
       <AnimatePresence>
         {selectedLog && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999] flex justify-end animate-fade-in" onClick={() => setSelectedLog(null)}>
-            <motion.div
+          <div className="fixed inset-0 bg-black/80 z-[99999] flex justify-end animate-fade-in" onClick={() => setSelectedLog(null)}>
+            <m.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
@@ -1529,28 +1529,28 @@ export const Admin: React.FC<AdminProps> = ({
                 <div className="space-y-4 text-left">
                   {/* Action summary */}
                   <div className="p-4 rounded-xl bg-orange-500/5 border border-orange-500/15">
-                    <p className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">Logged Action</p>
+                    <p className="text-2xs text-orange-400 font-bold uppercase tracking-wider">Logged Action</p>
                     <p className="text-base font-black text-white mt-1">{selectedLog.action}</p>
                     <p className="text-xs text-zinc-450 mt-1">Status: Success</p>
                   </div>
 
                   {/* Actor details */}
                   <div className="space-y-1">
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Actor</p>
+                    <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Actor</p>
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-white">
                         {(selectedLog.moderator?.username || 'S')[0].toUpperCase()}
                       </div>
                       <div>
                         <p className="text-xs font-bold text-white">@{selectedLog.moderator?.username || 'System'}</p>
-                        <p className="text-[10px] text-zinc-500">Role: <span className="uppercase font-bold text-orange-400">{selectedLog.actor_role || selectedLog.moderator?.role}</span></p>
+                        <p className="text-2xs text-zinc-500">Role: <span className="uppercase font-bold text-orange-400">{selectedLog.actor_role || selectedLog.moderator?.role}</span></p>
                       </div>
                     </div>
                   </div>
 
                   {/* Target details */}
                   <div className="space-y-1">
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Target Entity</p>
+                    <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Target Entity</p>
                     <div className="p-3 bg-white/3 rounded-xl border border-white/5 space-y-1 text-xs">
                       <p className="text-white"><span className="text-zinc-500">Type:</span> <span className="capitalize font-bold">{selectedLog.target_type}</span></p>
                       <p className="text-white"><span className="text-zinc-500">ID:</span> {selectedLog.target_id || 'N/A'}</p>
@@ -1562,7 +1562,7 @@ export const Admin: React.FC<AdminProps> = ({
 
                   {/* Reason & details */}
                   <div className="space-y-1">
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Moderator Reason</p>
+                    <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Moderator Reason</p>
                     <p className="text-xs text-zinc-300 bg-white/2 p-3 rounded-xl border border-white/5 leading-relaxed whitespace-pre-line">
                       {selectedLog.reason || 'No reason provided.'}
                     </p>
@@ -1570,8 +1570,8 @@ export const Admin: React.FC<AdminProps> = ({
 
                   {/* Technical Metadata */}
                   <div className="space-y-1">
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Additional Metadata</p>
-                    <pre className="text-[10px] text-orange-400/90 font-mono bg-black/60 p-3 rounded-xl border border-white/5 overflow-x-auto max-h-40">
+                    <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Additional Metadata</p>
+                    <pre className="text-2xs text-orange-400/90 font-mono bg-black/60 p-3 rounded-xl border border-white/5 overflow-x-auto max-h-40">
                       {JSON.stringify(selectedLog.metadata || {}, null, 2)}
                     </pre>
                   </div>
@@ -1579,11 +1579,11 @@ export const Admin: React.FC<AdminProps> = ({
                   {/* IP Address & Time */}
                   <div className="grid grid-cols-2 gap-3 pt-2">
                     <div>
-                      <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">IP Address</p>
+                      <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">IP Address</p>
                       <p className="text-xs text-zinc-300 font-mono mt-0.5">{selectedLog.ip_address || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Timestamp</p>
+                      <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Timestamp</p>
                       <p className="text-xs text-zinc-300 mt-0.5">{new Date(selectedLog.created_at).toLocaleString()}</p>
                     </div>
                   </div>
@@ -1599,7 +1599,7 @@ export const Admin: React.FC<AdminProps> = ({
                   <Trash2 className="w-4 h-4" /> Delete Log Entry (Soft Delete)
                 </AdminBtn>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>
@@ -1613,7 +1613,7 @@ export const Admin: React.FC<AdminProps> = ({
         onConfirm={handleConfirmRoleChange}
         isLoading={roleLoading}
       />
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -1705,7 +1705,7 @@ const XpSettingsManager: React.FC<{
   }
 
   return (
-    <div className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-5">
+    <div className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5">
       <div className="flex items-center gap-2 mb-5 pb-3 border-b border-white/8">
         <div className="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/20 flex items-center justify-center text-orange-400">
           <Settings className="w-4 h-4" />
@@ -1714,7 +1714,7 @@ const XpSettingsManager: React.FC<{
       </div>
 
       {error && (
-        <div className="mb-4 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[12px]">
+        <div className="mb-4 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
           {error}
         </div>
       )}
@@ -1728,8 +1728,8 @@ const XpSettingsManager: React.FC<{
                 {meta.icon}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-bold text-white">{meta.label}</p>
-                <p className="text-[10px] text-zinc-600 leading-tight">{meta.desc}</p>
+                <p className="text-xs font-bold text-white">{meta.label}</p>
+                <p className="text-2xs text-zinc-600 leading-tight">{meta.desc}</p>
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <input
@@ -1743,22 +1743,22 @@ const XpSettingsManager: React.FC<{
                   min={0}
                   required
                 />
-                <span className="text-[10px] text-zinc-600 font-bold">XP</span>
+                <span className="text-2xs text-zinc-600 font-bold">XP</span>
               </div>
             </div>
           );
         })}
 
         <div className="pt-2">
-          <motion.button
+          <m.button
             type="submit"
             disabled={saving}
             whileHover={{ scale: saving ? 1 : 1.02 }}
             whileTap={{ scale: saving ? 1 : 0.98 }}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-black text-[14px] hover:from-orange-400 hover:to-amber-400 transition-colors disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-black text-sm hover:from-orange-400 hover:to-amber-400 transition-colors disabled:opacity-60"
           >
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : <><Save className="w-4 h-4" /> Save XP Settings</>}
-          </motion.button>
+          </m.button>
         </div>
       </form>
     </div>
@@ -1864,7 +1864,7 @@ const SystemProfileConfig: React.FC<{
   return (
     <SectionCard>
       <SectionTitle icon={<ShieldCheck className="w-4 h-4 text-orange-400" />} label="Configure Official LehPhysio Profile" />
-      <p className="text-[12px] text-zinc-500 mb-4 leading-relaxed">
+      <p className="text-xs text-zinc-500 mb-4 leading-relaxed">
         This profile name and avatar image will be automatically used when publishing news posts to the official feed. Only admins can publish these posts.
       </p>
       <form onSubmit={handleSave} className="space-y-4 text-left">
@@ -1877,7 +1877,7 @@ const SystemProfileConfig: React.FC<{
         />
         
         <div className="space-y-1.5">
-          <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Official Avatar Image</p>
+          <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Official Avatar Image</p>
           <label className="block cursor-pointer">
             <input
               type="file"
@@ -1891,14 +1891,14 @@ const SystemProfileConfig: React.FC<{
                   <div className="w-16 h-16 rounded-full overflow-hidden border border-white/10">
                     <img src={URL.createObjectURL(avatarFile)} alt="Preview" className="w-full h-full object-cover" />
                   </div>
-                  <p className="text-[12px] font-bold text-white">{avatarFile.name}</p>
+                  <p className="text-xs font-bold text-white">{avatarFile.name}</p>
                 </>
               ) : avatarUrl ? (
                 <>
                   <div className="w-16 h-16 rounded-full overflow-hidden border border-white/10">
                     <img src={avatarUrl} alt="LehPhysio" className="w-full h-full object-cover" />
                   </div>
-                  <p className="text-[10px] text-zinc-500">Official avatar — click to replace</p>
+                  <p className="text-2xs text-zinc-500">Official avatar — click to replace</p>
                 </>
               ) : (
                 <>

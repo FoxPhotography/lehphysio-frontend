@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Trophy, Crown, Medal, Star } from 'lucide-react';
 import { UserAvatar } from '../components/UserAvatar';
 
@@ -61,7 +61,7 @@ const PodiumEntry: React.FC<{
   const empty = !person;
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: empty ? 0.35 : 1, y: 0 }}
       transition={{ delay, duration: 0.4 }}
@@ -83,20 +83,20 @@ const PodiumEntry: React.FC<{
       </div>
 
       {/* Name */}
-      <span className="text-[11px] font-bold text-white text-center max-w-[68px] truncate leading-tight">
+      <span className="text-xs font-bold text-white text-center max-w-[68px] truncate leading-tight">
         {empty ? '—' : person.username}
       </span>
 
       {/* XP */}
-      <span className="text-[10px] text-zinc-500 font-medium">
+      <span className="text-2xs text-zinc-500 font-medium">
         {empty ? '0 XP' : `${person.xp.toLocaleString()} XP`}
       </span>
 
       {/* Podium Bar */}
       <div className={`w-16 sm:w-20 ${cfg.barH} rounded-t-xl bg-gradient-to-t ${cfg.barColor} opacity-80 flex items-start justify-center pt-1.5`}>
-        <span className="text-[11px] font-black text-black/70">{place}</span>
+        <span className="text-xs font-black text-black/70">{place}</span>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -104,18 +104,18 @@ const PodiumEntry: React.FC<{
 const TabPill: React.FC<{ label: string; active: boolean; onClick: () => void }> = ({
   label, active, onClick
 }) => (
-  <motion.button
+  <m.button
     onClick={onClick}
     whileHover={{ scale: 1.03 }}
     whileTap={{ scale: 0.97 }}
-    className={`px-4 py-2 rounded-xl text-[12px] font-bold transition-all ${
+    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
       active
         ? 'bg-orange-500 text-black shadow-md shadow-orange-500/20'
         : 'bg-white/5 border border-white/8 text-zinc-400 hover:text-white hover:border-white/15'
     }`}
   >
     {label}
-  </motion.button>
+  </m.button>
 );
 
 // ─── Main Component ────────────────────────────────────────────────────────────
@@ -128,7 +128,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   const [first, second, third] = leaderboard;
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-2xl mx-auto px-4 xl:pt-6"
@@ -140,7 +140,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         </div>
         <div>
           <h1 className="text-xl font-black text-white leading-tight">Leaderboard</h1>
-          <p className="text-[12px] text-zinc-500">Leh Physio? Rankings</p>
+          <p className="text-xs text-zinc-500">Leh Physio? Rankings</p>
         </div>
       </div>
 
@@ -158,7 +158,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
       </div>
 
       {/* Podium */}
-      <div className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-6 mb-5">
+      <div className="rounded-2xl border border-white/8 bg-zinc-900/60 p-6 mb-5">
         <div className="flex items-end justify-center gap-4 sm:gap-6">
           <PodiumEntry person={second} place={2} delay={0.1} />
           <PodiumEntry person={first}  place={1} delay={0.0} />
@@ -167,11 +167,11 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
       </div>
 
       {/* Full Ranking List */}
-      <div className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl overflow-hidden">
+      <div className="rounded-2xl border border-white/8 bg-zinc-900/60 overflow-hidden">
         {leaderboard.length === 0 ? (
           <div className="py-16 text-center">
             <Trophy className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
-            <p className="text-[14px] text-zinc-500">No rankings yet for this tab.</p>
+            <p className="text-sm text-zinc-500">No rankings yet for this tab.</p>
           </div>
         ) : (
           <div>
@@ -180,7 +180,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
               const rankName = stripEmojis(u.rank?.name_en || '');
 
               return (
-                <motion.div
+                <m.div
                   key={u.username}
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -190,7 +190,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   }`}
                 >
                   {/* Rank Number */}
-                  <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-black flex-shrink-0 ${
+                  <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black flex-shrink-0 ${
                     idx === 0 ? 'bg-amber-500 text-black' :
                     idx === 1 ? 'bg-zinc-400 text-black' :
                     idx === 2 ? 'bg-amber-700 text-white' :
@@ -214,24 +214,24 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                         {u.username}
                       </span>
                       {isMe && (
-                        <span className="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 text-[9px] font-black">YOU</span>
+                        <span className="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 text-2xs font-black">YOU</span>
                       )}
                     </div>
-                    <p className="text-[11px] text-zinc-500 truncate">
+                    <p className="text-xs text-zinc-500 truncate">
                       {u.batch}{rankName ? ` · ${rankName}` : ''}
                     </p>
                   </div>
 
                   {/* XP Badge */}
                   <div className="px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 flex-shrink-0">
-                    <span className="text-[12px] font-black text-orange-400">{u.xp.toLocaleString()} XP</span>
+                    <span className="text-xs font-black text-orange-400">{u.xp.toLocaleString()} XP</span>
                   </div>
-                </motion.div>
+                </m.div>
               );
             })}
           </div>
         )}
       </div>
-    </motion.div>
+    </m.div>
   );
 };

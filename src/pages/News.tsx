@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cld } from '../utils/image';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { UserAvatar } from '../components/UserAvatar';
 import { 
   ArrowLeft,
@@ -298,7 +298,7 @@ export const News: React.FC<NewsProps> = ({
           onSubmit={handleSubmitPost} 
           className="glass-card p-5 flex gap-4 items-start text-left border border-zinc-900/60 relative"
         >
-          <div className="absolute -top-3 left-6 bg-brand-orange/10 border border-brand-orange/20 rounded-full px-3 py-0.5 text-[9px] font-extrabold text-brand-orange uppercase tracking-wider flex items-center gap-1">
+          <div className="absolute -top-3 left-6 bg-brand-orange/10 border border-brand-orange/20 rounded-full px-3 py-0.5 text-2xs font-extrabold text-brand-orange uppercase tracking-wider flex items-center gap-1">
             <Volume2 className="w-2.5 h-2.5 animate-bounce" />
             <span>Admin Broadcast</span>
           </div>
@@ -333,7 +333,7 @@ export const News: React.FC<NewsProps> = ({
             )}
 
             <div className="flex flex-row items-center justify-between w-full pt-2 gap-4">
-              <label className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-[10px] py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5 shrink-0">
+              <label className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-2xs py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5 shrink-0">
                 <ImageIcon className="w-3.5 h-3.5 shrink-0" />
                 <span>{isUploadingImage ? 'Uploading...' : 'Add Banner'}</span>
                 <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" disabled={isUploadingImage} />
@@ -385,12 +385,12 @@ export const News: React.FC<NewsProps> = ({
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-extrabold text-sm text-white">{post.username}</span>
-                      <span className="text-[9px] font-bold bg-brand-orange/15 text-brand-orange px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="text-2xs font-bold bg-brand-orange/15 text-brand-orange px-2 py-0.5 rounded-full flex items-center gap-1">
                         <Zap className="w-2.5 h-2.5 fill-current shrink-0" />
                         <span>{post.batch}</span>
                       </span>
                     </div>
-                    <span className="text-[10px] text-zinc-500 font-semibold mt-0.5 block">
+                    <span className="text-2xs text-zinc-500 font-semibold mt-0.5 block">
                       {stripEmojis(post.rank.name_en)} · {new Date(post.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
                     </span>
                   </div>
@@ -410,7 +410,7 @@ export const News: React.FC<NewsProps> = ({
                     </button>
                     <AnimatePresence>
                       {openPostMenu === post.id && (
-                        <motion.div
+                        <m.div
                           initial={{ opacity: 0, scale: 0.95, y: -5 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.95, y: -5 }}
@@ -439,7 +439,7 @@ export const News: React.FC<NewsProps> = ({
                             <Trash2 className="w-3.5 h-3.5" />
                             <span>Delete</span>
                           </button>
-                        </motion.div>
+                        </m.div>
                       )}
                     </AnimatePresence>
                   </div>
@@ -469,7 +469,7 @@ export const News: React.FC<NewsProps> = ({
                   )}
 
                   <div className="flex flex-row items-center justify-between w-full gap-4">
-                    <label className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-[10px] py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5 shrink-0">
+                    <label className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-2xs py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5 shrink-0">
                       <ImageIcon className="w-3.5 h-3.5 shrink-0" />
                       <span>{isUploadingEditImage ? 'Uploading...' : 'Change Image'}</span>
                       <input 
@@ -491,7 +491,7 @@ export const News: React.FC<NewsProps> = ({
 
                     <div className="flex gap-2">
                       <button 
-                        className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-[10px] py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all" 
+                        className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-2xs py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all" 
                         onClick={() => setEditingPostId(null)}
                       >
                         Cancel
@@ -518,7 +518,7 @@ export const News: React.FC<NewsProps> = ({
                   {/* Floating hearts container */}
                   <AnimatePresence>
                     {floatingHearts.filter(h => h.postId === post.id).map(h => (
-                      <motion.div
+                      <m.div
                         key={h.id}
                         initial={{ opacity: 1, scale: 0, y: 0 }}
                         animate={{ opacity: 0, scale: 2.2, y: -60 }}
@@ -527,12 +527,12 @@ export const News: React.FC<NewsProps> = ({
                         className="absolute inset-0 m-auto w-12 h-12 flex items-center justify-center pointer-events-none z-10"
                       >
                         <Heart className="w-12 h-12 fill-red-500 text-red-500 drop-shadow-heart shrink-0" />
-                      </motion.div>
+                      </m.div>
                     ))}
                   </AnimatePresence>
 
-                  {post.title && <h3 className="text-zinc-100 font-extrabold text-sm md:text-base mb-2">{post.title}</h3>}
-                  <p className="whitespace-pre-wrap">{post.content}</p>
+                  {post.title && <h3 dir="auto" className="text-zinc-100 font-extrabold text-sm md:text-base mb-2">{post.title}</h3>}
+                  <p dir="auto" className="whitespace-pre-wrap">{post.content}</p>
 
                   {post.image_url && (
                     <div 
@@ -560,7 +560,7 @@ export const News: React.FC<NewsProps> = ({
               <div className="flex gap-6 items-center mt-5 pt-3.5 border-t border-zinc-900/60">
                 <button
                   onClick={() => handleLikePost(post.id)}
-                  className={`flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer border-none bg-transparent outline-none ${
+                  className={`flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer border-none bg-transparent outline-none ${
                     post.isLiked ? 'text-red-500' : 'text-zinc-500 hover:text-red-500'
                   }`}
                 >
@@ -576,7 +576,7 @@ export const News: React.FC<NewsProps> = ({
                       toggleComments(post.id);
                     }
                   }}
-                  className={`flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer border-none bg-transparent outline-none ${
+                  className={`flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer border-none bg-transparent outline-none ${
                     expandedComments[post.id] !== undefined ? 'text-brand-orange' : 'text-zinc-500 hover:text-brand-orange'
                   }`}
                 >
@@ -586,7 +586,7 @@ export const News: React.FC<NewsProps> = ({
 
                 <button
                   onClick={() => handleSharePost(post.id)}
-                  className="flex items-center gap-1.5 text-[11px] font-bold text-zinc-500 hover:text-brand-orange transition-colors cursor-pointer border-none bg-transparent outline-none"
+                  className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-brand-orange transition-colors cursor-pointer border-none bg-transparent outline-none"
                 >
                   <Share2 className="w-4 h-4" />
                   <span>{post.shares_count}</span>
@@ -596,7 +596,7 @@ export const News: React.FC<NewsProps> = ({
               {/* Collapsible Comments Section */}
               <AnimatePresence>
                 {expandedComments[post.id] !== undefined && (
-                  <motion.div
+                  <m.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
@@ -611,7 +611,7 @@ export const News: React.FC<NewsProps> = ({
                         {/* Comments list */}
                         <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1">
                           {expandedComments[post.id]?.length === 0 ? (
-                            <p className="text-zinc-500 text-[10px] font-bold text-center py-2">لا توجد تعليقات بعد. كن أول من يعلق!</p>
+                            <p className="text-zinc-500 text-2xs font-bold text-center py-2">لا توجد تعليقات بعد. كن أول من يعلق!</p>
                           ) : (
                             expandedComments[post.id]?.map((comment: any) => (
                               <div key={comment.id} className="flex gap-2.5 items-start text-left bg-zinc-950/30 p-2.5 rounded-xl border border-zinc-900/30">
@@ -624,8 +624,8 @@ export const News: React.FC<NewsProps> = ({
                                 <div className="flex-1 min-w-0">
                                   <div className="flex justify-between items-start">
                                     <div>
-                                      <span className="font-extrabold text-[11px] text-zinc-200">{comment.username}</span>
-                                      <span className="text-[8px] bg-zinc-900 text-zinc-400 font-bold px-1.5 py-0.5 rounded ml-2 uppercase">
+                                      <span className="font-extrabold text-xs text-zinc-200">{comment.username}</span>
+                                      <span className="text-2xs bg-zinc-900 text-zinc-400 font-bold px-1.5 py-0.5 rounded ml-2 uppercase">
                                         {comment.batch}
                                       </span>
                                     </div>
@@ -639,8 +639,8 @@ export const News: React.FC<NewsProps> = ({
                                       </button>
                                     )}
                                   </div>
-                                  <p className="text-zinc-300 text-[11px] font-semibold mt-1 break-words">{comment.content}</p>
-                                  <span className="text-[8px] text-zinc-500 font-bold mt-1 block">
+                                  <p dir="auto" className="text-zinc-300 text-xs font-semibold mt-1 break-words">{comment.content}</p>
+                                  <span className="text-2xs text-zinc-500 font-bold mt-1 block">
                                     {new Date(comment.created_at).toLocaleString()}
                                   </span>
                                 </div>
@@ -677,7 +677,7 @@ export const News: React.FC<NewsProps> = ({
                         )}
                       </>
                     )}
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>
@@ -688,12 +688,12 @@ export const News: React.FC<NewsProps> = ({
       {/* Immersive Lightbox Modal */}
       <AnimatePresence>
         {activeLightboxImg && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setActiveLightboxImg(null)}
-            className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[99999] flex items-center justify-center p-4 cursor-zoom-out"
+            className="fixed inset-0 bg-black/95 z-[99999] flex items-center justify-center p-4 cursor-zoom-out"
           >
             {/* Close button */}
             <button
@@ -703,7 +703,7 @@ export const News: React.FC<NewsProps> = ({
               <X className="w-5 h-5" />
             </button>
 
-            <motion.img
+            <m.img
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -713,7 +713,7 @@ export const News: React.FC<NewsProps> = ({
               className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-zinc-800/40"
               onClick={(e) => e.stopPropagation()} // Stop closing on image click
             />
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

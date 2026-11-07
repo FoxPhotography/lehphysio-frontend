@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { HighlightWrapper } from '../notifications/HighlightWrapper';
 import { UserAvatar } from '../UserAvatar';
 import { Loader2, CornerUpLeft, X, Heart, MoreVertical, Edit2, Trash2, AlertTriangle } from 'lucide-react';
@@ -276,7 +276,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
       ) : (
         <>
           {comments.length === 0 ? (
-            <p className="text-zinc-500 text-[11px] font-medium py-3 text-center">No comments yet. Be the first to comment!</p>
+            <p className="text-zinc-500 text-xs font-medium py-3 text-center">No comments yet. Be the first to comment!</p>
           ) : (
             comments.map((c: any) => {
               const isCommentHighlighted = deepLinkTarget?.type === 'comment' && deepLinkTarget?.commentId === c.id;
@@ -298,11 +298,11 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                         <div className="flex justify-between items-center mb-1">
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs font-extrabold text-brand-orange">@{c.username}</span>
-                            <span className="text-[8px] font-bold bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-md">{c.batch}</span>
+                            <span className="text-2xs font-bold bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-md">{c.batch}</span>
                           </div>
                           
                           <div className="flex items-center gap-3">
-                            <span className="text-[9px] text-zinc-500 font-semibold">
+                            <span className="text-2xs text-zinc-500 font-semibold">
                               {new Date(c.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                             </span>
                             {user && (
@@ -330,24 +330,24 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                               autoFocus
                             />
                             <div className="flex justify-end gap-1.5">
-                              <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-[9px] py-1.5 px-3 rounded-lg cursor-pointer transition-all" onClick={() => setEditingCommentId(null)}>Cancel</button>
-                              <button className="bg-brand-orange text-black font-extrabold text-[9px] py-1.5 px-3 rounded-lg cursor-pointer transition-all shadow-md" onClick={() => handleEditComment(c.id, editCommentText)}>Save</button>
+                              <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-2xs py-1.5 px-3 rounded-lg cursor-pointer transition-all" onClick={() => setEditingCommentId(null)}>Cancel</button>
+                              <button className="bg-brand-orange text-black font-extrabold text-2xs py-1.5 px-3 rounded-lg cursor-pointer transition-all shadow-md" onClick={() => handleEditComment(c.id, editCommentText)}>Save</button>
                             </div>
                           </div>
                         ) : (
-                          <p className="text-xs text-zinc-200 font-medium leading-relaxed mb-2 pr-1">{renderTextWithMentions(c.content)}</p>
+                          <p dir="auto" className="text-xs text-zinc-200 font-medium leading-relaxed mb-2 pr-1">{renderTextWithMentions(c.content)}</p>
                         )}
 
                         <div className="flex gap-4 items-center">
                           <button 
-                            className={`flex items-center gap-1 text-[10px] font-bold cursor-pointer transition-colors ${c.has_liked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
+                            className={`flex items-center gap-1 text-2xs font-bold cursor-pointer transition-colors ${c.has_liked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
                             onClick={() => handleCommentLike(c.id)}
                           >
                             <Heart className={`w-3 h-3 ${c.has_liked ? 'fill-current' : ''}`} /> 
                             <span>{c.likes_count}</span>
                           </button>
                           <button 
-                            className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer" 
+                            className="flex items-center gap-1 text-2xs font-bold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer" 
                             onClick={() => {
                               setReplyingToComment(c);
                               document.getElementById(`comment-input-${postId}`)?.focus();
@@ -371,9 +371,9 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                                 <UserAvatar username={r.username} avatarUrl={r.avatar_url} equippedFrame={r.equipped_frame} size={22} />
                                 <div className="flex-1 min-w-0">
                                   <div className="flex justify-between items-center mb-0.5">
-                                    <span className="text-[11px] font-bold text-zinc-400">@{r.username}</span>
+                                    <span className="text-xs font-bold text-zinc-400">@{r.username}</span>
                                     <div className="flex items-center gap-2">
-                                      <span className="text-[8px] text-zinc-600 font-semibold">
+                                      <span className="text-2xs text-zinc-600 font-semibold">
                                         {new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                       </span>
                                       {user && (
@@ -394,24 +394,24 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                                   {editingCommentId === r.id ? (
                                     <div className="my-1.5 flex flex-col gap-1.5">
                                       <textarea
-                                        className="w-full bg-zinc-950 border border-zinc-800 focus:border-brand-orange text-white rounded-lg p-2 text-[11px] outline-none resize-none"
+                                        className="w-full bg-zinc-950 border border-zinc-800 focus:border-brand-orange text-white rounded-lg p-2 text-xs outline-none resize-none"
                                         value={editCommentText}
                                         onChange={(e) => setEditCommentText(e.target.value)}
                                         rows={2}
                                         autoFocus
                                       />
                                       <div className="flex justify-end gap-1.5">
-                                        <button className="border border-zinc-800 text-white text-[8px] py-1 px-2.5 rounded-md cursor-pointer" onClick={() => setEditingCommentId(null)}>Cancel</button>
-                                        <button className="bg-brand-orange text-black font-extrabold text-[8px] py-1 px-2.5 rounded-md cursor-pointer" onClick={() => handleEditComment(r.id, editCommentText)}>Save</button>
+                                        <button className="border border-zinc-800 text-white text-2xs py-1 px-2.5 rounded-md cursor-pointer" onClick={() => setEditingCommentId(null)}>Cancel</button>
+                                        <button className="bg-brand-orange text-black font-extrabold text-2xs py-1 px-2.5 rounded-md cursor-pointer" onClick={() => handleEditComment(r.id, editCommentText)}>Save</button>
                                       </div>
                                     </div>
                                   ) : (
-                                    <p className="text-xs text-zinc-300 font-medium leading-relaxed pr-1 mt-0.5">{renderTextWithMentions(r.content)}</p>
+                                    <p dir="auto" className="text-xs text-zinc-300 font-medium leading-relaxed pr-1 mt-0.5">{renderTextWithMentions(r.content)}</p>
                                   )}
 
                                   <div className="flex gap-2 items-center mt-1">
                                     <button 
-                                      className={`flex items-center gap-1 text-[9px] font-bold cursor-pointer transition-colors ${r.has_liked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                      className={`flex items-center gap-1 text-2xs font-bold cursor-pointer transition-colors ${r.has_liked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
                                       onClick={() => handleCommentLike(r.id)}
                                     >
                                       <Heart className={`w-2.5 h-2.5 ${r.has_liked ? 'fill-current' : ''}`} /> 
@@ -454,7 +454,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                 const suggestionsList = getFilteredUsernames();
                 if (suggestionsList.length === 0) return null;
                 return (
-                  <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 max-h-[160px] overflow-y-auto z-10 bg-zinc-950 border border-zinc-800 rounded-xl p-1 shadow-2xl backdrop-blur-md">
+                  <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 max-h-[160px] overflow-y-auto z-10 bg-zinc-950 border border-zinc-800 rounded-xl p-1 shadow-2xl">
                     {suggestionsList.map((u: any, idx: number) => (
                       <div
                         key={u.username}
@@ -521,7 +521,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   rows={1}
                 />
                 <button 
-                  className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-[10px] h-[34px] px-4 rounded-xl cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-md shrink-0 flex items-center justify-center disabled:opacity-50"
+                  className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-2xs h-[34px] px-4 rounded-xl cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-md shrink-0 flex items-center justify-center disabled:opacity-50"
                   onClick={() => {
                     submitComment(replyingToComment?.id);
                   }}
@@ -536,7 +536,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
               </div>
             </div>
           ) : (
-            <div className="text-zinc-500 text-[10px] font-bold text-center py-2 uppercase tracking-wide">
+            <div className="text-zinc-500 text-2xs font-bold text-center py-2 uppercase tracking-wide">
               Please login to post.
             </div>
           )}
@@ -547,7 +547,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
       <AnimatePresence>
         {contextMenu && (
           <div className="fixed inset-0 z-[999]" onClick={() => setContextMenu(null)}>
-            <motion.div 
+            <m.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -596,7 +596,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   <span>Report Comment</span>
                 </button>
               )}
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>
@@ -604,11 +604,11 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
       {/* Bottom inline edit form overlay */}
       <AnimatePresence>
         {editingCommentId && (
-          <motion.div 
+          <m.div 
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-0 left-0 right-0 bg-zinc-950 border-t border-zinc-850 p-4 z-[9000] shadow-2xl backdrop-blur-md flex gap-2.5 items-end"
+            className="fixed bottom-0 left-0 right-0 bg-zinc-950 border-t border-zinc-850 p-4 z-[9000] shadow-2xl flex gap-2.5 items-end"
           >
             <textarea
               className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-brand-orange text-white rounded-xl p-3 text-xs outline-none resize-none"
@@ -630,7 +630,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
             >
               Save
             </button>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

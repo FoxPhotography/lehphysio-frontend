@@ -259,3 +259,8 @@ html, body {
 }
 
 
+
+/* User-generated text (posts, comments, chat) picks its own direction; align to its start */
+[dir="auto"] {
+  text-align: start;
+}

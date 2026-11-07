@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { 
   Gamepad2, 
   ArrowLeft, 
@@ -136,7 +136,7 @@ export const Games: React.FC<GamesProps> = ({
                   </div>
                   
                   {gameFinished ? (
-                    <motion.div 
+                    <m.div 
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       className="flex flex-col items-center justify-center text-center p-8 bg-zinc-900/40 border border-zinc-800 rounded-2xl gap-4"
@@ -154,7 +154,7 @@ export const Games: React.FC<GamesProps> = ({
                       >
                         Play Again
                       </button>
-                    </motion.div>
+                    </m.div>
                   ) : (
                     <div className="space-y-4">
                       <div className="grid grid-cols-4 gap-2.5 max-w-md mx-auto aspect-square">
@@ -172,7 +172,7 @@ export const Games: React.FC<GamesProps> = ({
                                 <Gamepad2 className="w-5 h-5 opacity-60" />
                               </div>
                               {/* Card Front */}
-                              <div className="absolute inset-0 bg-zinc-800 border-2 border-brand-orange/40 text-white rounded-xl flex items-center justify-center text-[10px] md:text-xs font-black [transform:rotateY(180deg)] [backface-visibility:hidden] px-1.5 break-all">
+                              <div className="absolute inset-0 bg-zinc-800 border-2 border-brand-orange/40 text-white rounded-xl flex items-center justify-center text-2xs md:text-xs font-black [transform:rotateY(180deg)] [backface-visibility:hidden] px-1.5 break-all">
                                 {card.value}
                               </div>
                             </div>
@@ -274,18 +274,18 @@ export const Games: React.FC<GamesProps> = ({
               {/* Card 1 */}
               <div className="glass-card p-5 text-left flex flex-col justify-between h-64 hover:border-brand-orange/30 group">
                 <div className="space-y-2">
-                  <span className="text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10 self-start inline-block">
+                  <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10 self-start inline-block">
                     Memory Game
                   </span>
                   <h3 className="text-base font-black text-white group-hover:text-brand-orange transition-colors">Anatomy Match</h3>
                   <p className="text-zinc-400 text-xs font-semibold leading-relaxed">Strengthen your anatomical memory and match muscles with medical terms in fewer moves.</p>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-zinc-900/60">
-                  <span className="text-[11px] font-extrabold text-brand-orange bg-brand-orange/10 px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-extrabold text-brand-orange bg-brand-orange/10 px-2 py-0.5 rounded-full">
                     +{xpSettings.game_play || 20} XP (Max 3/day)
                   </span>
                   <button 
-                    className="bg-zinc-900 border border-zinc-800 text-white font-extrabold text-[10px] py-2 px-4 rounded-xl cursor-pointer hover:border-brand-orange hover:bg-brand-orange/5 active:scale-95 transition-all flex items-center gap-1"
+                    className="bg-zinc-900 border border-zinc-800 text-white font-extrabold text-2xs py-2 px-4 rounded-xl cursor-pointer hover:border-brand-orange hover:bg-brand-orange/5 active:scale-95 transition-all flex items-center gap-1"
                     onClick={() => { setActiveGame('memory'); initMemoryGame(); }}
                   >
                     <Play className="w-3 h-3 fill-current" /> Play
@@ -299,18 +299,18 @@ export const Games: React.FC<GamesProps> = ({
                 style={{ opacity: hasSpunToday ? 0.7 : 1 }}
               >
                 <div className="space-y-2">
-                  <span className="text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10 self-start inline-block">
+                  <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10 self-start inline-block">
                     Wheel of Fortune
                   </span>
                   <h3 className="text-base font-black text-white group-hover:text-brand-orange transition-colors">Daily Spinner</h3>
                   <p className="text-zinc-400 text-xs font-semibold leading-relaxed">Spin the golden wheel for a chance to win random free points up to 100 XP.</p>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-zinc-900/60">
-                  <span className="text-[11px] font-extrabold text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-extrabold text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded-full">
                     {hasSpunToday ? 'Spun Today' : 'Random Prizes'}
                   </span>
                   <button 
-                    className="bg-zinc-900 border border-zinc-800 text-white font-extrabold text-[10px] py-2 px-4 rounded-xl cursor-pointer hover:border-brand-orange hover:bg-brand-orange/5 active:scale-95 transition-all flex items-center gap-1"
+                    className="bg-zinc-900 border border-zinc-800 text-white font-extrabold text-2xs py-2 px-4 rounded-xl cursor-pointer hover:border-brand-orange hover:bg-brand-orange/5 active:scale-95 transition-all flex items-center gap-1"
                     onClick={() => { setActiveGame('spin'); }}
                   >
                     <Play className="w-3 h-3 fill-current" /> Open
@@ -321,17 +321,17 @@ export const Games: React.FC<GamesProps> = ({
               {/* Card 3 (Coming soon) */}
               <div className="glass-card p-5 text-left flex flex-col justify-between h-64 opacity-50">
                 <div className="space-y-2">
-                  <span className="text-[10px] font-black tracking-wider bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-md uppercase self-start inline-block">
+                  <span className="text-2xs font-black tracking-wider bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-md uppercase self-start inline-block">
                     Interactive Quiz
                   </span>
                   <h3 className="text-base font-black text-white">Case Diagnosis</h3>
                   <p className="text-zinc-500 text-xs font-semibold leading-relaxed">Test your clinical diagnosis in orthopedics and neurology with questions of graded difficulty.</p>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-zinc-900/60">
-                  <span className="text-[11px] font-extrabold text-zinc-600 bg-zinc-950 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-xs font-extrabold text-zinc-600 bg-zinc-950 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Hourglass className="w-3 h-3" /> Coming Soon
                   </span>
-                  <button className="border border-zinc-850 text-zinc-600 font-extrabold text-[10px] py-2 px-4 rounded-xl cursor-not-allowed" disabled>Locked</button>
+                  <button className="border border-zinc-850 text-zinc-600 font-extrabold text-2xs py-2 px-4 rounded-xl cursor-not-allowed" disabled>Locked</button>
                 </div>
               </div>
             </div>
@@ -344,18 +344,18 @@ export const Games: React.FC<GamesProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="glass-card p-5 text-left flex flex-col justify-between h-64 hover:border-brand-orange/30 group">
                 <div className="space-y-2">
-                  <span className="text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10 self-start inline-block">
+                  <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10 self-start inline-block">
                     Multiplayer Lobby
                   </span>
                   <h3 className="text-base font-black text-white group-hover:text-brand-orange transition-colors">Anatomy Challenge Online</h3>
                   <p className="text-zinc-400 text-xs font-semibold leading-relaxed">Create a challenge room and compete with your colleagues to reveal muscle groups and anatomical structures in real-time!</p>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-zinc-900/60">
-                  <span className="text-[11px] font-extrabold text-brand-orange bg-brand-orange/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-xs font-extrabold text-brand-orange bg-brand-orange/10 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Users className="w-3.5 h-3.5" /> Room Battles
                   </span>
                   <button 
-                    className="bg-zinc-900 border border-zinc-800 text-white font-extrabold text-[10px] py-2 px-4 rounded-xl cursor-pointer hover:border-brand-orange hover:bg-brand-orange/5 active:scale-95 transition-all flex items-center gap-1"
+                    className="bg-zinc-900 border border-zinc-800 text-white font-extrabold text-2xs py-2 px-4 rounded-xl cursor-pointer hover:border-brand-orange hover:bg-brand-orange/5 active:scale-95 transition-all flex items-center gap-1"
                     onClick={() => setShowMultiplayerSetup(true)}
                   >
                     <Play className="w-3 h-3 fill-current" /> Setup Room
@@ -438,7 +438,7 @@ export const Games: React.FC<GamesProps> = ({
                 <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-5 md:p-6 text-left flex flex-col justify-between gap-4">
                   <div>
                     <h4 className="text-xs font-black text-brand-orange uppercase tracking-wider">Join Game (Enter Room)</h4>
-                    <p className="text-[10px] text-zinc-500 font-semibold mt-1">Enter the 4-digit code from your colleague's invite to join immediately.</p>
+                    <p className="text-2xs text-zinc-500 font-semibold mt-1">Enter the 4-digit code from your colleague's invite to join immediately.</p>
                   </div>
                   
                   <div className="space-y-4">

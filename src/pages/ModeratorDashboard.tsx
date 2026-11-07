@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   ShieldAlert,
   FileText,
@@ -523,7 +523,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
   const pendingRevisions = pendingPosts.filter(p => p.is_edit_draft);
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-3xl mx-auto px-4 xl:pt-6 space-y-5"
@@ -535,7 +535,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
         </div>
         <div>
           <h1 className="text-xl font-black text-white leading-tight">Moderator Dashboard</h1>
-          <p className="text-[12px] text-zinc-500">
+          <p className="text-xs text-zinc-500">
             Daily content moderation &amp; user management
           </p>
         </div>
@@ -557,7 +557,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
               setActiveTab(tab.id as any);
               setMessage('');
             }}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === tab.id
                 ? 'bg-emerald-500 text-black font-extrabold shadow-md shadow-emerald-500/20'
                 : 'bg-white/5 border border-white/8 text-zinc-400 hover:text-white hover:border-white/15'
@@ -566,7 +566,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
             {tab.icon}
             {tab.label}
             {tab.count !== undefined && tab.count > 0 && (
-              <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+              <span className={`px-1.5 py-0.5 rounded-md text-2xs font-bold ${
                 activeTab === tab.id ? 'bg-black/25 text-black' : 'bg-emerald-500/15 text-emerald-400'
               }`}>
                 {tab.count}
@@ -579,7 +579,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       {/* Message Banner */}
       <AnimatePresence>
         {message && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -587,7 +587,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
           >
             <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
             <span>{message}</span>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
@@ -608,24 +608,24 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
             </div>
           ) : (
             pendingNewPosts.map((post) => (
-              <div key={post.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-5 space-y-4">
+              <div key={post.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center">
                     {post.avatar_url ? (
                       <img src={post.avatar_url} alt={post.username} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-[14px] font-bold text-zinc-400">{post.username[0].toUpperCase()}</span>
+                      <span className="text-sm font-bold text-zinc-400">{post.username[0].toUpperCase()}</span>
                     )}
                   </div>
                   <div>
                     <h4 className="text-[13px] font-black text-white">@{post.username}</h4>
-                    <p className="text-[10px] text-zinc-500">{post.batch} · {new Date(post.created_at).toLocaleString()}</p>
+                    <p className="text-2xs text-zinc-500">{post.batch} · {new Date(post.created_at).toLocaleString()}</p>
                   </div>
                 </div>
 
                 <div className="space-y-2 text-left">
-                  {post.title && <h3 className="text-sm font-bold text-white leading-tight">{post.title}</h3>}
-                  <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">{post.content}</p>
+                  {post.title && <h3 dir="auto" className="text-sm font-bold text-white leading-tight">{post.title}</h3>}
+                  <p dir="auto" className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">{post.content}</p>
                   {post.image_url && (
                     <div className="rounded-xl overflow-hidden max-h-60 border border-white/10">
                       <img src={post.image_url} alt="Post Attachment" className="w-full h-full object-cover" />
@@ -662,18 +662,18 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
             </div>
           ) : (
             pendingRevisions.map((post) => (
-              <div key={post.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-5 space-y-4">
+              <div key={post.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center">
                     {post.avatar_url ? (
                       <img src={post.avatar_url} alt={post.username} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-[14px] font-bold text-zinc-400">{post.username[0].toUpperCase()}</span>
+                      <span className="text-sm font-bold text-zinc-400">{post.username[0].toUpperCase()}</span>
                     )}
                   </div>
                   <div>
                     <h4 className="text-[13px] font-black text-white">@{post.username}</h4>
-                    <p className="text-[10px] text-zinc-500">Revision Request · {new Date(post.created_at).toLocaleString()}</p>
+                    <p className="text-2xs text-zinc-500">Revision Request · {new Date(post.created_at).toLocaleString()}</p>
                   </div>
                 </div>
 
@@ -681,9 +681,9 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Original Live version */}
                   <div className="rounded-xl border border-white/5 bg-zinc-950/40 p-4 space-y-2 relative text-left">
-                    <span className="absolute top-2.5 right-2.5 bg-zinc-800 text-zinc-400 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">Live Approved</span>
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Original Post</p>
-                    {post.original_title && <h4 className="text-[12px] font-bold text-zinc-400 leading-tight">{post.original_title}</h4>}
+                    <span className="absolute top-2.5 right-2.5 bg-zinc-800 text-zinc-400 text-2xs font-bold px-1.5 py-0.5 rounded uppercase">Live Approved</span>
+                    <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wide">Original Post</p>
+                    {post.original_title && <h4 className="text-xs font-bold text-zinc-400 leading-tight">{post.original_title}</h4>}
                     <p className="text-xs text-zinc-400 leading-relaxed whitespace-pre-line truncate-5">{post.original_content}</p>
                     {post.original_image_url && (
                       <div className="rounded-lg overflow-hidden h-24 border border-white/5 mt-1.5 opacity-60">
@@ -694,10 +694,10 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
 
                   {/* Pending Revision */}
                   <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/3 p-4 space-y-2 relative text-left">
-                    <span className="absolute top-2.5 right-2.5 bg-emerald-500/20 text-emerald-400 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">New Edit</span>
-                    <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wide">Revision Draft</p>
-                    {post.title && <h4 className="text-[12px] font-black text-white leading-tight">{post.title}</h4>}
-                    <p className="text-xs text-zinc-200 leading-relaxed whitespace-pre-line">{post.content}</p>
+                    <span className="absolute top-2.5 right-2.5 bg-emerald-500/20 text-emerald-400 text-2xs font-bold px-1.5 py-0.5 rounded uppercase">New Edit</span>
+                    <p className="text-2xs text-emerald-400 font-bold uppercase tracking-wide">Revision Draft</p>
+                    {post.title && <h4 dir="auto" className="text-xs font-black text-white leading-tight">{post.title}</h4>}
+                    <p dir="auto" className="text-xs text-zinc-200 leading-relaxed whitespace-pre-line">{post.content}</p>
                     {post.image_url && (
                       <div className="rounded-lg overflow-hidden h-28 border border-white/10 mt-1.5">
                         <img src={post.image_url} alt="Revision Attachment" className="w-full h-full object-cover" />
@@ -769,39 +769,39 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h4 className="text-[13px] font-bold text-white">
+                        <h4 dir="auto" className="text-[13px] font-bold text-white">
                           {s.title}
                         </h4>
-                        <p className="text-[10px] text-zinc-500">
+                        <p className="text-2xs text-zinc-500">
                           Submitted by @{s.username} ({s.batch || 'User'}) · {new Date(s.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wide border shrink-0 ${statusBg}`}>
+                      <span className={`px-2 py-0.5 rounded-lg text-2xs font-black uppercase tracking-wide border shrink-0 ${statusBg}`}>
                         {statusLabel}
                       </span>
                     </div>
                     
                     {s.edit_draft ? (
                       <div className="p-3.5 border border-amber-500/20 bg-amber-500/5 rounded-xl space-y-3">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-bold">
+                        <span className="text-2xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-bold">
                           <FileEdit className="w-3.5 h-3.5" /> Revision Edit Request Pending
                         </span>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <span className="text-[9px] font-bold text-zinc-500 uppercase">Original</span>
-                            <h5 className="text-xs font-bold text-zinc-400">{s.title}</h5>
-                            <p className="text-[11px] text-zinc-500">{s.content}</p>
+                            <span className="text-2xs font-bold text-zinc-500 uppercase">Original</span>
+                            <h5 dir="auto" className="text-xs font-bold text-zinc-400">{s.title}</h5>
+                            <p dir="auto" className="text-xs text-zinc-500">{s.content}</p>
                           </div>
                           <div className="space-y-1">
-                            <span className="text-[9px] font-bold text-amber-500 uppercase">New Draft</span>
+                            <span className="text-2xs font-bold text-amber-500 uppercase">New Draft</span>
                             <h5 className="text-xs font-bold text-white">{s.edit_draft.title}</h5>
-                            <p className="text-[11px] text-zinc-300">{s.edit_draft.content}</p>
+                            <p className="text-xs text-zinc-300">{s.edit_draft.content}</p>
                           </div>
                         </div>
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleSuggestionStatus(s.id, 'approved', 'approve_revision')}
-                            className="bg-emerald-500/20 border border-emerald-500/30 hover:bg-emerald-500/30 text-emerald-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            className="bg-emerald-500/20 border border-emerald-500/30 hover:bg-emerald-500/30 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
                           >
                             <Check className="w-3 h-3" /> Approve Revision
                           </button>
@@ -810,7 +810,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                               const reason = prompt("Enter rejection reason (optional):");
                               handleSuggestionStatus(s.id, 'rejected', 'reject_revision', reason || undefined);
                             }}
-                            className="bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            className="bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-400 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
                           >
                             <XCircle className="w-3 h-3" /> Reject Revision
                           </button>
@@ -818,31 +818,31 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                       </div>
                     ) : s.delete_pending ? (
                       <div className="p-3 border border-red-500/20 bg-red-500/5 rounded-xl space-y-2">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-red-400 flex items-center gap-1.5 font-bold">
+                        <span className="text-2xs font-black uppercase tracking-wider text-red-400 flex items-center gap-1.5 font-bold">
                           <AlertTriangle className="w-3.5 h-3.5" /> Deletion Request Pending
                         </span>
-                        <p className="text-xs text-zinc-300 leading-relaxed">{s.content}</p>
+                        <p dir="auto" className="text-xs text-zinc-300 leading-relaxed">{s.content}</p>
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleSuggestionStatus(s.id, 'rejected', 'approve_delete')}
-                            className="bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            className="bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-400 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
                           >
                             <Check className="w-3 h-3" /> Approve Deletion
                           </button>
                           <button
                             onClick={() => handleSuggestionStatus(s.id, 'approved', 'reject_delete')}
-                            className="border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            className="border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
                           >
                             <XCircle className="w-3 h-3" /> Keep Suggestion
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <p className="text-xs text-zinc-300 leading-relaxed">{s.content}</p>
+                      <p dir="auto" className="text-xs text-zinc-300 leading-relaxed">{s.content}</p>
                     )}
 
                     <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                      <span className="flex items-center gap-1 text-[11px] text-orange-400 font-bold">
+                      <span className="flex items-center gap-1 text-xs text-orange-400 font-bold">
                         <ThumbsUp className="w-3.5 h-3.5" /> {s.upvotes || 0} Upvotes
                       </span>
 
@@ -850,7 +850,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleSuggestionStatus(s.id, 'approved')}
-                            className="bg-emerald-500/15 border border-emerald-500/25 hover:bg-emerald-500/25 text-emerald-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            className="bg-emerald-500/15 border border-emerald-500/25 hover:bg-emerald-500/25 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
                           >
                             <Check className="w-3 h-3" /> Approve
                           </button>
@@ -859,7 +859,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                               const reason = prompt("Enter rejection reason (optional):");
                               handleSuggestionStatus(s.id, 'rejected', undefined, reason || undefined);
                             }}
-                            className="bg-red-500/15 border border-red-500/25 hover:bg-red-500/25 text-red-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            className="bg-red-500/15 border border-red-500/25 hover:bg-red-500/25 text-red-400 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
                           >
                             <XCircle className="w-3 h-3" /> Reject
                           </button>
@@ -917,7 +917,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                       <div className="min-w-0 flex-1 pr-2">
                         <p className="text-xs font-bold truncate">@{u.username}</p>
                         <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase border ${
+                          <span className={`px-1.5 py-0.5 rounded text-2xs font-black uppercase border ${
                             u.role === 'owner' ? 'bg-amber-500/15 text-amber-400 border-amber-500/25' :
                             u.role === 'admin' ? 'bg-orange-500/15 text-orange-400 border-orange-500/25' :
                             u.role === 'moderator' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25' :
@@ -926,11 +926,11 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                             {u.role === 'user' ? 'Student' : u.role === 'moderator' ? 'Moderator' : u.role === 'admin' ? 'Admin' : 'Owner'}
                           </span>
                           {u.role === 'owner' && (
-                            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[8px] font-black uppercase tracking-wider animate-pulse">
+                            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-2xs font-black uppercase tracking-wider animate-pulse">
                               Protected
                             </span>
                           )}
-                          <span className="text-[10px] text-zinc-500">{u.batch}</span>
+                          <span className="text-2xs text-zinc-500">{u.batch}</span>
                         </div>
                       </div>
                       <div className="flex gap-1.5 items-center flex-shrink-0">
@@ -955,12 +955,12 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   </div>
                   <div>
                     <p className="text-xs font-black text-white">Targeting: @{selectedUser.username}</p>
-                    <p className="text-[10px] text-zinc-500">Currently: {selectedUser.is_banned ? 'Banned' : selectedUser.is_muted ? 'Muted' : 'Normal'}</p>
+                    <p className="text-2xs text-zinc-500">Currently: {selectedUser.is_banned ? 'Banned' : selectedUser.is_muted ? 'Muted' : 'Normal'}</p>
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Action Type</label>
+                  <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">Action Type</label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { id: 'mute', label: 'Mute User', icon: <VolumeX className="w-3.5 h-3.5" /> },
@@ -987,7 +987,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
 
                 {['mute', 'ban'].includes(modAction) && (
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Duration</label>
+                    <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">Duration</label>
                     <div className="relative">
                       <select
                         value={modDuration}
@@ -1005,7 +1005,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 )}
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Rejection/Moderation Reason</label>
+                  <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">Rejection/Moderation Reason</label>
                   <textarea
                     placeholder="Provide details or reasons for this action (optional)..."
                     value={modReason}
@@ -1042,30 +1042,30 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {reports.map((report) => (
-                <div key={report.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-5 space-y-4 text-left">
+                <div key={report.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4 text-left">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center border border-white/10">
                         {report.reporter?.avatar_url ? (
                           <img src={report.reporter.avatar_url} alt={report.reporter.username} className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-[12px] font-bold text-zinc-400">
+                          <span className="text-xs font-bold text-zinc-400">
                             {report.reporter?.username ? report.reporter.username[0].toUpperCase() : '?'}
                           </span>
                         )}
                       </div>
                       <div>
-                        <h4 className="text-[12px] font-black text-white">
+                        <h4 className="text-xs font-black text-white">
                           Reporter: <span className="text-zinc-400">@{report.reporter?.username || 'Unknown'}</span>
                         </h4>
-                        <p className="text-[9px] text-zinc-500">
+                        <p className="text-2xs text-zinc-500">
                           {new Date(report.created_at).toLocaleString()}
                         </p>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                      <span className={`px-2 py-0.5 rounded text-2xs font-extrabold uppercase ${
                         report.target_type === 'post' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
                         report.target_type === 'comment' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
                         'bg-pink-500/10 text-pink-400 border border-pink-500/20'
@@ -1073,7 +1073,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                         Reported {report.target_type}
                       </span>
                       
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                      <span className={`px-2 py-0.5 rounded text-2xs font-extrabold uppercase ${
                         report.status === 'pending' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/25 animate-pulse' :
                         report.status === 'resolved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25' :
                         'bg-zinc-800 text-zinc-400 border border-white/10'
@@ -1085,7 +1085,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
 
                   <div className="space-y-3">
                     <div className="p-3.5 rounded-xl bg-red-500/5 border border-red-500/10">
-                      <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider">Reason for Report</p>
+                      <p className="text-2xs text-red-400 font-bold uppercase tracking-wider">Reason for Report</p>
                       <p className="text-xs text-zinc-200 mt-1 font-medium italic">"{report.reason}"</p>
                     </div>
 
@@ -1100,16 +1100,16 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                             {report.target_user?.avatar_url ? (
                               <img src={report.target_user.avatar_url} alt={report.target_user.username} className="w-full h-full object-cover" />
                             ) : (
-                              <span className="text-[9px] font-bold text-zinc-400">
+                              <span className="text-2xs font-bold text-zinc-400">
                                 {report.target_user?.username ? report.target_user.username[0].toUpperCase() : '?'}
                               </span>
                             )}
                           </div>
-                          <p className="text-[10px] text-zinc-400">
+                          <p className="text-2xs text-zinc-400">
                             Author: <span className="text-white font-bold">@{report.target_user?.username || 'Unknown'}</span>
                           </p>
                         </div>
-                        <span className="text-[9.5px] font-bold text-brand-orange opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                        <span className="text-2xs font-bold text-brand-orange opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                           <Eye className="w-3.5 h-3.5" /> View Content
                         </span>
                       </div>
@@ -1179,15 +1179,15 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                       <tr key={q._id || q.id} className="hover:bg-white/2 transition-colors">
                         <td className="py-3 pr-3 font-medium text-white max-w-[200px] truncate" title={q.question}>
                           {q.question}
-                          <div className="text-[10px] text-zinc-500 font-normal mt-0.5">
+                          <div className="text-2xs text-zinc-500 font-normal mt-0.5">
                             Correct Option: <span className="text-emerald-400 font-bold">#{q.correct_answer + 1}</span>
                           </div>
                         </td>
-                        <td className="py-3 pr-3 text-zinc-400 text-[10px]">
+                        <td className="py-3 pr-3 text-zinc-400 text-2xs">
                           {q.publish_at ? new Date(q.publish_at).toLocaleString() : 'Not Set'}
                         </td>
                         <td className="py-3 pr-3 text-center">
-                          <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wide border ${badgeClass}`}>
+                          <span className={`px-2 py-0.5 rounded-lg text-2xs font-black uppercase tracking-wide border ${badgeClass}`}>
                             {q.status}
                           </span>
                         </td>
@@ -1244,7 +1244,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
             
             <form onSubmit={handleQSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Question Text</label>
+                <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">Question Text</label>
                 <textarea
                   required
                   placeholder="e.g. Which muscle is responsible for shoulder abduction beyond 90 degrees?"
@@ -1256,7 +1256,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Choices & Correct Answer</label>
+                <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider block">Choices & Correct Answer</label>
                 {[0, 1, 2, 3].map((idx) => (
                   <div key={idx} className="flex items-center gap-2">
                     <input
@@ -1279,7 +1279,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                         onChange={() => setQCorrect(idx)}
                         className="accent-emerald-500 w-3.5 h-3.5"
                       />
-                      <span className="text-[10px] font-bold text-zinc-400">Correct</span>
+                      <span className="text-2xs font-bold text-zinc-400">Correct</span>
                     </label>
                   </div>
                 ))}
@@ -1294,7 +1294,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 />
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider block">Status</label>
+                  <label className="text-2xs font-bold text-zinc-550 uppercase tracking-wider block">Status</label>
                   <div className="relative">
                     <select
                       value={qStatus}
@@ -1344,8 +1344,8 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       {/* Rejection reason modal */}
       <AnimatePresence>
         {rejectionPostId !== null && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
-            <motion.div
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999] animate-fade-in">
+            <m.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -1359,7 +1359,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
               </div>
 
               <div className="space-y-1.5 text-left">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Reason (Optional)</label>
+                <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">Reason (Optional)</label>
                 <textarea
                   placeholder="Write the reason for rejection to share with the author..."
                   value={rejectionReason}
@@ -1383,14 +1383,14 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   إلغاء
                 </button>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         )}
 
         {/* QOTD Stats Modal */}
         {selectedStats && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
-            <motion.div
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999] animate-fade-in">
+            <m.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -1416,21 +1416,21 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
 
                 <div className="grid grid-cols-2 gap-3 text-center">
                   <div className="bg-white/3 border border-white/5 rounded-xl p-3">
-                    <p className="text-[9px] text-zinc-500 font-bold uppercase">Unique Participants</p>
+                    <p className="text-2xs text-zinc-500 font-bold uppercase">Unique Participants</p>
                     <p className="text-lg font-black text-white mt-0.5">{selectedStats.unique_participants}</p>
                   </div>
                   <div className="bg-white/3 border border-white/5 rounded-xl p-3">
-                    <p className="text-[9px] text-zinc-500 font-bold uppercase">Total Answers</p>
+                    <p className="text-2xs text-zinc-500 font-bold uppercase">Total Answers</p>
                     <p className="text-lg font-black text-white mt-0.5">{selectedStats.total_answers}</p>
                   </div>
                   <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3">
-                    <p className="text-[9px] text-emerald-400 font-bold uppercase">Correct Answers</p>
+                    <p className="text-2xs text-emerald-400 font-bold uppercase">Correct Answers</p>
                     <p className="text-lg font-black text-emerald-400 mt-0.5">
                       {selectedStats.correct_answers} ({selectedStats.correct_percentage}%)
                     </p>
                   </div>
                   <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-3">
-                    <p className="text-[9px] text-red-400 font-bold uppercase">Wrong Answers</p>
+                    <p className="text-2xs text-red-400 font-bold uppercase">Wrong Answers</p>
                     <p className="text-lg font-black text-red-400 mt-0.5">
                       {selectedStats.wrong_answers} ({selectedStats.total_answers > 0 ? 100 - selectedStats.correct_percentage : 0}%)
                     </p>
@@ -1438,7 +1438,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 </div>
 
                 <div className="space-y-3 pt-2">
-                  <p className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider">Answer Distribution</p>
+                  <p className="text-2xs font-bold text-zinc-550 uppercase tracking-wider">Answer Distribution</p>
                   <div className="space-y-2">
                     {selectedStats.options.map((option: string, idx: number) => {
                       const count = selectedStats.option_counts[idx] || 0;
@@ -1450,9 +1450,9 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                           <div className="flex justify-between text-xs font-bold text-zinc-300">
                             <span className="truncate pr-2 flex items-center gap-1.5">
                               {option}
-                              {isCorrect && <span className="bg-emerald-500/20 text-emerald-400 text-[8px] font-bold px-1.5 py-0.2 rounded border border-emerald-500/20">Correct</span>}
+                              {isCorrect && <span className="bg-emerald-500/20 text-emerald-400 text-2xs font-bold px-1.5 py-0.2 rounded border border-emerald-500/20">Correct</span>}
                             </span>
-                            <span className="shrink-0 text-[10px] text-zinc-550 font-extrabold">
+                            <span className="shrink-0 text-2xs text-zinc-550 font-extrabold">
                               {count} answers ({pct}%)
                             </span>
                           </div>
@@ -1468,10 +1468,10 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </m.div>
   );
 };

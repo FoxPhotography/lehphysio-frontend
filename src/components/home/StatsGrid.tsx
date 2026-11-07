@@ -30,7 +30,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ user, leaderboard = [] }) 
         <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden mt-3.5 border border-zinc-800/40">
           <div className="bg-gradient-to-r from-brand-orange to-brand-amber h-full" style={{ width: `${(user.total_xp % 1000) / 10}%` }}></div>
         </div>
-        <div className="flex justify-between text-[9px] text-zinc-500 font-bold mt-1.5 uppercase">
+        <div className="flex justify-between text-2xs text-zinc-500 font-bold mt-1.5 uppercase">
           <span>{user.total_xp % 1000} XP</span>
           <span>1,000 XP</span>
         </div>
@@ -41,7 +41,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ user, leaderboard = [] }) 
           <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Global Rank</span>
           <div className="text-2xl font-black text-white mt-1">{rankNum ? `#${rankNum}` : '—'}</div>
           {topPct !== null && (
-            <span className="text-[10px] text-brand-orange font-extrabold mt-1 inline-block bg-brand-orange/10 px-2 py-0.5 rounded-md">
+            <span className="text-2xs text-brand-orange font-extrabold mt-1 inline-block bg-brand-orange/10 px-2 py-0.5 rounded-md">
               Top {topPct}%
             </span>
           )}
@@ -61,7 +61,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ user, leaderboard = [] }) 
             <span className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-xs shrink-0" title="Quiz Solved">
               <Sparkles className="w-4 h-4 text-yellow-300" />
             </span>
-            <span className="h-7 px-2 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[10px] font-black text-zinc-400 select-none">
+            <span className="h-7 px-2 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-2xs font-black text-zinc-400 select-none">
               +12
             </span>
           </div>

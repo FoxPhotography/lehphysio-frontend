@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { YouTubeFacade } from '../components/common/YouTubeFacade';
 import { Thumb } from '../components/common/Thumb';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { getYoutubeEmbedUrl, copyToClipboard } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
 import { 
@@ -173,11 +174,11 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
         <Thumb src={episode.thumbnail_url} width={640} eager className="opacity-40" />
         
         <div className="relative z-20 space-y-4">
-          <span className="text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10 self-start inline-block">
+          <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10 self-start inline-block">
             Episode {episode.id}
           </span>
           <div className="space-y-1">
-            <h1 className="text-xl md:text-2xl font-black text-white leading-tight">{episode.title_ar}</h1>
+            <h1 dir="auto" className="text-xl md:text-2xl font-black text-white leading-tight">{episode.title_ar}</h1>
           </div>
 
           <div className="flex gap-4 pt-2">
@@ -219,16 +220,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
       {/* Embedded video player */}
       {embedUrl ? (
         <section className="glass-card p-2 overflow-hidden">
-          <div className="relative pb-[56.25%] h-0 rounded-xl overflow-hidden border border-zinc-900/60 bg-zinc-950">
-            <iframe
-              src={embedUrl}
-              className="absolute inset-0 w-full h-full border-none z-10"
-              allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              loading="lazy"
-              title={`Episode ${episode.id}: ${episode.title_ar}`}
-            />
-          </div>
+          <YouTubeFacade embedUrl={embedUrl} title={episode.title_ar || `Episode ${episode.id}`} thumbnail={episode.thumbnail_url} />
         </section>
       ) : null}
 
@@ -241,7 +233,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
               <Key className="w-4 h-4 text-brand-orange" />
               <span>Secret Episode Code</span>
             </h3>
-            <p className="text-[10px] text-zinc-500 font-semibold mt-1">Enter the secret code hidden in the specific minute to get XP.</p>
+            <p className="text-2xs text-zinc-500 font-semibold mt-1">Enter the secret code hidden in the specific minute to get XP.</p>
           </div>
 
           <form onSubmit={(e) => handleRedeem(e, episode?.id)} className="space-y-3.5">
@@ -338,7 +330,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
 
         <AnimatePresence>
           {commentsExpanded && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -440,7 +432,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                     const suggestionsList = getFilteredUsernames();
                     if (suggestionsList.length === 0) return null;
                     return (
-                      <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 max-h-[140px] overflow-y-auto z-[90] bg-zinc-950 border border-zinc-850 rounded-xl p-1 shadow-2xl backdrop-blur-md">
+                      <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 max-h-[140px] overflow-y-auto z-[90] bg-zinc-950 border border-zinc-850 rounded-xl p-1 shadow-2xl">
                         {suggestionsList.map((u, idx) => (
                           <div 
                             key={u.username} 
@@ -469,10 +461,10 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                   <div className="flex justify-end gap-2 items-center">
                     <div className="flex gap-2 items-center">
                       {replyingToComment && (
-                        <button className="border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-[10px] py-2 px-4 rounded-xl cursor-pointer transition-all" onClick={() => setReplyingToComment(null)}>Cancel</button>
+                        <button className="border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-2xs py-2 px-4 rounded-xl cursor-pointer transition-all" onClick={() => setReplyingToComment(null)}>Cancel</button>
                       )}
                       <button 
-                        className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-[10px] py-2 px-4 rounded-xl cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-md disabled:opacity-50"
+                        className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-2xs py-2 px-4 rounded-xl cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-md disabled:opacity-50"
                         onClick={() => {
                           handleEpisodeInteract('comment', commentInput, replyingToComment?.id);
                           setMentionSearchText(null);
@@ -529,14 +521,14 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                                   {user && ((user.role === 'admin' || user.role === 'owner') && c.user_id !== user.id) && (
                                     <button 
                                       onClick={() => handleOpenModerationModal(c.username, c.user_id)}
-                                      className="text-[9px] font-black bg-zinc-900/80 hover:bg-zinc-800 text-brand-orange border border-zinc-850 px-2 py-0.5 rounded-md flex items-center gap-1 transition-colors cursor-pointer"
+                                      className="text-2xs font-black bg-zinc-900/80 hover:bg-zinc-800 text-brand-orange border border-zinc-850 px-2 py-0.5 rounded-md flex items-center gap-1 transition-colors cursor-pointer"
                                     >
                                       <ShieldAlert className="w-3 h-3" /> 
                                       <span>Moderate</span>
                                     </button>
                                   )}
                                 </div>
-                                <span className="text-[10px] text-zinc-500 font-semibold block mt-0.5">
+                                <span className="text-2xs text-zinc-500 font-semibold block mt-0.5">
                                   {new Date(c.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                 </span>
                               </div>
@@ -575,9 +567,9 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                                 autoFocus
                               />
                               <div className="flex justify-end gap-1.5">
-                                <button className="border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-[9px] py-1.5 px-3 rounded-lg cursor-pointer transition-all" onClick={() => setEditingCommentId(null)}>Cancel</button>
+                                <button className="border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-2xs py-1.5 px-3 rounded-lg cursor-pointer transition-all" onClick={() => setEditingCommentId(null)}>Cancel</button>
                                 <button 
-                                  className="bg-brand-orange text-black font-extrabold text-[9px] py-1.5 px-3 rounded-lg cursor-pointer transition-all shadow-md"
+                                  className="bg-brand-orange text-black font-extrabold text-2xs py-1.5 px-3 rounded-lg cursor-pointer transition-all shadow-md"
                                   onClick={() => {
                                     if (editCommentText.trim()) {
                                       handleEditComment(c.id, editCommentText.trim());
@@ -591,7 +583,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                               </div>
                             </div>
                           ) : (
-                            <p className="text-xs md:text-sm text-zinc-100 font-medium leading-relaxed">{renderTextWithMentions(c.content)}</p>
+                            <p dir="auto" className="text-xs md:text-sm text-zinc-100 font-medium leading-relaxed">{renderTextWithMentions(c.content)}</p>
                           )}
                           
                           <div className="flex gap-4 mt-4 pt-2 border-t border-zinc-900/40">
@@ -638,7 +630,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                                           {user && ((user.role === 'admin' || user.role === 'owner') && r.user_id !== user.id) && (
                                             <button 
                                               onClick={() => handleOpenModerationModal(r.username, r.user_id)}
-                                              className="text-[8px] font-black bg-zinc-950 hover:bg-zinc-900 text-brand-orange border border-zinc-850 px-1.5 py-0.5 rounded-md flex items-center gap-0.5 transition-colors cursor-pointer"
+                                              className="text-2xs font-black bg-zinc-950 hover:bg-zinc-900 text-brand-orange border border-zinc-850 px-1.5 py-0.5 rounded-md flex items-center gap-0.5 transition-colors cursor-pointer"
                                             >
                                               <ShieldAlert className="w-2.5 h-2.5" /> 
                                               <span>Moderate</span>
@@ -646,7 +638,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                                           )}
                                         </div>
                                         <div className="flex items-center gap-3.5">
-                                          <span className="text-[9px] text-zinc-500 font-semibold">
+                                          <span className="text-2xs text-zinc-500 font-semibold">
                                             {new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                           </span>
                                           {user && (
@@ -683,9 +675,9 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                                             autoFocus
                                           />
                                           <div className="flex justify-end gap-1.5">
-                                            <button className="border border-zinc-800 text-white text-[8px] py-1 px-2.5 rounded-md cursor-pointer" onClick={() => setEditingCommentId(null)}>Cancel</button>
+                                            <button className="border border-zinc-800 text-white text-2xs py-1 px-2.5 rounded-md cursor-pointer" onClick={() => setEditingCommentId(null)}>Cancel</button>
                                             <button 
-                                              className="bg-brand-orange text-black font-extrabold text-[8px] py-1 px-2.5 rounded-md cursor-pointer"
+                                              className="bg-brand-orange text-black font-extrabold text-2xs py-1 px-2.5 rounded-md cursor-pointer"
                                               onClick={() => {
                                                 if (editCommentText.trim()) {
                                                   handleEditComment(r.id, editCommentText.trim());
@@ -699,11 +691,11 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                                           </div>
                                         </div>
                                       ) : (
-                                        <p className="text-xs text-zinc-300 font-medium leading-relaxed">{renderTextWithMentions(r.content)}</p>
+                                        <p dir="auto" className="text-xs text-zinc-300 font-medium leading-relaxed">{renderTextWithMentions(r.content)}</p>
                                       )}
 
                                       <button 
-                                        className={`flex items-center gap-1 mt-3 text-[10px] font-bold transition-colors cursor-pointer ${r.has_liked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                        className={`flex items-center gap-1 mt-3 text-2xs font-bold transition-colors cursor-pointer ${r.has_liked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
                                         onClick={() => handleEpisodeInteract('comment_like', undefined, r.id)}
                                       >
                                         <Heart className={`w-3 h-3 ${r.has_liked ? 'fill-current' : ''}`} /> 
@@ -721,7 +713,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                   })
                 )}
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </section>
@@ -729,8 +721,8 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
       {/* Context Menu for comments */}
       <AnimatePresence>
         {contextMenu && (
-          <div className="fixed inset-0 z-[999] bg-black/30 backdrop-blur-2xs" onClick={() => setContextMenu(null)}>
-            <motion.div 
+          <div className="fixed inset-0 z-[999] bg-black/30" onClick={() => setContextMenu(null)}>
+            <m.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -740,7 +732,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                 top: Math.min(contextMenu.y, typeof window !== 'undefined' ? window.innerHeight - 140 : contextMenu.y),
                 left: Math.max(12, Math.min(contextMenu.x - 110, typeof window !== 'undefined' ? window.innerWidth - 160 : contextMenu.x)),
               }}
-              className="bg-zinc-950 border border-zinc-800/90 rounded-2xl p-1.5 flex flex-col gap-0.5 min-w-[150px] shadow-2xl z-[1000] backdrop-blur-xl"
+              className="bg-zinc-950 border border-zinc-800/90 rounded-2xl p-1.5 flex flex-col gap-0.5 min-w-[150px] shadow-2xl z-[1000]"
               onClick={(e) => e.stopPropagation()}
             >
               {user && (contextMenu.isOwner || user.role === 'moderator' || user.role === 'admin' || user.role === 'owner') ? (
@@ -779,7 +771,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
                   <span>Report Comment</span>
                 </button>
               )}
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>
@@ -787,11 +779,11 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
       {/* Bottom inline edit form overlay */}
       <AnimatePresence>
         {editingCommentId && (
-          <motion.div 
+          <m.div 
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-0 left-0 right-0 bg-zinc-950 border-t border-zinc-850 p-4 z-[9000] shadow-2xl backdrop-blur-md flex gap-2.5 items-end"
+            className="fixed bottom-0 left-0 right-0 bg-zinc-950 border-t border-zinc-850 p-4 z-[9000] shadow-2xl flex gap-2.5 items-end"
           >
             <textarea
               className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-brand-orange text-white rounded-xl p-3 text-xs outline-none resize-none"
@@ -819,7 +811,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
             >
               Save
             </button>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

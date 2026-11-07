@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   CheckCircle, XCircle, MessageSquare, Reply, AtSign,
   FileText, Tv, Trash2, Shield, UserPlus, VolumeX, Volume2, Lock, Unlock
@@ -86,7 +86,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
   const senderAvatar = actorObj?.avatar_url || null;
 
   return (
-    <motion.div
+    <m.div
       layout
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -128,7 +128,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
             {title}
           </h4>
           <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
-            <span className="text-[10px] font-bold text-zinc-500">
+            <span className="text-2xs font-bold text-zinc-500">
               {timeAgo(created_at)}
             </span>
             {!is_read && (
@@ -143,7 +143,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
           </div>
         </div>
         <p
-          className={`text-[11px] leading-relaxed line-clamp-2 ${
+          className={`text-xs leading-relaxed line-clamp-2 ${
             is_read ? 'text-zinc-500' : 'text-zinc-400 font-medium'
           }`}
         >
@@ -162,6 +162,6 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
       >
         <Trash2 className="w-3.5 h-3.5" />
       </button>
-    </motion.div>
+    </m.div>
   );
 };

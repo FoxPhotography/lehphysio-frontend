@@ -3,7 +3,7 @@ import { Thumb } from '../components/common/Thumb';
 import { cld } from '../utils/image';
 import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
 import { useNotifications } from '../context/NotificationContext';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { 
   Gift, 
   Play, 
@@ -161,7 +161,7 @@ export const Home: React.FC<HomeProps> = ({
     <div className="space-y-10 xl:pt-6 max-w-4xl mx-auto px-4">
       {/* Banner alerts */}
       {loginReward && loginReward.daily_login && (
-        <motion.div 
+        <m.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-3 px-5 py-4 bg-brand-orange/10 border border-brand-orange/20 text-white rounded-2xl shadow-ambient"
@@ -170,7 +170,7 @@ export const Home: React.FC<HomeProps> = ({
           <span className="text-sm font-bold">
             Welcome back! You earned <strong className="text-brand-orange">+{xpSettings.daily_login || 10} XP</strong> for your daily login.
           </span>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Hero podcast card - latest episode */}
@@ -188,10 +188,10 @@ export const Home: React.FC<HomeProps> = ({
               </div>
               <div className="md:col-span-3 flex flex-col gap-4 text-left">
                 <div className="flex gap-2">
-                  <span className="text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
+                  <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
                     New Episode
                   </span>
-                  <span className="text-[10px] font-bold tracking-wider bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md uppercase">
+                  <span className="text-2xs font-bold tracking-wider bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md uppercase">
                     EP.{latestEp.id}
                   </span>
                 </div>
@@ -219,7 +219,7 @@ export const Home: React.FC<HomeProps> = ({
               </div>
               <div className="md:col-span-3 flex flex-col gap-4 text-left">
                 <div className="flex gap-2">
-                  <span className="text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
+                  <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
                     Podcast
                   </span>
                 </div>
@@ -305,8 +305,8 @@ export const Home: React.FC<HomeProps> = ({
                 </button>
               </div>
               <div className="text-left">
-                <h4 className="text-sm font-black text-white truncate">{ep.title_ar}</h4>
-                <div className="text-[10px] text-zinc-500 font-extrabold mt-1">Episode {ep.id}</div>
+                <h4 dir="auto" className="text-sm font-black text-white truncate">{ep.title_ar}</h4>
+                <div className="text-2xs text-zinc-500 font-extrabold mt-1">Episode {ep.id}</div>
               </div>
             </div>
           ))}
@@ -322,7 +322,7 @@ export const Home: React.FC<HomeProps> = ({
           </span>
           <button 
             onClick={() => setCurrentPage('news')} 
-            className="text-[10px] sm:text-xs font-black text-brand-orange hover:text-brand-amber transition-colors flex items-center gap-1 cursor-pointer bg-brand-orange/5 px-2.5 py-1.5 rounded-xl border border-brand-orange/15 hover:border-brand-orange/30 shrink-0 whitespace-nowrap"
+            className="text-2xs sm:text-xs font-black text-brand-orange hover:text-brand-amber transition-colors flex items-center gap-1 cursor-pointer bg-brand-orange/5 px-2.5 py-1.5 rounded-xl border border-brand-orange/15 hover:border-brand-orange/30 shrink-0 whitespace-nowrap"
           >
             View All
           </button>
@@ -344,14 +344,14 @@ export const Home: React.FC<HomeProps> = ({
                 <div className="absolute top-0 right-0 w-24 h-24 bg-brand-orange/5 blur-2xl rounded-full" />
                 
                 <div className="space-y-2 text-left relative z-10">
-                  <div className="flex items-center justify-between text-[9px] font-black text-brand-orange uppercase tracking-wider">
+                  <div className="flex items-center justify-between text-2xs font-black text-brand-orange uppercase tracking-wider">
                     <span>LehPhysio Official</span>
                     <span>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                   </div>
                   <h4 className="text-xs font-extrabold text-white leading-relaxed line-clamp-2">
                     {post.title || post.content.substring(0, 40) + '...'}
                   </h4>
-                  <p className="text-[11px] text-zinc-400 font-medium leading-relaxed line-clamp-3">
+                  <p dir="auto" className="text-xs text-zinc-400 font-medium leading-relaxed line-clamp-3">
                     {post.content}
                   </p>
                 </div>
@@ -367,9 +367,9 @@ export const Home: React.FC<HomeProps> = ({
                     <div className="w-5 h-5 rounded-full overflow-hidden border border-white/10 shrink-0">
                       <img src={post.avatar_url ? cld(post.avatar_url, { w: 20, h: 20, crop: 'fill' }) : '/icon-192.webp'} alt="" loading="lazy" className="w-full h-full object-cover" />
                     </div>
-                    <span className="text-[10px] font-black text-zinc-300 truncate max-w-[120px]">@{post.username}</span>
+                    <span className="text-2xs font-black text-zinc-300 truncate max-w-[120px]">@{post.username}</span>
                   </div>
-                  <span className="text-[10px] font-extrabold text-brand-orange group-hover:translate-x-1 transition-transform">Read Details →</span>
+                  <span className="text-2xs font-extrabold text-brand-orange group-hover:translate-x-1 transition-transform">Read Details →</span>
                 </div>
               </div>
             ))}
@@ -385,7 +385,7 @@ export const Home: React.FC<HomeProps> = ({
             <span>Community Feed</span>
           </span>
           {isRefreshingFeed && (
-            <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-bold uppercase tracking-wider animate-pulse">
+            <div className="flex items-center gap-1.5 text-2xs text-zinc-500 font-bold uppercase tracking-wider animate-pulse">
               <div className="w-3 h-3 border-2 border-brand-orange border-t-transparent rounded-full animate-spin" />
               <span>Updating...</span>
             </div>
@@ -396,7 +396,7 @@ export const Home: React.FC<HomeProps> = ({
         {dailyQuestion && dailyQuestion.active && dailyQuestion.question && (
           <div className="glass-card p-5 text-left space-y-4 border border-brand-orange/20 relative overflow-hidden">
             <div className="flex gap-2 relative z-10">
-              <span className="text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
+              <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
                 Question of the Day
               </span>
             </div>
@@ -442,7 +442,7 @@ export const Home: React.FC<HomeProps> = ({
             </div>
 
             {dailyQuestion.has_answered && (
-              <p className="text-[10px] text-brand-amber font-extrabold flex items-center gap-1.5 uppercase tracking-wide">
+              <p className="text-2xs text-brand-amber font-extrabold flex items-center gap-1.5 uppercase tracking-wide">
                 <Zap className="w-3.5 h-3.5 fill-current animate-fire-pulse" />
                 <span>
                   {dailyQuestion.user_answer?.is_correct 

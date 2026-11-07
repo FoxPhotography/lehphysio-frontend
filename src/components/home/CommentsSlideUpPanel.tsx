@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { m, AnimatePresence, PanInfo } from 'framer-motion';
 import { HighlightWrapper } from '../notifications/HighlightWrapper';
 import { UserAvatar } from '../UserAvatar';
 import { 
@@ -384,14 +384,14 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                     {c.username}
                   </span>
                   {c.batch && (
-                    <span className="text-[8px] font-bold bg-zinc-800/80 text-zinc-400 px-1.5 py-0.5 rounded-md border border-zinc-700/40">
+                    <span className="text-2xs font-bold bg-zinc-800/80 text-zinc-400 px-1.5 py-0.5 rounded-md border border-zinc-700/40">
                       {c.batch}
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] text-zinc-500 font-medium">
+                  <span className="text-2xs text-zinc-500 font-medium">
                     {new Date(c.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                   </span>
 
@@ -415,7 +415,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                               className="fixed inset-0 z-40" 
                               onClick={() => setActiveMenuCommentId(null)} 
                             />
-                            <motion.div
+                            <m.div
                               initial={{ opacity: 0, scale: 0.9, y: -5 }}
                               animate={{ opacity: 1, scale: 1, y: 0 }}
                               exit={{ opacity: 0, scale: 0.9, y: -5 }}
@@ -459,7 +459,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                                   <span>Report</span>
                                 </button>
                               )}
-                            </motion.div>
+                            </m.div>
                           </>
                         )}
                       </AnimatePresence>
@@ -481,27 +481,27 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => setEditingCommentId(null)}
-                      className="px-3 py-1 rounded-lg text-[10px] font-bold text-zinc-400 hover:text-white border border-zinc-800 cursor-pointer"
+                      className="px-3 py-1 rounded-lg text-2xs font-bold text-zinc-400 hover:text-white border border-zinc-800 cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={() => handleSaveEdit(c.id)}
-                      className="px-3 py-1 rounded-lg text-[10px] font-extrabold bg-brand-orange text-black cursor-pointer shadow-md"
+                      className="px-3 py-1 rounded-lg text-2xs font-extrabold bg-brand-orange text-black cursor-pointer shadow-md"
                     >
                       Save
                     </button>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-zinc-200 font-medium leading-relaxed whitespace-pre-wrap break-words">
+                <p dir="auto" className="text-xs text-zinc-200 font-medium leading-relaxed whitespace-pre-wrap break-words">
                   {renderFormattedText(c.content)}
                 </p>
               )}
             </div>
 
             {/* Sub-actions (Like, Reply, Reply count) */}
-            <div className="flex items-center gap-4 mt-1 px-1.5 text-[11px]">
+            <div className="flex items-center gap-4 mt-1 px-1.5 text-xs">
               <button
                 onClick={() => handleToggleLike(c.id)}
                 className={`flex items-center gap-1 font-bold cursor-pointer transition-colors ${
@@ -531,7 +531,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
               <div className="mt-2">
                 <button
                   onClick={() => setExpandedReplies(prev => ({ ...prev, [c.id]: !prev[c.id] }))}
-                  className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-brand-orange/90 hover:text-brand-orange cursor-pointer py-1"
+                  className="inline-flex items-center gap-1.5 text-xs font-extrabold text-brand-orange/90 hover:text-brand-orange cursor-pointer py-1"
                 >
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isRepliesExpanded ? 'rotate-180' : ''}`} />
                   <span>
@@ -543,14 +543,14 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
 
                 <AnimatePresence>
                   {isRepliesExpanded && (
-                    <motion.div
+                    <m.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       className="overflow-hidden space-y-2 mt-1"
                     >
                       {c.replies?.map(reply => renderCommentItem(reply, true, c.id))}
-                    </motion.div>
+                    </m.div>
                   )}
                 </AnimatePresence>
               </div>
@@ -566,17 +566,17 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
       {isOpen && (
         <div className="fixed inset-0 z-[9999] flex flex-col justify-end">
           {/* Dimmed Blurred Backdrop */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={handlePanelClose}
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm cursor-pointer"
+            className="fixed inset-0 bg-black/75 cursor-pointer"
           />
 
           {/* Slide-Up Bottom Sheet Panel */}
-          <motion.div
+          <m.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -586,7 +586,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
             dragElastic={{ top: 0, bottom: 0.5 }}
             dragSnapToOrigin
             onDragEnd={handleDragEnd}
-            className="relative z-10 w-full max-w-2xl mx-auto bg-zinc-950/95 border-t md:border border-zinc-800/80 rounded-t-[28px] md:rounded-[28px] md:mb-4 shadow-[0_-15px_40px_rgba(0,0,0,0.8)] backdrop-blur-2xl flex flex-col max-h-[88vh] h-[85vh] overflow-hidden"
+            className="relative z-10 w-full max-w-2xl mx-auto bg-zinc-950/95 border-t md:border border-zinc-800/80 rounded-t-[28px] md:rounded-[28px] md:mb-4 shadow-[0_-15px_40px_rgba(0,0,0,0.8)] flex flex-col max-h-[88vh] h-[85vh] overflow-hidden"
           >
             {/* Top Drag Handle Header */}
             <div className="pt-3 pb-2 px-5 flex flex-col border-b border-zinc-800/60 bg-zinc-950/80 select-none">
@@ -602,7 +602,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                       Comments {comments.length > 0 && `(${comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0)})`}
                     </h3>
                     {postAuthorName && (
-                      <p className="text-[10px] text-zinc-500 font-semibold">
+                      <p className="text-2xs text-zinc-500 font-semibold">
                         Post by @{postAuthorName}
                       </p>
                     )}
@@ -645,13 +645,13 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
             {/* Mentions Autocomplete Floating Box */}
             <AnimatePresence>
               {mentionSearch !== null && getFilteredUsernames().length > 0 && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
                   className="absolute bottom-20 left-4 right-4 z-30 bg-zinc-900 border border-zinc-700/80 rounded-2xl p-2 shadow-2xl max-h-40 overflow-y-auto"
                 >
-                  <div className="text-[10px] font-black text-zinc-400 uppercase tracking-wider px-2 py-1">
+                  <div className="text-2xs font-black text-zinc-400 uppercase tracking-wider px-2 py-1">
                     Mention user
                   </div>
                   {getFilteredUsernames().map((u: any, idx: number) => (
@@ -666,14 +666,14 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                       <span className="text-xs font-bold">@{u.username}</span>
                     </div>
                   ))}
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
 
             {/* Replying banner indicator */}
             <AnimatePresence>
               {replyingTo && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
@@ -689,7 +689,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
 
@@ -744,7 +744,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                 </div>
               )}
             </div>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </AnimatePresence>

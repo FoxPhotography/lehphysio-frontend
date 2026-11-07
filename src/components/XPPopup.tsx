@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Zap } from 'lucide-react';
 
 interface XPPopupProps {
@@ -11,7 +11,7 @@ export const XPPopup: React.FC<XPPopupProps> = ({ popups }) => {
     <div className="fixed inset-x-0 bottom-[20%] pointer-events-none flex flex-col items-center gap-2 z-[9999]">
       <AnimatePresence>
         {popups.map((popup) => (
-          <motion.div
+          <m.div
             key={popup.id}
             initial={{ opacity: 0, y: 40, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 1.1 }}
@@ -33,7 +33,7 @@ export const XPPopup: React.FC<XPPopupProps> = ({ popups }) => {
               {popup.amount > 0 ? '+' : ''}
               {popup.amount} XP
             </span>
-          </motion.div>
+          </m.div>
         ))}
       </AnimatePresence>
     </div>

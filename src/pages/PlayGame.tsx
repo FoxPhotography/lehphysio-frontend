@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Trophy,
   Clock,
@@ -308,11 +308,11 @@ export const PlayGame: React.FC<PlayGameProps> = ({
 
   // ─── Clean Room Chat Box ───────────────────────────────────────────────────────
   const renderChatBox = (maxH = '130px') => (
-    <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/40 backdrop-blur-md p-3 text-left flex flex-col shrink-0">
+    <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/40 p-3 text-left flex flex-col shrink-0">
       <div className="flex items-center justify-between mb-1.5 px-1">
         <div className="flex items-center gap-1.5">
           <MessageSquare className="w-3.5 h-3.5 text-zinc-400" />
-          <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">Room Chat</span>
+          <span className="text-2xs font-extrabold text-zinc-400 uppercase tracking-wider">Room Chat</span>
         </div>
       </div>
 
@@ -321,16 +321,16 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         style={{ maxHeight: maxH }}
       >
         {(!room.answersLog || room.answersLog.length === 0) ? (
-          <div className="text-zinc-600 text-[11px] font-semibold py-2.5 text-center">
+          <div className="text-zinc-600 text-xs font-semibold py-2.5 text-center">
             No messages yet. Say hi or guess the structure! 👋
           </div>
         ) : (
           room.answersLog.map((log: any, idx: number) => (
-            <motion.div
+            <m.div
               key={idx}
               initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
-              className={`flex items-start gap-1.5 text-[12px] leading-relaxed ${getLogStyle(log.type)}`}
+              className={`flex items-start gap-1.5 text-xs leading-relaxed ${getLogStyle(log.type)}`}
             >
               {getLogIcon(log.type)}
               {log.type === 'chat' ? (
@@ -341,7 +341,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               ) : (
                 <span>{log.text}</span>
               )}
-            </motion.div>
+            </m.div>
           ))
         )}
         <div ref={chatEndRef} />
@@ -363,7 +363,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             data-1p-ignore="true"
             data-bwignore="true"
             data-form-type="other"
-            className="w-full bg-transparent text-[14px] text-white placeholder-zinc-500 focus:outline-none resize-none overflow-y-auto leading-relaxed py-1.5 px-3 min-h-[32px] max-h-[85px] font-medium"
+            className="w-full bg-transparent text-sm text-white placeholder-zinc-500 focus:outline-none resize-none overflow-y-auto leading-relaxed py-1.5 px-3 min-h-[32px] max-h-[85px] font-medium"
             placeholder={room.status === 'playing' && !room.roundWinner ? "Type your guess or message..." : "Type a message..."}
             value={chatMessage}
             onChange={(e) => {
@@ -381,14 +381,14 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           />
         </div>
 
-        <motion.button
+        <m.button
           type="submit"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="h-11 w-11 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-[13px] flex items-center justify-center hover:opacity-90 transition-all shrink-0 cursor-pointer shadow-md mb-0.5"
         >
           <Send className="w-4 h-4" />
-        </motion.button>
+        </m.button>
       </form>
     </div>
   );
@@ -402,13 +402,13 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         {/* Top Header Bar */}
         <div className="flex items-center justify-between gap-3 pt-1">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-[10px] font-extrabold uppercase tracking-wider mb-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-2xs font-extrabold uppercase tracking-wider mb-1">
               <Loader2 className="w-3 h-3 animate-spin" />
               <span>Waiting for Players</span>
             </div>
             <h2 className="text-xl font-black text-white">Anatomy Online Challenge</h2>
           </div>
-          <motion.button
+          <m.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={handleLeaveGameRoom}
@@ -416,13 +416,13 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Leave</span>
-          </motion.button>
+          </m.button>
         </div>
 
         {/* Room Code Card */}
         <div className="text-center py-5 bg-zinc-900/50 rounded-2xl border border-zinc-800/70">
-          <p className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-widest mb-1.5">Room Code</p>
-          <motion.button
+          <p className="text-2xs text-zinc-500 font-extrabold uppercase tracking-widest mb-1.5">Room Code</p>
+          <m.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={async () => {
@@ -434,24 +434,24 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           >
             <span className="text-3xl font-black tracking-[6px] text-brand-orange font-mono">{room.code}</span>
             <Copy className="w-4 h-4 text-zinc-400" />
-          </motion.button>
-          <p className="text-[11px] text-zinc-500 mt-2 font-medium">Click to copy and share with friends</p>
+          </m.button>
+          <p className="text-xs text-zinc-500 mt-2 font-medium">Click to copy and share with friends</p>
         </div>
 
         {/* Invite Link Bar */}
         <div className="flex gap-2">
           <div className="flex-1 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-zinc-900/50 border border-zinc-800/70 min-w-0">
             <Link className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-            <span className="text-[11px] text-zinc-400 truncate font-mono">{inviteUrl}</span>
+            <span className="text-xs text-zinc-400 truncate font-mono">{inviteUrl}</span>
           </div>
-          <motion.button
+          <m.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={handleCopyInviteUrl}
             className="px-4 py-2.5 rounded-xl bg-brand-orange/15 border border-brand-orange/30 text-brand-orange text-xs font-black hover:bg-brand-orange/25 cursor-pointer transition-colors shrink-0"
           >
             Copy
-          </motion.button>
+          </m.button>
         </div>
 
         {/* Connected Players Section */}
@@ -462,7 +462,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           </div>
           <div className="grid grid-cols-2 gap-2">
             {room.players.map((p: any) => (
-              <motion.div
+              <m.div
                 key={p.username}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -478,7 +478,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                   <span className="text-xs font-extrabold text-white truncate">@{p.username}</span>
                 </div>
                 {p.username === room.host ? (
-                  <span className="px-1.5 py-0.5 rounded-md bg-brand-orange text-black text-[9px] font-black shrink-0">HOST</span>
+                  <span className="px-1.5 py-0.5 rounded-md bg-brand-orange text-black text-2xs font-black shrink-0">HOST</span>
                 ) : (
                   isHost && (
                     <button
@@ -490,7 +490,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                     </button>
                   )
                 )}
-              </motion.div>
+              </m.div>
             ))}
           </div>
         </div>
@@ -501,7 +501,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         {/* Start Button */}
         <div className="pt-2">
           {isHost ? (
-            <motion.button
+            <m.button
               whileHover={{ scale: room.players.length < 2 ? 1 : 1.02 }}
               whileTap={{ scale: room.players.length < 2 ? 1 : 0.98 }}
               onClick={() => {
@@ -522,7 +522,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               <Play className="w-5 h-5 fill-current" />
               <span>Start Challenge</span>
               {room.players.length < 2 && <span className="text-xs font-medium ml-1">(Need 2+ players)</span>}
-            </motion.button>
+            </m.button>
           ) : (
             <div className="flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 text-zinc-400">
               <Loader2 className="w-4 h-4 animate-spin text-brand-orange" />
@@ -549,7 +549,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         {/* Top Arena Header Bar */}
         <div className="flex items-center justify-between pb-2 border-b border-zinc-800/70 gap-2">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 text-brand-orange text-[10px] font-black uppercase tracking-wider mb-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 text-brand-orange text-2xs font-black uppercase tracking-wider mb-1">
               Round {room.currentRound} of {room.rounds}
             </div>
             <h3 className="text-base font-black text-white flex items-center gap-1.5">
@@ -570,7 +570,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               <Star className="w-3.5 h-3.5 text-brand-amber fill-current mb-0.5" />
               <span className="text-base font-black font-mono text-white leading-none">{myScore}</span>
             </div>
-            <motion.button
+            <m.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleLeaveGameRoom}
@@ -578,14 +578,14 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               title="Leave game"
             >
               <LogOut className="w-4 h-4" />
-            </motion.button>
+            </m.button>
           </div>
         </div>
 
         {/* Timer Progress Bar */}
         {!room.roundWinner && (
           <div className="h-1.5 rounded-full bg-zinc-900 overflow-hidden border border-zinc-800">
-            <motion.div
+            <m.div
               className={`h-full rounded-full ${timeLeft <= 5 ? 'bg-red-500' : timeLeft <= 10 ? 'bg-amber-500' : 'bg-brand-orange'}`}
               style={{ width: `${timerPct}%` }}
               transition={{ duration: 0.25 }}
@@ -596,15 +596,15 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         {/* Question Card */}
         <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/80 p-4 space-y-2">
           <div className="flex gap-2">
-            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black border border-brand-orange/30 bg-brand-orange/10 text-brand-orange uppercase">
+            <span className="px-2.5 py-0.5 rounded-md text-2xs font-black border border-brand-orange/30 bg-brand-orange/10 text-brand-orange uppercase">
               {getTypeLabel(question?.type)}
             </span>
-            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold border border-zinc-700/60 bg-zinc-800/60 text-zinc-300">
+            <span className="px-2.5 py-0.5 rounded-md text-2xs font-bold border border-zinc-700/60 bg-zinc-800/60 text-zinc-300">
               Hint {currentHintIdx + 1} / 4
             </span>
           </div>
           <AnimatePresence mode="wait">
-            <motion.p
+            <m.p
               key={room.roundWinner ? 'answer' : currentHintIdx}
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
@@ -617,14 +617,14 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                   <span className="text-emerald-400 font-extrabold text-lg">{question?.structure}</span>
                 </>
               ) : currentHint}
-            </motion.p>
+            </m.p>
           </AnimatePresence>
         </div>
 
         {/* Intermission Banner */}
         <AnimatePresence>
           {room.roundWinner && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -639,7 +639,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                 Correct answer: <strong className="text-emerald-400 font-extrabold">{question?.structure}</strong>
               </p>
               {isHost && room.currentRound < room.rounds && (
-                <motion.button
+                <m.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleNextRound}
@@ -647,9 +647,9 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                 >
                   <span>Next Round</span>
                   <ChevronRight className="w-4 h-4" />
-                </motion.button>
+                </m.button>
               )}
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 
@@ -685,14 +685,14 @@ export const PlayGame: React.FC<PlayGameProps> = ({
 
         {/* Trophy Icon */}
         <div className="text-center pt-2">
-          <motion.div
+          <m.div
             initial={{ scale: 0, rotate: -10 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
             className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-500/20 to-brand-orange/20 border border-amber-500/40 flex items-center justify-center mx-auto shadow-orange-glow mb-3"
           >
             <Trophy className="w-10 h-10 text-brand-amber fill-current" />
-          </motion.div>
+          </m.div>
 
           <h2 className="text-2xl font-black text-white">Challenge Ended</h2>
           <p className="text-xs text-zinc-400 mt-1">
@@ -703,7 +703,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         {/* Final Leaderboard */}
         <div className="space-y-2 text-left">
           {sorted.map((p: any, idx: number) => (
-            <motion.div
+            <m.div
               key={p.username}
               initial={{ opacity: 0, x: -16 }}
               animate={{ opacity: 1, x: 0 }}
@@ -730,7 +730,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               />
               <span className="flex-1 text-xs font-black text-white">@{p.username}</span>
               <span className="text-xs font-black text-brand-orange font-mono">{p.score} pts</span>
-            </motion.div>
+            </m.div>
           ))}
         </div>
 
@@ -740,7 +740,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         {/* Actions */}
         <div className="flex flex-col gap-2.5 pt-2">
           {isHost && (
-            <motion.button
+            <m.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handlePlayAgain}
@@ -748,9 +748,9 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             >
               <RotateCcw className="w-4 h-4" />
               <span>Play Again (Same Room)</span>
-            </motion.button>
+            </m.button>
           )}
-          <motion.button
+          <m.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleLeaveGameRoom}
@@ -758,7 +758,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           >
             <LogOut className="w-4 h-4" />
             <span>Leave Room</span>
-          </motion.button>
+          </m.button>
         </div>
       </div>
     );

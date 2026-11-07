@@ -4,6 +4,7 @@ import { API_BASE } from '../services/api';
 interface UseUrlRoutingProps {
   token: string | null;
   setCurrentPage: (page: string) => void;
+  setPageFromUrl: (page: string) => void;
   setCommunityTab: (tab: 'feed' | 'chat') => void;
   setSelectedEpisodeId: (id: number | null) => void;
   setSelectedPostId?: (id: number | null) => void;
@@ -17,6 +18,7 @@ interface UseUrlRoutingProps {
 export const useUrlRouting = ({
   token,
   setCurrentPage,
+  setPageFromUrl,
   setCommunityTab,
   setSelectedEpisodeId,
   setSelectedPostId,
@@ -91,22 +93,22 @@ export const useUrlRouting = ({
 
     // Path parsing
     if (path === '/' || path === '') {
-      setCurrentPage('home');
+      setPageFromUrl('home');
     } else if (path === '/chat') {
-      setCurrentPage('community');
+      setPageFromUrl('community');
       setCommunityTab('chat');
     } else if (path === '/episodes') {
-      setCurrentPage('episodes');
+      setPageFromUrl('episodes');
     } else if (path.startsWith('/episodes/')) {
       const idStr = path.substring('/episodes/'.length);
       const id = parseInt(idStr);
       if (!isNaN(id)) {
         setSelectedEpisodeId(id);
-        setCurrentPage('episode-detail');
+        setPageFromUrl('episode-detail');
         setEpisodeDetailLoading(true);
         fetchEpisodeDetail(id);
       } else {
-        setCurrentPage('episodes');
+        setPageFromUrl('episodes');
       }
     } else if (path.startsWith('/post/') || path.startsWith('/posts/')) {
       const match = path.match(/^\/posts?\/(\d+)/);
@@ -114,53 +116,53 @@ export const useUrlRouting = ({
         const id = parseInt(match[1], 10);
         if (!isNaN(id)) {
           if (setSelectedPostId) setSelectedPostId(id);
-          setCurrentPage('post-detail');
+          setPageFromUrl('post-detail');
         } else {
-          setCurrentPage('home');
+          setPageFromUrl('home');
         }
       } else {
-        setCurrentPage('home');
+        setPageFromUrl('home');
       }
     } else if (path === '/games') {
-      setCurrentPage('games');
+      setPageFromUrl('games');
     } else if (path.startsWith('/game/')) {
       const roomCode = path.substring('/game/'.length).toUpperCase();
       const activeToken = localStorage.getItem('token') || token;
       if (activeToken) {
         if (gamesHook.activeGameRoom && gamesHook.activeGameRoom.code === roomCode) {
-          setCurrentPage('play-game');
+          setPageFromUrl('play-game');
         } else {
           gamesHook.handleJoinGameRoom(roomCode);
         }
       } else {
         sessionStorage.setItem('pendingGameCode', roomCode);
-        setCurrentPage('login');
+        setPageFromUrl('login');
         showToast('Please log in to join the game room! 🔐');
       }
     } else if (path === '/leaderboard') {
-      setCurrentPage('leaderboard');
+      setPageFromUrl('leaderboard');
     } else if (path === '/rewards') {
-      setCurrentPage('rewards');
+      setPageFromUrl('rewards');
     } else if (path === '/profile') {
-      setCurrentPage('profile');
+      setPageFromUrl('profile');
     } else if (path === '/login') {
-      setCurrentPage('login');
+      setPageFromUrl('login');
     } else if (path === '/register') {
-      setCurrentPage('register');
+      setPageFromUrl('register');
     } else if (path === '/confirm') {
-      setCurrentPage('confirm');
+      setPageFromUrl('confirm');
     } else if (path === '/forgot-password') {
-      setCurrentPage('forgot-password');
+      setPageFromUrl('forgot-password');
     } else if (path === '/reset-password') {
-      setCurrentPage('reset-password');
+      setPageFromUrl('reset-password');
     } else if (path === '/admin') {
-      setCurrentPage('admin');
+      setPageFromUrl('admin');
     } else if (path === '/moderation') {
-      setCurrentPage('moderator-dashboard');
+      setPageFromUrl('moderator-dashboard');
     } else if (path === '/news') {
-      setCurrentPage('news');
+      setPageFromUrl('news');
     } else {
-      setCurrentPage('home');
+      setPageFromUrl('home');
     }
   };
 

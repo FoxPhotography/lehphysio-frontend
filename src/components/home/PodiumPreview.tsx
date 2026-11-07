@@ -49,14 +49,14 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
                 <Medal className="w-3.5 h-3.5" />
               </span>
             </div>
-            <span className="text-[11px] font-bold text-white text-center max-w-[68px] truncate leading-tight">
+            <span className="text-xs font-bold text-white text-center max-w-[68px] truncate leading-tight">
               {second ? second.username : '—'}
             </span>
-            <span className="text-[10px] text-zinc-500 font-medium">
+            <span className="text-2xs text-zinc-500 font-medium">
               {second ? `${second.xp.toLocaleString()} XP` : '0 XP'}
             </span>
             <div className="w-16 sm:w-20 h-16 rounded-t-xl bg-gradient-to-t from-zinc-400 to-zinc-300 opacity-80 flex items-start justify-center pt-1.5">
-              <span className="text-[11px] font-black text-black/70">2</span>
+              <span className="text-xs font-black text-black/70">2</span>
             </div>
           </div>
 
@@ -75,14 +75,14 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
                 <Crown className="w-3.5 h-3.5" />
               </span>
             </div>
-            <span className="text-[11px] font-bold text-white text-center max-w-[68px] truncate leading-tight">
+            <span className="text-xs font-bold text-white text-center max-w-[68px] truncate leading-tight">
               {first ? first.username : '—'}
             </span>
-            <span className="text-[10px] text-zinc-500 font-medium">
+            <span className="text-2xs text-zinc-500 font-medium">
               {first ? `${first.xp.toLocaleString()} XP` : '0 XP'}
             </span>
             <div className="w-16 sm:w-20 h-24 rounded-t-xl bg-gradient-to-t from-amber-500 to-yellow-400 opacity-80 flex items-start justify-center pt-1.5">
-              <span className="text-[11px] font-black text-black/70">1</span>
+              <span className="text-xs font-black text-black/70">1</span>
             </div>
           </div>
 
@@ -101,14 +101,14 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
                 <Star className="w-3.5 h-3.5" />
               </span>
             </div>
-            <span className="text-[11px] font-bold text-white text-center max-w-[68px] truncate leading-tight">
+            <span className="text-xs font-bold text-white text-center max-w-[68px] truncate leading-tight">
               {third ? third.username : '—'}
             </span>
-            <span className="text-[10px] text-zinc-500 font-medium">
+            <span className="text-2xs text-zinc-500 font-medium">
               {third ? `${third.xp.toLocaleString()} XP` : '0 XP'}
             </span>
             <div className="w-16 sm:w-20 h-10 rounded-t-xl bg-gradient-to-t from-amber-700 to-amber-600 opacity-80 flex items-start justify-center pt-1.5">
-              <span className="text-[11px] font-black text-black/70">3</span>
+              <span className="text-xs font-black text-black/70">3</span>
             </div>
           </div>
 

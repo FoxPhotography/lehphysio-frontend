@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { getNameColor, getFrameImage } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
 import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
@@ -415,9 +415,9 @@ export const Community: React.FC<CommunityProps> = ({
                 <span className="text-xs font-black text-white">Selected {selectedMessageIds.length} messages</span>
                 <div className="flex gap-2">
                   {canDeleteSelected && (
-                    <button className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-[10px] py-1.5 px-3 rounded-lg cursor-pointer" onClick={handleBulkDeleteMessages} disabled={selectedMessageIds.length === 0}>Delete</button>
+                    <button className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-2xs py-1.5 px-3 rounded-lg cursor-pointer" onClick={handleBulkDeleteMessages} disabled={selectedMessageIds.length === 0}>Delete</button>
                   )}
-                  <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-[10px] py-1.5 px-3 rounded-lg cursor-pointer" onClick={() => { setIsMultiSelectMode(false); setSelectedMessageIds([]); }}>Cancel</button>
+                  <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-2xs py-1.5 px-3 rounded-lg cursor-pointer" onClick={() => { setIsMultiSelectMode(false); setSelectedMessageIds([]); }}>Cancel</button>
                 </div>
               </div>
             ) : (
@@ -426,13 +426,13 @@ export const Community: React.FC<CommunityProps> = ({
                   <MessageSquare className="w-4 h-4 text-brand-orange" />
                   <h3 className="text-sm font-black text-white">Chat Feed</h3>
                   {isRefreshingChat && (
-                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-bold uppercase tracking-wider animate-pulse ml-2">
+                    <div className="flex items-center gap-1.5 text-2xs text-zinc-500 font-bold uppercase tracking-wider animate-pulse ml-2">
                       <div className="w-3.5 h-3.5 border-2 border-brand-orange border-t-transparent rounded-full animate-spin" />
                       <span>Updating...</span>
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-brand-orange font-extrabold uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-2xs text-brand-orange font-extrabold uppercase tracking-wider">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -553,17 +553,17 @@ export const Community: React.FC<CommunityProps> = ({
                       <div className={`flex flex-col ${isMyMsg ? 'items-end' : 'items-start'}`}>
                         {/* Sender info */}
                         <div className="flex items-center gap-1.5 mb-1 select-none">
-                          <span className="text-[10px] font-black" style={{ color: isMyMsg ? 'var(--color-brand-orange)' : getNameColor(msg.username) }}>
+                          <span className="text-2xs font-black" style={{ color: isMyMsg ? 'var(--color-brand-orange)' : getNameColor(msg.username) }}>
                             {msg.username}
                           </span>
-                          <span className="text-[8px] font-bold bg-zinc-900 border border-zinc-800/80 text-zinc-400 px-1.5 py-0.5 rounded-md">
+                          <span className="text-2xs font-bold bg-zinc-900 border border-zinc-800/80 text-zinc-400 px-1.5 py-0.5 rounded-md">
                             {msg.batch}
                           </span>
-                          <span className="text-[8px] text-zinc-500 font-semibold">
+                          <span className="text-2xs text-zinc-500 font-semibold">
                             {stripEmojis(msg.rank?.name_en || '')}
                           </span>
                           {(msg.role === 'admin' || msg.role === 'owner') && (
-                            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase border ${
+                            <span className={`text-2xs font-black px-1.5 py-0.5 rounded-md uppercase border ${
                               msg.role === 'owner' ? 'border-brand-amber/30 text-brand-amber bg-brand-amber/5' : 'border-brand-orange/30 text-brand-orange bg-brand-orange/5'
                             }`}>
                               {msg.role}
@@ -586,22 +586,22 @@ export const Community: React.FC<CommunityProps> = ({
                           >
                           {/* Quote reply */}
                           {msg.reply_to?.username && (
-                            <div className={`border-l-2 border-brand-orange px-2.5 py-1.5 rounded-lg mb-2 text-[10px] text-left ${
+                            <div className={`border-l-2 border-brand-orange px-2.5 py-1.5 rounded-lg mb-2 text-2xs text-left ${
                               isMyMsg ? 'bg-black/10 text-zinc-800' : 'bg-black/30 text-zinc-400'
                             }`}>
                               <div className={`font-black ${isMyMsg ? 'text-black' : 'text-brand-orange'}`}>
                                 @{msg.reply_to.username}
                               </div>
-                              <div className="truncate mt-0.5">{msg.reply_to.message}</div>
+                              <div dir="auto" className="truncate mt-0.5">{msg.reply_to.message}</div>
                             </div>
                           )}
 
                           <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1 w-full min-w-0">
-                            <p className="whitespace-pre-wrap break-words [word-break:break-word] leading-relaxed min-w-0">
+                            <p dir="auto" className="whitespace-pre-wrap break-words [word-break:break-word] leading-relaxed min-w-0">
                               {renderTextWithMentions(msg.message)}
                             </p>
                             
-                            <div className="flex items-center gap-1 shrink-0 text-[8px] opacity-75 select-none pb-0.5 ml-auto self-end">
+                            <div className="flex items-center gap-1 shrink-0 text-2xs opacity-75 select-none pb-0.5 ml-auto self-end">
                               {!!msg.is_edited && <span>(edited)</span>}
                               <span>{new Date(msg.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                               {isMyMsg && (
@@ -624,7 +624,7 @@ export const Community: React.FC<CommunityProps> = ({
                                     e.stopPropagation();
                                     handleToggleReaction(msg.id, react.emoji);
                                   }}
-                                  className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[9px] font-bold cursor-pointer transition-colors ${
+                                  className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border text-2xs font-bold cursor-pointer transition-colors ${
                                     react.userReacted 
                                       ? 'bg-brand-orange/20 border-brand-orange/40 text-white' 
                                       : 'bg-black/25 border-zinc-800/20 text-zinc-300'
@@ -659,7 +659,7 @@ export const Community: React.FC<CommunityProps> = ({
 
             {/* Chat form compose area */}
             <div 
-              className="border-t border-zinc-900/80 pt-2.5 bg-zinc-950/90 backdrop-blur-md px-3 md:px-0 shrink-0 text-left relative"
+              className="border-t border-zinc-900/80 pt-2.5 bg-zinc-950/90 px-3 md:px-0 shrink-0 text-left relative"
             >
               
               {/* Reply tag indicator */}
@@ -667,7 +667,7 @@ export const Community: React.FC<CommunityProps> = ({
                 <div className="flex justify-between items-center bg-brand-orange/5 border-l-2 border-brand-orange rounded-xl px-3 py-2.5 mb-2 text-xs font-bold text-brand-orange">
                   <div className="truncate pr-4">
                     <span>Replying to <strong>@{replyingTo.username}</strong>: </span>
-                    <span className="text-zinc-500 font-medium">{replyingTo.message}</span>
+                    <span dir="auto" className="text-zinc-500 font-medium">{replyingTo.message}</span>
                   </div>
                   <button onClick={() => setReplyingTo(null)} className="text-zinc-500 hover:text-white cursor-pointer shrink-0">
                     <X className="w-4 h-4" />
@@ -680,13 +680,13 @@ export const Community: React.FC<CommunityProps> = ({
                 const filteredSuggestions = usernames.filter((u: any) => u.username.toLowerCase().includes(mentionSearch.toLowerCase()) && u.username !== user?.username);
                 if (filteredSuggestions.length === 0) {
                   return (
-                    <div className="absolute bottom-[calc(100%+8px)] left-3 right-3 md:left-0 md:right-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-3 shadow-2xl backdrop-blur-md text-xs text-zinc-500 text-center font-bold">
+                    <div className="absolute bottom-[calc(100%+8px)] left-3 right-3 md:left-0 md:right-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-3 shadow-2xl text-xs text-zinc-500 text-center font-bold">
                       No matching users found
                     </div>
                   );
                 }
                 return (
-                  <div className="absolute bottom-[calc(100%+8px)] left-3 right-3 md:left-0 md:right-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-1 shadow-2xl backdrop-blur-md">
+                  <div className="absolute bottom-[calc(100%+8px)] left-3 right-3 md:left-0 md:right-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-1 shadow-2xl">
                     {filteredSuggestions.map((u: any, idx: number) => (
                       <button
                         key={u.username}
@@ -700,7 +700,7 @@ export const Community: React.FC<CommunityProps> = ({
                         <UserAvatar username={u.username} avatarUrl={u.avatar_url} equippedFrame={u.equipped_frame} size={24} />
                         <div className="flex flex-col text-left">
                            <span className="text-brand-orange font-black">@{u.username}</span>
-                           <span className="text-[9px] text-zinc-500">{u.role === 'owner' ? 'Owner' : u.role === 'admin' ? 'Admin' : 'Student'}</span>
+                           <span className="text-2xs text-zinc-500">{u.role === 'owner' ? 'Owner' : u.role === 'admin' ? 'Admin' : 'Student'}</span>
                         </div>
                       </button>
                     ))}
@@ -805,7 +805,7 @@ export const Community: React.FC<CommunityProps> = ({
             {/* Scroll bottom btn */}
             <AnimatePresence>
               {showScrollDownBtn && (
-                <motion.button
+                <m.button
                   initial={{ opacity: 0, y: 10, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.8 }}
@@ -814,7 +814,7 @@ export const Community: React.FC<CommunityProps> = ({
                   title="Scroll to bottom"
                 >
                   <ChevronDown className="w-4 h-4 animate-bounce" />
-                </motion.button>
+                </m.button>
               )}
             </AnimatePresence>
           </>
@@ -900,7 +900,7 @@ export const Community: React.FC<CommunityProps> = ({
                       {isEditing ? (
                         <div className="flex flex-col gap-3">
                           <div>
-                            <label className="text-[10px] font-bold text-brand-orange uppercase block mb-1">Title</label>
+                            <label className="text-2xs font-bold text-brand-orange uppercase block mb-1">Title</label>
                             <input 
                               type="text" 
                               className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl px-3 py-1.5 text-xs font-semibold focus:border-brand-orange outline-none"
@@ -910,7 +910,7 @@ export const Community: React.FC<CommunityProps> = ({
                             />
                           </div>
                           <div>
-                            <label className="text-[10px] font-bold text-brand-orange uppercase block mb-1">Details</label>
+                            <label className="text-2xs font-bold text-brand-orange uppercase block mb-1">Details</label>
                             <textarea 
                               className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl p-3 text-xs font-semibold focus:border-brand-orange outline-none resize-none"
                               value={editSuggContent}
@@ -922,7 +922,7 @@ export const Community: React.FC<CommunityProps> = ({
                           <div className="flex gap-2 justify-end">
                             <button 
                               type="button"
-                              className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-[10px] py-1.5 px-4 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow"
+                              className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-2xs py-1.5 px-4 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow"
                               onClick={async () => {
                                 await handleEditSuggestion(s.id, editSuggTitle, editSuggContent);
                                 setEditingSuggId(null);
@@ -932,7 +932,7 @@ export const Community: React.FC<CommunityProps> = ({
                             </button>
                             <button 
                               type="button"
-                              className="border border-zinc-800 hover:bg-zinc-900 text-zinc-400 font-bold text-[10px] py-1.5 px-4 rounded-xl cursor-pointer transition-all"
+                              className="border border-zinc-800 hover:bg-zinc-900 text-zinc-400 font-bold text-2xs py-1.5 px-4 rounded-xl cursor-pointer transition-all"
                               onClick={() => setEditingSuggId(null)}
                             >
                               Cancel
@@ -943,23 +943,23 @@ export const Community: React.FC<CommunityProps> = ({
                         <>
                           <div className="flex justify-between items-start gap-4">
                             <div>
-                              <h4 className="text-xs font-black text-white">
+                              <h4 dir="auto" className="text-xs font-black text-white">
                                 {s.title}
                               </h4>
-                              <span className="text-[10px] text-zinc-500 font-semibold block mt-0.5">
+                              <span className="text-2xs text-zinc-500 font-semibold block mt-0.5">
                                 By @{s.username} · {new Date(s.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                               </span>
                             </div>
-                            <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase border ${statusColor} ${statusBg}`}>
+                            <span className={`text-2xs font-black px-2.5 py-0.5 rounded-full uppercase border ${statusColor} ${statusBg}`}>
                               {statusLabel}
                             </span>
                           </div>
-                          <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+                          <p dir="auto" className="text-xs text-zinc-400 font-medium leading-relaxed">
                             {s.content}
                           </p>
                           
                           {s.status === 'rejected' && isAuthor && s.rejection_reason && (
-                            <div className="p-2 border border-red-500/20 bg-red-500/5 text-red-400 rounded-lg text-[10px] font-semibold">
+                            <div className="p-2 border border-red-500/20 bg-red-500/5 text-red-400 rounded-lg text-2xs font-semibold">
                               Rejection Reason: {s.rejection_reason}
                             </div>
                           )}
@@ -967,7 +967,7 @@ export const Community: React.FC<CommunityProps> = ({
                           <div className="flex justify-between items-center pt-2 border-t border-zinc-900/40">
                             <button 
                               type="button" 
-                              className={`flex items-center gap-1.5 text-[10px] font-bold transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ${
+                              className={`flex items-center gap-1.5 text-2xs font-bold transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ${
                                 isUpvoted ? 'text-brand-orange scale-105' : 'text-zinc-500 hover:text-zinc-300'
                               }`} 
                               onClick={() => handleUpvoteSuggestion(s.id)}
@@ -982,7 +982,7 @@ export const Community: React.FC<CommunityProps> = ({
                               {isAuthor && !s.delete_pending && (
                                 <button 
                                   type="button" 
-                                  className="flex items-center gap-1 text-[10px] font-bold text-brand-orange hover:text-brand-amber transition-colors cursor-pointer" 
+                                  className="flex items-center gap-1 text-2xs font-bold text-brand-orange hover:text-brand-amber transition-colors cursor-pointer" 
                                   onClick={() => {
                                     setEditingSuggId(s.id);
                                     setEditSuggTitle(s.title);
@@ -997,7 +997,7 @@ export const Community: React.FC<CommunityProps> = ({
                               {isAuthor && (s.edit_draft || s.delete_pending) ? (
                                 <button 
                                   type="button" 
-                                  className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 hover:text-zinc-300 transition-colors cursor-pointer" 
+                                  className="flex items-center gap-1 text-2xs font-bold text-zinc-400 hover:text-zinc-300 transition-colors cursor-pointer" 
                                   onClick={() => handleCancelSuggestionRevision(s.id)}
                                 >
                                   <X className="w-3.5 h-3.5" /> 
@@ -1007,7 +1007,7 @@ export const Community: React.FC<CommunityProps> = ({
                                 (isAuthor || isAdmin) && (
                                   <button 
                                     type="button" 
-                                    className="flex items-center gap-1 text-[10px] font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer" 
+                                    className="flex items-center gap-1 text-2xs font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer" 
                                     onClick={() => handleDeleteSuggestion(s.id)}
                                   >
                                     <Trash2 className="w-3.5 h-3.5" /> 
@@ -1036,7 +1036,7 @@ export const Community: React.FC<CommunityProps> = ({
             onClick={() => setActiveContextMenu(null)}
             onContextMenu={(e) => { e.preventDefault(); setActiveContextMenu(null); }}
           >
-            <motion.div 
+            <m.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -1154,7 +1154,7 @@ export const Community: React.FC<CommunityProps> = ({
                   <span>Report Message</span>
                 </button>
               )}
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>
