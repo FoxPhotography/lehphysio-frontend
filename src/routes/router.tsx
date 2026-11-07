@@ -25,6 +25,7 @@ export const pageLoaders = {
   resetPassword: () => import('../pages/ResetPassword'),
   admin: () => import('../pages/Admin'),
   moderator: () => import('../pages/ModeratorDashboard'),
+  publicProfile: () => import('../pages/PublicProfile'),
 };
 
 const News = named(pageLoaders.news, 'News');
@@ -44,6 +45,7 @@ const ForgotPassword = named(pageLoaders.forgotPassword, 'ForgotPassword');
 const ResetPassword = named(pageLoaders.resetPassword, 'ResetPassword');
 const Admin = named(pageLoaders.admin, 'Admin');
 const ModeratorDashboard = named(pageLoaders.moderator, 'ModeratorDashboard');
+const PublicProfile = named(pageLoaders.publicProfile, 'PublicProfile');
 
 /** Warm the pages people open most, once the browser is idle after first paint. */
 export const prefetchCorePages = () => {
@@ -652,6 +654,8 @@ export const AppRouter: React.FC<AppRouterProps> = ({
         />
       );
     }
+    case 'public-profile':
+      return <PublicProfile key={window.location.pathname} setCurrentPage={setCurrentPage} showToast={showToast} />;
     default:
       return null;
   }

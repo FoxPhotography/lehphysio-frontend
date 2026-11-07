@@ -159,6 +159,8 @@ export const useUrlRouting = ({
       setPageFromUrl('admin');
     } else if (path === '/moderation') {
       setPageFromUrl('moderator-dashboard');
+    } else if (path.startsWith('/u/')) {
+      setPageFromUrl('public-profile');
     } else if (path === '/news') {
       setPageFromUrl('news');
     } else {

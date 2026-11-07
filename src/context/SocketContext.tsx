@@ -29,7 +29,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         try {
           const payload = JSON.parse(atob(token.split('.')[1]));
           if (payload?.id) {
-            socket.emit('authenticate', payload.id);
+            socket.emit('authenticate', token);
           }
         } catch (e) {
           // Invalid token, skip
@@ -58,7 +58,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         try {
           const payload = JSON.parse(atob(token.split('.')[1]));
           if (payload?.id) {
-            socket.emit('authenticate', payload.id);
+            socket.emit('authenticate', token);
           }
         } catch (e) {
           // Invalid token

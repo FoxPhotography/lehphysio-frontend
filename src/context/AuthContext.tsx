@@ -98,6 +98,7 @@ const pageFromPath = (path: string): string => {
   if (path === '/episodes') return 'episodes';
   if (/^\/episodes\/\d+/.test(path)) return 'episode-detail';
   if (/^\/posts?\/\d+/.test(path)) return 'post-detail';
+  if (/^\/u\/[^/]+/.test(path)) return 'public-profile';
   if (path === '/moderation') return 'moderator-dashboard';
   const simple = ['games', 'leaderboard', 'rewards', 'profile', 'login', 'register', 'confirm', 'forgot-password', 'reset-password', 'admin', 'news'];
   const seg = path.replace(/^\//, '');
@@ -737,10 +738,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     else if (page === 'admin') path = '/admin';
     else if (page === 'moderator-dashboard') path = '/moderation';
     else if (page === 'news') path = '/news';
+    else if (page === 'public-profile') path = `/u/${encodeURIComponent(params?.username || '')}`;
     
     // Detail pages without an id keep the URL they already have instead of
     // degrading to "/episodes/" or "/post/" (a broken, unshareable link).
-    const isIdlessDetail = /\/(episodes|post|game)\/$/.test(path);
+    const isIdlessDetail = /\/(episodes|post|game|u)\/$/.test(path);
     if (!isIdlessDetail && window.location.pathname !== path) {
       window.history.pushState(null, '', path);
     }

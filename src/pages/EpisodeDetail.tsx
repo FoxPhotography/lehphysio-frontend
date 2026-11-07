@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { EpisodeNotes } from '../components/common/EpisodeNotes';
 import { YouTubeFacade } from '../components/common/YouTubeFacade';
 import { Thumb } from '../components/common/Thumb';
 import { m, AnimatePresence } from 'framer-motion';
@@ -92,6 +93,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
 }) => {
   const [mentionSearchText, setMentionSearchText] = useState<string | null>(null);
   const [commentsExpanded, setCommentsExpanded] = useState(true);
+  const [seekTo, setSeekTo] = useState<number | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editCommentText, setEditCommentText] = useState('');
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; commentId: number; content: string; isOwner: boolean; commentUserId?: number; commentUsername?: string } | null>(null);
@@ -220,9 +222,11 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
       {/* Embedded video player */}
       {embedUrl ? (
         <section className="glass-card p-2 overflow-hidden">
-          <YouTubeFacade embedUrl={embedUrl} title={episode.title_ar || `الحلقة ${episode.id}`} thumbnail={episode.thumbnail_url} />
+          <YouTubeFacade embedUrl={embedUrl} title={episode.title_ar || `الحلقة ${episode.id}`} thumbnail={episode.thumbnail_url} start={seekTo} />
         </section>
       ) : null}
+
+      {episode.description ? <EpisodeNotes text={episode.description} onSeek={(sec) => setSeekTo(sec)} /> : null}
 
       {/* Code redeem & quiz widgets */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">

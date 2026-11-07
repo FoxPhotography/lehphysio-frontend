@@ -17,6 +17,9 @@ import {
   LayoutDashboard,
   ZoomIn,
   Settings,
+  Share2,
+  Eye,
+  Download,
 } from 'lucide-react';
 import { UserAvatar } from '../components/UserAvatar';
 import { setFramesCache } from '../utils/helpers';
@@ -119,7 +122,20 @@ export const Profile: React.FC<ProfileProps> = ({
 }) => {
   if (!user) return null;
 
-  const { getFlameTier } = useAuth();
+  const { getFlameTier, changePage, deferredPrompt, handleInstallPWA, isStandalone, setShowIOSInstall, showToast: showToastCtx } = useAuth();
+  const [sharingCard, setSharingCard] = useState(false);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const canInstall = !isStandalone && (!!deferredPrompt || isIOS);
+  const onShareCard = async () => {
+    setSharingCard(true);
+    const { shareCard } = await import('../utils/shareCard');
+    const result = await shareCard(
+      { username: user.username, avatarUrl: user.avatar_url, rankName: user.rank?.name_ar || '', rankEmoji: user.rank?.emoji, totalXp: user.total_xp || 0, globalRank: user.global_rank, streak: user.streak_count, batch: user.batch },
+      `${window.location.origin}/u/${encodeURIComponent(user.username)}`
+    );
+    setSharingCard(false);
+    if (result === 'downloaded') showToastCtx('الكارت اتحفظ — نزّله ستوري! 📸');
+  };
   const streak = user.streak_count || 0;
   const tier = getFlameTier(streak);
 
@@ -466,7 +482,7 @@ export const Profile: React.FC<ProfileProps> = ({
             <span>{user.total_xp - currentThreshold} XP في الرتبة دي</span>
             <span>
               {nextThreshold
-                ? `${nextThreshold - currentThreshold - (user.total_xp - currentThreshold)} XP to ${RANK_NAMES[currentTier] || 'أعلى رتبة'}`
+                ? `باقي ${(nextThreshold - user.total_xp).toLocaleString('en-US')} XP على ${RANK_NAMES[currentTier] || 'أعلى رتبة'}`
                 : 'أعلى رتبة'}
             </span>
           </div>
@@ -567,6 +583,34 @@ export const Profile: React.FC<ProfileProps> = ({
             </div>
           </div>
         </div>
+
+        {/* ── Share card + public profile + install ─────────────────── */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <button
+            onClick={onShareCard}
+            disabled={sharingCard}
+            className="flex items-center justify-center gap-2 py-3 rounded-xl border border-brand-orange/30 bg-brand-orange/10 text-brand-amber font-bold text-sm active:scale-[0.98] transition-transform disabled:opacity-60"
+          >
+            <Share2 className="w-4 h-4" />
+            {sharingCard ? 'بنجهّز…' : 'شارك كارتك'}
+          </button>
+          <button
+            onClick={() => changePage('public-profile', { username: user.username })}
+            className="flex items-center justify-center gap-2 py-3 rounded-xl border border-zinc-800 bg-zinc-900/60 text-zinc-200 font-bold text-sm active:scale-[0.98] transition-transform"
+          >
+            <Eye className="w-4 h-4" />
+            بروفايلي العام
+          </button>
+        </div>
+        {canInstall && (
+          <button
+            onClick={() => (deferredPrompt ? handleInstallPWA() : setShowIOSInstall(true))}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-zinc-800 bg-zinc-900/60 text-white font-bold text-sm mb-3 active:scale-[0.98] transition-transform"
+          >
+            <Download className="w-4 h-4 text-brand-orange" />
+            ثبّت التطبيق على موبايلك
+          </button>
+        )}
 
         {/* ── Decoration Button ─────────────────────────────────────── */}
         <m.button

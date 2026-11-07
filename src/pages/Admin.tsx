@@ -742,7 +742,7 @@ export const Admin: React.FC<AdminProps> = ({
 
               <AdminTextarea
                 label="Description"
-                placeholder="Brief description of the episode..."
+                placeholder={"ملخص الحلقة… وكل سطر فيه وقت يبقى فصل، مثلًا:\n03:15 بداية الحوار\n12:40 نصايح للتدريب"}
                 rows={3}
                 value={adminEpisodeForm.description}
                 onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, description: e.target.value }))}

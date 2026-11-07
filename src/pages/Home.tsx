@@ -400,7 +400,7 @@ export const Home: React.FC<HomeProps> = ({
                 سؤال اليوم
               </span>
             </div>
-            <h3 className="text-base font-extrabold text-white leading-relaxed relative z-10">
+            <h3 dir="auto" className="text-base font-extrabold text-white leading-relaxed relative z-10">
               {dailyQuestion.question.question}
             </h3>
             <div className="flex flex-col gap-2.5 relative z-10">
@@ -408,6 +408,8 @@ export const Home: React.FC<HomeProps> = ({
                 const isSelected = dailyQuestion.has_answered && dailyQuestion.user_answer?.selected_answer === idx;
                 const isCorrectOption = dailyQuestion.has_answered && dailyQuestion.question.correct_answer === idx;
                 const showCorrectness = dailyQuestion.has_answered;
+                const total = dailyQuestion.stats?.total_answers || 0;
+                const share = total > 0 ? Math.round(((dailyQuestion.stats.option_counts?.[idx] || 0) / total) * 100) : null;
 
                 let btnStyles = 'border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 text-zinc-300';
                 if (showCorrectness) {
@@ -416,7 +418,7 @@ export const Home: React.FC<HomeProps> = ({
                   } else if (isSelected) {
                     btnStyles = 'border-red-500 bg-red-500/5 text-red-400 font-extrabold';
                   } else {
-                    btnStyles = 'border-zinc-900 bg-zinc-950/20 text-zinc-600 opacity-60';
+                    btnStyles = 'border-zinc-800/80 bg-zinc-950/40 text-zinc-400';
                   }
                 }
 
@@ -427,10 +429,18 @@ export const Home: React.FC<HomeProps> = ({
                     onClick={() => handleAnswerQuestion && handleAnswerQuestion(dailyQuestion.question.id, idx)}
                     disabled={dailyQuestion.has_answered}
                   >
-                    <div className="flex justify-between items-center relative z-10">
-                      <span>{option}</span>
+                    {showCorrectness && share !== null && (
+                      <span
+                        aria-hidden
+                        className={`absolute inset-y-0 start-0 ${isCorrectOption ? 'bg-emerald-500/15' : isSelected ? 'bg-red-500/15' : 'bg-zinc-700/25'} transition-[width] duration-700`}
+                        style={{ width: `${share}%` }}
+                      />
+                    )}
+                    <div className="flex justify-between items-center gap-3 relative z-10">
+                      <span dir="auto" className="text-sm">{option}</span>
                       {showCorrectness && (
-                        <span>
+                        <span className="flex items-center gap-2 shrink-0">
+                          {share !== null && <span dir="ltr" className="text-xs font-black tabular-nums">{share}%</span>}
                           {isCorrectOption && '✅'}
                           {isSelected && !isCorrectOption && '❌'}
                         </span>
@@ -450,6 +460,9 @@ export const Home: React.FC<HomeProps> = ({
                     : `❌ إجابة غلط (+${dailyQuestion.user_answer?.xp_awarded} XP)`
                   }
                 </span>
+                {dailyQuestion.stats?.total_answers > 0 && (
+                  <span className="ms-auto text-zinc-500 normal-case tracking-normal">جاوب {dailyQuestion.stats.total_answers} طالب</span>
+                )}
               </p>
             )}
           </div>

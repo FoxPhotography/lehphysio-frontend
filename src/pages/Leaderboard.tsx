@@ -1,3 +1,4 @@
+import { useAuth } from '../context/AuthContext';
 import React from 'react';
 import { m } from 'framer-motion';
 import { Trophy, Crown, Medal, Star } from 'lucide-react';
@@ -126,6 +127,8 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   setLeaderboardTab,
 }) => {
   const [first, second, third] = leaderboard;
+  const { changePage } = useAuth();
+  const openProfile = (username: string) => changePage('public-profile', { username });
 
   return (
     <m.div
@@ -160,9 +163,9 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
       {/* Podium */}
       <div className="rounded-2xl border border-white/8 bg-zinc-900/60 p-6 mb-5">
         <div className="flex items-end justify-center gap-4 sm:gap-6">
-          <PodiumEntry person={second} place={2} delay={0.1} />
-          <PodiumEntry person={first}  place={1} delay={0.0} />
-          <PodiumEntry person={third}  place={3} delay={0.2} />
+          <div role="link" tabIndex={0} className="cursor-pointer" onClick={() => second && openProfile(second.username)}><PodiumEntry person={second} place={2} delay={0.1} /></div>
+          <div role="link" tabIndex={0} className="cursor-pointer" onClick={() => first && openProfile(first.username)}><PodiumEntry person={first} place={1} delay={0.0} /></div>
+          <div role="link" tabIndex={0} className="cursor-pointer" onClick={() => third && openProfile(third.username)}><PodiumEntry person={third} place={3} delay={0.2} /></div>
         </div>
       </div>
 
@@ -182,10 +185,14 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
               return (
                 <m.div
                   key={u.username}
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.04 }}
-                  className={`flex items-center gap-3 px-4 py-3 border-b border-white/5 last:border-b-0 transition-colors ${
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => openProfile(u.username)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') openProfile(u.username); }}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: Math.min(idx, 10) * 0.03 }}
+                  className={`cursor-pointer flex items-center gap-3 px-4 py-3 border-b border-white/5 last:border-b-0 transition-colors ${
                     isMe ? 'bg-orange-500/6 border-s-2 border-s-orange-500' : 'hover:bg-white/2'
                   }`}
                 >
