@@ -124,11 +124,11 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
         setReplyingToComment(null);
       } else {
         const errData = await res.json().catch(() => ({}));
-        showToast(errData.error || 'Failed to post comment');
+        showToast(errData.error || 'معرفناش ننشر التعليق');
       }
     } catch (e) {
       console.error(e);
-      showToast('Network error: Failed to post comment');
+      showToast('مشكلة في النت: التعليق ماتنشرش');
     } finally {
       setSubmitting(false);
     }
@@ -267,16 +267,16 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
   if (!isExpanded) return null;
 
   return (
-    <div className="mt-4 pt-4 border-t border-zinc-900/60 flex flex-col gap-3.5 overflow-hidden text-left">
+    <div className="mt-4 pt-4 border-t border-zinc-900/60 flex flex-col gap-3.5 overflow-hidden text-start">
       {loading ? (
         <div className="flex items-center justify-center py-4 text-xs text-zinc-500 gap-1.5">
           <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-orange" />
-          <span>Loading comments...</span>
+          <span>بنحمّل التعليقات…</span>
         </div>
       ) : (
         <>
           {comments.length === 0 ? (
-            <p className="text-zinc-500 text-xs font-medium py-3 text-center">No comments yet. Be the first to comment!</p>
+            <p className="text-zinc-500 text-xs font-medium py-3 text-center">مفيش تعليقات لسه. اكتب أول تعليق!</p>
           ) : (
             comments.map((c: any) => {
               const isCommentHighlighted = deepLinkTarget?.type === 'comment' && deepLinkTarget?.commentId === c.id;
@@ -303,7 +303,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                           
                           <div className="flex items-center gap-3">
                             <span className="text-2xs text-zinc-500 font-semibold">
-                              {new Date(c.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                              {new Date(c.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                             </span>
                             {user && (
                               <button
@@ -312,7 +312,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                                   setContextMenu({ x: e.clientX, y: e.clientY, commentId: c.id, content: c.content, commentUserId: c.user_id, commentUsername: c.username });
                                 }}
                                 className="text-zinc-500 hover:text-white cursor-pointer opacity-0 group-hover/comment:opacity-100 transition-opacity"
-                                title="More Options"
+                                title="خيارات أكتر"
                               >
                                 <MoreVertical className="w-3.5 h-3.5" />
                               </button>
@@ -330,12 +330,12 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                               autoFocus
                             />
                             <div className="flex justify-end gap-1.5">
-                              <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-2xs py-1.5 px-3 rounded-lg cursor-pointer transition-all" onClick={() => setEditingCommentId(null)}>Cancel</button>
-                              <button className="bg-brand-orange text-black font-extrabold text-2xs py-1.5 px-3 rounded-lg cursor-pointer transition-all shadow-md" onClick={() => handleEditComment(c.id, editCommentText)}>Save</button>
+                              <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-2xs py-1.5 px-3 rounded-lg cursor-pointer transition-all" onClick={() => setEditingCommentId(null)}>إلغاء</button>
+                              <button className="bg-brand-orange text-black font-extrabold text-2xs py-1.5 px-3 rounded-lg cursor-pointer transition-all shadow-md" onClick={() => handleEditComment(c.id, editCommentText)}>حفظ</button>
                             </div>
                           </div>
                         ) : (
-                          <p dir="auto" className="text-xs text-zinc-200 font-medium leading-relaxed mb-2 pr-1">{renderTextWithMentions(c.content)}</p>
+                          <p dir="auto" className="text-xs text-zinc-200 font-medium leading-relaxed mb-2 pe-1">{renderTextWithMentions(c.content)}</p>
                         )}
 
                         <div className="flex gap-4 items-center">
@@ -353,8 +353,8 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                               document.getElementById(`comment-input-${postId}`)?.focus();
                             }}
                           >
-                            <CornerUpLeft className="w-3 h-3" /> 
-                            <span>Reply</span>
+                            <CornerUpLeft className="rtl:-scale-x-100 w-3 h-3" /> 
+                            <span>رد</span>
                           </button>
                         </div>
                       </div>
@@ -362,7 +362,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
 
                     {/* Nested replies */}
                     {c.replies && c.replies.length > 0 && (
-                      <div className="border-l-2 border-zinc-800/80 pl-3 ml-3 mt-3.5 space-y-3.5 text-left">
+                      <div className="border-s-2 border-zinc-800/80 ps-3 ms-3 mt-3.5 space-y-3.5 text-start">
                         {c.replies.map((r: any) => {
                           const isReplyHighlighted = deepLinkTarget?.type === 'comment' && deepLinkTarget?.commentId === r.id;
                           return (
@@ -374,7 +374,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                                     <span className="text-xs font-bold text-zinc-400">@{r.username}</span>
                                     <div className="flex items-center gap-2">
                                       <span className="text-2xs text-zinc-600 font-semibold">
-                                        {new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                                        {new Date(r.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                       </span>
                                       {user && (
                                         <button
@@ -383,7 +383,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                                             setContextMenu({ x: e.clientX, y: e.clientY, commentId: r.id, content: r.content, parentId: c.id, commentUserId: r.user_id, commentUsername: r.username });
                                           }}
                                           className="text-zinc-600 hover:text-white cursor-pointer opacity-0 group-hover/reply:opacity-100 transition-opacity"
-                                          title="More"
+                                          title="المزيد"
                                         >
                                           <MoreVertical className="w-3.5 h-3.5" />
                                         </button>
@@ -401,12 +401,12 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                                         autoFocus
                                       />
                                       <div className="flex justify-end gap-1.5">
-                                        <button className="border border-zinc-800 text-white text-2xs py-1 px-2.5 rounded-md cursor-pointer" onClick={() => setEditingCommentId(null)}>Cancel</button>
-                                        <button className="bg-brand-orange text-black font-extrabold text-2xs py-1 px-2.5 rounded-md cursor-pointer" onClick={() => handleEditComment(r.id, editCommentText)}>Save</button>
+                                        <button className="border border-zinc-800 text-white text-2xs py-1 px-2.5 rounded-md cursor-pointer" onClick={() => setEditingCommentId(null)}>إلغاء</button>
+                                        <button className="bg-brand-orange text-black font-extrabold text-2xs py-1 px-2.5 rounded-md cursor-pointer" onClick={() => handleEditComment(r.id, editCommentText)}>حفظ</button>
                                       </div>
                                     </div>
                                   ) : (
-                                    <p dir="auto" className="text-xs text-zinc-300 font-medium leading-relaxed pr-1 mt-0.5">{renderTextWithMentions(r.content)}</p>
+                                    <p dir="auto" className="text-xs text-zinc-300 font-medium leading-relaxed pe-1 mt-0.5">{renderTextWithMentions(r.content)}</p>
                                   )}
 
                                   <div className="flex gap-2 items-center mt-1">
@@ -435,10 +435,10 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
           {user ? (
             <div className="relative mt-2 border-t border-zinc-900/40 pt-3">
               {replyingToComment && (
-                <div className="flex items-center justify-between bg-brand-orange/5 border-l-2 border-brand-orange rounded-xl px-3 py-2 mb-3 text-xs font-bold text-brand-orange">
+                <div className="flex items-center justify-between bg-brand-orange/5 border-s-2 border-brand-orange rounded-xl px-3 py-2 mb-3 text-xs font-bold text-brand-orange">
                   <div className="flex items-center gap-1.5">
-                    <CornerUpLeft className="w-3.5 h-3.5 shrink-0" />
-                    <span>Replying to <strong>@{replyingToComment.username}</strong></span>
+                    <CornerUpLeft className="rtl:-scale-x-100 w-3.5 h-3.5 shrink-0" />
+                    <span>بترد على <strong>@{replyingToComment.username}</strong></span>
                   </div>
                   <button 
                     onClick={() => setReplyingToComment(null)}
@@ -454,13 +454,13 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                 const suggestionsList = getFilteredUsernames();
                 if (suggestionsList.length === 0) return null;
                 return (
-                  <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 max-h-[160px] overflow-y-auto z-10 bg-zinc-950 border border-zinc-800 rounded-xl p-1 shadow-2xl">
+                  <div className="absolute bottom-[calc(100%+8px)] start-0 end-0 max-h-[160px] overflow-y-auto z-10 bg-zinc-950 border border-zinc-800 rounded-xl p-1 shadow-2xl">
                     {suggestionsList.map((u: any, idx: number) => (
                       <div
                         key={u.username}
                         onClick={() => handleSelectCommentMention(u.username)}
                         onMouseEnter={() => setActiveSuggestionIdx(idx)}
-                        className={`flex items-center gap-2 p-2 cursor-pointer rounded-lg text-left text-xs font-bold transition-colors ${
+                        className={`flex items-center gap-2 p-2 cursor-pointer rounded-lg text-start text-xs font-bold transition-colors ${
                           idx === activeSuggestionIdx ? 'bg-brand-orange text-black font-extrabold' : 'hover:bg-brand-orange/10 text-white'
                         }`}
                       >
@@ -476,7 +476,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                 <textarea
                   id={`comment-input-${postId}`}
                   className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl px-3 py-2 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none min-h-[34px] maxHeight-[120px]"
-                  placeholder={replyingToComment ? `Reply to @${replyingToComment.username}...` : "Write a comment..."}
+                  placeholder={replyingToComment ? `Reply to @${replyingToComment.username}...` : "اكتب تعليق…"}
                   value={commentText}
                   onChange={(e) => {
                     handleCommentInputChange(e.target.value);
@@ -530,14 +530,14 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   {submitting ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    replyingToComment ? 'Reply' : 'Post'
+                    replyingToComment ? 'رد' : 'انشر'
                   )}
                 </button>
               </div>
             </div>
           ) : (
             <div className="text-zinc-500 text-2xs font-bold text-center py-2 uppercase tracking-wide">
-              Please login to post.
+              سجّل دخول عشان تكتب.
             </div>
           )}
         </>
@@ -568,20 +568,20 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                       setEditCommentText(contextMenu.content);
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-white rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                    className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-white rounded-lg cursor-pointer hover:bg-zinc-900/60 text-start transition-colors"
                   >
                     <Edit2 className="w-3.5 h-3.5 text-zinc-500" />
-                    <span>Edit Comment</span>
+                    <span>تعديل التعليق</span>
                   </button>
                   <button
                     onClick={() => {
                       deleteComment(contextMenu.commentId, !!contextMenu.parentId, contextMenu.parentId);
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                    className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-start transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                    <span>Delete Comment</span>
+                    <span>حذف التعليق</span>
                   </button>
                 </>
               ) : (
@@ -590,10 +590,10 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                     handleOpenReportModal && handleOpenReportModal('comment', contextMenu.commentId, contextMenu.content);
                     setContextMenu(null);
                   }}
-                  className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-amber-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                  className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-amber-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-start transition-colors"
                 >
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Report Comment</span>
+                  <span>إبلاغ عن التعليق</span>
                 </button>
               )}
             </m.div>
@@ -608,7 +608,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-0 left-0 right-0 bg-zinc-950 border-t border-zinc-850 p-4 z-[9000] shadow-2xl flex gap-2.5 items-end"
+            className="fixed bottom-0 start-0 end-0 bg-zinc-950 border-t border-zinc-850 p-4 z-[9000] shadow-2xl flex gap-2.5 items-end"
           >
             <textarea
               className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-brand-orange text-white rounded-xl p-3 text-xs outline-none resize-none"
@@ -621,14 +621,14 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
               className="border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer active:scale-95 transition-all" 
               onClick={() => { setEditingCommentId(null); setEditCommentText(''); }}
             >
-              Cancel
+              إلغاء
             </button>
             <button
               className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-xs py-2.5 px-4 rounded-xl cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-orange-glow"
               onClick={() => handleEditComment(editingCommentId, editCommentText)}
               disabled={!editCommentText.trim()}
             >
-              Save
+              حفظ
             </button>
           </m.div>
         )}

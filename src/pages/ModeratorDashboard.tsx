@@ -626,7 +626,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   </div>
                 </div>
 
-                <div className="space-y-2 text-left">
+                <div className="space-y-2 text-start">
                   {post.title && <h3 dir="auto" className="text-sm font-bold text-white leading-tight">{post.title}</h3>}
                   <p dir="auto" className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">{post.content}</p>
                   {post.image_url && (
@@ -683,8 +683,8 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 {/* Compare Layout */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Original Live version */}
-                  <div className="rounded-xl border border-white/5 bg-zinc-950/40 p-4 space-y-2 relative text-left">
-                    <span className="absolute top-2.5 right-2.5 bg-zinc-800 text-zinc-400 text-2xs font-bold px-1.5 py-0.5 rounded uppercase">Live Approved</span>
+                  <div className="rounded-xl border border-white/5 bg-zinc-950/40 p-4 space-y-2 relative text-start">
+                    <span className="absolute top-2.5 end-2.5 bg-zinc-800 text-zinc-400 text-2xs font-bold px-1.5 py-0.5 rounded uppercase">Live Approved</span>
                     <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wide">Original Post</p>
                     {post.original_title && <h4 className="text-xs font-bold text-zinc-400 leading-tight">{post.original_title}</h4>}
                     <p className="text-xs text-zinc-400 leading-relaxed whitespace-pre-line truncate-5">{post.original_content}</p>
@@ -696,8 +696,8 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   </div>
 
                   {/* Pending Revision */}
-                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/3 p-4 space-y-2 relative text-left">
-                    <span className="absolute top-2.5 right-2.5 bg-emerald-500/20 text-emerald-400 text-2xs font-bold px-1.5 py-0.5 rounded uppercase">New Edit</span>
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/3 p-4 space-y-2 relative text-start">
+                    <span className="absolute top-2.5 end-2.5 bg-emerald-500/20 text-emerald-400 text-2xs font-bold px-1.5 py-0.5 rounded uppercase">New Edit</span>
                     <p className="text-2xs text-emerald-400 font-bold uppercase tracking-wide">Revision Draft</p>
                     {post.title && <h4 dir="auto" className="text-xs font-black text-white leading-tight">{post.title}</h4>}
                     <p dir="auto" className="text-xs text-zinc-200 leading-relaxed whitespace-pre-line">{post.content}</p>
@@ -762,7 +762,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 return (
                   <div
                     key={s.id}
-                    className={`rounded-2xl border p-4.5 space-y-4 text-left transition-all ${
+                    className={`rounded-2xl border p-4.5 space-y-4 text-start transition-all ${
                       s.delete_pending ? 'border-red-500/25 bg-red-500/5' :
                       s.edit_draft ? 'border-amber-500/25 bg-amber-500/5' :
                       s.status === 'approved' ? 'border-emerald-500/20 bg-emerald-500/3' :
@@ -889,12 +889,12 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 placeholder="Search username or email..."
                 value={userSearchQuery}
                 onChange={(e) => setUserSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 text-xs focus:outline-none focus:border-emerald-500/50"
+                className="w-full ps-8 pe-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 text-xs focus:outline-none focus:border-emerald-500/50"
               />
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             </div>
 
-            <div className="max-h-80 overflow-y-auto space-y-1 pr-1">
+            <div className="max-h-80 overflow-y-auto space-y-1 pe-1">
               {filteredUsers.length === 0 ? (
                 <p className="text-center text-zinc-600 text-xs py-4">No users found.</p>
               ) : (
@@ -909,7 +909,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                       key={u.id}
                       disabled={!isModeratable}
                       onClick={() => setSelectedUser(u)}
-                      className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all ${
+                      className={`w-full flex items-center justify-between p-2 rounded-xl text-start transition-all ${
                         selectedUser?.id === u.id
                           ? 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 font-bold'
                           : isModeratable 
@@ -917,7 +917,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                             : 'opacity-40 cursor-not-allowed border border-transparent'
                       }`}
                     >
-                      <div className="min-w-0 flex-1 pr-2">
+                      <div className="min-w-0 flex-1 pe-2">
                         <p className="text-xs font-bold truncate">@{u.username}</p>
                         <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                           <span className={`px-1.5 py-0.5 rounded text-2xs font-black uppercase border ${
@@ -951,7 +951,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
           <div className="md:col-span-3 rounded-2xl border border-white/8 bg-zinc-900/60 p-5">
             <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider mb-4">Moderation Action</h3>
             {selectedUser ? (
-              <form onSubmit={handleUserModerateSubmit} className="space-y-4 text-left">
+              <form onSubmit={handleUserModerateSubmit} className="space-y-4 text-start">
                 <div className="p-3 bg-zinc-950/40 rounded-xl border border-white/5 flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-white">
                     {selectedUser.username[0].toUpperCase()}
@@ -1002,7 +1002,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                         <option value="7d">7 Days</option>
                         <option value="permanent">Permanent</option>
                       </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
+                      <ChevronDown className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
                     </div>
                   </div>
                 )}
@@ -1045,7 +1045,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {reports.map((report) => (
-                <div key={report.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4 text-left">
+                <div key={report.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4 text-start">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center border border-white/10">
@@ -1155,11 +1155,11 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       {activeTab === 'qotd' && !loading && (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
           {/* Daily Questions List (Left column, col-span-3) */}
-          <div className="md:col-span-3 rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4 text-left">
+          <div className="md:col-span-3 rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4 text-start">
             <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">Daily Questions List</h3>
             
             <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
+              <table className="w-full text-xs text-start">
                 <thead>
                   <tr className="border-b border-white/8 text-zinc-500 font-bold">
                     <th className="pb-2">Question</th>
@@ -1180,16 +1180,16 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
 
                     return (
                       <tr key={q._id || q.id} className="hover:bg-white/2 transition-colors">
-                        <td className="py-3 pr-3 font-medium text-white max-w-[200px] truncate" title={q.question}>
+                        <td className="py-3 pe-3 font-medium text-white max-w-[200px] truncate" title={q.question}>
                           {q.question}
                           <div className="text-2xs text-zinc-500 font-normal mt-0.5">
                             Correct Option: <span className="text-emerald-400 font-bold">#{q.correct_answer + 1}</span>
                           </div>
                         </td>
-                        <td className="py-3 pr-3 text-zinc-400 text-2xs">
+                        <td className="py-3 pe-3 text-zinc-400 text-2xs">
                           {q.publish_at ? new Date(q.publish_at).toLocaleString() : 'Not Set'}
                         </td>
-                        <td className="py-3 pr-3 text-center">
+                        <td className="py-3 pe-3 text-center">
                           <span className={`px-2 py-0.5 rounded-lg text-2xs font-black uppercase tracking-wide border ${badgeClass}`}>
                             {q.status}
                           </span>
@@ -1240,7 +1240,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
           </div>
 
           {/* Create/Edit Question Form (Right column, col-span-2) */}
-          <div className="md:col-span-2 rounded-2xl border border-white/8 bg-zinc-900/60 p-5 text-left space-y-4">
+          <div className="md:col-span-2 rounded-2xl border border-white/8 bg-zinc-900/60 p-5 text-start space-y-4">
             <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
               {editingQuestionId ? 'Edit Daily Question' : 'Create Daily Question'}
             </h3>
@@ -1307,7 +1307,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                       <option value="Draft">Draft</option>
                       <option value="Scheduled">Scheduled</option>
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-550 pointer-events-none" />
+                    <ChevronDown className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-550 pointer-events-none" />
                   </div>
                 </div>
               </div>
@@ -1361,7 +1361,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 </h3>
               </div>
 
-              <div className="space-y-1.5 text-left">
+              <div className="space-y-1.5 text-start">
                 <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">Reason (Optional)</label>
                 <textarea
                   placeholder="Write the reason for rejection to share with the author..."
@@ -1397,7 +1397,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="glass-card w-full max-w-md p-6 relative flex flex-col gap-5 border border-white/10 text-left"
+              className="glass-card w-full max-w-md p-6 relative flex flex-col gap-5 border border-white/10 text-start"
             >
               <div className="flex items-center justify-between border-b border-white/5 pb-3">
                 <div className="flex items-center gap-2.5 text-emerald-400">
@@ -1451,7 +1451,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                       return (
                         <div key={idx} className="space-y-1">
                           <div className="flex justify-between text-xs font-bold text-zinc-300">
-                            <span className="truncate pr-2 flex items-center gap-1.5">
+                            <span className="truncate pe-2 flex items-center gap-1.5">
                               {option}
                               {isCorrect && <span className="bg-emerald-500/20 text-emerald-400 text-2xs font-bold px-1.5 py-0.2 rounded border border-emerald-500/20">Correct</span>}
                             </span>

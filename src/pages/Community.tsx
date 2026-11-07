@@ -377,14 +377,14 @@ export const Community: React.FC<CommunityProps> = ({
   };
 
   const handleScrollToBottom = () => {
-    const el = document.getElementById('pl-chat-feed');
+    const el = document.getElementById('ps-chat-feed');
     if (el) {
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     }
   };
 
   return (
-    <div className="w-full max-w-none px-0 pb-0 text-left md:h-[calc(100dvh-var(--spacing-nav)-env(safe-area-inset-bottom,0px))] xl:h-dvh pt-[calc(4rem+env(safe-area-inset-top,0px))] xl:pt-0"
+    <div className="w-full max-w-none px-0 pb-0 text-start md:h-[calc(100dvh-var(--spacing-nav)-env(safe-area-inset-bottom,0px))] xl:h-dvh pt-[calc(4rem+env(safe-area-inset-top,0px))] xl:pt-0"
       style={{
         height: window.innerWidth < 768
           ? `${viewportHeight - (isInputFocused ? 0 : (document.querySelector('nav[aria-label]') as HTMLElement | null)?.offsetHeight ?? 72)}px`
@@ -404,8 +404,8 @@ export const Community: React.FC<CommunityProps> = ({
             onClick={() => setActiveSubTab('chat')}
           >
             <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden sm:inline">General Chat</span>
-            <span className="sm:hidden">Chat</span>
+            <span className="hidden sm:inline">الشات العام</span>
+            <span className="sm:hidden">الشات</span>
           </button>
           <button 
             type="button" 
@@ -417,8 +417,8 @@ export const Community: React.FC<CommunityProps> = ({
             onClick={() => setActiveSubTab('suggestions')}
           >
             <Lightbulb className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden sm:inline">Suggestions Board</span>
-            <span className="sm:hidden">Suggestions</span>
+            <span className="hidden sm:inline">لوحة الاقتراحات</span>
+            <span className="sm:hidden">الاقتراحات</span>
           </button>
         </div>
 
@@ -430,20 +430,20 @@ export const Community: React.FC<CommunityProps> = ({
                 <span className="text-xs font-black text-white">Selected {selectedMessageIds.length} messages</span>
                 <div className="flex gap-2">
                   {canDeleteSelected && (
-                    <button className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-2xs py-1.5 px-3 rounded-lg cursor-pointer" onClick={handleBulkDeleteMessages} disabled={selectedMessageIds.length === 0}>Delete</button>
+                    <button className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-2xs py-1.5 px-3 rounded-lg cursor-pointer" onClick={handleBulkDeleteMessages} disabled={selectedMessageIds.length === 0}>حذف</button>
                   )}
-                  <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-2xs py-1.5 px-3 rounded-lg cursor-pointer" onClick={() => { setIsMultiSelectMode(false); setSelectedMessageIds([]); }}>Cancel</button>
+                  <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-2xs py-1.5 px-3 rounded-lg cursor-pointer" onClick={() => { setIsMultiSelectMode(false); setSelectedMessageIds([]); }}>إلغاء</button>
                 </div>
               </div>
             ) : (
               <div className="flex items-center justify-between mb-2 border-b border-zinc-900 pb-2 mx-3 md:mx-0 shrink-0">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-brand-orange" />
-                  <h3 className="text-sm font-black text-white">Chat Feed</h3>
+                  <h3 className="text-sm font-black text-white">الشات</h3>
                   {isRefreshingChat && (
-                    <div className="flex items-center gap-1.5 text-2xs text-zinc-500 font-bold uppercase tracking-wider animate-pulse ml-2">
+                    <div className="flex items-center gap-1.5 text-2xs text-zinc-500 font-bold uppercase tracking-wider animate-pulse ms-2">
                       <div className="w-3.5 h-3.5 border-2 border-brand-orange border-t-transparent rounded-full animate-spin" />
-                      <span>Updating...</span>
+                      <span>بنحدّث…</span>
                     </div>
                   )}
                 </div>
@@ -452,14 +452,14 @@ export const Community: React.FC<CommunityProps> = ({
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                   </span>
-                  <span>{onlineCount} Online</span>
+                  <span>{onlineCount} أونلاين</span>
                 </div>
               </div>
             )}
 
             {/* Chat Messages Feed */}
             <div 
-              id="pl-chat-feed" 
+              id="ps-chat-feed" 
               onScroll={(e) => {
                 const el = e.currentTarget;
                 const isUp = el.scrollHeight - el.scrollTop - el.clientHeight > 150;
@@ -543,7 +543,7 @@ export const Community: React.FC<CommunityProps> = ({
                             transition: 'opacity 0.1s'
                           }}
                         >
-                          <CornerUpLeft className="w-4.5 h-4.5 text-zinc-500" />
+                          <CornerUpLeft className="rtl:-scale-x-100 w-4.5 h-4.5 text-zinc-500" />
                         </div>
                       )}
 
@@ -556,7 +556,7 @@ export const Community: React.FC<CommunityProps> = ({
                               prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]
                             );
                           }}
-                          className="self-center ml-2 shrink-0 cursor-pointer text-brand-orange"
+                          className="self-center ms-2 shrink-0 cursor-pointer text-brand-orange"
                         >
                           {isSelected ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5 text-zinc-600" />}
                         </div>
@@ -585,13 +585,13 @@ export const Community: React.FC<CommunityProps> = ({
                             {msg.batch}
                           </span>
                           <span className="text-2xs text-zinc-500 font-semibold">
-                            {stripEmojis(msg.rank?.name_en || '')}
+                            {stripEmojis(msg.rank?.name_ar || msg.rank?.name_en || '')}
                           </span>
                           {(msg.role === 'admin' || msg.role === 'owner') && (
                             <span className={`text-2xs font-black px-1.5 py-0.5 rounded-md uppercase border ${
                               msg.role === 'owner' ? 'border-brand-amber/30 text-brand-amber bg-brand-amber/5' : 'border-brand-orange/30 text-brand-orange bg-brand-orange/5'
                             }`}>
-                              {msg.role}
+                              {msg.role === 'owner' ? 'المالك' : 'أدمن'}
                             </span>
                           )}
                         </div>
@@ -603,15 +603,15 @@ export const Community: React.FC<CommunityProps> = ({
                           className="rounded-2xl"
                         >
                           <div 
-                            className={`px-3 py-2 rounded-2xl text-xs md:text-sm font-semibold shadow-lg text-left relative min-w-0 ${
+                            className={`px-3 py-2 rounded-2xl text-xs md:text-sm font-semibold shadow-lg text-start relative min-w-0 ${
                               isMyMsg 
-                                ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black rounded-tr-none' 
-                                : 'bg-zinc-900/60 border border-zinc-800 text-white rounded-tl-none'
+                                ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black rounded-se-none' 
+                                : 'bg-zinc-900/60 border border-zinc-800 text-white rounded-ss-none'
                             }`}
                           >
                           {/* Quote reply */}
                           {msg.reply_to?.username && (
-                            <div className={`border-l-2 border-brand-orange px-2.5 py-1.5 rounded-lg mb-2 text-2xs text-left ${
+                            <div className={`border-s-2 border-brand-orange px-2.5 py-1.5 rounded-lg mb-2 text-2xs text-start ${
                               isMyMsg ? 'bg-black/10 text-zinc-800' : 'bg-black/30 text-zinc-400'
                             }`}>
                               <div className={`font-black ${isMyMsg ? 'text-black' : 'text-brand-orange'}`}>
@@ -626,9 +626,9 @@ export const Community: React.FC<CommunityProps> = ({
                               {renderTextWithMentions(msg.message)}
                             </p>
                             
-                            <div className="flex items-center gap-1 shrink-0 text-2xs opacity-75 select-none pb-0.5 ml-auto self-end">
-                              {!!msg.is_edited && <span>(edited)</span>}
-                              <span>{new Date(msg.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                            <div className="flex items-center gap-1 shrink-0 text-2xs opacity-75 select-none pb-0.5 ms-auto self-end">
+                              {!!msg.is_edited && <span>(متعدّلة)</span>}
+                              <span>{new Date(msg.created_at).toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' })}</span>
                               {isMyMsg && (
                                 msg.isPending ? (
                                   <Clock className="w-2.5 h-2.5" />
@@ -684,14 +684,14 @@ export const Community: React.FC<CommunityProps> = ({
 
             {/* Chat form compose area */}
             <div 
-              className="border-t border-zinc-900/80 pt-2.5 bg-zinc-950/90 px-3 md:px-0 shrink-0 text-left relative"
+              className="border-t border-zinc-900/80 pt-2.5 bg-zinc-950/90 px-3 md:px-0 shrink-0 text-start relative"
             >
               
               {/* Reply tag indicator */}
               {replyingTo && (
-                <div className="flex justify-between items-center bg-brand-orange/5 border-l-2 border-brand-orange rounded-xl px-3 py-2.5 mb-2 text-xs font-bold text-brand-orange">
-                  <div className="truncate pr-4">
-                    <span>Replying to <strong>@{replyingTo.username}</strong>: </span>
+                <div className="flex justify-between items-center bg-brand-orange/5 border-s-2 border-brand-orange rounded-xl px-3 py-2.5 mb-2 text-xs font-bold text-brand-orange">
+                  <div className="truncate pe-4">
+                    <span>بترد على <strong>@{replyingTo.username}</strong>: </span>
                     <span dir="auto" className="text-zinc-500 font-medium">{replyingTo.message}</span>
                   </div>
                   <button onClick={() => setReplyingTo(null)} className="text-zinc-500 hover:text-white cursor-pointer shrink-0">
@@ -705,27 +705,27 @@ export const Community: React.FC<CommunityProps> = ({
                 const filteredSuggestions = usernames.filter((u: any) => u.username.toLowerCase().includes(mentionSearch.toLowerCase()) && u.username !== user?.username);
                 if (filteredSuggestions.length === 0) {
                   return (
-                    <div className="absolute bottom-[calc(100%+8px)] left-3 right-3 md:left-0 md:right-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-3 shadow-2xl text-xs text-zinc-500 text-center font-bold">
-                      No matching users found
+                    <div className="absolute bottom-[calc(100%+8px)] start-3 end-3 md:start-0 md:end-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-3 shadow-2xl text-xs text-zinc-500 text-center font-bold">
+                      مفيش حد بالاسم ده
                     </div>
                   );
                 }
                 return (
-                  <div className="absolute bottom-[calc(100%+8px)] left-3 right-3 md:left-0 md:right-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-1 shadow-2xl">
+                  <div className="absolute bottom-[calc(100%+8px)] start-3 end-3 md:start-0 md:end-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-1 shadow-2xl">
                     {filteredSuggestions.map((u: any, idx: number) => (
                       <button
                         key={u.username}
                         type="button"
                         onClick={() => handleSelectMention(u.username)}
                         onMouseEnter={() => setActiveSuggestionIdx(idx)}
-                        className={`w-full flex items-center gap-3 p-2.5 cursor-pointer rounded-lg text-left text-xs font-bold text-white transition-colors ${
+                        className={`w-full flex items-center gap-3 p-2.5 cursor-pointer rounded-lg text-start text-xs font-bold text-white transition-colors ${
                           idx === activeSuggestionIdx ? 'bg-brand-orange/20 border border-brand-orange/30 shadow-orange-glow' : 'hover:bg-brand-orange/10'
                         }`}
                       >
                         <UserAvatar username={u.username} avatarUrl={u.avatar_url} equippedFrame={u.equipped_frame} size={24} />
-                        <div className="flex flex-col text-left">
+                        <div className="flex flex-col text-start">
                            <span className="text-brand-orange font-black">@{u.username}</span>
-                           <span className="text-2xs text-zinc-500">{u.role === 'owner' ? 'Owner' : u.role === 'admin' ? 'Admin' : 'Student'}</span>
+                           <span className="text-2xs text-zinc-500">{u.role === 'owner' ? 'المالك' : u.role === 'admin' ? 'أدمن' : 'طالب'}</span>
                         </div>
                       </button>
                     ))}
@@ -735,8 +735,8 @@ export const Community: React.FC<CommunityProps> = ({
 
               {/* Editing tag indicator */}
               {editingMessage && (
-                <div className="flex justify-between items-center bg-brand-amber/5 border-l-2 border-brand-amber rounded-xl px-3 py-2.5 mb-2 text-xs font-bold text-brand-amber">
-                  <span>Editing message...</span>
+                <div className="flex justify-between items-center bg-brand-amber/5 border-s-2 border-brand-amber rounded-xl px-3 py-2.5 mb-2 text-xs font-bold text-brand-amber">
+                  <span>بتعدّل الرسالة…</span>
                   <button 
                     onClick={() => {
                       setEditingMessage(null);
@@ -780,7 +780,7 @@ export const Community: React.FC<CommunityProps> = ({
                       data-bwignore="true"
                       data-form-type="other"
                       className="w-full bg-transparent text-white py-2.5 text-xs md:text-sm font-semibold placeholder-zinc-500 outline-none resize-none min-h-[40px] max-h-[140px] leading-relaxed"
-                      placeholder={editingMessage ? "Edit your message here..." : "Type a message..."}
+                      placeholder={editingMessage ? "عدّل رسالتك هنا…" : "اكتب رسالة…"}
                       value={draft}
                       onChange={handleInputChange}
                       onFocus={() => {
@@ -819,12 +819,12 @@ export const Community: React.FC<CommunityProps> = ({
                     className="w-10 h-10 rounded-2xl bg-gradient-to-r from-brand-orange to-brand-amber text-black flex items-center justify-center hover:scale-105 active:scale-95 cursor-pointer shadow-md hover:shadow-brand-orange/20 shrink-0 transition-all duration-200"
                     onMouseDown={(e) => e.preventDefault()}
                   >
-                    {editingMessage ? <Check className="w-5 h-5 stroke-[2.5]" /> : <Send className="w-4.5 h-4.5 stroke-[2.5] translate-x-0.5" />}
+                    {editingMessage ? <Check className="w-5 h-5 stroke-[2.5]" /> : <Send className="rtl:-scale-x-100 w-4.5 h-4.5 stroke-[2.5] translate-x-0.5" />}
                   </button>
                 </form>
               ) : (
                 <div className="text-zinc-500 text-xs font-bold text-center py-2 uppercase tracking-wide">
-                  Please <button onClick={() => setCurrentPage('login')} className="text-brand-orange hover:text-brand-amber font-black cursor-pointer underline">Login</button> to participate in the live chat.
+                  من فضلك <button onClick={() => setCurrentPage('login')} className="text-brand-orange hover:text-brand-amber font-black cursor-pointer underline">سجّل دخول</button> عشان تشارك في الشات.
                 </div>
               )}
             </div>
@@ -837,8 +837,8 @@ export const Community: React.FC<CommunityProps> = ({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.8 }}
                   onClick={handleScrollToBottom}
-                  className="absolute left-6 w-9 h-9 rounded-full bg-zinc-950/90 border border-brand-orange flex items-center justify-center text-white cursor-pointer z-[25] shadow-orange-glow transition-all active:scale-90 bottom-[75px]"
-                  title="Scroll to bottom"
+                  className="absolute start-6 w-9 h-9 rounded-full bg-zinc-950/90 border border-brand-orange flex items-center justify-center text-white cursor-pointer z-[25] shadow-orange-glow transition-all active:scale-90 bottom-[75px]"
+                  title="انزل لآخر رسالة"
                 >
                   <ChevronDown className="w-4 h-4 animate-bounce" />
                 </m.button>
@@ -850,15 +850,15 @@ export const Community: React.FC<CommunityProps> = ({
             {user ? (
               <form 
                 onSubmit={submitSuggestion} 
-                className="glass-card p-4 flex flex-col gap-3 mb-3 border border-zinc-900/60 shrink-0 text-left"
+                className="glass-card p-4 flex flex-col gap-3 mb-3 border border-zinc-900/60 shrink-0 text-start"
               >
                 <h4 className="text-xs font-black text-brand-orange flex items-center gap-1.5">
                   <Lightbulb className="w-4.5 h-4.5" />
-                  <span>Submit a Suggestion or Feedback</span>
+                  <span>قدّم اقتراح أو رأي</span>
                 </h4>
                 <input 
                   type="text" 
-                  placeholder="Brief Title (e.g. Add dark mode toggle)" 
+                  placeholder="عنوان مختصر (مثلًا: إضافة بنك أسئلة)" 
                   className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl px-3 py-2 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200"
                   value={suggTitle}
                   onChange={(e) => setSuggTitle(e.target.value)}
@@ -867,7 +867,7 @@ export const Community: React.FC<CommunityProps> = ({
                   required
                 />
                 <textarea 
-                  placeholder="Explain your idea or feedback in detail..." 
+                  placeholder="اشرح فكرتك أو رأيك بالتفصيل…" 
                   className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl p-3 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none"
                   value={suggContent}
                   onChange={(e) => setSuggContent(e.target.value)}
@@ -888,13 +888,13 @@ export const Community: React.FC<CommunityProps> = ({
               <div 
                 className="text-zinc-500 text-xs font-bold text-center py-6 border border-dashed border-zinc-800 rounded-xl mb-4 uppercase tracking-wide shrink-0 bg-[#0a0a0a]"
               >
-                Please <button onClick={() => setCurrentPage('login')} className="text-brand-orange hover:text-brand-amber font-black cursor-pointer underline">Login</button> to submit suggestions.
+                من فضلك <button onClick={() => setCurrentPage('login')} className="text-brand-orange hover:text-brand-amber font-black cursor-pointer underline">سجّل دخول</button> عشان تقدّم اقتراحات.
               </div>
             )}
 
-            <div className="flex-1 overflow-y-auto flex flex-col gap-3.5 px-3 md:px-0 pr-3 md:pr-1 pb-4 md:pb-0">
+            <div className="flex-1 overflow-y-auto flex flex-col gap-3.5 px-3 md:px-0 pe-3 md:pe-1 pb-4 md:pb-0">
               {suggestions.length === 0 ? (
-                <div className="text-zinc-500 text-xs font-bold text-center py-10">No suggestions submitted yet. Be the first!</div>
+                <div className="text-zinc-500 text-xs font-bold text-center py-10">مفيش اقتراحات لسه. خليك أول واحد!</div>
               ) : (
                 suggestions.map((s: any) => {
                   const isAuthor = user && (String(s.user_id) === String(user.id) || s.username === user.username);
@@ -909,11 +909,11 @@ export const Community: React.FC<CommunityProps> = ({
                   if (s.delete_pending) {
                     statusColor = 'text-red-400';
                     statusBg = 'bg-red-500/10 border-red-500/20';
-                    statusLabel = 'Delete Pending';
+                    statusLabel = 'طلب حذف معلّق';
                   } else if (s.edit_draft) {
                     statusColor = 'text-amber-400';
                     statusBg = 'bg-amber-500/10 border-amber-500/20';
-                    statusLabel = 'Edit Pending';
+                    statusLabel = 'تعديل معلّق';
                   } else if (s.status === 'approved') {
                     statusColor = 'text-green-400';
                     statusBg = 'bg-green-500/10 border-green-500/20';
@@ -923,11 +923,11 @@ export const Community: React.FC<CommunityProps> = ({
                   }
 
                   return (
-                    <div key={s.id} className="glass-card p-4 border border-zinc-900/60 flex flex-col gap-2.5 text-left">
+                    <div key={s.id} className="glass-card p-4 border border-zinc-900/60 flex flex-col gap-2.5 text-start">
                       {isEditing ? (
                         <div className="flex flex-col gap-3">
                           <div>
-                            <label className="text-2xs font-bold text-brand-orange uppercase block mb-1">Title</label>
+                            <label className="text-2xs font-bold text-brand-orange uppercase block mb-1">العنوان</label>
                             <input 
                               type="text" 
                               className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl px-3 py-1.5 text-xs font-semibold focus:border-brand-orange outline-none"
@@ -937,7 +937,7 @@ export const Community: React.FC<CommunityProps> = ({
                             />
                           </div>
                           <div>
-                            <label className="text-2xs font-bold text-brand-orange uppercase block mb-1">Details</label>
+                            <label className="text-2xs font-bold text-brand-orange uppercase block mb-1">التفاصيل</label>
                             <textarea 
                               className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl p-3 text-xs font-semibold focus:border-brand-orange outline-none resize-none"
                               value={editSuggContent}
@@ -955,14 +955,14 @@ export const Community: React.FC<CommunityProps> = ({
                                 setEditingSuggId(null);
                               }}
                             >
-                              Save Edits
+                              احفظ التعديلات
                             </button>
                             <button 
                               type="button"
                               className="border border-zinc-800 hover:bg-zinc-900 text-zinc-400 font-bold text-2xs py-1.5 px-4 rounded-xl cursor-pointer transition-all"
                               onClick={() => setEditingSuggId(null)}
                             >
-                              Cancel
+                              إلغاء
                             </button>
                           </div>
                         </div>
@@ -974,7 +974,7 @@ export const Community: React.FC<CommunityProps> = ({
                                 {s.title}
                               </h4>
                               <span className="text-2xs text-zinc-500 font-semibold block mt-0.5">
-                                By @{s.username} · {new Date(s.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                                By @{s.username} · {new Date(s.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                               </span>
                             </div>
                             <span className={`text-2xs font-black px-2.5 py-0.5 rounded-full uppercase border ${statusColor} ${statusBg}`}>
@@ -1017,7 +1017,7 @@ export const Community: React.FC<CommunityProps> = ({
                                   }}
                                 >
                                   <Edit2 className="w-3.5 h-3.5" /> 
-                                  <span>Edit</span>
+                                  <span>تعديل</span>
                                 </button>
                               )}
 
@@ -1028,7 +1028,7 @@ export const Community: React.FC<CommunityProps> = ({
                                   onClick={() => handleCancelSuggestionRevision(s.id)}
                                 >
                                   <X className="w-3.5 h-3.5" /> 
-                                  <span>Discard Changes</span>
+                                  <span>تجاهل التعديلات</span>
                                 </button>
                               ) : (
                                 (isAuthor || isAdmin) && (
@@ -1038,7 +1038,7 @@ export const Community: React.FC<CommunityProps> = ({
                                     onClick={() => handleDeleteSuggestion(s.id)}
                                   >
                                     <Trash2 className="w-3.5 h-3.5" /> 
-                                    <span>Delete</span>
+                                    <span>حذف</span>
                                   </button>
                                 )
                               )}
@@ -1068,7 +1068,7 @@ export const Community: React.FC<CommunityProps> = ({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.15 }}
-              className="absolute bg-zinc-950 border border-zinc-800 rounded-2xl p-1.5 flex flex-col gap-1 min-w-[150px] shadow-2xl z-[1000] text-left"
+              className="absolute bg-zinc-950 border border-zinc-800 rounded-2xl p-1.5 flex flex-col gap-1 min-w-[150px] shadow-2xl z-[1000] text-start"
               style={{
                 top: Math.min(activeContextMenu.y, window.innerHeight - 280),
                 left: Math.max(10, Math.min(activeContextMenu.x - 105, window.innerWidth - 220))
@@ -1092,7 +1092,7 @@ export const Community: React.FC<CommunityProps> = ({
                 <button
                   type="button"
                   className="p-1 text-xs text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg cursor-pointer transition-colors flex items-center justify-center"
-                  title="More Emojis"
+                  title="إيموجي أكتر"
                   onClick={() => {
                     setReactionPickerMsgId(activeContextMenu.messageId);
                     setActiveContextMenu(null);
@@ -1114,8 +1114,8 @@ export const Community: React.FC<CommunityProps> = ({
                   setActiveContextMenu(null);
                 }}
               >
-                <CornerUpLeft className="w-3.5 h-3.5 text-zinc-500" /> 
-                <span>Reply</span>
+                <CornerUpLeft className="rtl:-scale-x-100 w-3.5 h-3.5 text-zinc-500" /> 
+                <span>رد</span>
               </button>
 
               {user && activeContextMenu.msg.username === user.username && (
@@ -1129,7 +1129,7 @@ export const Community: React.FC<CommunityProps> = ({
                   }}
                 >
                   <Edit2 className="w-3.5 h-3.5 text-zinc-500" /> 
-                  <span>Edit</span>
+                  <span>تعديل</span>
                 </button>
               )}
 
@@ -1142,7 +1142,7 @@ export const Community: React.FC<CommunityProps> = ({
                 }}
               >
                 <CheckSquare className="w-3.5 h-3.5 text-zinc-500" /> 
-                <span>Select</span>
+                <span>تحديد</span>
               </button>
 
               {user && (activeContextMenu.msg.username === user.username || user.role === 'admin' || user.role === 'owner') && (
@@ -1154,7 +1154,7 @@ export const Community: React.FC<CommunityProps> = ({
                   }}
                 >
                   <Trash2 className="w-3.5 h-3.5 text-red-500" /> 
-                  <span>Delete</span>
+                  <span>حذف</span>
                 </button>
               )}
               {user && (user.role === 'admin' || user.role === 'owner') && activeContextMenu.msg.username !== user.username && (
@@ -1166,7 +1166,7 @@ export const Community: React.FC<CommunityProps> = ({
                   }}
                 >
                   <ShieldAlert className="w-3.5 h-3.5 text-brand-orange" /> 
-                  <span>Moderate User</span>
+                  <span>إجراء على المستخدم</span>
                 </button>
               )}
               {user && activeContextMenu.msg.username !== user.username && (
@@ -1178,7 +1178,7 @@ export const Community: React.FC<CommunityProps> = ({
                   }}
                 >
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> 
-                  <span>Report Message</span>
+                  <span>إبلاغ عن الرسالة</span>
                 </button>
               )}
             </m.div>

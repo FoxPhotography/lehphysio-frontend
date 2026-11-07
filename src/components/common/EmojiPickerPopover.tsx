@@ -113,17 +113,17 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
   const getPositionClasses = () => {
     switch (activePosition) {
       case 'top-right':
-        return 'bottom-full right-0 mb-2';
+        return 'bottom-full end-0 mb-2';
       case 'top-left':
-        return 'bottom-full left-0 mb-2';
+        return 'bottom-full start-0 mb-2';
       case 'bottom-right':
-        return 'top-full right-0 mt-2';
+        return 'top-full end-0 mt-2';
       case 'bottom-left':
-        return 'top-full left-0 mt-2';
+        return 'top-full start-0 mt-2';
       case 'centered':
         return 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[10000]';
       default:
-        return 'bottom-full left-0 mb-2';
+        return 'bottom-full start-0 mb-2';
     }
   };
 

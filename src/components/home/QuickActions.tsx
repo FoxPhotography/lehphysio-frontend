@@ -13,7 +13,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ xpSettings = {}, set
     { label: 'ادخل كود', xp: 'XP', icon: Key, onClick: () => setCurrentPage('rewards') },
     { label: 'شارك', xp: `+${xpSettings.comment || 15} XP`, icon: MessageSquare, onClick: () => { setCurrentPage('community'); setCommunityTab('chat'); } },
     { label: 'العب', xp: `+${xpSettings.game_play || 50} XP`, icon: Gamepad2, onClick: () => setCurrentPage('games') },
-    { label: 'المتجر', xp: 'Shop', icon: Store, onClick: () => setCurrentPage('rewards') },
+    { label: 'المتجر', xp: 'متجر', icon: Store, onClick: () => setCurrentPage('rewards') },
   ];
 
   return (

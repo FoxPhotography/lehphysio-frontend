@@ -137,7 +137,7 @@ export const useUrlRouting = ({
       } else {
         sessionStorage.setItem('pendingGameCode', roomCode);
         setPageFromUrl('login');
-        showToast('Please log in to join the game room! 🔐');
+        showToast('سجّل دخول عشان تدخل الغرفة! 🔐');
       }
     } else if (path === '/leaderboard') {
       setPageFromUrl('leaderboard');

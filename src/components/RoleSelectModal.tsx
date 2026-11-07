@@ -36,33 +36,33 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
   const currentWeight = ROLE_WEIGHTS[currentUserRole] || 0;
 
   const roleLabels: Record<string, string> = {
-    user: 'Student',
-    moderator: 'Moderator',
-    admin: 'Admin',
-    owner: 'Owner',
+    user: 'طالب',
+    moderator: 'مشرف',
+    admin: 'أدمن',
+    owner: 'المالك',
   };
 
   const allRoles: RoleOption[] = [
     {
       id: 'user',
-      label: 'Student',
-      description: 'Default role. Can access community features, chat, games, and leaderboards.',
+      label: 'طالب',
+      description: 'الصلاحية العادية: الشات والألعاب والترتيب والمجتمع.',
       icon: <Users className="w-5 h-5" />,
       colorClass: 'border-white/10 hover:border-zinc-500/40 hover:bg-zinc-500/5 text-zinc-400',
       badgeClass: 'bg-white/5 text-zinc-500 border-white/10',
     },
     {
       id: 'moderator',
-      label: 'Moderator',
-      description: 'Can moderate posts, comments, suggestions, chat messages, and manage user restrictions (mutes/bans).',
+      label: 'مشرف',
+      description: 'يراجع البوستات والتعليقات والاقتراحات والشات، ويقدر يكتم أو يحظر.',
       icon: <ShieldAlert className="w-5 h-5" />,
       colorClass: 'border-emerald-500/20 hover:border-emerald-500/40 hover:bg-emerald-500/5 text-emerald-400',
       badgeClass: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
     },
     {
       id: 'admin',
-      label: 'Admin',
-      description: 'Full administrative access. Can manage users, create XP codes, add cosmetics, and configure settings.',
+      label: 'أدمن',
+      description: 'صلاحيات كاملة: المستخدمين وأكواد XP والفريمات والإعدادات.',
       icon: <ShieldCheck className="w-5 h-5" />,
       colorClass: 'border-orange-500/20 hover:border-orange-500/40 hover:bg-orange-500/5 text-orange-400',
       badgeClass: 'bg-orange-500/15 text-orange-400 border-orange-500/25',
@@ -114,7 +114,7 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
         <div className="flex items-center justify-between border-b border-white/5 pb-3">
           <div className="flex items-center gap-2.5 text-orange-400">
             <ShieldCheck className="w-5 h-5 shrink-0" />
-            <h3 className="text-base font-black tracking-tight">Manage User Role</h3>
+            <h3 className="text-base font-black tracking-tight">صلاحية المستخدم</h3>
           </div>
           <button 
             onClick={onClose}
@@ -130,9 +130,9 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
               <AlertTriangle className="w-6 h-6 animate-pulse" />
             </div>
             <div className="space-y-2">
-              <h4 className="text-sm font-bold text-white">Confirm Role Update</h4>
+              <h4 className="text-sm font-bold text-white">تأكيد تغيير الصلاحية</h4>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Are you sure you want to change <span className="text-white font-bold">@{targetUser.username}</span>'s role from{' '}
+                متأكد إنك عايز تغيّر صلاحية <span className="text-white font-bold">@{targetUser.username}</span>'s role from{' '}
                 <span className="text-orange-400 font-bold">{roleLabels[targetUser.role]}</span> to{' '}
                 <span className="text-orange-400 font-bold">{roleLabels[confirmRole]}</span>?
               </p>
@@ -143,20 +143,20 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
                 onClick={handleConfirmSubmit}
                 className="flex-1 bg-orange-500 hover:bg-orange-400 text-black font-black text-xs py-3 rounded-xl cursor-pointer transition-all active:scale-[0.98] flex items-center justify-center gap-1.5"
               >
-                {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Confirm Change'}
+                {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'أكّد التغيير'}
               </button>
               <button
                 onClick={handleCancelConfirm}
                 className="border border-zinc-800 hover:bg-zinc-900/60 text-zinc-400 font-bold text-xs py-3 px-5 rounded-xl cursor-pointer transition-all"
               >
-                Cancel
+                إلغاء
               </button>
             </div>
           </div>
         ) : (
-          <div className="space-y-4 text-left">
+          <div className="space-y-4 text-start">
             <div>
-              <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Target User</p>
+              <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">المستخدم</p>
               <p className="text-sm font-black text-white mt-0.5">@{targetUser.username}</p>
               <p className="text-xs text-zinc-400 mt-0.5 flex items-center gap-1.5">
                 Current Role:{' '}
@@ -169,17 +169,17 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
             </div>
 
             <div className="space-y-2">
-              <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">Select Assignable Role</p>
+              <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">اختار الصلاحية</p>
               
               {assignableRoles.length === 0 ? (
-                <p className="text-xs text-zinc-500 py-4 text-center italic">No roles are assignable for this user under hierarchy rules.</p>
+                <p className="text-xs text-zinc-500 py-4 text-center italic">مينفعش تغيّر صلاحية المستخدم ده.</p>
               ) : (
                 <div className="flex flex-col gap-2.5">
                   {assignableRoles.map((role) => (
                     <button
                       key={role.id}
                       onClick={() => handleSelectRole(role.id)}
-                      className={`flex items-start gap-3 p-3 rounded-xl border bg-white/2 hover:scale-[1.01] transition-all text-left group ${role.colorClass}`}
+                      className={`flex items-start gap-3 p-3 rounded-xl border bg-white/2 hover:scale-[1.01] transition-all text-start group ${role.colorClass}`}
                     >
                       <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center shrink-0">
                         {role.icon}

@@ -77,7 +77,7 @@ const PodiumEntry: React.FC<{
             size={cfg.avatarSize}
           />
         </div>
-        <span className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full ${cfg.badgeBg} ${cfg.badgeText} flex items-center justify-center shadow-lg z-20`}>
+        <span className={`absolute -bottom-1 -end-1 w-5 h-5 rounded-full ${cfg.badgeBg} ${cfg.badgeText} flex items-center justify-center shadow-lg z-20`}>
           {cfg.icon}
         </span>
       </div>
@@ -139,18 +139,18 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           <Trophy className="w-5 h-5 text-amber-400" />
         </div>
         <div>
-          <h1 className="text-xl font-black text-white leading-tight">Leaderboard</h1>
-          <p className="text-xs text-zinc-500">Leh Physio? Rankings</p>
+          <h1 className="text-xl font-black text-white leading-tight">لوحة الترتيب</h1>
+          <p className="text-xs text-zinc-500">ترتيب ليه فيزيو؟</p>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-2 flex-wrap mb-6">
-        <TabPill label="All-Time"    active={leaderboardTab === 'all-time'} onClick={() => setLeaderboardTab('all-time')} />
-        <TabPill label="Weekly"      active={leaderboardTab === 'weekly'}   onClick={() => setLeaderboardTab('weekly')} />
+        <TabPill label="الكل"    active={leaderboardTab === 'all-time'} onClick={() => setLeaderboardTab('all-time')} />
+        <TabPill label="الأسبوع"      active={leaderboardTab === 'weekly'}   onClick={() => setLeaderboardTab('weekly')} />
         {user && (
           <TabPill
-            label={`My Batch (${user.batch})`}
+            label={`دفعتي (${user.batch})`}
             active={leaderboardTab === 'batch'}
             onClick={() => setLeaderboardTab('batch')}
           />
@@ -171,13 +171,13 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         {leaderboard.length === 0 ? (
           <div className="py-16 text-center">
             <Trophy className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
-            <p className="text-sm text-zinc-500">No rankings yet for this tab.</p>
+            <p className="text-sm text-zinc-500">مفيش ترتيب هنا لسه.</p>
           </div>
         ) : (
           <div>
             {leaderboard.map((u: any, idx: number) => {
               const isMe = user && u.username === user.username;
-              const rankName = stripEmojis(u.rank?.name_en || '');
+              const rankName = stripEmojis(u.rank?.name_ar || u.rank?.name_en || '');
 
               return (
                 <m.div
@@ -186,7 +186,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.04 }}
                   className={`flex items-center gap-3 px-4 py-3 border-b border-white/5 last:border-b-0 transition-colors ${
-                    isMe ? 'bg-orange-500/6 border-l-2 border-l-orange-500' : 'hover:bg-white/2'
+                    isMe ? 'bg-orange-500/6 border-s-2 border-s-orange-500' : 'hover:bg-white/2'
                   }`}
                 >
                   {/* Rank Number */}
@@ -214,7 +214,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                         {u.username}
                       </span>
                       {isMe && (
-                        <span className="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 text-2xs font-black">YOU</span>
+                        <span className="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 text-2xs font-black">إنت</span>
                       )}
                     </div>
                     <p className="text-xs text-zinc-500 truncate">
@@ -224,7 +224,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
 
                   {/* XP Badge */}
                   <div className="px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 flex-shrink-0">
-                    <span className="text-xs font-black text-orange-400">{u.xp.toLocaleString()} XP</span>
+                    <span className="text-xs font-black text-orange-400" dir="ltr">{u.xp.toLocaleString()} XP</span>
                   </div>
                 </m.div>
               );

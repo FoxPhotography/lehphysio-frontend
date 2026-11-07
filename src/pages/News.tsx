@@ -173,15 +173,15 @@ export const News: React.FC<NewsProps> = ({
       if (res.ok) {
         setNewPostContent('');
         setUploadedImageUrl('');
-        showToast('Official News published successfully! 📢');
+        showToast('الإعلان اتنشر! 📢');
         // Refresh page newsposts in parent via a reload or window event or simple navigation
         window.dispatchEvent(new CustomEvent('news_published'));
       } else {
-        showToast(data.error || 'Failed to publish news.');
+        showToast(data.error || 'معرفناش ننشر الإعلان.');
       }
     } catch (err) {
       console.error(err);
-      showToast('Error publishing news.');
+      showToast('حصل خطأ في نشر الإعلان.');
     } finally {
       setIsPosting(false);
     }
@@ -236,9 +236,9 @@ export const News: React.FC<NewsProps> = ({
           const cData = await cRes.json();
           setExpandedComments(prev => ({ ...prev, [postId]: cData }));
         }
-        showToast('Comment published! 📝');
+        showToast('التعليق اتنشر! 📝');
       } else {
-        showToast(data.error || 'Failed to comment.');
+        showToast(data.error || 'معرفناش ننشر التعليق.');
       }
     } catch (e) {
       console.error(e);
@@ -255,7 +255,7 @@ export const News: React.FC<NewsProps> = ({
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
-        showToast('Comment deleted.');
+        showToast('التعليق اتمسح.');
         // Refresh comments list
         const cRes = await fetch(`${API_BASE}/api/community/posts/${postId}/comments`);
         if (cRes.ok) {
@@ -274,13 +274,13 @@ export const News: React.FC<NewsProps> = ({
     <div className="max-w-4xl mx-auto px-4 xl:pt-6 space-y-6">
       {/* Premium Glass Header */}
       <div className="glass-card p-6 flex flex-col md:flex-row justify-between items-center gap-4 border border-zinc-950/40 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-brand-orange/5 rounded-full blur-3xl -z-10"></div>
-        <div className="flex items-center gap-4 text-left w-full md:w-auto">
+        <div className="absolute top-0 end-0 w-32 h-32 bg-brand-orange/5 rounded-full blur-3xl -z-10"></div>
+        <div className="flex items-center gap-4 text-start w-full md:w-auto">
           <button 
             onClick={() => setCurrentPage('home')}
             className="w-10 h-10 rounded-full border border-zinc-800 hover:border-zinc-700 bg-zinc-950/80 hover:bg-zinc-900 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="rtl:-scale-x-100 w-5 h-5" />
           </button>
           <div>
             <h1 className="text-xl md:text-2xl font-black bg-gradient-to-r from-white via-zinc-100 to-zinc-400 bg-clip-text text-transparent tracking-tight flex items-center gap-2">
@@ -296,11 +296,11 @@ export const News: React.FC<NewsProps> = ({
       {isAdmin && (
         <form 
           onSubmit={handleSubmitPost} 
-          className="glass-card p-5 flex gap-4 items-start text-left border border-zinc-900/60 relative"
+          className="glass-card p-5 flex gap-4 items-start text-start border border-zinc-900/60 relative"
         >
-          <div className="absolute -top-3 left-6 bg-brand-orange/10 border border-brand-orange/20 rounded-full px-3 py-0.5 text-2xs font-extrabold text-brand-orange uppercase tracking-wider flex items-center gap-1">
+          <div className="absolute -top-3 start-6 bg-brand-orange/10 border border-brand-orange/20 rounded-full px-3 py-0.5 text-2xs font-extrabold text-brand-orange uppercase tracking-wider flex items-center gap-1">
             <Volume2 className="w-2.5 h-2.5 animate-bounce" />
-            <span>Admin Broadcast</span>
+            <span>إعلان من الإدارة</span>
           </div>
 
           <UserAvatar
@@ -321,11 +321,11 @@ export const News: React.FC<NewsProps> = ({
 
             {uploadedImageUrl && (
               <div className="relative rounded-xl overflow-hidden max-w-[200px] border border-zinc-800">
-                <img src={uploadedImageUrl} alt="Upload preview" className="w-full max-h-[140px] object-cover" />
+                <img src={uploadedImageUrl} alt="معاينة" className="w-full max-h-[140px] object-cover" />
                 <button
                   type="button"
                   onClick={() => setUploadedImageUrl('')}
-                  className="absolute top-2 right-2 bg-black/80 hover:bg-black/90 text-white border-none rounded-full w-6 h-6 flex items-center justify-center cursor-pointer transition-colors"
+                  className="absolute top-2 end-2 bg-black/80 hover:bg-black/90 text-white border-none rounded-full w-6 h-6 flex items-center justify-center cursor-pointer transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -335,7 +335,7 @@ export const News: React.FC<NewsProps> = ({
             <div className="flex flex-row items-center justify-between w-full pt-2 gap-4">
               <label className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-2xs py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5 shrink-0">
                 <ImageIcon className="w-3.5 h-3.5 shrink-0" />
-                <span>{isUploadingImage ? 'Uploading...' : 'Add Banner'}</span>
+                <span>{isUploadingImage ? 'بنرفع…' : 'أضف بانر'}</span>
                 <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" disabled={isUploadingImage} />
               </label>
               
@@ -347,12 +347,12 @@ export const News: React.FC<NewsProps> = ({
                 {isPosting ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Publishing...</span>
+                    <span>بننشر…</span>
                   </>
                 ) : (
                   <>
-                    <span>Publish</span>
-                    <Send className="w-3 h-3" />
+                    <span>انشر</span>
+                    <Send className="rtl:-scale-x-100 w-3 h-3" />
                   </>
                 )}
               </button>
@@ -372,7 +372,7 @@ export const News: React.FC<NewsProps> = ({
             <div 
               key={post.id} 
               id={`post-${post.id}`} 
-              className="glass-card p-5 text-left border border-brand-orange/5 hover:border-brand-orange/15 transition-all duration-300 relative"
+              className="glass-card p-5 text-start border border-brand-orange/5 hover:border-brand-orange/15 transition-all duration-300 relative"
             >
               <div className="flex justify-between items-start">
                 <div className="flex gap-3 items-center">
@@ -391,7 +391,7 @@ export const News: React.FC<NewsProps> = ({
                       </span>
                     </div>
                     <span className="text-2xs text-zinc-500 font-semibold mt-0.5 block">
-                      {stripEmojis(post.rank.name_en)} · {new Date(post.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                      {stripEmojis(post.rank.name_ar || post.rank.name_en)} · {new Date(post.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
                     </span>
                   </div>
                 </div>
@@ -414,7 +414,7 @@ export const News: React.FC<NewsProps> = ({
                           initial={{ opacity: 0, scale: 0.95, y: -5 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                          className="absolute right-0 top-9 z-20 bg-zinc-950 border border-zinc-800 rounded-xl p-1.5 flex flex-col gap-1 min-w-[120px] shadow-2xl"
+                          className="absolute end-0 top-9 z-20 bg-zinc-950 border border-zinc-800 rounded-xl p-1.5 flex flex-col gap-1 min-w-[120px] shadow-2xl"
                         >
                           <button
                             onClick={() => {
@@ -423,10 +423,10 @@ export const News: React.FC<NewsProps> = ({
                               setEditPostImageUrl(post.image_url || '');
                               setOpenPostMenu(null);
                             }}
-                            className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-brand-amber rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                            className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-brand-amber rounded-lg cursor-pointer hover:bg-zinc-900/60 text-start transition-colors"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
-                            <span>Edit</span>
+                            <span>تعديل</span>
                           </button>
                           
                           <button
@@ -434,10 +434,10 @@ export const News: React.FC<NewsProps> = ({
                               handleDeletePost(post.id);
                               setOpenPostMenu(null);
                             }}
-                            className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-red-500/10 text-left transition-colors"
+                            className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-red-500/10 text-start transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                            <span>Delete</span>
+                            <span>حذف</span>
                           </button>
                         </m.div>
                       )}
@@ -457,11 +457,11 @@ export const News: React.FC<NewsProps> = ({
 
                   {editPostImageUrl && (
                     <div className="relative rounded-xl overflow-hidden max-w-[200px] border border-zinc-800">
-                      <img src={editPostImageUrl} alt="Edit preview" className="w-full max-h-[140px] object-cover" />
+                      <img src={editPostImageUrl} alt="معاينة" className="w-full max-h-[140px] object-cover" />
                       <button
                         type="button"
                         onClick={() => setEditPostImageUrl('')}
-                        className="absolute top-2 right-2 bg-black/80 hover:bg-black/90 text-white border-none rounded-full w-6 h-6 flex items-center justify-center cursor-pointer transition-colors"
+                        className="absolute top-2 end-2 bg-black/80 hover:bg-black/90 text-white border-none rounded-full w-6 h-6 flex items-center justify-center cursor-pointer transition-colors"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -471,7 +471,7 @@ export const News: React.FC<NewsProps> = ({
                   <div className="flex flex-row items-center justify-between w-full gap-4">
                     <label className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-2xs py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5 shrink-0">
                       <ImageIcon className="w-3.5 h-3.5 shrink-0" />
-                      <span>{isUploadingEditImage ? 'Uploading...' : 'Change Image'}</span>
+                      <span>{isUploadingEditImage ? 'بنرفع…' : 'غيّر الصورة'}</span>
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -494,7 +494,7 @@ export const News: React.FC<NewsProps> = ({
                         className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-2xs py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all" 
                         onClick={() => setEditingPostId(null)}
                       >
-                        Cancel
+                        إلغاء
                       </button>
                       <button 
                         className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-xs py-2 px-4 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow" 
@@ -505,7 +505,7 @@ export const News: React.FC<NewsProps> = ({
                         }}
                         disabled={!editPostContent.trim() || isUploadingEditImage}
                       >
-                        Save
+                        حفظ
                       </button>
                     </div>
                   </div>
@@ -609,12 +609,12 @@ export const News: React.FC<NewsProps> = ({
                     ) : (
                       <>
                         {/* Comments list */}
-                        <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1">
+                        <div className="space-y-3.5 max-h-[300px] overflow-y-auto pe-1">
                           {expandedComments[post.id]?.length === 0 ? (
                             <p className="text-zinc-500 text-2xs font-bold text-center py-2">لا توجد تعليقات بعد. كن أول من يعلق!</p>
                           ) : (
                             expandedComments[post.id]?.map((comment: any) => (
-                              <div key={comment.id} className="flex gap-2.5 items-start text-left bg-zinc-950/30 p-2.5 rounded-xl border border-zinc-900/30">
+                              <div key={comment.id} className="flex gap-2.5 items-start text-start bg-zinc-950/30 p-2.5 rounded-xl border border-zinc-900/30">
                                 <UserAvatar
                                   username={comment.username}
                                   avatarUrl={comment.avatarUrl || comment.avatar_url}
@@ -625,7 +625,7 @@ export const News: React.FC<NewsProps> = ({
                                   <div className="flex justify-between items-start">
                                     <div>
                                       <span className="font-extrabold text-xs text-zinc-200">{comment.username}</span>
-                                      <span className="text-2xs bg-zinc-900 text-zinc-400 font-bold px-1.5 py-0.5 rounded ml-2 uppercase">
+                                      <span className="text-2xs bg-zinc-900 text-zinc-400 font-bold px-1.5 py-0.5 rounded ms-2 uppercase">
                                         {comment.batch}
                                       </span>
                                     </div>
@@ -670,7 +670,7 @@ export const News: React.FC<NewsProps> = ({
                               {commentSubmitting[post.id] ? (
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                               ) : (
-                                <Send className="w-3.5 h-3.5" />
+                                <Send className="rtl:-scale-x-100 w-3.5 h-3.5" />
                               )}
                             </button>
                           </div>
@@ -698,7 +698,7 @@ export const News: React.FC<NewsProps> = ({
             {/* Close button */}
             <button
               onClick={() => setActiveLightboxImg(null)}
-              className="absolute top-6 right-6 w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 text-white flex items-center justify-center cursor-pointer transition-all hover:scale-105 hover:bg-zinc-800 active:scale-95 z-[999999]"
+              className="absolute top-6 end-6 w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 text-white flex items-center justify-center cursor-pointer transition-all hover:scale-105 hover:bg-zinc-800 active:scale-95 z-[999999]"
             >
               <X className="w-5 h-5" />
             </button>
@@ -709,7 +709,7 @@ export const News: React.FC<NewsProps> = ({
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               src={activeLightboxImg}
-              alt="Expanded preview"
+              alt="معاينة"
               className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-zinc-800/40"
               onClick={(e) => e.stopPropagation()} // Stop closing on image click
             />

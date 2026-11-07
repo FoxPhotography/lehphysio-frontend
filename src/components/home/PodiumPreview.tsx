@@ -20,14 +20,14 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-2.5 text-lg font-black text-white">
           <Trophy className="w-5 h-5 text-brand-orange" />
-          <span>Leaderboard</span>
+          <span>الترتيب</span>
         </span>
         <button 
           className="flex items-center gap-1 text-xs font-bold text-brand-orange hover:text-brand-amber cursor-pointer transition-colors" 
           onClick={() => setCurrentPage('leaderboard')}
         >
-          <span>View All</span>
-          <ChevronLeft className="w-4 h-4" />
+          <span>عرض الكل</span>
+          <ChevronLeft className="rtl:-scale-x-100 w-4 h-4" />
         </button>
       </div>
 
@@ -45,7 +45,7 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
                   size={56} 
                 />
               </div>
-              <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-zinc-400 text-black flex items-center justify-center shadow-lg z-20">
+              <span className="absolute -bottom-1 -end-1 w-5 h-5 rounded-full bg-zinc-400 text-black flex items-center justify-center shadow-lg z-20">
                 <Medal className="w-3.5 h-3.5" />
               </span>
             </div>
@@ -71,7 +71,7 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
                   size={68} 
                 />
               </div>
-              <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-lg z-20">
+              <span className="absolute -bottom-1 -end-1 w-5 h-5 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-lg z-20">
                 <Crown className="w-3.5 h-3.5" />
               </span>
             </div>
@@ -97,7 +97,7 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
                   size={52} 
                 />
               </div>
-              <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-700 text-white flex items-center justify-center shadow-lg z-20">
+              <span className="absolute -bottom-1 -end-1 w-5 h-5 rounded-full bg-amber-700 text-white flex items-center justify-center shadow-lg z-20">
                 <Star className="w-3.5 h-3.5" />
               </span>
             </div>

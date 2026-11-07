@@ -168,7 +168,7 @@ export const Home: React.FC<HomeProps> = ({
         >
           <Gift className="w-5 h-5 text-brand-orange shrink-0" />
           <span className="text-sm font-bold">
-            Welcome back! You earned <strong className="text-brand-orange">+{xpSettings.daily_login || 10} XP</strong> for your daily login.
+            أهلًا بيك تاني! كسبت <strong className="text-brand-orange" dir="ltr">+{xpSettings.daily_login || 10} XP</strong> عشان دخلت النهارده.
           </span>
         </m.div>
       )}
@@ -186,17 +186,17 @@ export const Home: React.FC<HomeProps> = ({
                   <Play className="w-5 h-5 fill-current ms-0.5" />
                 </span>
               </div>
-              <div className="md:col-span-3 flex flex-col gap-4 text-left">
+              <div className="md:col-span-3 flex flex-col gap-4 text-start">
                 <div className="flex gap-2">
                   <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
-                    New Episode
+                    حلقة جديدة
                   </span>
                   <span className="text-2xs font-bold tracking-wider bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md uppercase">
-                    EP.{latestEp.id}
+                    حلقة {latestEp.id}
                   </span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-black text-white leading-tight">
-                  {latestEp.title_ar || 'New Episode'}
+                  {latestEp.title_ar || 'حلقة جديدة'}
                 </h2>
                 <p className="text-zinc-400 text-sm font-medium line-clamp-2 leading-relaxed">
                   {latestEp.description || ''}
@@ -206,7 +206,7 @@ export const Home: React.FC<HomeProps> = ({
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-sm px-6 py-3 rounded-full cursor-pointer hover:shadow-orange-intense hover:scale-102 active:scale-98 transition-all shadow-orange-glow" 
                     onClick={() => navigateToEpisode(latestEp.id)}
                   >
-                    <Play className="w-4 h-4 fill-current" /> Watch Now
+                    <Play className="w-4 h-4 fill-current" /> اتفرج دلوقتي
                   </button>
                 </div>
               </div>
@@ -217,24 +217,24 @@ export const Home: React.FC<HomeProps> = ({
                 <Thumb width={480} />
                 <Play className="w-12 h-12 text-brand-orange relative z-10" />
               </div>
-              <div className="md:col-span-3 flex flex-col gap-4 text-left">
+              <div className="md:col-span-3 flex flex-col gap-4 text-start">
                 <div className="flex gap-2">
                   <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
-                    Podcast
+                    البودكاست
                   </span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-black text-white leading-tight">
                   Leh Physio?
                 </h2>
                 <p className="text-zinc-400 text-sm font-medium leading-relaxed">
-                  Listen. Learn. Elevate your level.
+                  اسمع. اتعلم. علّي مستواك.
                 </p>
                 <div className="mt-2">
                   <button 
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-sm px-6 py-3 rounded-full cursor-pointer hover:shadow-orange-intense hover:scale-102 active:scale-98 transition-all shadow-orange-glow" 
                     onClick={() => setCurrentPage('episodes')}
                   >
-                    <Play className="w-4 h-4 fill-current" /> Browse Episodes
+                    <Play className="w-4 h-4 fill-current" /> تصفّح الحلقات
                   </button>
                 </div>
               </div>
@@ -245,17 +245,17 @@ export const Home: React.FC<HomeProps> = ({
 
       {/* Streak Panel */}
       <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="text-left">
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">Leh Physio?</h1>
-          <p className="text-zinc-400 text-xs md:text-sm font-medium mt-1">Listen. Learn. Elevate your level.</p>
+        <div className="text-start">
+          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">ليه فيزيو؟</h1>
+          <p className="text-zinc-400 text-xs md:text-sm font-medium mt-1">اسمع. اتعلم. علّي مستواك.</p>
         </div>
         <button 
           className="self-start sm:self-auto flex items-center gap-2.5 px-5 py-2.5 rounded-2xl text-brand-amber font-extrabold text-sm border border-brand-orange/30 fire-glow-badge cursor-pointer transition-all duration-300 hover:scale-103 active:scale-97 group" 
           onClick={() => setCurrentPage('profile')}
         >
           <Flame className="w-5 h-5 text-brand-orange fill-current animate-fire-pulse" />
-          <span>{activeStreak} Day Streak</span>
-          <ChevronLeft className="w-4 h-4 text-zinc-500 group-hover:-translate-x-0.5 transition-transform" />
+          <span>{activeStreak} يوم متتالي</span>
+          <ChevronLeft className="rtl:-scale-x-100 w-4 h-4 text-zinc-500 group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5 transition-transform" />
         </button>
       </section>
 
@@ -283,7 +283,7 @@ export const Home: React.FC<HomeProps> = ({
         <div className="flex items-center">
           <span className="flex items-center gap-2.5 text-lg font-black text-white">
             <ListVideo className="w-5 h-5 text-brand-orange" />
-            <span>All Episodes</span>
+            <span>كل الحلقات</span>
           </span>
         </div>
         
@@ -301,12 +301,12 @@ export const Home: React.FC<HomeProps> = ({
                   className="w-10 h-10 rounded-full bg-brand-orange text-black flex items-center justify-center hover:scale-110 active:scale-95 cursor-pointer relative z-10 transition-transform shadow-lg shrink-0" 
                   onClick={(e) => { e.stopPropagation(); navigateToEpisode(ep.id); }}
                 >
-                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                  <Play className="w-4 h-4 fill-current ms-0.5" />
                 </button>
               </div>
-              <div className="text-left">
+              <div className="text-start">
                 <h4 dir="auto" className="text-sm font-black text-white truncate">{ep.title_ar}</h4>
-                <div className="text-2xs text-zinc-500 font-extrabold mt-1">Episode {ep.id}</div>
+                <div className="text-2xs text-zinc-500 font-extrabold mt-1">الحلقة {ep.id}</div>
               </div>
             </div>
           ))}
@@ -318,19 +318,19 @@ export const Home: React.FC<HomeProps> = ({
         <div className="flex flex-row items-center justify-between w-full gap-2">
           <span className="flex items-center gap-2 text-sm sm:text-lg font-black text-white shrink">
             <Sparkles className="w-4 h-4 sm:w-5 h-5 text-brand-orange animate-pulse shrink-0" />
-            <span className="truncate">Official News & Announcements</span>
+            <span className="truncate">الأخبار والإعلانات الرسمية</span>
           </span>
           <button 
             onClick={() => setCurrentPage('news')} 
             className="text-2xs sm:text-xs font-black text-brand-orange hover:text-brand-amber transition-colors flex items-center gap-1 cursor-pointer bg-brand-orange/5 px-2.5 py-1.5 rounded-xl border border-brand-orange/15 hover:border-brand-orange/30 shrink-0 whitespace-nowrap"
           >
-            View All
+            عرض الكل
           </button>
         </div>
         
         {newsPosts.length === 0 ? (
           <div className="glass-card p-6 text-center text-zinc-500 text-xs font-bold border border-dashed border-zinc-800">
-            No official announcements yet. Stay tuned! 📢
+            مفيش إعلانات رسمية لسه. خليك متابع! 📢
           </div>
         ) : (
           <div className="flex gap-4 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory">
@@ -341,12 +341,12 @@ export const Home: React.FC<HomeProps> = ({
                 onClick={() => setCurrentPage('news')}
               >
                 {/* Visual Glow */}
-                <div className="absolute top-0 right-0 w-24 h-24 bg-brand-orange/5 blur-2xl rounded-full" />
+                <div className="absolute top-0 end-0 w-24 h-24 bg-brand-orange/5 blur-2xl rounded-full" />
                 
-                <div className="space-y-2 text-left relative z-10">
+                <div className="space-y-2 text-start relative z-10">
                   <div className="flex items-center justify-between text-2xs font-black text-brand-orange uppercase tracking-wider">
-                    <span>LehPhysio Official</span>
-                    <span>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    <span>ليه فيزيو — رسمي</span>
+                    <span>{new Date(post.created_at).toLocaleDateString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric' })}</span>
                   </div>
                   <h4 className="text-xs font-extrabold text-white leading-relaxed line-clamp-2">
                     {post.title || post.content.substring(0, 40) + '...'}
@@ -369,7 +369,7 @@ export const Home: React.FC<HomeProps> = ({
                     </div>
                     <span className="text-2xs font-black text-zinc-300 truncate max-w-[120px]">@{post.username}</span>
                   </div>
-                  <span className="text-2xs font-extrabold text-brand-orange group-hover:translate-x-1 transition-transform">Read Details →</span>
+                  <span className="text-2xs font-extrabold text-brand-orange group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">اقرا التفاصيل ←</span>
                 </div>
               </div>
             ))}
@@ -382,22 +382,22 @@ export const Home: React.FC<HomeProps> = ({
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2.5 text-lg font-black text-white">
             <MessageSquare className="w-5 h-5 text-brand-orange" />
-            <span>Community Feed</span>
+            <span>مجتمع الطلبة</span>
           </span>
           {isRefreshingFeed && (
             <div className="flex items-center gap-1.5 text-2xs text-zinc-500 font-bold uppercase tracking-wider animate-pulse">
               <div className="w-3 h-3 border-2 border-brand-orange border-t-transparent rounded-full animate-spin" />
-              <span>Updating...</span>
+              <span>بنحدّث…</span>
             </div>
           )}
         </div>
 
         {/* Question of the Day */}
         {dailyQuestion && dailyQuestion.active && dailyQuestion.question && (
-          <div className="glass-card p-5 text-left space-y-4 border border-brand-orange/20 relative overflow-hidden">
+          <div className="glass-card p-5 text-start space-y-4 border border-brand-orange/20 relative overflow-hidden">
             <div className="flex gap-2 relative z-10">
               <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
-                Question of the Day
+                سؤال اليوم
               </span>
             </div>
             <h3 className="text-base font-extrabold text-white leading-relaxed relative z-10">
@@ -423,7 +423,7 @@ export const Home: React.FC<HomeProps> = ({
                 return (
                   <button
                     key={idx}
-                    className={`w-full text-left p-3.5 rounded-xl border font-bold text-xs relative overflow-hidden transition-all duration-200 group active:scale-99 ${btnStyles} disabled:cursor-default`}
+                    className={`w-full text-start p-3.5 rounded-xl border font-bold text-xs relative overflow-hidden transition-all duration-200 group active:scale-99 ${btnStyles} disabled:cursor-default`}
                     onClick={() => handleAnswerQuestion && handleAnswerQuestion(dailyQuestion.question.id, idx)}
                     disabled={dailyQuestion.has_answered}
                   >
@@ -446,8 +446,8 @@ export const Home: React.FC<HomeProps> = ({
                 <Zap className="w-3.5 h-3.5 fill-current animate-fire-pulse" />
                 <span>
                   {dailyQuestion.user_answer?.is_correct 
-                    ? `✅ Correct Answer (+${dailyQuestion.user_answer?.xp_awarded} XP earned!)` 
-                    : `❌ Wrong Answer (+${dailyQuestion.user_answer?.xp_awarded} XP earned!)`
+                    ? `✅ إجابة صح (+${dailyQuestion.user_answer?.xp_awarded} XP)` 
+                    : `❌ إجابة غلط (+${dailyQuestion.user_answer?.xp_awarded} XP)`
                   }
                 </span>
               </p>
@@ -467,7 +467,7 @@ export const Home: React.FC<HomeProps> = ({
         {/* Posts feed */}
         <div className="space-y-4">
           {communityPosts.length === 0 ? (
-            <p className="text-zinc-500 text-xs md:text-sm font-medium py-12 text-center">No posts available at the moment.</p>
+            <p className="text-zinc-500 text-xs md:text-sm font-medium py-12 text-center">مفيش بوستات دلوقتي.</p>
           ) : (
             communityPosts.map((post: any) => (
               <PostCard

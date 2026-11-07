@@ -349,7 +349,7 @@ export const useAppSockets = ({
         has_answered: false,
         question
       });
-      showToast('⚡ Question of the Day is now live!');
+      showToast('⚡ سؤال اليوم نزل!');
       playChatSound('success');
     };
 

@@ -151,9 +151,9 @@ const getLogIcon = (type: string) => {
 
 // ─── Question type label ───────────────────────────────────────────────────────
 const getTypeLabel = (type: string) => {
-  if (type === 'muscle') return 'Muscle';
-  if (type === 'bone')   return 'Bone';
-  return 'Nerve';
+  if (type === 'muscle') return 'عضلة';
+  if (type === 'bone')   return 'عظمة';
+  return 'عصب';
 };
 
 // ─── Main Component ────────────────────────────────────────────────────────────
@@ -212,7 +212,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
       playChatSound('success');
       
       const shareData = {
-        title: 'Anatomy Online Challenge 🧠',
+        title: 'تحدي التشريح أونلاين 🧠',
         text: `تعال انضم لتحدي التشريح المباشر معي في Leh Physio! كود الغرفة: ${room.code} ⚡`,
         url: inviteUrl,
       };
@@ -298,7 +298,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         showToast(`تم طرد اللاعب @${targetUsername} بنجاح 🚨`);
         playChatSound('error');
       } else {
-        showToast(data.error || 'Failed to kick player.');
+        showToast(data.error || 'معرفناش نطرد اللاعب.');
       }
     } catch (err) {
       console.error(err);
@@ -308,21 +308,21 @@ export const PlayGame: React.FC<PlayGameProps> = ({
 
   // ─── Clean Room Chat Box ───────────────────────────────────────────────────────
   const renderChatBox = (maxH = '130px') => (
-    <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/40 p-3 text-left flex flex-col shrink-0">
+    <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/40 p-3 text-start flex flex-col shrink-0">
       <div className="flex items-center justify-between mb-1.5 px-1">
         <div className="flex items-center gap-1.5">
           <MessageSquare className="w-3.5 h-3.5 text-zinc-400" />
-          <span className="text-2xs font-extrabold text-zinc-400 uppercase tracking-wider">Room Chat</span>
+          <span className="text-2xs font-extrabold text-zinc-400 uppercase tracking-wider">شات الغرفة</span>
         </div>
       </div>
 
       <div
-        className="flex flex-col gap-1.5 overflow-y-auto pr-1 mb-2 scrollbar-thin scrollbar-thumb-white/10"
+        className="flex flex-col gap-1.5 overflow-y-auto pe-1 mb-2 scrollbar-thin scrollbar-thumb-white/10"
         style={{ maxHeight: maxH }}
       >
         {(!room.answersLog || room.answersLog.length === 0) ? (
           <div className="text-zinc-600 text-xs font-semibold py-2.5 text-center">
-            No messages yet. Say hi or guess the structure! 👋
+            مفيش رسايل لسه. سلّم على صحابك أو خمّن الإجابة! 👋
           </div>
         ) : (
           room.answersLog.map((log: any, idx: number) => (
@@ -364,7 +364,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             data-bwignore="true"
             data-form-type="other"
             className="w-full bg-transparent text-sm text-white placeholder-zinc-500 focus:outline-none resize-none overflow-y-auto leading-relaxed py-1.5 px-3 min-h-[32px] max-h-[85px] font-medium"
-            placeholder={room.status === 'playing' && !room.roundWinner ? "Type your guess or message..." : "Type a message..."}
+            placeholder={room.status === 'playing' && !room.roundWinner ? "اكتب تخمينك أو رسالة…" : "اكتب رسالة…"}
             value={chatMessage}
             onChange={(e) => {
               setChatMessage(e.target.value);
@@ -387,7 +387,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           whileTap={{ scale: 0.95 }}
           className="h-11 w-11 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-[13px] flex items-center justify-center hover:opacity-90 transition-all shrink-0 cursor-pointer shadow-md mb-0.5"
         >
-          <Send className="w-4 h-4" />
+          <Send className="rtl:-scale-x-100 w-4 h-4" />
         </m.button>
       </form>
     </div>
@@ -396,7 +396,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   // ─── WAITING ROOM / LOBBY (FLAT FULL PAGE) ────────────────────────────────────
   if (room.status === 'waiting') {
     return (
-      <div className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-32 px-4 max-w-xl mx-auto text-left space-y-4">
+      <div className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-32 px-4 max-w-xl mx-auto text-start space-y-4">
         <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
 
         {/* Top Header Bar */}
@@ -404,9 +404,9 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-2xs font-extrabold uppercase tracking-wider mb-1">
               <Loader2 className="w-3 h-3 animate-spin" />
-              <span>Waiting for Players</span>
+              <span>مستنيين اللاعبين</span>
             </div>
-            <h2 className="text-xl font-black text-white">Anatomy Online Challenge</h2>
+            <h2 className="text-xl font-black text-white">تحدي التشريح أونلاين</h2>
           </div>
           <m.button
             whileHover={{ scale: 1.03 }}
@@ -414,14 +414,14 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             onClick={handleLeaveGameRoom}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/10 cursor-pointer transition-colors shrink-0"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Leave</span>
+            <LogOut className="rtl:-scale-x-100 w-3.5 h-3.5" />
+            <span>خروج</span>
           </m.button>
         </div>
 
         {/* Room Code Card */}
         <div className="text-center py-5 bg-zinc-900/50 rounded-2xl border border-zinc-800/70">
-          <p className="text-2xs text-zinc-500 font-extrabold uppercase tracking-widest mb-1.5">Room Code</p>
+          <p className="text-2xs text-zinc-500 font-extrabold uppercase tracking-widest mb-1.5">كود الغرفة</p>
           <m.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
@@ -435,7 +435,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             <span className="text-3xl font-black tracking-[6px] text-brand-orange font-mono">{room.code}</span>
             <Copy className="w-4 h-4 text-zinc-400" />
           </m.button>
-          <p className="text-xs text-zinc-500 mt-2 font-medium">Click to copy and share with friends</p>
+          <p className="text-xs text-zinc-500 mt-2 font-medium">دوس عشان تنسخ الكود وتبعته لصحابك</p>
         </div>
 
         {/* Invite Link Bar */}
@@ -450,7 +450,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             onClick={handleCopyInviteUrl}
             className="px-4 py-2.5 rounded-xl bg-brand-orange/15 border border-brand-orange/30 text-brand-orange text-xs font-black hover:bg-brand-orange/25 cursor-pointer transition-colors shrink-0"
           >
-            Copy
+            نسخ
           </m.button>
         </div>
 
@@ -483,7 +483,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                   isHost && (
                     <button
                       onClick={() => handleKickPlayer(p.username)}
-                      title="Kick Player"
+                      title="اطرد اللاعب"
                       className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg cursor-pointer transition-colors shrink-0"
                     >
                       <UserMinus className="w-3.5 h-3.5" />
@@ -506,7 +506,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               whileTap={{ scale: room.players.length < 2 ? 1 : 0.98 }}
               onClick={() => {
                 if (room.players.length < 2) {
-                  showToast('You need at least 2 players to start the challenge!');
+                  showToast('لازم يبقى فيه لاعبين على الأقل عشان التحدي يبدأ!');
                   playChatSound('error');
                 } else {
                   handleStartGame();
@@ -520,13 +520,13 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               }`}
             >
               <Play className="w-5 h-5 fill-current" />
-              <span>Start Challenge</span>
-              {room.players.length < 2 && <span className="text-xs font-medium ml-1">(Need 2+ players)</span>}
+              <span>ابدأ التحدي</span>
+              {room.players.length < 2 && <span className="text-xs font-medium ms-1">(محتاج لاعبين أو أكتر)</span>}
             </m.button>
           ) : (
             <div className="flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 text-zinc-400">
               <Loader2 className="w-4 h-4 animate-spin text-brand-orange" />
-              <span className="text-xs font-bold">Waiting for host to start the challenge...</span>
+              <span className="text-xs font-bold">مستنيين صاحب الغرفة يبدأ…</span>
             </div>
           )}
         </div>
@@ -543,7 +543,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     const timerColor = timeLeft <= 5 ? 'text-red-400 animate-pulse' : timeLeft <= 10 ? 'text-amber-400' : 'text-white';
 
     return (
-      <div className="w-full max-w-xl mx-auto text-left pt-20 xl:pt-8 pb-8 px-4 flex flex-col space-y-3">
+      <div className="w-full max-w-xl mx-auto text-start pt-20 xl:pt-8 pb-8 px-4 flex flex-col space-y-3">
         <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
 
         {/* Top Arena Header Bar */}
@@ -554,7 +554,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             </div>
             <h3 className="text-base font-black text-white flex items-center gap-1.5">
               <Zap className="w-4 h-4 text-brand-orange fill-current" />
-              <span>Guess the Structure</span>
+              <span>خمّن التركيب</span>
             </h3>
           </div>
           <div className="flex items-center gap-2">
@@ -575,9 +575,9 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               whileTap={{ scale: 0.95 }}
               onClick={handleLeaveGameRoom}
               className="p-2 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 cursor-pointer transition-colors"
-              title="Leave game"
+              title="اخرج من اللعبة"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="rtl:-scale-x-100 w-4 h-4" />
             </m.button>
           </div>
         </div>
@@ -613,7 +613,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             >
               {room.roundWinner ? (
                 <>
-                  <span className="text-zinc-400 font-normal">Answer: </span>
+                  <span className="text-zinc-400 font-normal">الإجابة: </span>
                   <span className="text-emerald-400 font-extrabold text-lg">{question?.structure}</span>
                 </>
               ) : currentHint}
@@ -632,11 +632,11 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             >
               <h4 className="text-sm md:text-base font-black text-brand-amber">
                 {room.roundWinner === 'timeout'
-                  ? '⏱️ Time is up!'
+                  ? '⏱️ الوقت خلص!'
                   : `🎉 @${room.roundWinner} answered correctly!`}
               </h4>
               <p className="text-xs text-zinc-300">
-                Correct answer: <strong className="text-emerald-400 font-extrabold">{question?.structure}</strong>
+                الإجابة الصح: <strong className="text-emerald-400 font-extrabold">{question?.structure}</strong>
               </p>
               {isHost && room.currentRound < room.rounds && (
                 <m.button
@@ -645,8 +645,8 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                   onClick={handleNextRound}
                   className="mt-3 w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-sm cursor-pointer shadow-md"
                 >
-                  <span>Next Round</span>
-                  <ChevronRight className="w-4 h-4" />
+                  <span>الجولة الجاية</span>
+                  <ChevronRight className="rtl:-scale-x-100 w-4 h-4" />
                 </m.button>
               )}
             </m.div>
@@ -680,7 +680,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     const sorted = [...room.players].sort((a, b) => b.score - a.score);
 
     return (
-      <div className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-32 px-4 max-w-md mx-auto text-left space-y-4">
+      <div className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-32 px-4 max-w-md mx-auto text-start space-y-4">
         <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
 
         {/* Trophy Icon */}
@@ -694,14 +694,14 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             <Trophy className="w-10 h-10 text-brand-amber fill-current" />
           </m.div>
 
-          <h2 className="text-2xl font-black text-white">Challenge Ended</h2>
+          <h2 className="text-2xl font-black text-white">التحدي خلص</h2>
           <p className="text-xs text-zinc-400 mt-1">
-            <span className="text-brand-amber font-black">@{room.finalWinner || 'Nobody'}</span> was crowned champion! 👑
+            <span className="text-brand-amber font-black">@{room.finalWinner || 'محدش'}</span> كسب التحدي! 👑
           </p>
         </div>
 
         {/* Final Leaderboard */}
-        <div className="space-y-2 text-left">
+        <div className="space-y-2 text-start">
           {sorted.map((p: any, idx: number) => (
             <m.div
               key={p.username}
@@ -747,7 +747,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-black text-xs md:text-sm hover:bg-emerald-500/25 cursor-pointer transition-colors"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>Play Again (Same Room)</span>
+              <span>العب تاني (نفس الغرفة)</span>
             </m.button>
           )}
           <m.button
@@ -756,8 +756,8 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             onClick={handleLeaveGameRoom}
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-red-500/20 text-red-400 font-black text-xs md:text-sm hover:bg-red-500/10 cursor-pointer transition-colors"
           >
-            <LogOut className="w-4 h-4" />
-            <span>Leave Room</span>
+            <LogOut className="rtl:-scale-x-100 w-4 h-4" />
+            <span>اخرج من الغرفة</span>
           </m.button>
         </div>
       </div>

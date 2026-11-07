@@ -44,7 +44,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ setCurrentPage, user
             />
           ) : (
             <button className={iconBtn} onClick={() => setCurrentPage('login')} aria-label="تسجيل الدخول" title="تسجيل الدخول">
-              <LogIn className="w-[18px] h-[18px]" />
+              <LogIn className="rtl:-scale-x-100 w-[18px] h-[18px]" />
             </button>
           )}
         </div>

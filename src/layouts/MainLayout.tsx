@@ -64,12 +64,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
       />
 
       {/* Main Column Wrapper */}
-      <div className="app-body-wrapper xl:pl-[280px]">
+      <div className="app-body-wrapper xl:ps-[280px]">
         {/* Offline Banner */}
         {isOffline && (
           <div className="bg-red-600/90 text-white text-center py-1.5 px-4 text-xs font-black flex items-center justify-center gap-2 z-[999] border-b border-red-500/20 shadow-lg shrink-0">
             <WifiOff className="w-3.5 h-3.5" />
-            <span>You are currently offline. Showing cached content.</span>
+            <span>انت أوفلاين دلوقتي، بنعرض آخر محتوى اتحمّل.</span>
           </div>
         )}
 
@@ -114,7 +114,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.9 }}
             transition={{ type: 'spring', damping: 20, stiffness: 200 }}
-            className="fixed bottom-20 md:bottom-6 right-4 left-4 md:left-auto md:w-[400px] z-[9999] rounded-2xl border border-brand-orange/25 bg-zinc-950/95 p-5 shadow-[0_8px_40px_rgba(242,101,34,0.15)] flex flex-col gap-4 overflow-hidden"
+            className="fixed bottom-20 md:bottom-6 end-4 start-4 md:start-auto md:w-[400px] z-[9999] rounded-2xl border border-brand-orange/25 bg-zinc-950/95 p-5 shadow-[0_8px_40px_rgba(242,101,34,0.15)] flex flex-col gap-4 overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-orange/[0.03] to-transparent animate-shimmer pointer-events-none" />
 
@@ -128,13 +128,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
                   <h4 className="text-sm font-black text-white leading-tight">Leh Physio</h4>
                   <button 
                     onClick={dismissInstallBanner}
-                    className="text-zinc-600 hover:text-zinc-300 cursor-pointer transition-colors p-0.5 -mt-1 -mr-1 shrink-0"
+                    className="text-zinc-600 hover:text-zinc-300 cursor-pointer transition-colors p-0.5 -mt-1 -me-1 shrink-0"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
                 <p className="text-xs text-zinc-400 font-medium leading-relaxed mt-1">
-                  Install the official Leh Physio app for a better experience.
+                  ثبّت تطبيق ليه فيزيو على موبايلك عشان تجربة أسرع وإشعارات فورية.
                 </p>
               </div>
             </div>
@@ -145,13 +145,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
                 className="flex-1 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs py-3 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-[0.97] transition-all shadow-orange-glow flex items-center justify-center gap-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span>Install App</span>
+                <span>ثبّت التطبيق</span>
               </button>
               <button 
                 onClick={dismissInstallBanner}
                 className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/60 text-zinc-400 font-bold text-xs py-3 px-5 rounded-xl cursor-pointer transition-all active:scale-[0.97]"
               >
-                Later
+                بعدين
               </button>
             </div>
           </m.div>
@@ -163,7 +163,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 80, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed bottom-20 md:bottom-6 right-4 left-4 md:left-auto md:w-[420px] z-[9999] rounded-3xl border border-white/10 bg-zinc-950/95 p-6 shadow-[0_12px_45px_rgba(0,0,0,0.8)] flex flex-col gap-4 text-left font-sans"
+            className="fixed bottom-20 md:bottom-6 end-4 start-4 md:start-auto md:w-[420px] z-[9999] rounded-3xl border border-white/10 bg-zinc-950/95 p-6 shadow-[0_12px_45px_rgba(0,0,0,0.8)] flex flex-col gap-4 text-start font-sans"
           >
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-brand-orange/30 shadow-lg shadow-brand-orange/10 shrink-0 bg-brand-orange">
@@ -175,13 +175,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
                   <h4 className="text-sm font-black text-white leading-tight">LehPhysio? - ليه فيزيو؟</h4>
                   <button 
                     onClick={dismissIOSInstall}
-                    className="text-zinc-500 hover:text-zinc-300 cursor-pointer transition-colors p-0.5 -mt-1 -mr-1 shrink-0"
+                    className="text-zinc-500 hover:text-zinc-300 cursor-pointer transition-colors p-0.5 -mt-1 -me-1 shrink-0"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
                 <p className="text-xs text-zinc-400 font-bold leading-relaxed mt-1">
-                  Install the official Leh Physio app for a better experience.
+                  ثبّت تطبيق ليه فيزيو على موبايلك عشان تجربة أسرع وإشعارات فورية.
                 </p>
               </div>
             </div>
@@ -345,10 +345,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
                   className="space-y-1.5"
                 >
                     <h1 className={`text-4xl ${tier.textClass} tracking-tighter leading-none select-none`}>
-                      {streakOverlay.days}-Day Streak!
+                      {streakOverlay.days} يوم متتالي!
                     </h1>
                   <p className="text-sm font-bold text-zinc-400 select-none uppercase tracking-wide">
-                    Your Current Active Streak
+                    أيامك المتتالية
                   </p>
                 </m.div>
 
@@ -360,7 +360,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
                 >
                   <div className="w-5 h-5 rounded-full bg-green-500 text-black flex items-center justify-center font-black text-2xs">✓</div>
                 <span className="text-xs font-black select-none">
-                  <strong className="text-green-400">+{streakOverlay.xpEarned} XP</strong> Earned!
+                  <strong className="text-green-400" dir="ltr">+{streakOverlay.xpEarned} XP</strong> اتضافت!
                 </span>
                 </m.div>
 
@@ -379,7 +379,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
                     'bg-gradient-to-r from-brand-orange to-brand-amber text-black shadow-orange-glow hover:shadow-orange-intense'
                   }`}
                 >
-                  <span>Keep Grinding!</span>
+                  <span>كمّل كده!</span>
                 </m.button>
               </div>
             </m.div>

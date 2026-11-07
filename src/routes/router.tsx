@@ -300,7 +300,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           handleLikePost={handleLikePost}
           handleDeletePost={handleDeletePost}
           handleCancelPostRevision={handleCancelPostRevision}
-          handleSharePost={handleSharePost || ((id) => showToast('Post link copied to clipboard! 🔗'))}
+          handleSharePost={handleSharePost || ((id) => showToast('اتنسخ لينك البوست! 🔗'))}
           handleUploadImage={handleUploadImage}
           usernames={usernamesDirectory}
           showToast={showToast}
@@ -344,7 +344,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           newsPosts={newsPosts}
           handleLikePost={handleLikePost}
           handleDeletePost={handleDeletePost}
-          handleSharePost={handleSharePost || ((id) => showToast('Post link copied to clipboard! 🔗'))}
+          handleSharePost={handleSharePost || ((id) => showToast('اتنسخ لينك البوست! 🔗'))}
           handleUploadImage={handleUploadImage}
           handleEditPost={handleEditPost}
           setCurrentPage={setCurrentPage}

@@ -149,7 +149,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
     <HighlightWrapper isHighlighted={isPostHighlighted} className="rounded-2xl">
       <div 
         id={`post-${post.id}`} 
-        className={`glass-card p-5 text-left relative transition-all ${
+        className={`glass-card p-5 text-start relative transition-all ${
           hasPendingRevision || isPendingPost 
             ? 'border-dashed border-zinc-700/60' 
             : isRejectedPost 
@@ -174,24 +174,24 @@ const PostCardImpl: React.FC<PostCardProps> = ({
                 </span>
                 {hasPendingRevision && (
                   <span className="text-2xs font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/25 px-2 py-0.5 rounded-full">
-                    Pending Review
+                    قيد المراجعة
                   </span>
                 )}
                 {isPendingPost && (
                   <span className="text-2xs font-black uppercase tracking-wider bg-yellow-500/15 text-yellow-400 border border-yellow-500/25 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Clock className="w-2.5 h-2.5" />
-                    <span>Pending Approval</span>
+                    <span>مستني الموافقة</span>
                   </span>
                 )}
                 {isRejectedPost && (
                   <span className="text-2xs font-black uppercase tracking-wider bg-red-500/15 text-red-400 border border-red-500/25 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <XCircle className="w-2.5 h-2.5" />
-                    <span>Rejected</span>
+                    <span>اترفض</span>
                   </span>
                 )}
               </div>
               <span className="text-2xs text-zinc-500 font-semibold mt-0.5 block">
-                {stripEmojis(post.rank.name_en)} · {new Date(post.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                {stripEmojis(post.rank.name_ar || post.rank.name_en)} · {new Date(post.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
               </span>
             </div>
           </div>
@@ -205,7 +205,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
                 }}
                 className="border border-red-500/25 bg-red-500/5 hover:bg-red-500/10 text-red-400 font-bold text-2xs py-1.5 px-3 rounded-xl cursor-pointer active:scale-95 transition-all"
               >
-                Cancel Edit
+                إلغاء التعديل
               </button>
             )}
             {/* 3-dot post options menu */}
@@ -228,7 +228,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
                         initial={{ opacity: 0, scale: 0.95, y: -5 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                        className="absolute right-0 top-9 z-20 bg-zinc-950 border border-zinc-800 rounded-xl p-1.5 flex flex-col gap-1 min-w-[120px] shadow-2xl"
+                        className="absolute end-0 top-9 z-20 bg-zinc-950 border border-zinc-800 rounded-xl p-1.5 flex flex-col gap-1 min-w-[120px] shadow-2xl"
                       >
                         {(post.user_id === user.id || post.username === user.username || user.role === 'admin' || user.role === 'owner') ? (
                           <>
@@ -239,20 +239,20 @@ const PostCardImpl: React.FC<PostCardProps> = ({
                                 setEditPostImageUrl(post.image_url || '');
                                 setOpenPostMenu(false);
                               }}
-                              className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-brand-amber rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                              className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-brand-amber rounded-lg cursor-pointer hover:bg-zinc-900/60 text-start transition-colors"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
-                              <span>Edit</span>
+                              <span>تعديل</span>
                             </button>
                             <button
                               onClick={() => {
                                 handleDeletePost(post.id);
                                 setOpenPostMenu(false);
                               }}
-                              className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                              className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-start transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
-                              <span>Delete</span>
+                              <span>حذف</span>
                             </button>
                           </>
                         ) : (
@@ -263,10 +263,10 @@ const PostCardImpl: React.FC<PostCardProps> = ({
                               }
                               setOpenPostMenu(false);
                             }}
-                            className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-amber-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-left transition-colors"
+                            className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-amber-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-start transition-colors"
                           >
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                            <span>Report Post</span>
+                            <span>إبلاغ عن البوست</span>
                           </button>
                         )}
                       </m.div>
@@ -288,11 +288,11 @@ const PostCardImpl: React.FC<PostCardProps> = ({
 
             {editPostImageUrl && (
               <div className="relative rounded-xl overflow-hidden max-w-[200px] border border-zinc-800">
-                <img src={editPostImageUrl} alt="Edit preview" className="w-full max-h-[140px] object-cover" />
+                <img src={editPostImageUrl} alt="معاينة" className="w-full max-h-[140px] object-cover" />
                 <button
                   type="button"
                   onClick={() => setEditPostImageUrl('')}
-                  className="absolute top-2 right-2 bg-black/80 hover:bg-black/90 text-white border-none rounded-full w-6 h-6 flex items-center justify-center cursor-pointer transition-colors"
+                  className="absolute top-2 end-2 bg-black/80 hover:bg-black/90 text-white border-none rounded-full w-6 h-6 flex items-center justify-center cursor-pointer transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -302,7 +302,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
             <div className="flex justify-between items-center">
               <label className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-2xs py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5">
                 <ImageIcon className="w-3.5 h-3.5 shrink-0" />
-                <span>{isUploadingEditImage ? 'Uploading...' : 'Change Image'}</span>
+                <span>{isUploadingEditImage ? 'بنرفع…' : 'غيّر الصورة'}</span>
                 <input 
                   type="file" 
                   accept="image/*" 
@@ -317,14 +317,14 @@ const PostCardImpl: React.FC<PostCardProps> = ({
                   className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-2xs py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all" 
                   onClick={() => setIsEditing(false)}
                 >
-                  Cancel
+                  إلغاء
                 </button>
                 <button 
                   className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-xs py-2 px-4 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow" 
                   onClick={handleSaveEdit}
                   disabled={!editPostContent.trim() || isUploadingEditImage}
                 >
-                  Save
+                  حفظ
                 </button>
               </div>
             </div>
@@ -371,7 +371,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
             {isPendingPost && (
               <div className="mt-4 p-3 rounded-xl border border-yellow-500/10 bg-yellow-500/[0.02] flex items-center gap-2 text-yellow-400/80 font-bold text-2xs uppercase tracking-wider">
                 <Clock className="w-3.5 h-3.5 shrink-0" />
-                <span>Waiting for moderation approval...</span>
+                <span>مستني موافقة المشرفين…</span>
               </div>
             )}
 
@@ -379,15 +379,15 @@ const PostCardImpl: React.FC<PostCardProps> = ({
               <div className="mt-4 p-4 rounded-xl border border-red-500/20 bg-red-950/10 flex flex-col gap-1.5">
                 <div className="flex items-center gap-1.5 text-red-400 font-extrabold text-2xs uppercase tracking-wide">
                   <XCircle className="w-4 h-4 shrink-0" />
-                  <span>Post Rejected</span>
+                  <span>البوست اترفض</span>
                 </div>
                 {post.rejection_reason && (
                   <p className="text-xs text-zinc-300 font-medium">
-                    <strong>Reason:</strong> {post.rejection_reason}
+                    <strong>السبب:</strong> {post.rejection_reason}
                   </p>
                 )}
                 <p className="text-2xs text-zinc-500 font-semibold leading-relaxed">
-                  You can edit this post to fix any issues and resubmit it.
+                  تقدر تعدّل البوست وتبعته تاني للمراجعة.
                 </p>
               </div>
             )}
@@ -480,7 +480,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
             {/* Close button */}
             <button
               onClick={() => setActiveLightboxImg(null)}
-              className="absolute top-6 right-6 w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 text-white flex items-center justify-center cursor-pointer transition-all hover:scale-105 hover:bg-zinc-800 active:scale-95 z-[999999]"
+              className="absolute top-6 end-6 w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 text-white flex items-center justify-center cursor-pointer transition-all hover:scale-105 hover:bg-zinc-800 active:scale-95 z-[999999]"
             >
               <X className="w-5 h-5" />
             </button>
@@ -491,7 +491,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               src={activeLightboxImg}
-              alt="Expanded preview"
+              alt="معاينة"
               className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-zinc-800/40"
               onClick={(e) => e.stopPropagation()}
             />

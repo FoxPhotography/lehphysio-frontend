@@ -36,8 +36,9 @@ export function formatMentions(
     if (part.startsWith('@')) {
       const username = part.substring(1);
       return (
-        <span
+        <bdi
           key={idx}
+          dir="ltr"
           className={customClass}
           onClick={(e) => {
             if (onMentionClick) {
@@ -47,7 +48,7 @@ export function formatMentions(
           }}
         >
           {part}
-        </span>
+        </bdi>
       );
     }
     return part;

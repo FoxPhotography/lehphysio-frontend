@@ -134,7 +134,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
       setIsFindingTargetMessage(false);
       setDeepLinkTarget(null);
       window.history.replaceState({}, '', '/chat');
-      showToast('Could not locate the message. It might have been deleted.');
+      showToast('الرسالة مش موجودة، ممكن تكون اتمسحت.');
     }
   }, [isFindingTargetMessage, chatMessages, deepLinkTarget]);
 
@@ -445,7 +445,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     const optimisticId = -Date.now();
     const optimisticMsg: ChatMessage = {
       id: optimisticId,
-      username: user?.username || 'Me',
+      username: user?.username || 'أنا',
       message: messageText,
       timestamp: new Date().toISOString(),
       avatar_url: user?.avatar_url || null,
@@ -473,12 +473,12 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
         chatMessagesRef.current = chatMessagesRef.current.map(m => m.id === optimisticId ? { ...m, id: data.id, isPending: false, equipped_frame: data.equipped_frame || m.equipped_frame, avatar_url: data.avatar_url || m.avatar_url } : m);
       } else {
         setChatMessages(prev => prev.filter(m => m.id !== optimisticId));
-        showToast(data.error || 'Failed to send message');
+        showToast(data.error || 'الرسالة ماتبعتتش');
       }
     } catch (err) {
       console.error(err);
       setChatMessages(prev => prev.filter(m => m.id !== optimisticId));
-      showToast('Network error: Failed to send message');
+      showToast('مشكلة في النت: الرسالة ماتبعتتش');
     }
   };
 
@@ -502,11 +502,11 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
       if (res.ok) {
         setChatInput('');
         setEditingMessage(null);
-        showToast('Message edited successfully');
+        showToast('الرسالة اتعدّلت');
         fetchChatMessages();
       } else {
         const data = await res.json();
-        showToast(data.error || 'Failed to edit message');
+        showToast(data.error || 'معرفناش نعدّل الرسالة');
       }
     } catch (err) {
       console.error(err);
@@ -516,17 +516,17 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
   const handleDeleteMessage = async (messageId: number) => {
     if (!token) return;
     showConfirm(
-      'Delete Message',
-      'Are you sure you want to delete this message?',
+      'حذف الرسالة',
+      'متأكد إنك عايز تمسح الرسالة؟',
       async () => {
         try {
           const res = await chatService.deleteMessage(messageId, token);
           if (res.ok) {
-            showToast('Message deleted');
+            showToast('الرسالة اتمسحت');
             fetchChatMessages();
           } else {
             const data = await res.json();
-            showToast(data.error || 'Failed to delete message');
+            showToast(data.error || 'معرفناش نمسح الرسالة');
           }
         } catch (err) {
           console.error(err);
@@ -538,19 +538,19 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
   const handleBulkDeleteMessages = async () => {
     if (!token || selectedMessageIds.length === 0) return;
     showConfirm(
-      'Delete Multiple Messages',
+      'حذف رسايل',
       `Are you sure you want to delete ${selectedMessageIds.length} selected messages?`,
       async () => {
         try {
           const res = await chatService.bulkDeleteMessages(selectedMessageIds, token);
           if (res.ok) {
-            showToast('Selected messages deleted');
+            showToast('الرسايل اتمسحت');
             setIsMultiSelectMode(false);
             setSelectedMessageIds([]);
             fetchChatMessages();
           } else {
             const data = await res.json();
-            showToast(data.error || 'Failed to delete messages');
+            showToast(data.error || 'معرفناش نمسح الرسايل');
           }
         } catch (err) {
           console.error(err);

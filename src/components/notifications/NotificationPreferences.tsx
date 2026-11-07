@@ -12,32 +12,32 @@ const PREF_OPTIONS: {
 }[] = [
   {
     key: 'comments',
-    label: 'Comments',
-    description: 'Notify me when someone comments on my posts',
+    label: 'التعليقات',
+    description: 'لما حد يعلّق على بوستاتي',
     icon: <MessageSquare className="w-4 h-4" />,
   },
   {
     key: 'replies',
-    label: 'Replies',
-    description: 'Notify me when someone replies to my comments',
-    icon: <Reply className="w-4 h-4" />,
+    label: 'الردود',
+    description: 'لما حد يرد على تعليقاتي',
+    icon: <Reply className="rtl:-scale-x-100 w-4 h-4" />,
   },
   {
     key: 'mentions',
-    label: 'Mentions',
-    description: 'Notify me when someone mentions me using @',
+    label: 'المنشن',
+    description: 'لما حد يعملي منشن بـ @',
     icon: <AtSign className="w-4 h-4" />,
   },
   {
     key: 'community',
-    label: 'Community',
-    description: 'Notify me about new posts and new episodes',
+    label: 'المجتمع',
+    description: 'البوستات والحلقات الجديدة',
     icon: <Users className="w-4 h-4" />,
   },
   {
     key: 'moderation',
-    label: 'Moderation',
-    description: 'Notify me when my posts are approved or rejected',
+    label: 'المراجعة',
+    description: 'لما بوستاتي تتقبل أو تترفض',
     icon: <Shield className="w-4 h-4" />,
   },
 ];
@@ -66,10 +66,10 @@ export const NotificationPreferencesPanel: React.FC = () => {
             (e.currentTarget as HTMLElement).style.background = 'transparent';
           }}
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="rtl:-scale-x-100 w-4 h-4" />
         </button>
         <h3 className="text-sm font-black" style={{ color: 'var(--text-primary)' }}>
-          Notification Settings
+          إعدادات الإشعارات
         </h3>
       </div>
 
@@ -104,7 +104,7 @@ export const NotificationPreferencesPanel: React.FC = () => {
                 onClick={() => updatePreferences({ [key]: !isEnabled })}
                 className="relative shrink-0 cursor-pointer"
                 style={{ width: '40px', height: '22px' }}
-                aria-label={`Toggle ${label}`}
+                aria-label={`تفعيل/إيقاف: ${label}`}
               >
                 <div
                   className="absolute inset-0 rounded-full transition-colors duration-300"

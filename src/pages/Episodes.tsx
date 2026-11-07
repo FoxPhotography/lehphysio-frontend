@@ -19,13 +19,13 @@ export const Episodes: React.FC<EpisodesProps> = ({
   user
 }) => {
   return (
-    <div className="space-y-6 xl:pt-6 max-w-4xl mx-auto px-4 text-left">
+    <div className="space-y-6 xl:pt-6 max-w-4xl mx-auto px-4 text-start">
       <div className="flex items-center gap-2.5">
         <Tv className="w-6 h-6 text-brand-orange" />
-        <h2 className="text-xl md:text-2xl font-black text-white">Podcast Episodes</h2>
+        <h2 className="text-xl md:text-2xl font-black text-white">حلقات البودكاست</h2>
       </div>
       <p className="text-zinc-400 text-sm font-medium leading-relaxed max-w-2xl">
-        Watch the episodes to find the hidden secret code and solve the quiz to get +250 XP total per episode!
+        اتفرج على الحلقة، دوّر على الكود السري وحل الكويز، واكسب لحد +250 XP في كل حلقة!
       </p>
       
       <m.div 
@@ -53,8 +53,8 @@ export const Episodes: React.FC<EpisodesProps> = ({
             <div className="w-full aspect-[16/9] rounded-xl bg-zinc-900 relative overflow-hidden border border-zinc-800/40">
               <Thumb src={ep.thumbnail_url} width={420} eager={index === 0} />
               <div className="absolute inset-0 bg-black/20" />
-              <span className="absolute top-3 right-3 text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10">
-                Episode {ep.id}
+              <span className="absolute top-3 end-3 text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10">
+                الحلقة {ep.id}
               </span>
             </div>
             
@@ -70,10 +70,10 @@ export const Episodes: React.FC<EpisodesProps> = ({
             <div className="flex items-center justify-between pt-3 border-t border-zinc-900/60 text-2xs">
               <span className="flex items-center gap-1.5 font-extrabold text-brand-amber">
                 <Key className="w-3.5 h-3.5 fill-current" />
-                <span>Secret Code + Quiz</span>
+                <span>كود سري + كويز</span>
               </span>
               <span className="text-zinc-500 font-semibold">
-                {new Date(ep.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                {new Date(ep.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
               </span>
             </div>
 

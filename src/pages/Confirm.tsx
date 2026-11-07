@@ -27,8 +27,8 @@ export const Confirm: React.FC<ConfirmProps> = ({
   handleConfirm,
 }) => (
   <AuthLayout
-    title="Verify Account"
-    subtitle={confirmEmail ? `Enter the 6-digit code sent to ${confirmEmail}` : "Enter the 6-digit code sent to your email"}
+    title="تأكيد الحساب"
+    subtitle={confirmEmail ? `Enter the 6-digit code sent to ${confirmEmail}` : "اكتب الكود المكوّن من 6 أرقام اللي وصلك على الإيميل"}
   >
     <form id="verify-form" onSubmit={handleConfirm} className="space-y-5">
       <AuthError message={authError} />
@@ -51,7 +51,7 @@ export const Confirm: React.FC<ConfirmProps> = ({
         }}
       />
 
-      <AuthSubmitButton label="Verify Account" />
+      <AuthSubmitButton label="تأكيد الحساب" />
     </form>
   </AuthLayout>
 );

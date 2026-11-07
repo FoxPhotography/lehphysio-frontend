@@ -193,8 +193,9 @@ body.keyboard-open nav {
 /* Position notification panel next to sidebar on desktop */
 @media (min-width: 1280px) {
   :root {
-    --notification-panel-left: 296px;
-    --notification-panel-right: auto;
+    /* Sidebar sits on the right in RTL, so the panel opens next to it on the right */
+    --notification-panel-left: auto;
+    --notification-panel-right: 296px;
     --notification-panel-top: 80px;
     --notification-panel-max-height: min(80vh, 600px);
     --notification-panel-width: 380px;

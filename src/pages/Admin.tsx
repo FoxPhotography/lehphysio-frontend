@@ -90,7 +90,7 @@ const SectionTitle: React.FC<{ icon: React.ReactNode; label: string; count?: num
     <h3 className="text-[15px] font-black text-white">
       {label}
       {count !== undefined && (
-        <span className="ml-2 px-1.5 py-0.5 rounded-md bg-orange-500/15 text-orange-400 text-xs font-bold">
+        <span className="ms-2 px-1.5 py-0.5 rounded-md bg-orange-500/15 text-orange-400 text-xs font-bold">
           {count}
         </span>
       )}
@@ -122,7 +122,7 @@ const AdminSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { la
       >
         {children}
       </select>
-      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 pointer-events-none" />
+      <ChevronDown className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 pointer-events-none" />
     </div>
   </div>
 );
@@ -883,7 +883,7 @@ export const Admin: React.FC<AdminProps> = ({
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-bold text-white truncate">
-                        <span className="text-orange-400 font-mono mr-1.5 font-bold">#{ep.id}</span>
+                        <span className="text-orange-400 font-mono me-1.5 font-bold">#{ep.id}</span>
                         {ep.title_ar || ep.title_en}
                       </p>
                       <p className="text-xs text-zinc-500 truncate">
@@ -1008,12 +1008,12 @@ export const Admin: React.FC<AdminProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-xs min-w-[560px]">
                 <thead>
-                  <tr className="border-b border-white/8 text-left text-zinc-500">
-                    <th className="pb-2 pr-3 font-bold">Code</th>
-                    <th className="pb-2 pr-3 font-bold">XP</th>
-                    <th className="pb-2 pr-3 font-bold">Type / Target</th>
-                    <th className="pb-2 pr-3 font-bold">Uses</th>
-                    <th className="pb-2 pr-3 font-bold">Expires</th>
+                  <tr className="border-b border-white/8 text-start text-zinc-500">
+                    <th className="pb-2 pe-3 font-bold">Code</th>
+                    <th className="pb-2 pe-3 font-bold">XP</th>
+                    <th className="pb-2 pe-3 font-bold">Type / Target</th>
+                    <th className="pb-2 pe-3 font-bold">Uses</th>
+                    <th className="pb-2 pe-3 font-bold">Expires</th>
                     <th className="pb-2 font-bold text-center">Action</th>
                   </tr>
                 </thead>
@@ -1035,7 +1035,7 @@ export const Admin: React.FC<AdminProps> = ({
                             : 'border-white/4 hover:bg-white/2'
                         }`}
                       >
-                        <td className="py-2.5 pr-3 font-bold text-white font-mono">
+                        <td className="py-2.5 pe-3 font-bold text-white font-mono">
                           <div className="flex items-center gap-2">
                             <span>{c.code}</span>
                             {isHighlighted && (
@@ -1046,8 +1046,8 @@ export const Admin: React.FC<AdminProps> = ({
                             )}
                           </div>
                         </td>
-                        <td className="py-2.5 pr-3 text-orange-400 font-bold">+{c.xp_reward}</td>
-                        <td className="py-2.5 pr-3 text-zinc-300">
+                        <td className="py-2.5 pe-3 text-orange-400 font-bold">+{c.xp_reward}</td>
+                        <td className="py-2.5 pe-3 text-zinc-300">
                           {c.type === 'episode' ? (
                             c.episode_id ? (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold">
@@ -1064,9 +1064,9 @@ export const Admin: React.FC<AdminProps> = ({
                             </span>
                           )}
                         </td>
-                        <td className="py-2.5 pr-3 text-zinc-400">{c.current_uses}/{c.max_uses}</td>
-                        <td className={`py-2.5 pr-3 ${isExpired ? 'text-red-400' : 'text-zinc-400'}`}>
-                          {c.expiry_date ? new Date(c.expiry_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Never'}
+                        <td className="py-2.5 pe-3 text-zinc-400">{c.current_uses}/{c.max_uses}</td>
+                        <td className={`py-2.5 pe-3 ${isExpired ? 'text-red-400' : 'text-zinc-400'}`}>
+                          {c.expiry_date ? new Date(c.expiry_date).toLocaleDateString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Never'}
                           {isExpired && ' (Expired)'}
                         </td>
                         <td className="py-2.5 text-center">
@@ -1091,12 +1091,12 @@ export const Admin: React.FC<AdminProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-xs min-w-[600px]">
               <thead>
-                <tr className="border-b border-white/8 text-left text-zinc-500">
-                  <th className="pb-2 pr-3 font-bold">User</th>
-                  <th className="pb-2 pr-3 font-bold">Email</th>
-                  <th className="pb-2 pr-3 font-bold">Batch</th>
-                  <th className="pb-2 pr-3 font-bold">XP</th>
-                  <th className="pb-2 pr-3 font-bold">Role</th>
+                <tr className="border-b border-white/8 text-start text-zinc-500">
+                  <th className="pb-2 pe-3 font-bold">User</th>
+                  <th className="pb-2 pe-3 font-bold">Email</th>
+                  <th className="pb-2 pe-3 font-bold">Batch</th>
+                  <th className="pb-2 pe-3 font-bold">XP</th>
+                  <th className="pb-2 pe-3 font-bold">Role</th>
                   <th className="pb-2 font-bold text-center">Actions</th>
                 </tr>
               </thead>
@@ -1107,11 +1107,11 @@ export const Admin: React.FC<AdminProps> = ({
                   </tr>
                 ) : adminUsers.map((u: any) => (
                   <tr key={u.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
-                    <td className="py-2.5 pr-3 font-bold text-white">@{u.username}</td>
-                    <td className="py-2.5 pr-3 text-zinc-500">{u.email}</td>
-                    <td className="py-2.5 pr-3 text-zinc-400">{u.batch}</td>
-                    <td className="py-2.5 pr-3 text-orange-400 font-bold">{u.total_xp?.toLocaleString()}</td>
-                    <td className="py-2.5 pr-3">
+                    <td className="py-2.5 pe-3 font-bold text-white">@{u.username}</td>
+                    <td className="py-2.5 pe-3 text-zinc-500">{u.email}</td>
+                    <td className="py-2.5 pe-3 text-zinc-400">{u.batch}</td>
+                    <td className="py-2.5 pe-3 text-orange-400 font-bold">{u.total_xp?.toLocaleString()}</td>
+                    <td className="py-2.5 pe-3">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className={`px-2 py-0.5 rounded-lg text-2xs font-black uppercase ${
                           u.role === 'owner' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/25' :
@@ -1262,7 +1262,7 @@ export const Admin: React.FC<AdminProps> = ({
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5 justify-center">
-                          <p className="text-2xs text-orange-400 font-bold">{f.price.toLocaleString()} XP</p>
+                          <p className="text-2xs text-orange-400 font-bold" dir="ltr">{f.price.toLocaleString()} XP</p>
                           <button
                             onClick={() => {
                               setEditingFrameId(f._id);
@@ -1318,10 +1318,10 @@ export const Admin: React.FC<AdminProps> = ({
             {/* Quick Timeline of last 5 entries */}
             <SectionCard className="lg:col-span-1">
               <SectionTitle icon={<Clock className="w-4 h-4" />} label="Recent Activity Timeline" />
-              <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+              <div className="space-y-3 max-h-60 overflow-y-auto pe-1">
                 {auditLogs.slice(0, 5).map((log) => (
-                  <div key={log.id} className="relative pl-4 border-l-2 border-orange-500/30 py-0.5 text-left">
-                    <div className="absolute w-2 h-2 rounded-full bg-orange-500 -left-[5px] top-1.5" />
+                  <div key={log.id} className="relative ps-4 border-s-2 border-orange-500/30 py-0.5 text-start">
+                    <div className="absolute w-2 h-2 rounded-full bg-orange-500 -start-[5px] top-1.5" />
                     <p className="text-2xs text-zinc-500 font-bold">
                       {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {new Date(log.created_at).toLocaleDateString()}
                     </p>
@@ -1345,7 +1345,7 @@ export const Admin: React.FC<AdminProps> = ({
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {/* Search username */}
-                  <div className="space-y-1.5 text-left">
+                  <div className="space-y-1.5 text-start">
                     <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">Search username / reason</label>
                     <div className="relative">
                       <input
@@ -1353,9 +1353,9 @@ export const Admin: React.FC<AdminProps> = ({
                         placeholder="Search..."
                         value={auditFilters.search}
                         onChange={(e) => setAuditFilters(prev => ({ ...prev, search: e.target.value }))}
-                        className="w-full pl-8 pr-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-650 text-xs focus:outline-none focus:border-orange-500/50"
+                        className="w-full ps-8 pe-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-650 text-xs focus:outline-none focus:border-orange-500/50"
                       />
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                      <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                     </div>
                   </div>
 
@@ -1397,7 +1397,7 @@ export const Admin: React.FC<AdminProps> = ({
                 </div>
 
                 {auditFilters.dateRange === 'custom' && (
-                  <div className="grid grid-cols-2 gap-3 text-left">
+                  <div className="grid grid-cols-2 gap-3 text-start">
                     <AdminInput
                       label="Start Date"
                       type="date"
@@ -1443,14 +1443,14 @@ export const Admin: React.FC<AdminProps> = ({
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-xs min-w-[650px] text-left">
+              <table className="w-full text-xs min-w-[650px] text-start">
                 <thead>
                   <tr className="border-b border-white/8 text-zinc-550">
-                    <th className="pb-2 pr-3 font-bold">Action</th>
-                    <th className="pb-2 pr-3 font-bold">Actor</th>
-                    <th className="pb-2 pr-3 font-bold">Role</th>
-                    <th className="pb-2 pr-3 font-bold">Target</th>
-                    <th className="pb-2 pr-3 font-bold">Date</th>
+                    <th className="pb-2 pe-3 font-bold">Action</th>
+                    <th className="pb-2 pe-3 font-bold">Actor</th>
+                    <th className="pb-2 pe-3 font-bold">Role</th>
+                    <th className="pb-2 pe-3 font-bold">Target</th>
+                    <th className="pb-2 pe-3 font-bold">Date</th>
                     <th className="pb-2 font-bold text-center">Details</th>
                   </tr>
                 </thead>
@@ -1458,21 +1458,21 @@ export const Admin: React.FC<AdminProps> = ({
                   {auditLogs.map((log) => {
                     return (
                       <tr key={log.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
-                        <td className="py-2.5 pr-3">
+                        <td className="py-2.5 pe-3">
                           <span className="font-extrabold text-white">{log.action}</span>
                         </td>
-                        <td className="py-2.5 pr-3 text-zinc-300">
+                        <td className="py-2.5 pe-3 text-zinc-300">
                           @{log.moderator?.username || 'System'}
                         </td>
-                        <td className="py-2.5 pr-3">
+                        <td className="py-2.5 pe-3">
                           <span className="text-2xs uppercase font-bold text-orange-400">
                             {log.actor_role || log.moderator?.role}
                           </span>
                         </td>
-                        <td className="py-2.5 pr-3 text-zinc-400 capitalize">
+                        <td className="py-2.5 pe-3 text-zinc-400 capitalize">
                           {log.target_type} ({log.target_user ? `@${log.target_user.username}` : log.target_id || 'N/A'})
                         </td>
-                        <td className="py-2.5 pr-3 text-zinc-500">
+                        <td className="py-2.5 pe-3 text-zinc-500">
                           {new Date(log.created_at).toLocaleString()}
                         </td>
                         <td className="py-2.5 text-center">
@@ -1512,7 +1512,7 @@ export const Admin: React.FC<AdminProps> = ({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="w-full max-w-md bg-zinc-950 border-l border-white/8 h-full p-6 overflow-y-auto space-y-6 flex flex-col justify-between"
+              className="w-full max-w-md bg-zinc-950 border-s border-white/8 h-full p-6 overflow-y-auto space-y-6 flex flex-col justify-between"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="space-y-6">
@@ -1526,7 +1526,7 @@ export const Admin: React.FC<AdminProps> = ({
                   </button>
                 </div>
 
-                <div className="space-y-4 text-left">
+                <div className="space-y-4 text-start">
                   {/* Action summary */}
                   <div className="p-4 rounded-xl bg-orange-500/5 border border-orange-500/15">
                     <p className="text-2xs text-orange-400 font-bold uppercase tracking-wider">Logged Action</p>
@@ -1867,7 +1867,7 @@ const SystemProfileConfig: React.FC<{
       <p className="text-xs text-zinc-500 mb-4 leading-relaxed">
         This profile name and avatar image will be automatically used when publishing news posts to the official feed. Only admins can publish these posts.
       </p>
-      <form onSubmit={handleSave} className="space-y-4 text-left">
+      <form onSubmit={handleSave} className="space-y-4 text-start">
         <AdminInput
           label="Official Display Name"
           placeholder="e.g. LehPhysio"

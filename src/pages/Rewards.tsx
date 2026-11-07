@@ -72,7 +72,7 @@ const ShopCard: React.FC<{
         <p className="text-[13px] font-black text-white leading-tight truncate">{name}</p>
         <div className="flex items-center justify-center gap-1 mt-1">
           <span className="text-xs font-extrabold text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full">
-            {cost.toLocaleString()} XP Milestone
+            يتفتح عند {cost.toLocaleString()} XP
           </span>
         </div>
 
@@ -80,7 +80,7 @@ const ShopCard: React.FC<{
         {!owned && (
           <div className="mt-2.5 w-full">
             <div className="flex justify-between items-center text-2xs font-bold text-zinc-400 mb-1">
-              <span>{Math.min(userXp, cost).toLocaleString()} XP</span>
+              <span dir="ltr">{Math.min(userXp, cost).toLocaleString()} XP</span>
               <span className={canAfford ? 'text-emerald-400' : 'text-zinc-500'}>{progressPct}%</span>
             </div>
             <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
@@ -112,13 +112,13 @@ const ShopCard: React.FC<{
         }`}
       >
         {buying ? (
-          <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Unlocking...</>
+          <><Loader2 className="w-3.5 h-3.5 animate-spin" /> بنفتح…</>
         ) : owned ? (
-          <><CheckCircle className="w-3.5 h-3.5" /> Unlocked</>
+          <><CheckCircle className="w-3.5 h-3.5" /> مفتوح</>
         ) : !canAfford ? (
           <><Lock className="w-3.5 h-3.5" /> Requires {cost.toLocaleString()} XP</>
         ) : (
-          <><Sparkles className="w-3.5 h-3.5 fill-black" /> Unlock for Free</>
+          <><Sparkles className="w-3.5 h-3.5 fill-black" /> افتحه ببلاش</>
         )}
       </m.button>
     </m.div>
@@ -171,13 +171,13 @@ export const Rewards: React.FC<RewardsProps> = ({
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || 'Frame purchased!');
+        showToast(data.message || 'الفريم بقى بتاعك!');
         if (handleBuyFrame) await handleBuyFrame(frameId, 0);
       } else {
-        showToast(data.error || 'Failed to purchase frame.');
+        showToast(data.error || 'معرفناش نفتح الفريم.');
       }
     } catch {
-      showToast('An error occurred.');
+      showToast('حصل خطأ.');
     }
     setBuyingFrameId(null);
   };
@@ -194,12 +194,12 @@ export const Rewards: React.FC<RewardsProps> = ({
           <ShoppingBag className="w-5 h-5 text-orange-400" />
         </div>
         <div>
-          <h1 className="text-xl font-black text-white leading-tight">XP Shop</h1>
-          <p className="text-xs text-zinc-500">Rewards &amp; Cosmetic Center</p>
+          <h1 className="text-xl font-black text-white leading-tight">متجر XP</h1>
+          <p className="text-xs text-zinc-500">المكافآت والفريمات</p>
         </div>
         {user && (
-          <div className="ml-auto px-3 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20">
-            <span className="text-xs font-black text-orange-400">{user.total_xp?.toLocaleString() || 0} XP</span>
+          <div className="ms-auto px-3 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20">
+            <span className="text-xs font-black text-orange-400" dir="ltr">{user.total_xp?.toLocaleString() || 0} XP</span>
           </div>
         )}
       </div>
@@ -208,10 +208,10 @@ export const Rewards: React.FC<RewardsProps> = ({
       <section className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5">
         <div className="flex items-center gap-2 mb-3">
           <Key className="w-4 h-4 text-orange-400" />
-          <h2 className="text-[15px] font-black text-white">Redeem Secret XP Code</h2>
+          <h2 className="text-[15px] font-black text-white">استخدم كود XP سري</h2>
         </div>
         <p className="text-xs text-zinc-500 mb-4">
-          Enter codes from social media or episodes to earn instant XP.
+          اكتب الأكواد اللي بتنزل في الحلقات أو على السوشيال واكسب XP على طول.
         </p>
 
         <AnimatePresence>
@@ -243,7 +243,7 @@ export const Rewards: React.FC<RewardsProps> = ({
           <input
             type="text"
             className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 text-[13px] focus:outline-none focus:border-orange-500/60 transition-colors"
-            placeholder="Enter reward code here..."
+            placeholder="اكتب الكود هنا…"
             value={secretCode}
             onChange={(e) => setSecretCode(e.target.value)}
           />
@@ -253,7 +253,7 @@ export const Rewards: React.FC<RewardsProps> = ({
             whileTap={{ scale: 0.97 }}
             className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-bold text-[13px] hover:from-orange-400 hover:to-amber-400 transition-colors flex-shrink-0"
           >
-            Redeem Code
+            استخدم الكود
           </m.button>
         </form>
       </section>
@@ -262,10 +262,10 @@ export const Rewards: React.FC<RewardsProps> = ({
       <section className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5">
         <div className="flex items-center gap-2 mb-3">
           <Gift className="w-4 h-4 text-violet-400" />
-          <h2 className="text-[15px] font-black text-white">Daily Surprise Box</h2>
+          <h2 className="text-[15px] font-black text-white">صندوق المفاجأة اليومي</h2>
           {hasOpenedBoxToday && (
-            <span className="ml-auto flex items-center gap-1 text-xs text-zinc-500">
-              <Clock className="w-3.5 h-3.5" /> Resets at 12:00 AM
+            <span className="ms-auto flex items-center gap-1 text-xs text-zinc-500">
+              <Clock className="w-3.5 h-3.5" /> بيتجدد الساعة 12 بالليل
             </span>
           )}
         </div>
@@ -276,8 +276,8 @@ export const Rewards: React.FC<RewardsProps> = ({
             {!hasOpenedBoxToday && (
               <>
                 <span className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 opacity-30 blur-md group-hover:opacity-75 transition duration-500 animate-pulse" />
-                <span className="absolute -top-1.5 -right-1.5 z-20 bg-red-500 text-white text-2xs font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider animate-bounce shadow-lg shadow-red-500/40">
-                  Ready
+                <span className="absolute -top-1.5 -end-1.5 z-20 bg-red-500 text-white text-2xs font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider animate-bounce shadow-lg shadow-red-500/40">
+                  جاهز
                 </span>
               </>
             )}
@@ -321,19 +321,19 @@ export const Rewards: React.FC<RewardsProps> = ({
             </m.button>
           </div>
 
-          <div className="flex-1 text-center sm:text-left">
+          <div className="flex-1 text-center sm:text-start">
             {hasOpenedBoxToday ? (
               <>
-                <p className="text-sm font-bold text-zinc-400">Already opened today</p>
+                <p className="text-sm font-bold text-zinc-400">فتحته النهارده خلاص</p>
                 <p className="text-xs text-zinc-600 mt-1">
-                  Come back after midnight for your next surprise box.
+                  ارجع بعد نص الليل عشان الصندوق الجاي.
                 </p>
               </>
             ) : (
               <>
-                <p className="text-sm font-bold text-white">Click the box to open it!</p>
+                <p className="text-sm font-bold text-white">دوس على الصندوق عشان تفتحه!</p>
                 <p className="text-xs text-zinc-500 mt-1">
-                  Receive a random daily XP bonus. One box per day.
+                  XP عشوائي كل يوم. صندوق واحد في اليوم.
                 </p>
               </>
             )}
@@ -346,12 +346,12 @@ export const Rewards: React.FC<RewardsProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-orange-400" />
-            <h2 className="text-[15px] font-black text-white">Avatar Frame Milestones</h2>
+            <h2 className="text-[15px] font-black text-white">فريمات حسب مستواك</h2>
           </div>
           <div className="text-xs font-bold text-zinc-400 bg-zinc-900/80 border border-zinc-800 px-3 py-1 rounded-xl flex items-center gap-1.5 self-start sm:self-auto">
-            <span>✨ Unlocking frames</span>
-            <strong className="text-orange-400">never deducts</strong>
-            <span>your XP!</span>
+            <span>✨ فتح الفريمات</span>
+            <strong className="text-orange-400">عمره ما بيخصم من</strong>
+            <span>الـ XP بتاعك!</span>
           </div>
         </div>
 
@@ -365,7 +365,7 @@ export const Rewards: React.FC<RewardsProps> = ({
             if (item.isTitle) {
               previewContent = (
                 <span className="text-2xs font-black text-center leading-tight px-1" style={{ color: item.color }}>
-                  {item.name.replace('Title: ', '')}
+                  {item.name.replace('اللقب: ', '')}
                 </span>
               );
             } else {

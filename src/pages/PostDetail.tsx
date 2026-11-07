@@ -47,7 +47,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
   // Load post from communityPosts cache first, or fetch from backend API
   useEffect(() => {
     if (!postId) {
-      setError('Invalid post link');
+      setError('لينك البوست غلط');
       setLoading(false);
       return;
     }
@@ -68,12 +68,12 @@ export const PostDetail: React.FC<PostDetailProps> = ({
           setPost(data);
           setError(null);
         } else if (!cached) {
-          setError('Post not found or has been removed.');
+          setError('البوست مش موجود أو اتشال.');
         }
       } catch (e) {
         console.error('Error loading post:', e);
         if (!cached) {
-          setError('Failed to load post. Please check your network connection.');
+          setError('معرفناش نحمّل البوست. اتأكد من النت.');
         }
       } finally {
         setLoading(false);
@@ -90,15 +90,15 @@ export const PostDetail: React.FC<PostDetailProps> = ({
   const handleShare = async (id: number) => {
     const ref = user?.username ? `?ref=${user.username}` : '';
     const shareUrl = `${window.location.origin}/post/${id}${ref}`;
-    const shareTitle = post?.title || 'LehPhysio Community Post';
-    const shareText = post?.content ? `${post.content.substring(0, 100)}...` : 'Check out this post on LehPhysio!';
+    const shareTitle = post?.title || 'بوست من مجتمع ليه فيزيو';
+    const shareText = post?.content ? `${post.content.substring(0, 100)}...` : 'شوف البوست ده على ليه فيزيو!';
 
     // Always copy link to clipboard reliably
     try {
       await copyToClipboard(shareUrl);
-      showToast('Post link copied to clipboard! 🔗');
+      showToast('اتنسخ لينك البوست! 🔗');
     } catch {
-      showToast('Post link copied to clipboard! 🔗');
+      showToast('اتنسخ لينك البوست! 🔗');
     }
 
     // Open native share sheet on mobile or desktop browsers if supported
@@ -123,12 +123,12 @@ export const PostDetail: React.FC<PostDetailProps> = ({
           onClick={handleBackToFeed}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 text-white font-extrabold text-xs cursor-pointer transition-all hover:scale-102 active:scale-98 shadow-sm group"
         >
-          <ArrowLeft className="w-4 h-4 text-brand-orange group-hover:-translate-x-1 transition-transform" />
-          <span>Back to Feed / العودة للرئيسية</span>
+          <ArrowLeft className="rtl:-scale-x-100 w-4 h-4 text-brand-orange group-hover:-translate-x-1 transition-transform" />
+          <span>رجوع للرئيسية</span>
         </button>
 
         <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
-          Post Details
+          تفاصيل البوست
         </span>
       </div>
 
@@ -164,13 +164,13 @@ export const PostDetail: React.FC<PostDetailProps> = ({
           </div>
           <h3 className="text-base font-extrabold text-white">{error}</h3>
           <p className="text-xs text-zinc-400">
-            The post you're looking for might have been deleted, or the link is incorrect.
+            البوست ده ممكن يكون اتمسح، أو اللينك غلط.
           </p>
           <button
             onClick={handleBackToFeed}
             className="inline-flex items-center gap-2 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-xs px-5 py-2.5 rounded-full cursor-pointer hover:shadow-orange-glow transition-all"
           >
-            Return to Community Feed
+            ارجع للرئيسية
           </button>
         </div>
       )}
@@ -208,13 +208,13 @@ export const PostDetail: React.FC<PostDetailProps> = ({
           <div className="glass-card p-4 flex items-center justify-between border border-zinc-800/60">
             <div className="flex items-center gap-2 text-xs font-bold text-zinc-300">
               <MessageCircle className="w-4 h-4 text-brand-orange" />
-              <span>Have something to say?</span>
+              <span>عندك حاجة تقولها؟</span>
             </div>
             <button
               onClick={() => onOpenComments(post.id, post.username)}
               className="bg-brand-orange/15 hover:bg-brand-orange/25 border border-brand-orange/30 text-brand-orange font-black text-xs px-4 py-2 rounded-xl cursor-pointer transition-all hover:scale-102 active:scale-98"
             >
-              Open Comments ({post.comments_count || 0}) 💬
+              افتح التعليقات ({post.comments_count || 0}) 💬
             </button>
           </div>
         </m.div>

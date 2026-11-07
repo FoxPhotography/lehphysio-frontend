@@ -30,7 +30,7 @@ export const NotificationBell: React.FC = () => {
       style={{
         background: isOpen ? 'rgba(242, 101, 34, 0.15)' : 'transparent',
       }}
-      aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+      aria-label={`الإشعارات${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
     >
       <m.div
         animate={shouldPulse ? {

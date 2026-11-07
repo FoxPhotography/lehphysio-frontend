@@ -162,13 +162,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const handleOnline = () => {
       setIsOffline(false);
-      showToast('Back online! Syncing fresh data... 🟢');
+      showToast('رجع النت! بنحدّث البيانات… 🟢');
       window.dispatchEvent(new Event('app_online'));
     };
 
     const handleOffline = () => {
       setIsOffline(true);
-      showToast('Offline mode. Showing cached content. 🔴');
+      showToast('أوفلاين: بنعرض آخر محتوى اتحمّل. 🔴');
     };
 
     window.addEventListener('online', handleOnline);
@@ -240,7 +240,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     onConfirm: () => void,
     onCancel?: () => void,
     confirmText: string = 'Confirm',
-    cancelText: string = 'Cancel',
+    cancelText: string = 'إلغاء',
     type: 'danger' | 'info' | 'success' | 'warning' = 'warning'
   ) => {
     setCustomModal({
@@ -383,13 +383,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.ok) {
         fetchUserProfile();
         fetchUsernamesDirectory();
-        showToast(data.message || 'Profile updated!');
+        showToast(data.message || 'البروفايل اتحدّث!');
       } else {
-        showToast(data.error || 'Failed to update profile.');
+        showToast(data.error || 'معرفناش نحدّث البروفايل.');
       }
     } catch (e) {
       console.error(e);
-      showToast('Error updating profile.');
+      showToast('حصل خطأ في تحديث البروفايل.');
     }
   };
 
@@ -445,14 +445,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleUploadImage = async (file: File): Promise<string | null> => {
     if (!token) return null;
     try {
-      showToast('Compressing image... ⚙️');
+      showToast('بنصغّر الصورة… ⚙️');
       const compressedBlob = await resizeImage(file, 1200, 1200);
       const res = await authService.uploadImage(compressedBlob, file.name.replace(/\.[^/.]+$/, "") + ".jpg", token);
       
       const contentType = res.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         console.error('Server returned non-JSON response:', res.status);
-        showToast('Upload failed: Server error or file too large.');
+        showToast('الرفع فشل: الصورة كبيرة أو في مشكلة في السيرفر.');
         return null;
       }
 
@@ -460,12 +460,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.ok) {
         return data.url;
       } else {
-        showToast(data.error || 'Upload failed.');
+        showToast(data.error || 'الرفع فشل.');
         return null;
       }
     } catch (e) {
       console.error('Error uploading image:', e);
-      showToast('Upload error.');
+      showToast('حصل خطأ في الرفع.');
       return null;
     }
   };
@@ -643,8 +643,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getFlameTier = (days: number) => {
     if (days >= 15) {
       return {
-        name: "Supernova Blue",
-        badge: "Peak Performance!",
+        name: "سوبرنوفا",
+        badge: "في القمة!",
         outer: ["#002080", "#00bfff", "#e0ffff"],
         mid: ["#0055ff", "#00ffff", "#ffffff"],
         inner: ["#00ffff", "#ffffff", "#ffffff"],
@@ -656,8 +656,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     if (days >= 7) {
       return {
-        name: "Plasma Storm",
-        badge: "Plasma Storm!",
+        name: "بلازما",
+        badge: "عاصفة بلازما!",
         outer: ["#310062", "#8a2be2", "#ff007f"],
         mid: ["#4b0082", "#ff00ff", "#ffffff"],
         inner: ["#ff00ff", "#ffffff", "#ffffff"],
@@ -669,8 +669,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     if (days >= 3) {
       return {
-        name: "Golden Blaze",
-        badge: "Golden Blaze!",
+        name: "اللهب الدهبي",
+        badge: "لهب دهبي!",
         outer: ["#b8860b", "#ffaa00", "#ffea80"],
         mid: ["#d4af37", "#ffdf00", "#ffffff"],
         inner: ["#ffdf00", "#ffffff", "#ffffff"],
@@ -681,8 +681,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     }
     return {
-      name: "Starter Spark",
-      badge: "Spark Up!",
+      name: "الشرارة",
+      badge: "ولّعها!",
       outer: ["#d90429", "#f77f00", "#fcbf49"],
       mid: ["#f77f00", "#fcbf49", "#eae2b7"],
       inner: ["#fcbf49", "#ffffff", "#ffffff"],

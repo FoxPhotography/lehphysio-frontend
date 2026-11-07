@@ -39,14 +39,14 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
 
   return (
     <AuthLayout
-      title="Forgot Password?"
-      subtitle="Enter your email to receive a reset code"
+      title="نسيت كلمة السر؟"
+      subtitle="اكتب الإيميل وهنبعتلك كود لتغيير كلمة السر"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <AuthError message={authError} />
         <AuthSuccess message={authSuccess} />
 
-        <FormField label="Email Address" icon={<Mail className="w-3 h-3" />}>
+        <FormField label="الإيميل" icon={<Mail className="w-3 h-3" />}>
           <AuthInput
             type="email"
             icon={<Mail className="w-4 h-4" />}
@@ -59,12 +59,12 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
           />
         </FormField>
 
-        <AuthSubmitButton label={loading ? "Sending..." : "Send Reset Code"} disabled={loading} />
+        <AuthSubmitButton label={loading ? "بنبعت…" : "ابعت الكود"} disabled={loading} />
       </form>
 
       <p className="text-center text-[13px] text-zinc-500 mt-5">
-        Remember your password?{' '}
-        <AuthLink onClick={() => !loading && setCurrentPage('login')}>Login</AuthLink>
+        افتكرت كلمة السر؟{' '}
+        <AuthLink onClick={() => !loading && setCurrentPage('login')}>دخول</AuthLink>
       </p>
     </AuthLayout>
   );
