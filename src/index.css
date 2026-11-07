@@ -265,3 +265,18 @@ html, body {
 [dir="auto"] {
   text-align: start;
 }
+
+/* Notification panel: full screen on phones, anchored dropdown from md up */
+@media (min-width: 768px) {
+  .notif-panel {
+    top: var(--notification-panel-top, 72px);
+    inset-inline-end: 24px;
+    width: 420px;
+    height: min(78vh, 640px);
+  }
+}
+@media (min-width: 1280px) {
+  .notif-panel {
+    inset-inline-end: 304px; /* beside the right-hand sidebar */
+  }
+}

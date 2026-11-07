@@ -10,6 +10,7 @@ import { XPPopup } from '../components/XPPopup';
 import { Toast } from '../components/Toast';
 import { UpdatePrompt } from '../components/UpdatePrompt';
 import { NotificationCenter } from '../components/notifications/NotificationCenter';
+import { useNotifications } from '../context/NotificationContext';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -43,6 +44,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
     triggerXpPopup,
     isOffline
   } = useAuth();
+  // Install prompts never cover the notifications sheet
+  const { isOpen: notificationsOpen } = useNotifications();
 
   return (
     <div className="app-layout">
@@ -108,13 +111,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
 
       {/* PWA Install Banner */}
       <AnimatePresence>
-        {showInstallBanner && deferredPrompt && !isStandalone && (
+        {showInstallBanner && deferredPrompt && !isStandalone && !notificationsOpen && (
           <m.div
             initial={{ opacity: 0, y: 60, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.9 }}
             transition={{ type: 'spring', damping: 20, stiffness: 200 }}
-            className="fixed bottom-20 md:bottom-6 end-4 start-4 md:start-auto md:w-[400px] z-[9999] rounded-2xl border border-brand-orange/25 bg-zinc-950/95 p-5 shadow-[0_8px_40px_rgba(242,101,34,0.15)] flex flex-col gap-4 overflow-hidden"
+            className="fixed bottom-nav-offset md:bottom-6 end-4 start-4 md:start-auto md:w-[400px] z-[9999] rounded-2xl border border-brand-orange/25 bg-zinc-950/95 p-5 shadow-[0_8px_40px_rgba(242,101,34,0.15)] flex flex-col gap-4 overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-orange/[0.03] to-transparent animate-shimmer pointer-events-none" />
 
@@ -157,13 +160,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
           </m.div>
         )}
 
-        {showIOSInstall && (
+        {!notificationsOpen && showIOSInstall && (
           <m.div
             initial={{ opacity: 0, y: 100, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 80, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed bottom-20 md:bottom-6 end-4 start-4 md:start-auto md:w-[420px] z-[9999] rounded-3xl border border-white/10 bg-zinc-950/95 p-6 shadow-[0_12px_45px_rgba(0,0,0,0.8)] flex flex-col gap-4 text-start font-sans"
+            className="fixed bottom-nav-offset md:bottom-6 end-4 start-4 md:start-auto md:w-[420px] z-[9999] rounded-3xl border border-white/10 bg-zinc-950/95 p-6 shadow-[0_12px_45px_rgba(0,0,0,0.8)] flex flex-col gap-4 text-start font-sans"
           >
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-brand-orange/30 shadow-lg shadow-brand-orange/10 shrink-0 bg-brand-orange">
@@ -172,7 +175,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-black text-white leading-tight">LehPhysio? - ليه فيزيو؟</h4>
+                  <h4 className="text-sm font-black text-white leading-tight">ليه فيزيو؟</h4>
                   <button 
                     onClick={dismissIOSInstall}
                     className="text-zinc-500 hover:text-zinc-300 cursor-pointer transition-colors p-0.5 -mt-1 -me-1 shrink-0"
