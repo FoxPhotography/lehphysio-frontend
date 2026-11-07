@@ -601,7 +601,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (err) {
       console.error('Error toggling push notifications:', err);
-      showToast('حدث خطأ أثناء تفعيل الإشعارات.');
+      const e = err as { name?: string; message?: string };
+      const msg = (e?.message || '').toLowerCase();
+      if (e?.name === 'AbortError' || msg.includes('push service')) {
+        showToast('خدمة الإشعارات مقفولة في المتصفح ده. لو بتستخدم Brave فعّل "Use Google services for push messaging" من الإعدادات، أو جرّب Chrome/Edge.');
+      } else if (e?.name === 'NotAllowedError') {
+        showToast('الإشعارات مقفولة للموقع أو لويندوز. فعّلها من إعدادات المتصفح ومن Windows Settings > Notifications.');
+      } else if (e?.name === 'InvalidStateError') {
+        showToast('في اشتراك قديم متعارض. امسح بيانات الموقع وجرّب تاني.');
+      } else {
+        showToast(`حدث خطأ أثناء تفعيل الإشعارات (${e?.name || 'Error'}: ${e?.message || 'unknown'})`);
+      }
     } finally {
       setPushLoading(false);
     }
