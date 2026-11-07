@@ -45,7 +45,7 @@ const getClientRank = (xp: number) => {
   if (score >= 3000) return { name_ar: 'استشاري', name_en: 'Neurogenic', emoji: '🧠', tier: 4 };
   if (score >= 1500) return { name_ar: 'ثيرابيست', name_en: 'Ortho King', emoji: '🦴', tier: 3 };
   if (score >= 500) return { name_ar: 'متدرّب', name_en: 'Pain Specialist', emoji: '⚡', tier: 2 };
-  return { name_ar: 'هاوي', name_en: 'Anatomy Rookie', emoji: '🧪', tier: 1 };
+  return { name_ar: 'هاوٍ', name_en: 'Anatomy Rookie', emoji: '🧪', tier: 1 };
 };
 
 const mergePendingAndFresh = (pendingPosts: any[], freshData: any[]): any[] => {

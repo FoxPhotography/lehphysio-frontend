@@ -3,7 +3,7 @@
  * Names follow a PT career ladder: amateur → trainee → therapist → consultant → legend.
  */
 export const RANKS = [
-  { tier: 1, min: 0, name: 'هاوي', emoji: '🧪' },
+  { tier: 1, min: 0, name: 'هاوٍ', emoji: '🧪' },
   { tier: 2, min: 500, name: 'متدرّب', emoji: '⚡' },
   { tier: 3, min: 1500, name: 'ثيرابيست', emoji: '🦴' },
   { tier: 4, min: 3000, name: 'استشاري', emoji: '🧠' },
