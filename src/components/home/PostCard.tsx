@@ -1,4 +1,5 @@
 import { cld } from '../../utils/image';
+import { rankName } from '../../utils/ranks';
 import React, { useState, useRef, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { HighlightWrapper } from '../notifications/HighlightWrapper';
@@ -16,7 +17,8 @@ import {
   Clock, 
   XCircle, 
   Image as ImageIcon,
-  Loader2
+  Loader2,
+  Send
 } from 'lucide-react';
 
 const stripEmojis = (str: string) => {
@@ -191,7 +193,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
                 )}
               </div>
               <span className="text-2xs text-zinc-500 font-semibold mt-0.5 block">
-                {stripEmojis(post.rank.name_ar || post.rank.name_en)} · {new Date(post.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                {rankName(post.rank)} · {new Date(post.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
               </span>
             </div>
           </div>
@@ -410,44 +412,47 @@ const PostCardImpl: React.FC<PostCardProps> = ({
           </div>
         )}
 
-        {/* Actions row */}
-        <div className="flex gap-6 mt-4 pt-3.5 border-t border-zinc-900/60">
-          <button 
-            className={`flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer ${post.isLiked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'} ${post.pending ? 'opacity-50 cursor-not-allowed' : ''}`} 
-            onClick={() => {
-              if (post.pending) return;
-              handleLikePost(post.id);
-            }}
+        {/* Actions row — Instagram-style: icon + count pairs, grouped at the start */}
+        <div className="flex items-center gap-5 mt-3 pt-3 border-t border-zinc-900/60">
+          <button
+            type="button"
+            dir="ltr"
+            aria-label={post.isLiked ? 'إلغاء اللايك' : 'لايك'}
+            aria-pressed={!!post.isLiked}
+            className={`h-10 -my-1 flex items-center gap-1.5 transition-colors ${post.isLiked ? 'text-[#ff3b5c]' : 'text-zinc-200 hover:text-white'} ${post.pending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            onClick={() => { if (!post.pending) handleLikePost(post.id); }}
             disabled={post.pending}
           >
-            <Heart className={`w-4 h-4 ${post.isLiked ? 'fill-current' : ''}`} /> 
-            <span>{post.likes_count}</span>
+            <m.span key={post.isLiked ? 'on' : 'off'} initial={{ scale: post.isLiked ? 0.6 : 1 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 600, damping: 14 }} className="flex">
+              <Heart className={`w-[24px] h-[24px] ${post.isLiked ? 'fill-current' : ''}`} strokeWidth={1.9} />
+            </m.span>
+            <span className="text-sm font-bold tabular-nums leading-none">{post.likes_count || 0}</span>
           </button>
-          <button 
-            className={`flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-brand-orange transition-colors cursor-pointer ${post.pending ? 'opacity-50 cursor-not-allowed' : ''}`} 
+          <button
+            type="button"
+            dir="ltr"
+            aria-label="التعليقات"
+            className={`h-10 -my-1 flex items-center gap-1.5 text-zinc-200 hover:text-white transition-colors ${post.pending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             onClick={() => {
               if (post.pending) return;
-              if (onOpenComments) {
-                onOpenComments(post.id, post.username);
-              } else {
-                setIsCommentsExpanded(!isCommentsExpanded);
-              }
+              if (onOpenComments) onOpenComments(post.id, post.username);
+              else setIsCommentsExpanded(!isCommentsExpanded);
             }}
             disabled={post.pending}
           >
-            <MessageCircle className="w-4 h-4" /> 
-            <span>{post.comments_count || 0}</span>
+            <MessageCircle className="w-[24px] h-[24px] -scale-x-100" strokeWidth={1.9} />
+            <span className="text-sm font-bold tabular-nums leading-none">{post.comments_count || 0}</span>
           </button>
-          <button 
-            className={`flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer ${post.pending ? 'opacity-50 cursor-not-allowed' : ''}`} 
-            onClick={() => {
-              if (post.pending) return;
-              handleSharePost(post.id);
-            }}
+          <button
+            type="button"
+            dir="ltr"
+            aria-label="مشاركة"
+            className={`h-10 -my-1 flex items-center gap-1.5 text-zinc-200 hover:text-white transition-colors ${post.pending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            onClick={() => { if (!post.pending) handleSharePost(post.id); }}
             disabled={post.pending}
           >
-            <Share2 className="w-4 h-4" /> 
-            <span>{post.shares_count || 0}</span>
+            <Send className="w-[22px] h-[22px]" strokeWidth={1.9} />
+            {(post.shares_count || 0) > 0 && <span className="text-sm font-bold tabular-nums leading-none">{post.shares_count}</span>}
           </button>
         </div>
 

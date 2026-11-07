@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { rankName, rankEmoji } from '../utils/ranks';
 import { m, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -61,7 +62,7 @@ const BATCHES = [
 ];
 
 // ─── Next rank names ───────────────────────────────────────────────────────────
-const RANK_NAMES = ['طالب تشريح', 'أخصائي الألم', 'سيد الأورثو', 'النيوروچي', 'أسطورة الريهاب'];
+const RANK_NAMES = ['هاوي', 'متدرّب', 'ثيرابيست', 'استشاري', 'أسطورة فيزيو'];
 
 // ─── Rank thresholds ───────────────────────────────────────────────────────────
 const RANK_THRESHOLDS = [0, 500, 1500, 3000, 6000];
@@ -130,7 +131,7 @@ export const Profile: React.FC<ProfileProps> = ({
     setSharingCard(true);
     const { shareCard } = await import('../utils/shareCard');
     const result = await shareCard(
-      { username: user.username, avatarUrl: user.avatar_url, rankName: user.rank?.name_ar || '', rankEmoji: user.rank?.emoji, totalXp: user.total_xp || 0, globalRank: user.global_rank, streak: user.streak_count, batch: user.batch },
+      { username: user.username, avatarUrl: user.avatar_url, rankName: rankName(user.rank), rankEmoji: rankEmoji(user.rank), totalXp: user.total_xp || 0, globalRank: user.global_rank, streak: user.streak_count, batch: user.batch },
       `${window.location.origin}/u/${encodeURIComponent(user.username)}`
     );
     setSharingCard(false);
@@ -380,7 +381,7 @@ export const Profile: React.FC<ProfileProps> = ({
 
             {/* Tier Pill */}
             <div className="absolute bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-orange-500 text-black text-2xs font-black border-2 border-zinc-900 whitespace-nowrap z-20">
-              {stripEmojis(user.rank?.name_ar || user.rank?.name_en) || `المستوى ${currentTier}`}
+              {rankName(user.rank)}
             </div>
           </div>
 
@@ -463,7 +464,7 @@ export const Profile: React.FC<ProfileProps> = ({
             <div className="flex-1 min-w-0">
               <p className="text-xs text-zinc-500 uppercase tracking-wider font-bold">الرتبة الحالية</p>
               <p className="text-base font-black text-white truncate">
-                {stripEmojis(user.rank?.name_ar || user.rank?.name_en) || `المستوى ${currentTier}`}
+                {rankName(user.rank)}
               </p>
             </div>
             <span className="text-[13px] font-black text-orange-400" dir="ltr">{user.total_xp?.toLocaleString()} XP</span>

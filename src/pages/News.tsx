@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { rankName } from '../utils/ranks';
 import { cld } from '../utils/image';
 import { m, AnimatePresence } from 'framer-motion';
 import { UserAvatar } from '../components/UserAvatar';
@@ -391,7 +392,7 @@ export const News: React.FC<NewsProps> = ({
                       </span>
                     </div>
                     <span className="text-2xs text-zinc-500 font-semibold mt-0.5 block">
-                      {stripEmojis(post.rank.name_ar || post.rank.name_en)} · {new Date(post.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                      {rankName(post.rank)} · {new Date(post.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
                     </span>
                   </div>
                 </div>

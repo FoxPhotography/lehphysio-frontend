@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { rankName } from '../utils/ranks';
 import { textDir } from '../utils/format';
 import { m, AnimatePresence } from 'framer-motion';
 import { getNameColor, getFrameImage } from '../utils/helpers';
@@ -194,6 +195,40 @@ export const Community: React.FC<CommunityProps> = ({
   const CHAT_WINDOW_STEP = 60;
   const [renderLimit, setRenderLimit] = useState(CHAT_WINDOW_STEP);
   const visibleMessages = chatMessages.length > renderLimit ? chatMessages.slice(-renderLimit) : chatMessages;
+
+  // ── Scroll anchoring ──────────────────────────────────────────────────────
+  // The chat always opens on the newest message, and follows new messages when
+  // you sent them or were already at the bottom (like WhatsApp / Messenger).
+  // This lives here (not in App) because the page is code-split: App's effect
+  // used to run before this list existed, so the chat opened at the top.
+  const nearBottomRef = useRef(true);
+  const lastMsgIdRef = useRef<any>(null);
+  const scrollFeedToBottom = () => {
+    const el = document.getElementById('pl-chat-feed');
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+    // Once more after fonts/avatars settle the final heights
+    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+    setTimeout(() => { if (nearBottomRef.current) el.scrollTop = el.scrollHeight; }, 250);
+  };
+  useLayoutEffect(() => {
+    if (activeSubTab !== 'chat' || deepLinkTarget?.type === 'chat_message') return;
+    nearBottomRef.current = true;
+    scrollFeedToBottom();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSubTab]);
+  useLayoutEffect(() => {
+    if (activeSubTab !== 'chat') return;
+    const last = visibleMessages[visibleMessages.length - 1];
+    const lastId = last?.id ?? null;
+    if (lastId === lastMsgIdRef.current) return;
+    const isFirstLoad = lastMsgIdRef.current === null;
+    lastMsgIdRef.current = lastId;
+    const mine = !!(last && user && last.username === user.username);
+    if (deepLinkTarget?.type === 'chat_message' && !mine) return;
+    if (isFirstLoad || mine || nearBottomRef.current) scrollFeedToBottom();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleMessages, activeSubTab]);
   useEffect(() => {
     // A deep link may point at an older message: render everything we have so it can be found.
     if (deepLinkTarget?.type === 'chat_message') setRenderLimit(Number.MAX_SAFE_INTEGER);
@@ -378,7 +413,7 @@ export const Community: React.FC<CommunityProps> = ({
   };
 
   const handleScrollToBottom = () => {
-    const el = document.getElementById('ps-chat-feed');
+    const el = document.getElementById('pl-chat-feed');
     if (el) {
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     }
@@ -394,7 +429,7 @@ export const Community: React.FC<CommunityProps> = ({
       <div className="glass-card p-0 md:p-4 flex flex-col h-full relative overflow-hidden border-0 rounded-none">
         
         {/* Sub tab switcher */}
-        <div className="flex gap-2 mb-3 p-3 md:p-0 shrink-0">
+        <div className="flex gap-2 p-3 md:p-0 md:mb-3 shrink-0 border-b border-zinc-900/80 md:border-0">
           <button 
             type="button" 
             className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 ${
@@ -404,9 +439,26 @@ export const Community: React.FC<CommunityProps> = ({
             }`} 
             onClick={() => setActiveSubTab('chat')}
           >
-            <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+            {isRefreshingChat ? (
+              <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" aria-label="بنحدّث" />
+            ) : (
+              <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+            )}
             <span className="hidden sm:inline">الشات العام</span>
             <span className="sm:hidden">الشات</span>
+            <span
+              className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-black ${
+                activeSubTab === 'chat' ? 'bg-black/15 text-black' : 'bg-emerald-500/10 text-emerald-400'
+              }`}
+              aria-label={`${onlineCount} أونلاين`}
+              title={`${onlineCount} أونلاين`}
+            >
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${activeSubTab === 'chat' ? 'bg-emerald-700' : 'bg-emerald-500'}`} />
+              </span>
+              <span dir="ltr" className="tabular-nums">{onlineCount}</span>
+            </span>
           </button>
           <button 
             type="button" 
@@ -428,7 +480,7 @@ export const Community: React.FC<CommunityProps> = ({
             {/* Multi-select bar or Standard Header */}
             {isMultiSelectMode ? (
               <div className="flex justify-between items-center bg-brand-orange/10 border border-brand-orange/20 rounded-xl p-3 mb-3 mx-3 md:mx-0 shrink-0">
-                <span className="text-xs font-black text-white">Selected {selectedMessageIds.length} messages</span>
+                <span className="text-xs font-black text-white">اتحدد {selectedMessageIds.length} رسالة</span>
                 <div className="flex gap-2">
                   {canDeleteSelected && (
                     <button className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-2xs py-1.5 px-3 rounded-lg cursor-pointer" onClick={handleBulkDeleteMessages} disabled={selectedMessageIds.length === 0}>حذف</button>
@@ -436,34 +488,16 @@ export const Community: React.FC<CommunityProps> = ({
                   <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-2xs py-1.5 px-3 rounded-lg cursor-pointer" onClick={() => { setIsMultiSelectMode(false); setSelectedMessageIds([]); }}>إلغاء</button>
                 </div>
               </div>
-            ) : (
-              <div className="flex items-center justify-between mb-2 border-b border-zinc-900 pb-2 mx-3 md:mx-0 shrink-0">
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-brand-orange" />
-                  <h3 className="text-sm font-black text-white">الشات</h3>
-                  {isRefreshingChat && (
-                    <div className="flex items-center gap-1.5 text-2xs text-zinc-500 font-bold uppercase tracking-wider animate-pulse ms-2">
-                      <div className="w-3.5 h-3.5 border-2 border-brand-orange border-t-transparent rounded-full animate-spin" />
-                      <span>بنحدّث…</span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 text-2xs text-brand-orange font-extrabold uppercase tracking-wider">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                  </span>
-                  <span>{onlineCount} أونلاين</span>
-                </div>
-              </div>
-            )}
+            ) : null}
 
             {/* Chat Messages Feed */}
             <div 
-              id="ps-chat-feed" 
+              id="pl-chat-feed" 
               onScroll={(e) => {
                 const el = e.currentTarget;
-                const isUp = el.scrollHeight - el.scrollTop - el.clientHeight > 150;
+                const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+                nearBottomRef.current = distance < 120;
+                const isUp = distance > 150;
                 setShowScrollDownBtn(isUp);
 
                 // Infinite scroll up: reveal cached messages first, then fetch older ones
@@ -508,9 +542,6 @@ export const Community: React.FC<CommunityProps> = ({
                     className="flex w-full"
                     style={{
                       justifyContent: isMyMsg ? 'flex-end' : 'flex-start',
-                      // Skip layout/paint for messages scrolled out of view
-                      contentVisibility: 'auto',
-                      containIntrinsicSize: 'auto 72px',
                     }}
                   >
                     <div
@@ -586,7 +617,7 @@ export const Community: React.FC<CommunityProps> = ({
                             {msg.batch}
                           </span>
                           <span className="text-2xs text-zinc-500 font-semibold">
-                            {stripEmojis(msg.rank?.name_ar || msg.rank?.name_en || '')}
+                            {msg.rank ? rankName(msg.rank) : ''}
                           </span>
                           {(msg.role === 'admin' || msg.role === 'owner') && (
                             <span className={`text-2xs font-black px-1.5 py-0.5 rounded-md uppercase border ${
