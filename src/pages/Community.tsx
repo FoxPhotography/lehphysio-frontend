@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { rankName } from '../utils/ranks';
 import { textDir } from '../utils/format';
 import { m, AnimatePresence } from 'framer-motion';
 import { getNameColor, getFrameImage } from '../utils/helpers';
@@ -194,6 +195,40 @@ export const Community: React.FC<CommunityProps> = ({
   const CHAT_WINDOW_STEP = 60;
   const [renderLimit, setRenderLimit] = useState(CHAT_WINDOW_STEP);
   const visibleMessages = chatMessages.length > renderLimit ? chatMessages.slice(-renderLimit) : chatMessages;
+
+  // ── Scroll anchoring ──────────────────────────────────────────────────────
+  // The chat always opens on the newest message, and follows new messages when
+  // you sent them or were already at the bottom (like WhatsApp / Messenger).
+  // This lives here (not in App) because the page is code-split: App's effect
+  // used to run before this list existed, so the chat opened at the top.
+  const nearBottomRef = useRef(true);
+  const lastMsgIdRef = useRef<any>(null);
+  const scrollFeedToBottom = () => {
+    const el = document.getElementById('pl-chat-feed');
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+    // Once more after fonts/avatars settle the final heights
+    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+    setTimeout(() => { if (nearBottomRef.current) el.scrollTop = el.scrollHeight; }, 250);
+  };
+  useLayoutEffect(() => {
+    if (activeSubTab !== 'chat' || deepLinkTarget?.type === 'chat_message') return;
+    nearBottomRef.current = true;
+    scrollFeedToBottom();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSubTab]);
+  useLayoutEffect(() => {
+    if (activeSubTab !== 'chat') return;
+    const last = visibleMessages[visibleMessages.length - 1];
+    const lastId = last?.id ?? null;
+    if (lastId === lastMsgIdRef.current) return;
+    const isFirstLoad = lastMsgIdRef.current === null;
+    lastMsgIdRef.current = lastId;
+    const mine = !!(last && user && last.username === user.username);
+    if (deepLinkTarget?.type === 'chat_message' && !mine) return;
+    if (isFirstLoad || mine || nearBottomRef.current) scrollFeedToBottom();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleMessages, activeSubTab]);
   useEffect(() => {
     // A deep link may point at an older message: render everything we have so it can be found.
     if (deepLinkTarget?.type === 'chat_message') setRenderLimit(Number.MAX_SAFE_INTEGER);
@@ -378,7 +413,7 @@ export const Community: React.FC<CommunityProps> = ({
   };
 
   const handleScrollToBottom = () => {
-    const el = document.getElementById('ps-chat-feed');
+    const el = document.getElementById('pl-chat-feed');
     if (el) {
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     }
@@ -460,10 +495,12 @@ export const Community: React.FC<CommunityProps> = ({
 
             {/* Chat Messages Feed */}
             <div 
-              id="ps-chat-feed" 
+              id="pl-chat-feed" 
               onScroll={(e) => {
                 const el = e.currentTarget;
-                const isUp = el.scrollHeight - el.scrollTop - el.clientHeight > 150;
+                const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+                nearBottomRef.current = distance < 120;
+                const isUp = distance > 150;
                 setShowScrollDownBtn(isUp);
 
                 // Infinite scroll up: reveal cached messages first, then fetch older ones
@@ -508,9 +545,6 @@ export const Community: React.FC<CommunityProps> = ({
                     className="flex w-full"
                     style={{
                       justifyContent: isMyMsg ? 'flex-end' : 'flex-start',
-                      // Skip layout/paint for messages scrolled out of view
-                      contentVisibility: 'auto',
-                      containIntrinsicSize: 'auto 72px',
                     }}
                   >
                     <div
@@ -586,7 +620,7 @@ export const Community: React.FC<CommunityProps> = ({
                             {msg.batch}
                           </span>
                           <span className="text-2xs text-zinc-500 font-semibold">
-                            {stripEmojis(msg.rank?.name_ar || msg.rank?.name_en || '')}
+                            {msg.rank ? rankName(msg.rank) : ''}
                           </span>
                           {(msg.role === 'admin' || msg.role === 'owner') && (
                             <span className={`text-2xs font-black px-1.5 py-0.5 rounded-md uppercase border ${

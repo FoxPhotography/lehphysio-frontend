@@ -208,7 +208,7 @@ export const Rewards: React.FC<RewardsProps> = ({
       <section className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5">
         <div className="flex items-center gap-2 mb-3">
           <Key className="w-4 h-4 text-orange-400" />
-          <h2 className="text-[15px] font-black text-white">استخدم كود XP سري</h2>
+          <h2 className="text-[15px] font-black text-white whitespace-nowrap truncate min-w-0">استخدم كود XP سري</h2>
         </div>
         <p className="text-xs text-zinc-500 mb-4">
           اكتب الأكواد اللي بتنزل في الحلقات أو على السوشيال واكسب XP على طول.
@@ -261,11 +261,11 @@ export const Rewards: React.FC<RewardsProps> = ({
       {/* ── Daily Surprise Box ──────────────────────────────────────── */}
       <section className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Gift className="w-4 h-4 text-violet-400" />
-          <h2 className="text-[15px] font-black text-white">صندوق المفاجأة اليومي</h2>
+          <Gift className="w-4 h-4 text-violet-400 shrink-0" />
+          <h2 className="text-[15px] font-black text-white whitespace-nowrap truncate min-w-0">صندوق اليوم</h2>
           {hasOpenedBoxToday && (
-            <span className="ms-auto flex items-center gap-1 text-xs text-zinc-500">
-              <Clock className="w-3.5 h-3.5" /> بيتجدد الساعة 12 بالليل
+            <span className="ms-auto shrink-0 whitespace-nowrap flex items-center gap-1 text-xs text-zinc-500">
+              <Clock className="w-3.5 h-3.5" /> يتجدد 12 بالليل
             </span>
           )}
         </div>
@@ -346,7 +346,7 @@ export const Rewards: React.FC<RewardsProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-orange-400" />
-            <h2 className="text-[15px] font-black text-white">فريمات حسب مستواك</h2>
+            <h2 className="text-[15px] font-black text-white whitespace-nowrap truncate min-w-0">فريمات حسب مستواك</h2>
           </div>
           <div className="text-xs font-bold text-zinc-400 bg-zinc-900/80 border border-zinc-800 px-3 py-1 rounded-xl flex items-center gap-1.5 self-start sm:self-auto">
             <span>✨ فتح الفريمات</span>

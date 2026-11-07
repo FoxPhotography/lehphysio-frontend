@@ -14,11 +14,11 @@ const getUserId = (user: any, token: string | null): string | null => {
 
 const getClientRank = (xp: number) => {
   const score = xp || 0;
-  if (score >= 6000) return { name_ar: 'أسطورة الريهاب', name_en: 'Rehab Legend', emoji: '👑', tier: 5 };
-  if (score >= 3000) return { name_ar: 'النيوروچي', name_en: 'Neurogenic', emoji: '🧠', tier: 4 };
-  if (score >= 1500) return { name_ar: 'سيد الأورثو', name_en: 'Ortho King', emoji: '🦴', tier: 3 };
-  if (score >= 500) return { name_ar: 'أخصائي الألم', name_en: 'Pain Specialist', emoji: '⚡', tier: 2 };
-  return { name_ar: 'طالب تشريح', name_en: 'Anatomy Rookie', emoji: '🧪', tier: 1 };
+  if (score >= 6000) return { name_ar: 'أسطورة فيزيو', name_en: 'Rehab Legend', emoji: '👑', tier: 5 };
+  if (score >= 3000) return { name_ar: 'استشاري', name_en: 'Neurogenic', emoji: '🧠', tier: 4 };
+  if (score >= 1500) return { name_ar: 'معالج', name_en: 'Ortho King', emoji: '🦴', tier: 3 };
+  if (score >= 500) return { name_ar: 'متدرّب', name_en: 'Pain Specialist', emoji: '⚡', tier: 2 };
+  return { name_ar: 'سنة أولى', name_en: 'Anatomy Rookie', emoji: '🧪', tier: 1 };
 };
 
 interface UseAppSocketsProps {

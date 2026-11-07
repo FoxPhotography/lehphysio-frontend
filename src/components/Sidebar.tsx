@@ -1,4 +1,5 @@
 import React from 'react';
+import { rankName } from '../utils/ranks';
 import { UserAvatar } from './UserAvatar';
 import logo from '../assets/logo-wordmark.webp';
 import { NotificationBell } from './notifications/NotificationBell';
@@ -44,8 +45,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (equippedTitle && equippedTitle !== 'none') {
       return stripEmojis(equippedTitle);
     }
-    if (user?.rank?.name_ar || user?.rank?.name_en) {
-      return stripEmojis(user.rank.name_ar || user.rank.name_en);
+    if (user?.rank) {
+      return rankName(user.rank);
     }
     return '';
   };

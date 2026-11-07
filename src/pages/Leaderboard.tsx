@@ -1,4 +1,5 @@
 import { useAuth } from '../context/AuthContext';
+import { rankName } from '../utils/ranks';
 import React from 'react';
 import { m } from 'framer-motion';
 import { Trophy, Crown, Medal, Star } from 'lucide-react';
@@ -180,7 +181,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           <div>
             {leaderboard.map((u: any, idx: number) => {
               const isMe = user && u.username === user.username;
-              const rankName = stripEmojis(u.rank?.name_ar || u.rank?.name_en || '');
+              const rankLabel = u.rank ? rankName(u.rank) : '';
 
               return (
                 <m.div
@@ -225,7 +226,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                       )}
                     </div>
                     <p className="text-xs text-zinc-500 truncate">
-                      {u.batch}{rankName ? ` · ${rankName}` : ''}
+                      {u.batch}{rankLabel ? ` · ${rankLabel}` : ''}
                     </p>
                   </div>
 

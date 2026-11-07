@@ -3,7 +3,7 @@ import { ArrowRight, Flame, Share2, Trophy, Zap } from 'lucide-react';
 import { API_BASE } from '../services/api';
 import { UserAvatar } from '../components/UserAvatar';
 import { SkeletonBlock } from '../components/common/Skeleton';
-import { rankProgress } from '../utils/ranks';
+import { rankName, rankEmoji, rankProgress } from '../utils/ranks';
 import { daysLabel } from '../utils/format';
 import { shareCard } from '../utils/shareCard';
 
@@ -105,7 +105,7 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
   const onShare = async () => {
     setSharing(true);
     const result = await shareCard(
-      { username: data.username, avatarUrl: data.avatar_url, rankName: data.rank?.name_ar, rankEmoji: data.rank?.emoji, totalXp: data.total_xp, globalRank: data.global_rank, streak: data.streak_count, batch: data.batch },
+      { username: data.username, avatarUrl: data.avatar_url, rankName: rankName(data.rank), rankEmoji: rankEmoji(data.rank), totalXp: data.total_xp, globalRank: data.global_rank, streak: data.streak_count, batch: data.batch },
       profileUrl
     );
     setSharing(false);
@@ -130,7 +130,7 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
           {data.batch && <p className="text-sm text-zinc-500 font-bold mt-0.5">{data.batch}</p>}
         </div>
         <span className="relative text-sm font-black text-brand-amber bg-brand-orange/10 border border-brand-orange/30 rounded-full px-4 py-1.5">
-          {data.rank?.emoji} {data.rank?.name_ar}
+          {rankEmoji(data.rank)} {rankName(data.rank)}
         </span>
         <div className="w-full mt-2">
           <div className="h-2 rounded-full bg-zinc-900 overflow-hidden">
