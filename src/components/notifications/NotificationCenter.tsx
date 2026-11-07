@@ -1,420 +1,248 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import {
-  CheckCheck, Trash2, Settings, BellOff, Loader2, MessageSquare, AtSign, Tv, Shield
-} from 'lucide-react';
+import { CheckCheck, Settings, X, BellRing, AtSign, MessageCircle, Tv, Shield, Trash2, Loader2 } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext';
 import { NotificationItem } from './NotificationItem';
 import { NotificationPreferencesPanel } from './NotificationPreferences';
 import type { AppNotification } from '../../types';
 
+type Filter = 'all' | 'unread' | 'mentions' | 'comments' | 'posts' | 'moderation';
+
+const FILTERS: { id: Filter; label: string }[] = [
+  { id: 'all', label: 'الكل' },
+  { id: 'mentions', label: 'المنشن' },
+  { id: 'comments', label: 'التعليقات' },
+  { id: 'posts', label: 'المحتوى' },
+  { id: 'moderation', label: 'المراجعة' },
+];
+
+const EMPTY: Record<Filter, { icon: React.ElementType; title: string; body: string }> = {
+  all: { icon: BellRing, title: 'مفيش إشعارات لسه', body: 'لما حد يعلّق أو يعملك منشن أو تنزل حلقة جديدة، هتلاقيها هنا.' },
+  unread: { icon: CheckCheck, title: 'قريت كل حاجة', body: 'مفيش جديد دلوقتي.' },
+  mentions: { icon: AtSign, title: 'مفيش منشنات', body: 'لما حد يكتب @اسمك في تعليق أو في الشات هتظهر هنا.' },
+  comments: { icon: MessageCircle, title: 'مفيش تعليقات', body: 'التعليقات والردود على بوستاتك هتظهر هنا.' },
+  posts: { icon: Tv, title: 'مفيش محتوى جديد', body: 'الحلقات والبوستات الجديدة هتظهر هنا.' },
+  moderation: { icon: Shield, title: 'مفيش تحديثات', body: 'قبول ورفض بوستاتك واقتراحاتك هيظهر هنا.' },
+};
+
+/** "جديد" first (unread), then the rest by recency – the way Instagram/TikTok read. */
+function groupNotifications(list: AppNotification[]) {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startOfWeek = startOfToday - 6 * 864e5;
+  const groups: { key: string; label: string; items: AppNotification[] }[] = [
+    { key: 'new', label: 'جديد', items: [] },
+    { key: 'today', label: 'النهارده', items: [] },
+    { key: 'week', label: 'الأسبوع ده', items: [] },
+    { key: 'older', label: 'قبل كده', items: [] },
+  ];
+  for (const n of list) {
+    const t = new Date(n.created_at).getTime();
+    if (!n.is_read) groups[0].items.push(n);
+    else if (t >= startOfToday) groups[1].items.push(n);
+    else if (t >= startOfWeek) groups[2].items.push(n);
+    else groups[3].items.push(n);
+  }
+  return groups.filter((g) => g.items.length > 0);
+}
+
+const RowSkeleton = () => (
+  <div className="flex items-center gap-3 px-4 py-3 animate-pulse" aria-hidden>
+    <div className="w-11 h-11 rounded-full bg-zinc-900 shrink-0" />
+    <div className="flex-1 space-y-2">
+      <div className="h-3 rounded bg-zinc-900 w-4/5" />
+      <div className="h-3 rounded bg-zinc-900 w-2/5" />
+    </div>
+  </div>
+);
+
 export const NotificationCenter: React.FC = () => {
   const {
-    notifications,
-    isLoading,
-    hasMore,
-    activeFilter,
-    isOpen,
-    showPreferences,
-    loadMore,
-    markAllAsRead,
-    clearRead,
-    softDelete,
-    setFilter,
-    setIsOpen,
-    setShowPreferences,
-    navigateToTarget,
-    unreadCount,
+    notifications, isLoading, hasMore, activeFilter, isOpen, showPreferences, unreadCount,
+    loadMore, markAllAsRead, clearRead, softDelete, setFilter, setIsOpen, setShowPreferences, navigateToTarget,
   } = useNotifications();
 
   const panelRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const close = () => { setIsOpen(false); setShowPreferences(false); };
 
-  // Group notifications chronologically
-  const getGroupedNotifications = useCallback(() => {
-    const todayGroup: AppNotification[] = [];
-    const yesterdayGroup: AppNotification[] = [];
-    const thisWeekGroup: AppNotification[] = [];
-    const olderGroup: AppNotification[] = [];
+  const groups = useMemo(() => groupNotifications(notifications), [notifications]);
 
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const startOfYesterday = startOfToday - 24 * 60 * 60 * 1000;
-    const startOfThisWeek = startOfToday - 7 * 24 * 60 * 60 * 1000;
-
-    notifications.forEach((n) => {
-      const date = new Date(n.created_at).getTime();
-      if (date >= startOfToday) {
-        todayGroup.push(n);
-      } else if (date >= startOfYesterday) {
-        yesterdayGroup.push(n);
-      } else if (date >= startOfThisWeek) {
-        thisWeekGroup.push(n);
-      } else {
-        olderGroup.push(n);
-      }
-    });
-
-    return {
-      today: todayGroup,
-      yesterday: yesterdayGroup,
-      thisWeek: thisWeekGroup,
-      older: olderGroup,
-    };
-  }, [notifications]);
-
-  // Close on click outside or escape key
+  // Outside click (desktop dropdown) + Escape
   useEffect(() => {
-    if (!isOpen) return () => {};
-
-    const handleClickOutside = (e: MouseEvent) => {
-      const clickedBell = (e.target as HTMLElement).closest('.notification-bell-btn');
-      if (
-        panelRef.current &&
-        !panelRef.current.contains(e.target as Node) &&
-        !clickedBell
-      ) {
-        setIsOpen(false);
-        setShowPreferences(false);
-      }
+    if (!isOpen) return undefined;
+    const onDown = (e: MouseEvent) => {
+      if ((e.target as HTMLElement).closest('.notification-bell-btn')) return;
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) close();
     };
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsOpen(false);
-        setShowPreferences(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEscape);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [isOpen, setIsOpen, setShowPreferences]);
-
-  // Lock body scroll when open
-  useEffect(() => {
-    if (!isOpen) return () => {};
-
-    const origHtmlOverflow = document.documentElement.style.overflow;
-    const origBodyOverflow = document.body.style.overflow;
-
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.documentElement.style.overflow = origHtmlOverflow;
-      document.body.style.overflow = origBodyOverflow;
-    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // Infinite scroll observer
+  // Full-screen on phones: lock the page behind
   useEffect(() => {
-    if (!sentinelRef.current || !isOpen) return () => {};
+    if (!isOpen) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isOpen]);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(sentinelRef.current);
-    return () => observer.disconnect();
+  // Infinite scroll
+  useEffect(() => {
+    if (!isOpen || !sentinelRef.current) return undefined;
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore && !isLoading) loadMore();
+    }, { rootMargin: '200px' });
+    io.observe(sentinelRef.current);
+    return () => io.disconnect();
   }, [isOpen, hasMore, isLoading, loadMore]);
 
-  if (!isOpen) return null;
-
-  const renderEmptyState = () => {
-    let title = 'مفيش إشعارات لسه';
-    let description = 'هنبلّغك أول ما يحصل حاجة مهمة.';
-    let icon = <BellOff className="w-8 h-8 text-zinc-500" />;
-
-    if (activeFilter === 'unread') {
-      title = 'مفيش جديد';
-      description = 'مفيش إشعارات جديدة.';
-      icon = (
-        <div className="relative">
-          <CheckCheck className="w-8 h-8 text-emerald-400" />
-          <m.div
-            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="absolute -top-1 -end-1 w-2.5 h-2.5 rounded-full bg-emerald-400"
-          />
-        </div>
-      );
-    } else if (activeFilter === 'mentions') {
-      title = 'مفيش منشنات';
-      description = 'لما حد يعملك منشن هتلاقيه هنا.';
-      icon = <AtSign className="w-8 h-8 text-zinc-500" />;
-    } else if (activeFilter === 'comments') {
-      title = 'مفيش تعليقات أو ردود';
-      description = 'التفاعل على بوستاتك وتعليقاتك هيظهر هنا.';
-      icon = <MessageSquare className="w-8 h-8 text-zinc-500" />;
-    } else if (activeFilter === 'posts') {
-      title = 'مفيش بوستات أو حلقات';
-      description = 'المحتوى الجديد هيظهر هنا.';
-      icon = <Tv className="w-8 h-8 text-zinc-500" />;
-    } else if (activeFilter === 'moderation') {
-      title = 'مفيش تحديثات مراجعة';
-      description = 'قبول ورفض بوستاتك هيظهر هنا.';
-      icon = <Shield className="w-8 h-8 text-zinc-500" />;
-    }
-
-    return (
-      <div className="flex flex-col items-center justify-center py-14 px-6 text-center select-none">
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 bg-white/2 border border-white/5 shadow-inner"
-        >
-          {icon}
-        </div>
-        <p className="text-sm font-black text-white">{title}</p>
-        <p className="text-xs mt-1 text-zinc-500 font-bold max-w-[200px] leading-relaxed">
-          {description}
-        </p>
-      </div>
-    );
-  };
+  const empty = EMPTY[activeFilter as Filter] ?? EMPTY.all;
+  const EmptyIcon = empty.icon;
+  const hasRead = notifications.some((n) => n.is_read);
 
   return (
-    <>
-      {/* Mobile backdrop */}
-      <m.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[998] bg-black/70 md:hidden"
-        onClick={() => { setIsOpen(false); setShowPreferences(false); }}
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Desktop: dim the page slightly behind the dropdown */}
+          <m.div
+            key="backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="hidden md:block fixed inset-0 z-[998] bg-black/40"
+            onClick={close}
+          />
 
-      {/* Panel Container */}
-      <m.div
-        ref={panelRef}
-        initial={{ opacity: 0, y: -8, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -8, scale: 0.98 }}
-        transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-        className="fixed z-[999] overflow-hidden flex flex-col"
-        style={{
-          top: 'var(--notification-panel-top, 56px)',
-          right: 'var(--notification-panel-right, 16px)',
-          left: 'var(--notification-panel-left, auto)',
-          bottom: 'var(--notification-panel-bottom, auto)',
-          width: 'var(--notification-panel-width, 380px)',
-          maxHeight: 'var(--notification-panel-max-height, min(70vh, 520px))',
-          borderRadius: '20px',
-          background: 'var(--color-bg-card)',
-          border: '1px solid var(--color-border-card)',
-          boxShadow: '0 25px 65px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-        }}
-      >
-        <AnimatePresence mode="wait">
-          {showPreferences ? (
-            <NotificationPreferencesPanel key="preferences" />
-          ) : (
-            <m.div
-              key="notifications"
-              initial={{ opacity: 0, x: -16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.18 }}
-              className="flex flex-col max-h-[inherit] h-full min-h-0"
-            >
-              {/* Header */}
-              <div
-                className="flex items-center justify-between px-4 py-3.5 border-b shrink-0"
-                style={{ borderColor: 'rgba(255,255,255,0.06)' }}
-              >
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-black tracking-tight text-white">
-                    الإشعارات
-                  </h3>
-                  {unreadCount > 0 && (
-                    <span className="px-2 py-0.5 rounded-full text-2xs font-black bg-brand-orange/15 text-brand-orange border border-brand-orange/20 animate-pulse">
-                      {unreadCount}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); markAllAsRead(); }}
-                      className="p-2 rounded-xl transition-all cursor-pointer bg-white/3 border border-white/5 text-zinc-400 hover:text-brand-orange hover:border-brand-orange/25 active:scale-95"
-                      title="علّم الكل كمقروء"
-                    >
-                      <CheckCheck className="w-4 h-4" />
-                    </button>
-                  )}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowPreferences(true); }}
-                    className="p-2 rounded-xl transition-all cursor-pointer bg-white/3 border border-white/5 text-zinc-400 hover:text-brand-orange hover:border-brand-orange/25 active:scale-95"
-                    title="إعدادات الإشعارات"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Filter tabs */}
-              <div
-                className="flex items-center gap-1.5 px-4 py-2 border-b shrink-0 overflow-x-auto scrollbar-none"
-                style={{ borderColor: 'rgba(255,255,255,0.06)' }}
-              >
-                {([
-                  { id: 'all', label: 'الكل' },
-                  { id: 'unread', label: 'غير مقروء' },
-                  { id: 'mentions', label: 'المنشن' },
-                  { id: 'comments', label: 'التعليقات' },
-                  { id: 'posts', label: 'البوستات' },
-                  { id: 'moderation', label: 'المراجعة' }
-                ] as const).map((filterItem) => {
-                  const isActive = activeFilter === filterItem.id;
-                  return (
-                    <button
-                      key={filterItem.id}
-                      onClick={() => setFilter(filterItem.id)}
-                      className="relative px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer capitalize shrink-0 focus-visible:outline-none"
-                      style={{
-                        color: isActive ? 'var(--color-brand-orange)' : 'var(--text-secondary)',
-                      }}
-                    >
-                      {isActive && (
-                        <m.div
-                          layoutId="activeFilterTab"
-                          className="absolute inset-0 rounded-xl bg-brand-orange/10 border border-brand-orange/20"
-                          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                        />
-                      )}
-                      <span className="relative z-10 flex items-center gap-1">
-                        {filterItem.label}
-                        {filterItem.id === 'unread' && unreadCount > 0 && (
-                          <span className="px-1.5 py-0.5 rounded-full text-2xs font-black bg-red-500/15 text-red-500 border border-red-500/20">
-                            {unreadCount > 99 ? '99+' : unreadCount}
-                          </span>
-                        )}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Notification list */}
-              <div
-                ref={scrollRef}
-                className="flex-1 overflow-y-auto overscroll-contain min-h-0"
-                style={{ overscrollBehavior: 'contain' }}
-              >
-                {notifications.length === 0 && !isLoading ? (
-                  renderEmptyState()
-                ) : (
-                  <div className="flex flex-col divide-y divide-white/3">
-                    {(() => {
-                      const groups = getGroupedNotifications();
-                      return (
-                        <>
-                          {groups.today.length > 0 && (
-                            <div className="flex flex-col">
-                              <div className="px-4 py-2 text-2xs font-black uppercase tracking-wider text-zinc-500 bg-zinc-950/20 sticky top-0 z-[2] border-b border-white/3">
-                                النهارده
-                              </div>
-                              {groups.today.map((notif) => (
-                                <NotificationItem
-                                  key={notif._id}
-                                  notification={notif}
-                                  onNavigate={navigateToTarget}
-                                  onDelete={softDelete}
-                                />
-                              ))}
-                            </div>
-                          )}
-                          {groups.yesterday.length > 0 && (
-                            <div className="flex flex-col">
-                              <div className="px-4 py-2 text-2xs font-black uppercase tracking-wider text-zinc-500 bg-zinc-950/20 sticky top-0 z-[2] border-b border-white/3">
-                                امبارح
-                              </div>
-                              {groups.yesterday.map((notif) => (
-                                <NotificationItem
-                                  key={notif._id}
-                                  notification={notif}
-                                  onNavigate={navigateToTarget}
-                                  onDelete={softDelete}
-                                />
-                              ))}
-                            </div>
-                          )}
-                          {groups.thisWeek.length > 0 && (
-                            <div className="flex flex-col">
-                              <div className="px-4 py-2 text-2xs font-black uppercase tracking-wider text-zinc-500 bg-zinc-950/20 sticky top-0 z-[2] border-b border-white/3">
-                                الأسبوع ده
-                              </div>
-                              {groups.thisWeek.map((notif) => (
-                                <NotificationItem
-                                  key={notif._id}
-                                  notification={notif}
-                                  onNavigate={navigateToTarget}
-                                  onDelete={softDelete}
-                                />
-                              ))}
-                            </div>
-                          )}
-                          {groups.older.length > 0 && (
-                            <div className="flex flex-col">
-                              <div className="px-4 py-2 text-2xs font-black uppercase tracking-wider text-zinc-500 bg-zinc-950/20 sticky top-0 z-[2] border-b border-white/3">
-                                أقدم
-                              </div>
-                              {groups.older.map((notif) => (
-                                <NotificationItem
-                                  key={notif._id}
-                                  notification={notif}
-                                  onNavigate={navigateToTarget}
-                                  onDelete={softDelete}
-                                />
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
-                )}
-
-                {/* Infinite scroll sentinel */}
-                <div ref={sentinelRef} className="h-1 shrink-0" />
-
-                {/* Loading indicator */}
-                {isLoading && (
-                  <div className="flex items-center justify-center py-5">
-                    <Loader2 className="w-5 h-5 animate-spin text-brand-orange" />
-                  </div>
-                )}
-              </div>
-
-              {/* Footer: Clear read */}
-              {notifications.some(n => n.is_read) && (
-                <div
-                  className="px-4 py-3 border-t shrink-0 bg-zinc-950/30"
-                  style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+          <m.section
+            key="panel"
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="الإشعارات"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 36 }}
+            className="notif-panel fixed z-[999] flex flex-col bg-[#0b0b0c] overflow-hidden
+                       inset-0 pt-safe pb-safe
+                       md:inset-auto md:pt-0 md:pb-0 md:rounded-3xl md:border md:border-white/10 md:shadow-[0_30px_80px_rgba(0,0,0,0.7)]"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {showPreferences ? (
+                <NotificationPreferencesPanel key="prefs" />
+              ) : (
+                <m.div
+                  key="list"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.12 }}
+                  className="flex flex-col h-full min-h-0"
                 >
-                  <button
-                    onClick={(e) => { e.stopPropagation(); clearRead(); }}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border border-red-500/15 bg-red-500/5 text-red-400 hover:bg-red-500/10 active:scale-[0.99]"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    امسح المقروء
-                  </button>
-                </div>
+                  {/* Header */}
+                  <header className="flex items-center gap-2 px-2 h-14 shrink-0">
+                    <button onClick={close} aria-label="إغلاق" className="w-10 h-10 rounded-full flex items-center justify-center text-zinc-300 hover:bg-white/5 md:hidden">
+                      <X className="w-6 h-6" />
+                    </button>
+                    <h2 className="flex-1 text-xl font-black text-white px-2 md:px-3">الإشعارات</h2>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); markAllAsRead(); }}
+                        className="h-9 px-3 rounded-full flex items-center gap-1.5 text-xs font-bold text-zinc-300 hover:bg-white/5 active:scale-95 transition"
+                      >
+                        <CheckCheck className="w-4 h-4" />
+                        <span>قريت الكل</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowPreferences(true); }}
+                      aria-label="إعدادات الإشعارات"
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-zinc-300 hover:bg-white/5 active:scale-95 transition"
+                    >
+                      <Settings className="w-5 h-5" />
+                    </button>
+                  </header>
+
+                  {/* Filter chips */}
+                  <nav aria-label="فلترة الإشعارات" className="flex gap-2 px-4 pb-3 overflow-x-auto shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {FILTERS.map((f) => {
+                      const active = activeFilter === f.id;
+                      return (
+                        <button
+                          key={f.id}
+                          onClick={() => setFilter(f.id)}
+                          aria-pressed={active}
+                          className={`shrink-0 h-8 px-4 rounded-full text-[13px] font-bold transition-colors active:scale-95 ${
+                            active ? 'bg-white text-black' : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800'
+                          }`}
+                        >
+                          {f.label}
+                        </button>
+                      );
+                    })}
+                  </nav>
+
+                  <div className="h-px bg-white/[0.06] shrink-0" />
+
+                  {/* List */}
+                  <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+                    {isLoading && notifications.length === 0 ? (
+                      <div role="status" aria-label="جاري التحميل">{Array.from({ length: 7 }, (_, i) => <RowSkeleton key={i} />)}</div>
+                    ) : notifications.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center text-center px-8 py-20">
+                        <div className="w-20 h-20 rounded-full border-2 border-zinc-800 flex items-center justify-center mb-5">
+                          <EmptyIcon className="w-9 h-9 text-zinc-400" strokeWidth={1.6} />
+                        </div>
+                        <p className="text-lg font-black text-white">{empty.title}</p>
+                        <p className="text-sm text-zinc-500 mt-1.5 max-w-[260px] leading-relaxed">{empty.body}</p>
+                      </div>
+                    ) : (
+                      groups.map((g) => (
+                        <section key={g.key} aria-label={g.label}>
+                          <h3 className="sticky top-0 z-30 bg-[#0b0b0c]/95 px-4 pt-4 pb-2 text-[15px] font-black text-white flex items-center gap-2">
+                            {g.label}
+                            {g.key === 'new' && <span className="min-w-5 h-5 px-1.5 rounded-full bg-brand-orange text-black text-2xs font-black flex items-center justify-center">{g.items.length}</span>}
+                          </h3>
+                          <ul>
+                            <AnimatePresence initial={false}>
+                              {g.items.map((n) => (
+                                <NotificationItem key={n._id} notification={n} onNavigate={navigateToTarget} onDelete={softDelete} />
+                              ))}
+                            </AnimatePresence>
+                          </ul>
+                        </section>
+                      ))
+                    )}
+
+                    <div ref={sentinelRef} className="h-1" />
+                    {isLoading && notifications.length > 0 && (
+                      <div className="flex justify-center py-5"><Loader2 className="w-5 h-5 animate-spin text-zinc-500" /></div>
+                    )}
+
+                    {hasRead && !hasMore && (
+                      <div className="flex justify-center py-6">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); clearRead(); }}
+                          className="flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          امسح الإشعارات المقروءة
+                        </button>
+                      </div>
+                    )}
+                    <p className="md:hidden text-center text-2xs text-zinc-600 pb-6">اسحب أي إشعار للجنب عشان تمسحه</p>
+                  </div>
+                </m.div>
               )}
-            </m.div>
-          )}
-        </AnimatePresence>
-      </m.div>
-    </>
+            </AnimatePresence>
+          </m.section>
+        </>
+      )}
+    </AnimatePresence>
   );
 };

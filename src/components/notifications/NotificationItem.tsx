@@ -1,12 +1,12 @@
-import { timeAgo } from '../../utils/format';
-import React from 'react';
-import { m } from 'framer-motion';
+import React, { useRef, useState } from 'react';
+import { m, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import {
-  CheckCircle, XCircle, MessageSquare, Reply, AtSign,
-  FileText, Tv, Trash2, Shield, UserPlus, VolumeX, Volume2, Lock, Unlock
+  MessageCircle, Reply, AtSign, FileText, Tv, Check, X, VolumeX, Volume2, Lock, Unlock, Award, Shield, Flag, Trash2,
 } from 'lucide-react';
 import type { AppNotification, NotificationType } from '../../types';
 import { UserAvatar } from '../UserAvatar';
+import { timeAgo } from '../../utils/format';
+import { describe, TONE_STYLE } from './notificationCopy';
 
 interface NotificationItemProps {
   notification: AppNotification;
@@ -14,144 +14,138 @@ interface NotificationItemProps {
   onDelete: (id: number) => void;
 }
 
-const TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
-  post_approved: <CheckCircle className="w-3 h-3" />,
-  post_rejected: <XCircle className="w-3 h-3" />,
-  post_update_approved: <CheckCircle className="w-3 h-3" />,
-  post_update_rejected: <XCircle className="w-3 h-3" />,
-  episode_approved: <CheckCircle className="w-3 h-3" />,
-  episode_rejected: <XCircle className="w-3 h-3" />,
-  new_comment: <MessageSquare className="w-3 h-3" />,
-  comment_reply: <Reply className="rtl:-scale-x-100 w-3 h-3" />,
-  mention_comment: <AtSign className="w-3 h-3" />,
-  mention_chat: <AtSign className="w-3 h-3" />,
-  new_post: <FileText className="w-3 h-3" />,
-  new_episode: <Tv className="w-3 h-3" />,
-  suggestion_approved: <CheckCircle className="w-3 h-3" />,
-  suggestion_rejected: <XCircle className="w-3 h-3" />,
-  user_muted: <VolumeX className="w-3 h-3" />,
-  user_unmuted: <Volume2 className="w-3 h-3" />,
-  user_banned: <Lock className="w-3 h-3" />,
-  user_unbanned: <Unlock className="w-3 h-3" />,
-  user_role_updated: <UserPlus className="w-3 h-3" />,
-  moderation_post_pending: <FileText className="w-3 h-3" />,
-  moderation_post_edited: <FileText className="w-3 h-3" />,
-  moderation_suggestion_pending: <FileText className="w-3 h-3" />,
-  moderation_report_pending: <Shield className="w-3 h-3" />,
+const ICON: Partial<Record<NotificationType, React.ElementType>> = {
+  new_comment: MessageCircle,
+  comment_reply: Reply,
+  mention_comment: AtSign,
+  mention_chat: AtSign,
+  new_post: FileText,
+  new_episode: Tv,
+  post_approved: Check,
+  post_update_approved: Check,
+  episode_approved: Check,
+  suggestion_approved: Check,
+  post_rejected: X,
+  post_update_rejected: X,
+  episode_rejected: X,
+  suggestion_rejected: X,
+  user_muted: VolumeX,
+  user_unmuted: Volume2,
+  user_banned: Lock,
+  user_unbanned: Unlock,
+  user_role_updated: Award,
+  moderation_post_pending: Shield,
+  moderation_post_edited: Shield,
+  moderation_suggestion_pending: Shield,
+  moderation_report_pending: Flag,
 };
 
-const TYPE_ACCENT: Record<NotificationType, string> = {
-  post_approved: '#10b981',
-  post_rejected: '#ef4444',
-  post_update_approved: '#10b981',
-  post_update_rejected: '#ef4444',
-  episode_approved: '#10b981',
-  episode_rejected: '#ef4444',
-  new_comment: '#3b82f6',
-  comment_reply: '#8b5cf6',
-  mention_comment: '#f59e0b',
-  mention_chat: '#f59e0b',
-  new_post: '#0ea5e9',
-  new_episode: '#f26522',
-  suggestion_approved: '#10b981',
-  suggestion_rejected: '#ef4444',
-  user_muted: '#f59e0b',
-  user_unmuted: '#10b981',
-  user_banned: '#ef4444',
-  user_unbanned: '#10b981',
-  user_role_updated: '#f26522',
-  moderation_post_pending: '#f59e0b',
-  moderation_post_edited: '#f59e0b',
-  moderation_suggestion_pending: '#f59e0b',
-  moderation_report_pending: '#ef4444',
-};
+const SWIPE_DELETE = 96;
 
-
+/**
+ * Instagram-style row: avatar with an action badge, one flowing sentence
+ * ("**Moemen** علّق على بوستك: …  ·  5د"), unread dot at the end.
+ * Swipe sideways on touch to delete; hover shows a delete button on desktop.
+ */
 export const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onNavigate, onDelete }) => {
-  const { _id, type, title, body, is_read, created_at, actor_id } = notification;
-  const accentColor = TYPE_ACCENT[type] || 'var(--color-brand-orange)';
+  const { _id, type, is_read, created_at } = notification;
+  const d = describe(notification);
+  const tone = TONE_STYLE[d.tone];
+  const Icon = ICON[type] ?? Shield;
 
-  const actorObj = actor_id && typeof actor_id === 'object' ? actor_id : null;
-  const senderName = actorObj?.username || 'النظام';
-  const senderAvatar = actorObj?.avatar_url || null;
+  const x = useMotionValue(0);
+  const revealOpacity = useTransform(x, [-SWIPE_DELETE, -24, 0, 24, SWIPE_DELETE], [1, 0.2, 0, 0.2, 1]);
+  const [removing, setRemoving] = useState(false);
+  const dragged = useRef(false);
+
+  const onDragEnd = (_: unknown, info: PanInfo) => {
+    if (Math.abs(info.offset.x) > SWIPE_DELETE || Math.abs(info.velocity.x) > 700) {
+      setRemoving(true);
+      animate(x, info.offset.x > 0 ? 480 : -480, { duration: 0.18 }).then(() => onDelete(_id));
+    } else {
+      animate(x, 0, { type: 'spring', stiffness: 500, damping: 35 });
+    }
+    setTimeout(() => { dragged.current = false; }, 0);
+  };
 
   return (
-    <m.div
-      layout
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, height: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }}
+    <m.li
+      layout="position"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: removing ? 0 : 1 }}
+      exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.18 }}
-      onClick={() => onNavigate(notification)}
-      className={`relative flex items-start gap-3.5 px-4 py-3.5 cursor-pointer transition-all duration-200 group border-b border-white/3 select-none ${
-        is_read ? 'bg-transparent hover:bg-white/[0.015]' : 'bg-brand-orange/[0.02] hover:bg-brand-orange/[0.04]'
-      }`}
+      className="relative overflow-hidden list-none"
     >
-      {/* Sender Avatar + Type Icon Overlay */}
-      <div className="relative shrink-0 mt-0.5">
-        <UserAvatar
-          username={senderName}
-          avatarUrl={senderAvatar}
-          size={36}
-        />
-        <div
-          className="absolute -bottom-1 -end-1 w-5 h-5 rounded-full flex items-center justify-center border shadow-md"
-          style={{
-            background: '#0a0a0a',
-            borderColor: `${accentColor}40`,
-            color: accentColor,
-            boxShadow: `0 2px 6px ${accentColor}15`,
-          }}
-        >
-          {TYPE_ICONS[type] || <Shield className="w-3 h-3" />}
-        </div>
-      </div>
+      {/* Revealed behind the row while swiping */}
+      <m.div aria-hidden style={{ opacity: revealOpacity }} className="absolute inset-0 bg-red-600 flex items-center justify-between px-6 text-white">
+        <Trash2 className="w-5 h-5" />
+        <Trash2 className="w-5 h-5" />
+      </m.div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0 space-y-0.5 text-start">
-        <div className="flex items-start justify-between gap-2">
-          <h4
-            className={`text-[12.5px] leading-tight truncate ${
-              is_read ? 'text-zinc-300 font-bold' : 'text-white font-extrabold'
-            }`}
-          >
-            {title}
-          </h4>
-          <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
-            <span className="text-2xs font-bold text-zinc-500">
-              {timeAgo(created_at)}
-            </span>
-            {!is_read && (
-              <span
-                className="w-1.5 h-1.5 rounded-full shrink-0"
-                style={{
-                  backgroundColor: accentColor,
-                  boxShadow: `0 0 6px ${accentColor}`,
-                }}
-              />
-            )}
-          </div>
-        </div>
-        <p
-          className={`text-xs leading-relaxed line-clamp-2 ${
-            is_read ? 'text-zinc-500' : 'text-zinc-400 font-medium'
-          }`}
-        >
-          {body}
-        </p>
-      </div>
-
-      {/* Delete button (appears on hover) */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(_id);
-        }}
-        className="absolute top-3.5 end-3.5 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-150 cursor-pointer z-20 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/10 hover:border-red-500/20 active:scale-95"
-        aria-label="امسح الإشعار"
+      <m.div
+        drag="x"
+        dragDirectionLock
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.9}
+        style={{ x }}
+        onDragStart={() => { dragged.current = true; }}
+        onDragEnd={onDragEnd}
+        role="button"
+        tabIndex={0}
+        onClick={() => { if (!dragged.current) onNavigate(notification); }}
+        onKeyDown={(e) => { if (e.key === 'Enter') onNavigate(notification); }}
+        className={`group relative flex items-center gap-3 px-4 py-3 cursor-pointer select-none touch-pan-y transition-colors ${
+          is_read ? 'bg-[#0b0b0c] hover:bg-white/[0.03]' : 'bg-[#120c07] hover:bg-[#1a1108]'
+        }`}
       >
-        <Trash2 className="w-3.5 h-3.5" />
-      </button>
-    </m.div>
+        {/* Avatar + action badge */}
+        <div className="relative shrink-0">
+          {d.system ? (
+            <div className="w-11 h-11 rounded-full overflow-hidden ring-1 ring-white/10 bg-zinc-900">
+              <img src="/icon-192.webp" alt="" width={44} height={44} className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <UserAvatar username={d.actorName || '?'} avatarUrl={d.actorAvatar} size={44} />
+          )}
+          <span
+            className="absolute -bottom-0.5 -end-0.5 w-[22px] h-[22px] rounded-full flex items-center justify-center ring-[2.5px] ring-[#0b0b0c] z-20"
+            style={{ background: tone.bg, color: tone.fg }}
+            aria-hidden
+          >
+            <Icon className="w-3 h-3" strokeWidth={2.75} />
+          </span>
+        </div>
+
+        {/* Sentence */}
+        <p className={`flex-1 min-w-0 text-sm leading-snug ${is_read ? 'text-zinc-400' : 'text-zinc-200'}`}>
+          {!d.system && d.actorName && (
+            <bdi className="font-extrabold text-white">{d.actorName}</bdi>
+          )}
+          {d.system && <span className="font-extrabold text-white">ليه فيزيو</span>}{' '}
+          <span>{d.action}</span>
+          {d.snippet && (
+            <>
+              {': '}
+              <bdi dir="auto" className="text-zinc-400 line-clamp-2 inline">«{d.snippet}»</bdi>
+            </>
+          )}{' '}
+          <time dateTime={created_at} className="text-zinc-500 whitespace-nowrap text-xs">· {timeAgo(created_at)}</time>
+        </p>
+
+        {/* Unread dot / desktop delete */}
+        <div className="shrink-0 w-6 flex items-center justify-center">
+          {!is_read && <span className="w-2 h-2 rounded-full bg-brand-orange group-hover:md:hidden" aria-label="جديد" />}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDelete(_id); }}
+            className="hidden md:group-hover:flex w-7 h-7 rounded-full items-center justify-center text-zinc-500 hover:text-red-400 hover:bg-red-500/10"
+            aria-label="امسح الإشعار"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </m.div>
+    </m.li>
   );
 };
