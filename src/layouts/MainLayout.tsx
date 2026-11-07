@@ -8,6 +8,7 @@ import { BottomNav } from '../components/BottomNav';
 import { CustomModal } from '../components/CustomModal';
 import { XPPopup } from '../components/XPPopup';
 import { Toast } from '../components/Toast';
+import { UpdatePrompt } from '../components/UpdatePrompt';
 import { NotificationCenter } from '../components/notifications/NotificationCenter';
 
 interface MainLayoutProps {
@@ -388,6 +389,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
 
       {/* Toast Notification element */}
       <Toast message={toastMessage} />
+      <UpdatePrompt />
     </div>
   );
 };

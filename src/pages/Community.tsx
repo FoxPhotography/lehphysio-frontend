@@ -49,7 +49,7 @@ interface CommunityProps {
   setEditingMessage: (val: any) => void;
   chatInput: string;
   setChatInput: (val: string | ((prev: string) => string)) => void;
-  handleSendChatMessage: (e: React.FormEvent) => void;
+  handleSendChatMessage: (e: React.FormEvent, text?: string) => void;
   setCurrentPage: (page: string) => void;
   activeContextMenu: any;
   setActiveContextMenu: (val: any) => void;
@@ -183,6 +183,21 @@ export const Community: React.FC<CommunityProps> = ({
 
   const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
 
+  // Windowed rendering: only the newest messages are in the DOM. Scrolling to the top
+  // reveals more from memory first, then asks the server for older ones.
+  // Typing stays local to this page: the shared chatInput (owned by App) is only
+  // touched on send / edit, so a keystroke no longer re-renders the whole app.
+  const [draft, setDraft] = useState(chatInput);
+  useEffect(() => { setDraft(chatInput); }, [chatInput]);
+
+  const CHAT_WINDOW_STEP = 60;
+  const [renderLimit, setRenderLimit] = useState(CHAT_WINDOW_STEP);
+  const visibleMessages = chatMessages.length > renderLimit ? chatMessages.slice(-renderLimit) : chatMessages;
+  useEffect(() => {
+    // A deep link may point at an older message: render everything we have so it can be found.
+    if (deepLinkTarget?.type === 'chat_message') setRenderLimit(Number.MAX_SAFE_INTEGER);
+  }, [deepLinkTarget]);
+
   const selectedMessages = chatMessages.filter(msg => selectedMessageIds.includes(msg.id));
   const canDeleteSelected = !!user && (
     user.role === 'admin' || 
@@ -307,7 +322,7 @@ export const Community: React.FC<CommunityProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
-    setChatInput(value);
+    setDraft(value);
     e.target.style.height = 'auto';
     e.target.style.height = `${e.target.scrollHeight}px`;
 
@@ -333,14 +348,14 @@ export const Community: React.FC<CommunityProps> = ({
 
   const handleSelectMention = (targetUsername: string) => {
     if (mentionStartIndex === -1) return;
-    const value = chatInput;
+    const value = draft;
     const selectionStart = mentionStartIndex + targetUsername.length + 2; 
     const newValue = 
       value.substring(0, mentionStartIndex) + 
       `@${targetUsername} ` + 
       value.substring(mentionStartIndex + mentionSearch.length + 1);
     
-    setChatInput(newValue);
+    setDraft(newValue);
     setShowMentionSuggestions(false);
     setActiveSuggestionIdx(0);
     
@@ -450,8 +465,15 @@ export const Community: React.FC<CommunityProps> = ({
                 const isUp = el.scrollHeight - el.scrollTop - el.clientHeight > 150;
                 setShowScrollDownBtn(isUp);
 
-                // Infinite scroll up
+                // Infinite scroll up: reveal cached messages first, then fetch older ones
+                if (el.scrollTop === 0 && chatMessages.length > renderLimit) {
+                  const prevHeight = el.scrollHeight;
+                  setRenderLimit((n) => n + CHAT_WINDOW_STEP);
+                  requestAnimationFrame(() => { el.scrollTop = el.scrollHeight - prevHeight; });
+                  return;
+                }
                 if (el.scrollTop === 0 && !isLoadingOlder && hasMoreChat && loadOlderMessages) {
+                  setRenderLimit((n) => n + 30);
                   const oldestMsg = chatMessages[0];
                   if (oldestMsg && oldestMsg.id) {
                     loadOlderMessages(oldestMsg.id);
@@ -471,7 +493,7 @@ export const Community: React.FC<CommunityProps> = ({
                 </div>
               )}
 
-              {chatMessages.map((msg: any) => {
+              {visibleMessages.map((msg: any) => {
                 const isMyMsg = user && msg.username === user.username;
                 const isSelected = selectedMessageIds.includes(msg.id);
                 
@@ -485,6 +507,9 @@ export const Community: React.FC<CommunityProps> = ({
                     className="flex w-full"
                     style={{
                       justifyContent: isMyMsg ? 'flex-end' : 'flex-start',
+                      // Skip layout/paint for messages scrolled out of view
+                      contentVisibility: 'auto',
+                      containIntrinsicSize: 'auto 72px',
                     }}
                   >
                     <div
@@ -716,6 +741,7 @@ export const Community: React.FC<CommunityProps> = ({
                     onClick={() => {
                       setEditingMessage(null);
                       setChatInput('');
+                      setDraft('');
                     }} 
                     className="text-zinc-500 hover:text-white cursor-pointer shrink-0"
                   >
@@ -728,7 +754,8 @@ export const Community: React.FC<CommunityProps> = ({
               {user ? (
                 <form
                   onSubmit={(e) => {
-                    handleSendChatMessage(e);
+                    handleSendChatMessage(e, draft);
+                    setDraft('');
                     const el = document.getElementById('community-chat-input');
                     if (el) el.style.height = 'auto';
                   }}
@@ -754,7 +781,7 @@ export const Community: React.FC<CommunityProps> = ({
                       data-form-type="other"
                       className="w-full bg-transparent text-white py-2.5 text-xs md:text-sm font-semibold placeholder-zinc-500 outline-none resize-none min-h-[40px] max-h-[140px] leading-relaxed"
                       placeholder={editingMessage ? "Edit your message here..." : "Type a message..."}
-                      value={chatInput}
+                      value={draft}
                       onChange={handleInputChange}
                       onFocus={() => {
                         setIsInputFocused(true);

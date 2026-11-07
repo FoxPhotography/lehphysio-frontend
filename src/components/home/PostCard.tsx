@@ -42,7 +42,7 @@ interface PostCardProps {
   onOpenComments?: (postId: number, authorName?: string) => void;
 }
 
-export const PostCard: React.FC<PostCardProps> = ({
+const PostCardImpl: React.FC<PostCardProps> = ({
   post,
   user,
   usernames = [],
@@ -501,3 +501,18 @@ export const PostCard: React.FC<PostCardProps> = ({
     </HighlightWrapper>
   );
 };
+
+/**
+ * Feed cards re-render only when their data changes. Function props are ignored in the
+ * comparison: App-level handlers are stable "latest" wrappers (useStableProps), and the
+ * context helpers they receive refresh whenever `user` changes.
+ */
+const sameData = (a: PostCardProps, b: PostCardProps) => {
+  for (const key of Object.keys(b) as (keyof PostCardProps)[]) {
+    if (typeof b[key] === 'function') continue;
+    if (a[key] !== b[key]) return false;
+  }
+  return Object.keys(a).length === Object.keys(b).length;
+};
+
+export const PostCard = React.memo(PostCardImpl, sameData);

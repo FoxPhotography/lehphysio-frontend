@@ -7,11 +7,13 @@ import App from './App.jsx'
 // Animation features are fetched after first paint; `m.*` components render instantly without them.
 const loadMotionFeatures = () => import('./motionFeatures').then((mod) => mod.default)
 
-// Register Service Worker for full PWA installability & offline caching
+// Service worker (precache + offline + push). A new version waits until the user taps "update".
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((err) => {
-      console.log('SW registration note:', err?.message || err);
+  import('virtual:pwa-register').then(({ registerSW }) => {
+    const updateSW = registerSW({
+      onNeedRefresh() {
+        window.dispatchEvent(new CustomEvent('pwa:need-refresh', { detail: () => updateSW(true) }));
+      },
     });
   });
 }

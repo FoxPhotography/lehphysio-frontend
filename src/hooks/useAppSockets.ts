@@ -75,7 +75,6 @@ export const useAppSockets = ({
     if (!socket) return () => {};
 
     const handlePostCreated = (newPost: any) => {
-      console.log('[Socket] post_created received:', newPost);
       const userId = getUserId(user, token);
       setCommunityPosts(prev => {
         const isMatch = (p: any) => {
@@ -92,10 +91,8 @@ export const useAppSockets = ({
         let updated;
         if (exists) {
           updated = prev.map(p => isMatch(p) ? { ...p, ...newPost, pending: false } : p);
-          console.log('[Socket] post_created matched existing post, updated in place.');
         } else {
           updated = [newPost, ...prev];
-          console.log('[Socket] post_created did not match, prepended to feed.');
         }
         if (userId) feedCacheService.set(`feed_${userId}`, updated);
         return updated;
@@ -121,7 +118,6 @@ export const useAppSockets = ({
     };
 
     const handleAnnouncementCreated = (newAnn: any) => {
-      console.log('[Socket] announcement_created received:', newAnn);
       const userId = getUserId(user, token);
       setNewsPosts(prev => {
         const isMatch = (p: any) => {
@@ -138,10 +134,8 @@ export const useAppSockets = ({
         let updated;
         if (exists) {
           updated = prev.map(p => isMatch(p) ? { ...p, ...newAnn, pending: false } : p);
-          console.log('[Socket] announcement_created matched existing announcement, updated in-place.');
         } else {
           updated = [newAnn, ...prev];
-          console.log('[Socket] announcement_created did not match, prepended to news list.');
         }
         if (userId) feedCacheService.set(`news_${userId}`, updated);
         return updated;
@@ -195,7 +189,6 @@ export const useAppSockets = ({
     };
 
     const handleSuggestionCreated = (newSugg: any) => {
-      console.log('[Socket] suggestion_created received:', newSugg);
       setSuggestions(prev => {
         const exists = prev.some(s => String(s.id) === String(newSugg.id));
         if (exists) {
@@ -213,7 +206,6 @@ export const useAppSockets = ({
     };
 
     const handleSuggestionUpdated = (updatedSugg: any) => {
-      console.log('[Socket] suggestion_updated received:', updatedSugg);
       const userId = getUserId(user, token);
       setSuggestions(prev => {
         const isAuthor = userId && String(updatedSugg.user_id) === String(userId);
@@ -238,13 +230,11 @@ export const useAppSockets = ({
     };
 
     const handleSuggestionDeleted = (data: { id: number }) => {
-      console.log('[Socket] suggestion_deleted received:', data);
       setSuggestions(prev => prev.filter(s => String(s.id) !== String(data.id)));
       setAdminSuggestions(prev => prev.filter(s => String(s.id) !== String(data.id)));
     };
 
     const handleXpCodeCreated = (newCode: any) => {
-      console.log('[Socket] xp_code_created received:', newCode);
       if (!setAdminCodes) return;
       const codeObj = {
         ...newCode,
@@ -262,7 +252,6 @@ export const useAppSockets = ({
     };
 
     const handleXpCodeDeleted = (data: { id: any; code?: string }) => {
-      console.log('[Socket] xp_code_deleted received:', data);
       if (!setAdminCodes) return;
       setAdminCodes(prev => prev.filter(c => String(c.id ?? c._id) !== String(data.id) && (!data.code || c.code !== data.code)));
     };

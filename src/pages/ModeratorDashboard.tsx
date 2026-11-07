@@ -289,8 +289,8 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
   };
 
   // Delete QOTD
-  const handleQDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this question?')) return;
+  const handleQDelete = (id: number) => {
+    const run = async () => {
     try {
       const res = await fetch(`${apiBase}/api/questions/admin/${id}`, {
         method: 'DELETE',
@@ -307,6 +307,9 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       console.error('Error deleting question:', err);
       setMessage('Failed to connect to server.');
     }
+  };
+    if (showConfirm) showConfirm('حذف السؤال', 'متأكد إنك عايز تحذف السؤال ده؟', run, undefined, 'احذف', 'إلغاء', 'danger');
+    else run();
   };
 
   // Fetch statistics of QOTD

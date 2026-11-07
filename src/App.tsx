@@ -25,6 +25,7 @@ import { useAppAuth } from './hooks/useAppAuth';
 // Layout & Routing
 import { MainLayout } from './layouts/MainLayout';
 import { AppRouter, prefetchCorePages } from './routes/router';
+import { useStableProps } from './hooks/useStableProps';
 import { CommentsSlideUpPanel } from './components/home/CommentsSlideUpPanel';
 
 const getUserId = (user: any, token: string): string | null => {
@@ -816,7 +817,6 @@ function InnerApp() {
               setHasMorePosts(false);
             }
             const updated = [...prev, ...newPosts];
-            console.log('[FetchPosts] Loaded older posts count:', newPosts.length, 'total count:', updated.length);
             return updated;
           });
         }
@@ -900,7 +900,6 @@ function InnerApp() {
           setNewsPosts(prev => {
             const pending = prev.filter(p => p.pending);
             const merged = mergePendingAndFresh(pending, cache.data);
-            console.log('[FetchNews] Loaded news from cache. Count:', merged.length);
             return merged;
           });
           const cacheAge = Date.now() - cache.cachedAt;
@@ -1220,18 +1219,15 @@ function InnerApp() {
     };
 
     // Insert the post immediately into the current feed and save it to the cache
-    console.log('[CreatePost] Optimistically inserting pending post:', pendingPost);
     if (isNews) {
       setNewsPosts(prev => {
         const updated = [pendingPost, ...prev];
-        console.log('[CreatePost] News posts after optimistic insert count:', updated.length);
         if (userId) feedCacheService.set(`news_${userId}`, updated);
         return updated;
       });
     } else {
       setCommunityPosts(prev => {
         const updated = [pendingPost, ...prev];
-        console.log('[CreatePost] Community posts after optimistic insert count:', updated.length);
         if (userId) feedCacheService.set(`feed_${userId}`, updated);
         return updated;
       });
@@ -1240,7 +1236,6 @@ function InnerApp() {
     try {
       const res = await communityService.createPost(title, content, imageUrl, isNews, token);
       const data = await res.json();
-      console.log('[CreatePost] API response status:', res.status, 'data:', data);
 
       if (res.ok) {
         showToast(data.message || 'Post published! 🎉');
@@ -1259,7 +1254,6 @@ function InnerApp() {
               }
               return p;
             });
-            console.log('[CreatePost] News posts after updating temp ID:', updated);
             if (userId) feedCacheService.set(`news_${userId}`, updated);
             return updated;
           });
@@ -1277,7 +1271,6 @@ function InnerApp() {
               }
               return p;
             });
-            console.log('[CreatePost] Community posts after updating temp ID:', updated);
             if (userId) feedCacheService.set(`feed_${userId}`, updated);
             return updated;
           });
@@ -1871,7 +1864,7 @@ function InnerApp() {
       unseenCount={unseenCount}
       setCommunityTab={setCommunityTab}
     >
-      <AppRouter
+      <StableAppRouter
         loginReward={loginReward}
         dailyQuestion={dailyQuestion}
         handleAnswerQuestion={handleAnswerQuestion}
@@ -1988,6 +1981,12 @@ function InnerApp() {
       {renderReportModal()}
     </MainLayout>
   );
+}
+
+// Gives every handler App passes down a stable identity (see useStableProps).
+function StableAppRouter(props: React.ComponentProps<typeof AppRouter>) {
+  const stable = useStableProps(props);
+  return <AppRouter {...stable} />;
 }
 
 function App() {

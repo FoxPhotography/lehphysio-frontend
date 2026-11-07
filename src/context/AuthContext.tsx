@@ -517,14 +517,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Service Worker and Push Activation
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').then(() => {
-        // registered
-      }).catch(err => {
-        console.error('Service Worker registration failed:', err);
-      });
-    }
-
+    // The service worker itself is registered once in main.tsx.
     if ('serviceWorker' in navigator && 'PushManager' in window) {
       navigator.serviceWorker.ready.then((reg) => {
         reg.pushManager.getSubscription().then((sub) => {
@@ -539,7 +532,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
-      console.log('User accepted the PWA install prompt');
       setShowInstallBanner(false);
       setDeferredPrompt(null);
       localStorage.removeItem('pwa_install_dismissed');

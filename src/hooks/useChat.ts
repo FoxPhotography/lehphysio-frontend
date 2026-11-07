@@ -6,6 +6,28 @@ import { chatService } from '../services/chatService';
 import { playChatSound } from '../utils/helpers';
 import { ChatMessage } from '../types';
 
+// Chat cache: written at most once per 1.5s, off the critical path, and only the
+// latest 200 messages (enough to open the chat instantly). Writing 1000 messages
+// synchronously on every incoming message used to block the main thread.
+const CHAT_CACHE_LIMIT = 200;
+let chatCacheTimer: ReturnType<typeof setTimeout> | null = null;
+let chatCachePending: { userId: number | string; messages: any[] } | null = null;
+const scheduleChatCache = (userId: number | string, messages: any[]) => {
+  chatCachePending = { userId, messages };
+  if (chatCacheTimer) return;
+  chatCacheTimer = setTimeout(() => {
+    chatCacheTimer = null;
+    const pending = chatCachePending;
+    chatCachePending = null;
+    if (!pending) return;
+    try {
+      localStorage.setItem(`chat_cache_${pending.userId}`, JSON.stringify(pending.messages.slice(-CHAT_CACHE_LIMIT)));
+    } catch {
+      /* quota exceeded or private mode: the cache is only an optimisation */
+    }
+  }, 1500);
+};
+
 export const useChat = (communityTab: 'feed' | 'chat') => {
   const { token, user, showToast, showConfirm, currentPage } = useAuth();
   const socket = useSocket();
@@ -153,7 +175,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
 
               if (userRef.current?.id) {
                 const cacheSlice = mergedMessages.slice(-1000);
-                localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(cacheSlice));
+                scheduleChatCache(userRef.current.id, cacheSlice);
               }
 
               return mergedMessages;
@@ -211,7 +233,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
 
             if (userRef.current?.id) {
               const cacheSlice = mergedMessages.slice(-1000);
-              localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(cacheSlice));
+              scheduleChatCache(userRef.current.id, cacheSlice);
             }
 
             return mergedMessages;
@@ -249,7 +271,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
           setChatMessages(prev => {
             const filtered = prev.filter(m => m.id !== payload.messageId);
             if (userRef.current?.id) {
-              localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(filtered.slice(-1000)));
+              scheduleChatCache(userRef.current.id, filtered.slice(-1000));
             }
             return filtered;
           });
@@ -257,7 +279,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
           setChatMessages(prev => {
             const filtered = prev.filter(m => !payload.messageIds.includes(m.id));
             if (userRef.current?.id) {
-              localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(filtered.slice(-1000)));
+              scheduleChatCache(userRef.current.id, filtered.slice(-1000));
             }
             return filtered;
           });
@@ -265,7 +287,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
           setChatMessages(prev => {
             const updated = prev.map(m => m.id === payload.messageId ? { ...m, message: payload.message, is_edited: 1 } : m);
             if (userRef.current?.id) {
-              localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(updated.slice(-1000)));
+              scheduleChatCache(userRef.current.id, updated.slice(-1000));
             }
             return updated;
           });
@@ -406,9 +428,9 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     swipeMessageIdRef.current = null;
   };
 
-  const handleSendChatMessage = async (e: React.FormEvent) => {
+  const handleSendChatMessage = async (e: React.FormEvent, text?: string) => {
     e.preventDefault();
-    const messageText = chatInput.trim();
+    const messageText = (text ?? chatInput).trim();
     if (!messageText || !token) return;
 
     if (editingMessage) {
