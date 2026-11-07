@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Thumb } from '../components/common/Thumb';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getYoutubeEmbedUrl, copyToClipboard } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
@@ -157,7 +158,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
   const embedUrl = getYoutubeEmbedUrl(episode.youtube_url);
 
   return (
-    <div className="space-y-6 pt-20 xl:pt-6 max-w-4xl mx-auto px-4 pb-20 text-left">
+    <div className="space-y-6 xl:pt-6 max-w-4xl mx-auto px-4 text-left">
       <button 
         className="flex items-center gap-2 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer active:scale-95 transition-all" 
         onClick={() => setCurrentPage('episodes')}
@@ -169,10 +170,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
       {/* Cinematic header card */}
       <section className="glass-card overflow-hidden relative p-6 md:p-8 flex flex-col justify-end min-h-60 group">
         <div className="absolute inset-0 bg-black/60 bg-radial-gradient z-10" />
-        <div 
-          className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:scale-102 transition-transform duration-700" 
-          style={{ backgroundImage: `url(${episode.thumbnail_url || 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop'})` }}
-        />
+        <Thumb src={episode.thumbnail_url} width={640} eager className="opacity-40" />
         
         <div className="relative z-20 space-y-4">
           <span className="text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10 self-start inline-block">

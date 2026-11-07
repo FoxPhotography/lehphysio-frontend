@@ -116,7 +116,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
   };
 
   return (
-    <div className="space-y-6 pt-20 xl:pt-6 pb-24 max-w-3xl mx-auto px-4">
+    <div className="space-y-6 xl:pt-6 max-w-3xl mx-auto px-4">
       {/* Top Navigation Bar with Back Button */}
       <div className="flex items-center justify-between pb-2">
         <button

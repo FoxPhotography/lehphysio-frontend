@@ -45,9 +45,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
 
   return (
     <div className="app-layout">
-      {/* Background Watermark/Reflections */}
-      <div className="ambient-glow-bg"></div>
-
       {/* Floating XP Popups */}
       <XPPopup popups={xpPopups} />
 
@@ -83,7 +80,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
         />
 
         {/* Main Content Router */}
-        <main className="app-main">
+        <main
+          className={
+            currentPage === 'community'
+              ? 'app-main'
+              : currentPage === 'play-game'
+                ? 'app-main pt-[calc(4rem+env(safe-area-inset-top,0px)+1rem)] xl:pt-0 pb-safe'
+                : 'app-main pt-[calc(4rem+env(safe-area-inset-top,0px)+1rem)] xl:pt-0 pb-nav xl:pb-8'
+          }
+        >
           {children}
         </main>
 
@@ -114,7 +119,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
 
             <div className="flex items-start gap-3.5 relative z-10">
               <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-brand-orange/30 shadow-lg shadow-brand-orange/10 shrink-0 bg-brand-orange">
-                <img src="/favicon.svg" alt="Leh Physio" className="w-full h-full object-cover" />
+                <img src="/icon-192.webp" width={96} height={96} alt="Leh Physio" className="w-full h-full object-cover" />
               </div>
 
               <div className="flex-1 min-w-0">
@@ -161,7 +166,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
           >
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-brand-orange/30 shadow-lg shadow-brand-orange/10 shrink-0 bg-brand-orange">
-                <img src="/favicon.svg" alt="LehPhysio" className="w-full h-full object-cover" />
+                <img src="/icon-192.webp" width={96} height={96} alt="LehPhysio" className="w-full h-full object-cover" />
               </div>
 
               <div className="flex-1 min-w-0">

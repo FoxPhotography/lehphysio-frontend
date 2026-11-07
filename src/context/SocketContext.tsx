@@ -8,10 +8,13 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const socket = useMemo(() => {
     return io(API_BASE || window.location.origin, {
       autoConnect: false,
+      // Try a WebSocket first (one request instead of a polling handshake), fall back to polling.
+      transports: ['websocket', 'polling'],
     });
   }, []);
 
   const hasConnected = useRef(false);
+  const connectCount = useRef(0);
 
   useEffect(() => {
     if (!hasConnected.current) {
@@ -32,8 +35,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           // Invalid token, skip
         }
       }
-      // Notify components to resynchronize
-      window.dispatchEvent(new Event('socket_reconnect'));
+      // Only a *re*-connect means we may have missed events. The first connect happens
+      // while the initial data load is already in flight, so re-fetching then is wasted work.
+      connectCount.current += 1;
+      if (connectCount.current > 1) {
+        window.dispatchEvent(new Event('socket_reconnect'));
+      }
     };
 
     socket.on('connect', onReconnect);

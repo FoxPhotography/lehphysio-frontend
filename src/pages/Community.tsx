@@ -369,10 +369,10 @@ export const Community: React.FC<CommunityProps> = ({
   };
 
   return (
-    <div className="w-full max-w-none px-0 pb-0 text-left md:h-[calc(100vh-136px)] xl:h-screen pt-20 md:pt-16 xl:pt-0"
+    <div className="w-full max-w-none px-0 pb-0 text-left md:h-[calc(100dvh-var(--spacing-nav)-env(safe-area-inset-bottom,0px))] xl:h-dvh pt-[calc(4rem+env(safe-area-inset-top,0px))] xl:pt-0"
       style={{
         height: window.innerWidth < 768
-          ? `${viewportHeight - (isInputFocused ? 0 : 72)}px`
+          ? `${viewportHeight - (isInputFocused ? 0 : (document.querySelector('nav[aria-label]') as HTMLElement | null)?.offsetHeight ?? 72)}px`
           : undefined
       }}>
       <div className="glass-card p-0 md:p-4 flex flex-col h-full relative overflow-hidden border-0 rounded-none">
@@ -458,14 +458,14 @@ export const Community: React.FC<CommunityProps> = ({
                   }
                 }
               }}
-              className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-4 py-2 px-3 md:px-1 pb-2 direction-rtl"
+              className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-4 py-2 px-3 md:px-1 pb-2"
               style={{ 
                 WebkitOverflowScrolling: 'touch',
                 overscrollBehavior: 'contain'
               }}
             >
               {isLoadingOlder && (
-                <div className="flex items-center justify-center py-2 text-zinc-500 text-xs font-bold gap-2 shrink-0 direction-ltr">
+                <div className="flex items-center justify-center py-2 text-zinc-500 text-xs font-bold gap-2 shrink-0">
                   <div className="w-4 h-4 border-2 border-brand-orange border-t-transparent rounded-full animate-spin"></div>
                   <span>جاري تحميل الرسائل السابقة...</span>
                 </div>
@@ -586,7 +586,7 @@ export const Community: React.FC<CommunityProps> = ({
                           >
                           {/* Quote reply */}
                           {msg.reply_to?.username && (
-                            <div className={`border-l-2 border-brand-orange px-2.5 py-1.5 rounded-lg mb-2 text-[10px] text-left direction-ltr ${
+                            <div className={`border-l-2 border-brand-orange px-2.5 py-1.5 rounded-lg mb-2 text-[10px] text-left ${
                               isMyMsg ? 'bg-black/10 text-zinc-800' : 'bg-black/30 text-zinc-400'
                             }`}>
                               <div className={`font-black ${isMyMsg ? 'text-black' : 'text-brand-orange'}`}>
@@ -596,7 +596,7 @@ export const Community: React.FC<CommunityProps> = ({
                             </div>
                           )}
 
-                          <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1 w-full min-w-0 direction-ltr">
+                          <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1 w-full min-w-0">
                             <p className="whitespace-pre-wrap break-words [word-break:break-word] leading-relaxed min-w-0">
                               {renderTextWithMentions(msg.message)}
                             </p>
@@ -659,7 +659,7 @@ export const Community: React.FC<CommunityProps> = ({
 
             {/* Chat form compose area */}
             <div 
-              className="border-t border-zinc-900/80 pt-2.5 bg-zinc-950/90 backdrop-blur-md px-3 md:px-0 shrink-0 direction-ltr text-left relative"
+              className="border-t border-zinc-900/80 pt-2.5 bg-zinc-950/90 backdrop-blur-md px-3 md:px-0 shrink-0 text-left relative"
             >
               
               {/* Reply tag indicator */}

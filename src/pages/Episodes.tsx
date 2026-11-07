@@ -1,4 +1,5 @@
 import React from 'react';
+import { Thumb } from '../components/common/Thumb';
 import { motion } from 'framer-motion';
 import { Tv, Heart, MessageCircle, Share2, Key } from 'lucide-react';
 
@@ -18,7 +19,7 @@ export const Episodes: React.FC<EpisodesProps> = ({
   user
 }) => {
   return (
-    <div className="space-y-6 pt-20 xl:pt-6 max-w-4xl mx-auto px-4 pb-20 text-left">
+    <div className="space-y-6 xl:pt-6 max-w-4xl mx-auto px-4 text-left">
       <div className="flex items-center gap-2.5">
         <Tv className="w-6 h-6 text-brand-orange" />
         <h2 className="text-xl md:text-2xl font-black text-white">Podcast Episodes</h2>
@@ -39,7 +40,7 @@ export const Episodes: React.FC<EpisodesProps> = ({
         }}
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
       >
-        {episodes.map((ep: any) => (
+        {episodes.map((ep: any, index: number) => (
           <motion.div 
             key={ep.id}
             variants={{
@@ -49,10 +50,8 @@ export const Episodes: React.FC<EpisodesProps> = ({
             onClick={() => navigateToEpisode(ep.id)} 
             className="glass-card p-4 hover:border-brand-orange/30 flex flex-col gap-3.5 cursor-pointer group"
           >
-            <div 
-              className="w-full aspect-[16/9] rounded-xl bg-zinc-900 bg-cover bg-center relative overflow-hidden border border-zinc-800/40" 
-              style={{ backgroundImage: `url(${ep.thumbnail_url || 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop'})` }}
-            >
+            <div className="w-full aspect-[16/9] rounded-xl bg-zinc-900 relative overflow-hidden border border-zinc-800/40">
+              <Thumb src={ep.thumbnail_url} width={420} eager={index === 0} />
               <div className="absolute inset-0 bg-black/20" />
               <span className="absolute top-3 right-3 text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10">
                 Episode {ep.id}

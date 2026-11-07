@@ -1,3 +1,4 @@
+import { cld } from '../../utils/image';
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HighlightWrapper } from '../notifications/HighlightWrapper';
@@ -357,10 +358,12 @@ export const PostCard: React.FC<PostCardProps> = ({
                   handleImageClickCoord(post.image_url);
                 }}
               >
-                <img 
-                  src={post.image_url} 
-                  alt="Post content" 
-                  className="w-full h-full object-contain max-h-[300px] group-hover:scale-[1.01] transition-transform duration-300" 
+                <img
+                  src={cld(post.image_url, { w: 640 })}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-contain max-h-[300px] group-hover:scale-[1.01] transition-transform duration-300"
                 />
               </div>
             )}

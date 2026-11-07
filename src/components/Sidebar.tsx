@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserAvatar } from './UserAvatar';
-import logo from '../assets/LOGO.svg';
+import logo from '../assets/logo-wordmark.webp';
 import { NotificationBell } from './notifications/NotificationBell';
 import { 
   Mic, 
@@ -68,25 +68,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside className="fixed top-0 left-0 bottom-0 w-[280px] bg-zinc-950/80 border-r border-zinc-900/60 p-8 flex flex-col z-50 hidden xl:flex backdrop-blur-md">
       {/* Logo */}
-      <a 
-        href="#" 
-        className="flex items-center justify-center w-full mb-6 hover:opacity-90 transition-opacity" 
+      <a
+        href="/"
+        className="flex items-center justify-center w-full mb-8 mt-2 hover:opacity-90 transition-opacity"
         onClick={(e) => { e.preventDefault(); setCurrentPage('home'); }}
-        style={{ overflow: 'hidden', height: '72px' }}
+        aria-label="ليه فيزيو؟ — الرئيسية"
       >
-        <img 
-          src={logo} 
-          alt="Leh Physio Logo" 
-          style={{ 
-            width: '280px', 
-            height: '280px', 
-            objectFit: 'none',
-            objectPosition: 'center center',
-            marginTop: '-104px',
-            marginBottom: '-104px',
-            flexShrink: 0
-          }} 
-        />
+        <img src={logo} alt="Leh Physio" width={210} height={43} className="w-[210px] h-auto" decoding="async" />
       </a>
 
       {user && (

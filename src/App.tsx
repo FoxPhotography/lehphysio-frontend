@@ -376,7 +376,7 @@ function InnerApp() {
   // Handle reconnect background validation and safe updates
   useEffect(() => {
     const handleReconnectSync = () => {
-      showToast('Real-time connection restored. Syncing...');
+      showToast('رجع الاتصال، بنحدّث البيانات…');
       fetchEpisodes(true);
       fetchCommunityPosts(undefined, true);
       fetchNewsPosts(true);

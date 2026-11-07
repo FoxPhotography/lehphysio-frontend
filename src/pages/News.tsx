@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { cld } from '../utils/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserAvatar } from '../components/UserAvatar';
 import { 
@@ -270,7 +271,7 @@ export const News: React.FC<NewsProps> = ({
   const isAdmin = user?.role === 'admin' || user?.role === 'owner';
 
   return (
-    <div className="max-w-4xl mx-auto px-4 pt-24 xl:pt-6 pb-6 space-y-6 md:pb-24">
+    <div className="max-w-4xl mx-auto px-4 xl:pt-6 space-y-6">
       {/* Premium Glass Header */}
       <div className="glass-card p-6 flex flex-col md:flex-row justify-between items-center gap-4 border border-zinc-950/40 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-brand-orange/5 rounded-full blur-3xl -z-10"></div>
@@ -542,9 +543,11 @@ export const News: React.FC<NewsProps> = ({
                         handleImageClickCoord(post.id, post.image_url);
                       }}
                     >
-                      <img 
-                        src={post.image_url} 
-                        alt="News attachment" 
+                      <img
+                        src={cld(post.image_url, { w: 720 })}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-contain max-h-[380px] group-hover:scale-[1.01] transition-transform duration-300" 
                       />
 

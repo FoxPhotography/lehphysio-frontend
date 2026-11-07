@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+import { Thumb } from '../components/common/Thumb';
+import { cld } from '../utils/image';
 import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
 import { useNotifications } from '../context/NotificationContext';
 import { motion } from 'framer-motion';
@@ -156,7 +158,7 @@ export const Home: React.FC<HomeProps> = ({
   }, [deepLinkTarget, communityPosts]);
 
   return (
-    <div className="space-y-10 pt-20 xl:pt-6 pb-20 max-w-4xl mx-auto px-4">
+    <div className="space-y-10 xl:pt-6 max-w-4xl mx-auto px-4">
       {/* Banner alerts */}
       {loginReward && loginReward.daily_login && (
         <motion.div 
@@ -178,12 +180,11 @@ export const Home: React.FC<HomeProps> = ({
           const latestEp = sorted.length > 0 ? sorted[0] : null;
           return latestEp ? (
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-8 items-center relative z-10">
-              <div 
-                className="md:col-span-2 aspect-[16/9] w-full rounded-2xl bg-zinc-900 bg-cover bg-center relative shadow-2xl flex items-center justify-center overflow-hidden group-hover:scale-[1.01] transition-transform duration-500 border border-zinc-800/40" 
-                style={{ backgroundImage: `url(${latestEp.thumbnail_url || 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop'})` }}
-              >
-                <div className="absolute inset-0 bg-black/40 bg-radial-gradient" />
-                <Play className="w-16 h-16 text-brand-orange filter drop-shadow-[0_0_15px_rgba(255,106,0,0.6)] animate-float-mic relative z-10 shrink-0" />
+              <div className="md:col-span-2 aspect-[16/9] w-full rounded-2xl bg-zinc-900 relative shadow-2xl overflow-hidden border border-zinc-800/40">
+                <Thumb src={latestEp.thumbnail_url} width={480} eager className="group-hover:scale-[1.02] transition-transform duration-500" />
+                <span className="absolute bottom-3 end-3 w-11 h-11 rounded-full bg-brand-orange text-black flex items-center justify-center shadow-lg z-10" aria-hidden>
+                  <Play className="w-5 h-5 fill-current ms-0.5" />
+                </span>
               </div>
               <div className="md:col-span-3 flex flex-col gap-4 text-left">
                 <div className="flex gap-2">
@@ -212,12 +213,9 @@ export const Home: React.FC<HomeProps> = ({
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-8 items-center relative z-10">
-              <div 
-                className="md:col-span-2 aspect-[16/9] w-full rounded-2xl bg-zinc-900 bg-cover bg-center relative shadow-2xl flex items-center justify-center overflow-hidden border border-zinc-800/40" 
-                style={{ backgroundImage: `url('https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop')` }}
-              >
-                <div className="absolute inset-0 bg-black/40 bg-radial-gradient" />
-                <Play className="w-16 h-16 text-brand-orange filter drop-shadow-[0_0_15px_rgba(255,106,0,0.6)] animate-float-mic relative z-10 shrink-0" />
+              <div className="md:col-span-2 aspect-[16/9] w-full rounded-2xl bg-zinc-900 relative shadow-2xl overflow-hidden border border-zinc-800/40 flex items-center justify-center">
+                <Thumb width={480} />
+                <Play className="w-12 h-12 text-brand-orange relative z-10" />
               </div>
               <div className="md:col-span-3 flex flex-col gap-4 text-left">
                 <div className="flex gap-2">
@@ -296,11 +294,9 @@ export const Home: React.FC<HomeProps> = ({
               className="min-w-64 max-w-64 snap-start glass-card p-4 hover:border-brand-orange/30 group flex flex-col gap-3 cursor-pointer"
               onClick={() => navigateToEpisode(ep.id)}
             >
-              <div 
-                className="w-full aspect-[16/9] rounded-xl bg-zinc-900 bg-cover bg-center relative overflow-hidden flex items-center justify-center border border-zinc-800/40" 
-                style={{ backgroundImage: `url(${ep.thumbnail_url || 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=280&auto=format&fit=crop'})` }}
-              >
-                <div className="absolute inset-0 bg-black/30 bg-radial-gradient" />
+              <div className="w-full aspect-[16/9] rounded-xl bg-zinc-900 relative overflow-hidden flex items-center justify-center border border-zinc-800/40">
+                <Thumb src={ep.thumbnail_url} width={256} />
+                <div className="absolute inset-0 bg-black/20" />
                 <button 
                   className="w-10 h-10 rounded-full bg-brand-orange text-black flex items-center justify-center hover:scale-110 active:scale-95 cursor-pointer relative z-10 transition-transform shadow-lg shrink-0" 
                   onClick={(e) => { e.stopPropagation(); navigateToEpisode(ep.id); }}
@@ -362,14 +358,14 @@ export const Home: React.FC<HomeProps> = ({
                 
                 {post.image_url && (
                   <div className="w-full aspect-[2/1] rounded-lg overflow-hidden border border-zinc-800/40 relative shrink-0">
-                    <img src={post.image_url} alt="News thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <img src={cld(post.image_url, { w: 320, h: 160, crop: 'fill' })} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
                 )}
                 
                 <div className="flex items-center justify-between border-t border-white/5 pt-2 shrink-0">
                   <div className="flex items-center gap-1.5">
                     <div className="w-5 h-5 rounded-full overflow-hidden border border-white/10 shrink-0">
-                      <img src={post.avatar_url || '/icons/icon-192x192.png'} alt="LehPhysio" className="w-full h-full object-cover" />
+                      <img src={post.avatar_url ? cld(post.avatar_url, { w: 20, h: 20, crop: 'fill' }) : '/icon-192.webp'} alt="" loading="lazy" className="w-full h-full object-cover" />
                     </div>
                     <span className="text-[10px] font-black text-zinc-300 truncate max-w-[120px]">@{post.username}</span>
                   </div>

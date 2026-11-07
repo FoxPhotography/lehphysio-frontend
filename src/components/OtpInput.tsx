@@ -96,7 +96,7 @@ export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange, onComplete,
   };
 
   return (
-    <div className="flex gap-2.5 justify-center mb-6 direction-ltr">
+    <div className="flex gap-2.5 justify-center mb-6">
       {codeArray.map((digit, idx) => (
         <input
           key={idx}
