@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import {
   Camera,
@@ -17,6 +17,9 @@ import {
   LayoutDashboard,
   ZoomIn,
   Settings,
+  Share2,
+  Eye,
+  Download,
 } from 'lucide-react';
 import { UserAvatar } from '../components/UserAvatar';
 import { setFramesCache } from '../utils/helpers';
@@ -49,16 +52,16 @@ interface ProfileProps {
 
 // ─── Batch options ─────────────────────────────────────────────────────────────
 const BATCHES = [
-  { value: 'PT 9',  label: 'PT 9 (Year 6)' },
-  { value: 'PT 10', label: 'PT 10 (Year 5)' },
-  { value: 'PT 11', label: 'PT 11 (Year 4)' },
-  { value: 'PT 12', label: 'PT 12 (Year 3)' },
-  { value: 'PT 13', label: 'PT 13 (Year 2)' },
-  { value: 'PT 14', label: 'PT 14 (Year 1)' },
+  { value: 'PT 9',  label: 'PT 9 (سنة سادسة)' },
+  { value: 'PT 10', label: 'PT 10 (سنة خامسة)' },
+  { value: 'PT 11', label: 'PT 11 (سنة رابعة)' },
+  { value: 'PT 12', label: 'PT 12 (سنة تالتة)' },
+  { value: 'PT 13', label: 'PT 13 (سنة تانية)' },
+  { value: 'PT 14', label: 'PT 14 (سنة أولى)' },
 ];
 
 // ─── Next rank names ───────────────────────────────────────────────────────────
-const RANK_NAMES = ['Anatomy Rookie', 'Pain Specialist', 'Ortho King', 'Neurogenic', 'Rehab Legend'];
+const RANK_NAMES = ['طالب تشريح', 'أخصائي الألم', 'سيد الأورثو', 'النيوروچي', 'أسطورة الريهاب'];
 
 // ─── Rank thresholds ───────────────────────────────────────────────────────────
 const RANK_THRESHOLDS = [0, 500, 1500, 3000, 6000];
@@ -72,7 +75,7 @@ const FrameOption: React.FC<{
   children: React.ReactNode;
   accent?: string;
 }> = ({ label, equipped, locked, onClick, children, accent = 'orange' }) => (
-  <motion.div
+  <m.div
     onClick={locked ? undefined : onClick}
     whileHover={locked ? {} : { scale: 1.04 }}
     whileTap={locked ? {} : { scale: 0.96 }}
@@ -85,11 +88,11 @@ const FrameOption: React.FC<{
     }`}
   >
     {children}
-    <span className="text-[10px] font-bold text-center leading-tight" style={{ color: locked ? '#71717a' : equipped ? '#f97316' : '#d4d4d8' }}>
+    <span className="text-2xs font-bold text-center leading-tight" style={{ color: locked ? '#71717a' : equipped ? '#f97316' : '#d4d4d8' }}>
       {label}
     </span>
     {equipped && !locked && (
-      <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-orange-500 border-2 border-zinc-900 flex items-center justify-center">
+      <span className="absolute -top-1.5 -end-1.5 w-4 h-4 rounded-full bg-orange-500 border-2 border-zinc-900 flex items-center justify-center">
         <CheckCircle className="w-2.5 h-2.5 text-black" />
       </span>
     )}
@@ -98,7 +101,7 @@ const FrameOption: React.FC<{
         <Lock className="w-4 h-4 text-zinc-700" />
       </span>
     )}
-  </motion.div>
+  </m.div>
 );
 
 // ─── Main Component ────────────────────────────────────────────────────────────
@@ -119,7 +122,20 @@ export const Profile: React.FC<ProfileProps> = ({
 }) => {
   if (!user) return null;
 
-  const { getFlameTier } = useAuth();
+  const { getFlameTier, changePage, deferredPrompt, handleInstallPWA, isStandalone, setShowIOSInstall, showToast: showToastCtx } = useAuth();
+  const [sharingCard, setSharingCard] = useState(false);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const canInstall = !isStandalone && (!!deferredPrompt || isIOS);
+  const onShareCard = async () => {
+    setSharingCard(true);
+    const { shareCard } = await import('../utils/shareCard');
+    const result = await shareCard(
+      { username: user.username, avatarUrl: user.avatar_url, rankName: user.rank?.name_ar || '', rankEmoji: user.rank?.emoji, totalXp: user.total_xp || 0, globalRank: user.global_rank, streak: user.streak_count, batch: user.batch },
+      `${window.location.origin}/u/${encodeURIComponent(user.username)}`
+    );
+    setSharingCard(false);
+    if (result === 'downloaded') showToastCtx('الكارت اتحفظ — نزّله ستوري! 📸');
+  };
   const streak = user.streak_count || 0;
   const tier = getFlameTier(streak);
 
@@ -289,13 +305,13 @@ export const Profile: React.FC<ProfileProps> = ({
   }));
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-lg mx-auto px-4 pt-20 xl:pt-6 pb-24 md:pb-6 space-y-4"
+      className="w-full max-w-lg mx-auto px-4 xl:pt-6 space-y-4"
     >
       {/* ── Profile Card ──────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-6">
+      <div className="rounded-2xl border border-white/8 bg-zinc-900/60 p-6">
 
         {/* Avatar Section */}
         <div className="flex flex-col items-center mb-6">
@@ -346,7 +362,7 @@ export const Profile: React.FC<ProfileProps> = ({
                   {isUploading ? (
                     <div className="flex flex-col items-center gap-1">
                       <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                      <span className="text-[10px] text-white font-bold">Uploading</span>
+                      <span className="text-2xs text-white font-bold">بنرفع</span>
                     </div>
                   ) : (
                     <Camera className="w-7 h-7 text-white" />
@@ -363,8 +379,8 @@ export const Profile: React.FC<ProfileProps> = ({
             </div>
 
             {/* Tier Pill */}
-            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-orange-500 text-black text-[9px] font-black border-2 border-zinc-900 whitespace-nowrap z-20">
-              {stripEmojis(user.rank?.name_en) || `Tier ${currentTier}`}
+            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-orange-500 text-black text-2xs font-black border-2 border-zinc-900 whitespace-nowrap z-20">
+              {stripEmojis(user.rank?.name_ar || user.rank?.name_en) || `المستوى ${currentTier}`}
             </div>
           </div>
 
@@ -374,7 +390,7 @@ export const Profile: React.FC<ProfileProps> = ({
           {/* Admin / Owner Badge */}
           {(user.role === 'admin' || user.role === 'owner') && (
             <div
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black mb-2"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black mb-2"
               style={{
                 background: user.role === 'owner'
                   ? 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,140,0,0.15))'
@@ -384,7 +400,7 @@ export const Profile: React.FC<ProfileProps> = ({
               }}
             >
               {user.role === 'owner' ? <Crown className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
-              {user.role === 'owner' ? 'Owner' : 'Admin'}
+              {user.role === 'owner' ? 'المالك' : 'أدمن'}
             </div>
           )}
 
@@ -392,7 +408,7 @@ export const Profile: React.FC<ProfileProps> = ({
           <div className="flex items-center gap-2">
             {isEditingBatch ? (
               <select
-                className="px-3 py-1.5 text-[12px] rounded-lg bg-zinc-800 border border-white/15 text-white focus:outline-none focus:border-orange-500/60"
+                className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 border border-white/15 text-white focus:outline-none focus:border-orange-500/60"
                 value={selectedBatch}
                 autoFocus
                 onChange={(e) => {
@@ -408,14 +424,14 @@ export const Profile: React.FC<ProfileProps> = ({
                 ))}
               </select>
             ) : (
-              <motion.button
+              <m.button
                 onClick={() => setIsEditingBatch(true)}
                 whileHover={{ scale: 1.04 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[12px] font-bold hover:border-orange-500/40 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold hover:border-orange-500/40 transition-colors"
               >
                 {user.batch}
                 <Pencil className="w-3 h-3 opacity-70" />
-              </motion.button>
+              </m.button>
             )}
           </div>
         </div>
@@ -445,29 +461,29 @@ export const Profile: React.FC<ProfileProps> = ({
               <Star className="w-5 h-5 text-amber-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] text-zinc-500 uppercase tracking-wider font-bold">Current Rank</p>
-              <p className="text-[16px] font-black text-white truncate">
-                {stripEmojis(user.rank?.name_en) || `Tier ${currentTier}`}
+              <p className="text-xs text-zinc-500 uppercase tracking-wider font-bold">الرتبة الحالية</p>
+              <p className="text-base font-black text-white truncate">
+                {stripEmojis(user.rank?.name_ar || user.rank?.name_en) || `المستوى ${currentTier}`}
               </p>
             </div>
-            <span className="text-[13px] font-black text-orange-400">{user.total_xp?.toLocaleString()} XP</span>
+            <span className="text-[13px] font-black text-orange-400" dir="ltr">{user.total_xp?.toLocaleString()} XP</span>
           </div>
 
           {/* XP Progress Bar */}
           <div className="h-2 rounded-full bg-white/8 overflow-hidden mb-1.5">
-            <motion.div
+            <m.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(100, progressPct)}%` }}
               transition={{ duration: 0.8, ease: 'easeOut' }}
               className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400"
             />
           </div>
-          <div className="flex justify-between text-[10px] text-zinc-600">
-            <span>{user.total_xp - currentThreshold} XP earned</span>
+          <div className="flex justify-between text-2xs text-zinc-600">
+            <span>{user.total_xp - currentThreshold} XP في الرتبة دي</span>
             <span>
               {nextThreshold
-                ? `${nextThreshold - currentThreshold - (user.total_xp - currentThreshold)} XP to ${RANK_NAMES[currentTier] || 'MAX'}`
-                : 'MAX RANK'}
+                ? `باقي ${(nextThreshold - user.total_xp).toLocaleString('en-US')} XP على ${RANK_NAMES[currentTier] || 'أعلى رتبة'}`
+                : 'أعلى رتبة'}
             </span>
           </div>
         </div>
@@ -475,7 +491,7 @@ export const Profile: React.FC<ProfileProps> = ({
         {/* ── Stats Badges ──────────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-3 mb-5">
           <div className="rounded-xl border border-white/8 bg-black/30 p-3.5 flex items-center gap-3">
-            <motion.div 
+            <m.div 
               animate={{ 
                 scale: [1, 1.08, 0.95, 1.08, 1],
                 filter: [
@@ -492,10 +508,10 @@ export const Profile: React.FC<ProfileProps> = ({
               className="w-9 h-9 rounded-lg bg-orange-500/15 border border-orange-500/20 flex items-center justify-center flex-shrink-0"
             >
               <Zap className="w-4.5 h-4.5 text-orange-400 fill-orange-400" />
-            </motion.div>
+            </m.div>
             <div className="min-w-0">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Total XP</p>
-              <p className="text-[18px] font-black text-white leading-tight">{user.total_xp?.toLocaleString()}</p>
+              <p className="text-2xs text-zinc-500 uppercase tracking-wider">إجمالي XP</p>
+              <p className="text-lg font-black text-white leading-tight">{user.total_xp?.toLocaleString()}</p>
             </div>
           </div>
           <div className="rounded-xl border border-white/8 bg-black/30 p-3.5 flex items-center gap-3">
@@ -520,7 +536,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 </defs>
 
                 {/* 1. Outer Flame */}
-                <motion.path
+                <m.path
                   d="M50,95 C70,95 85,80 82,58 C80,38 65,30 50,2 C35,30 20,38 18,58 C15,80 30,95 50,95 Z"
                   fill="url(#profileOuterFlame)"
                   animate={{
@@ -534,7 +550,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 />
 
                 {/* 2. Middle Flame */}
-                <motion.path
+                <m.path
                   d="M50,90 C65,90 75,78 72,58 C70,40 60,32 50,15 C40,32 30,40 28,58 C25,78 35,90 50,90 Z"
                   fill="url(#profileMidFlame)"
                   animate={{
@@ -548,7 +564,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 />
 
                 {/* 3. Inner Flame */}
-                <motion.path
+                <m.path
                   d="M50,85 C60,85 68,75 66,58 C64,42 58,35 50,28 C42,35 36,42 34,58 C32,75 40,85 50,85 Z"
                   fill="url(#profileInnerFlame)"
                   animate={{
@@ -562,27 +578,55 @@ export const Profile: React.FC<ProfileProps> = ({
               </svg>
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Streak</p>
-              <p className="text-[18px] font-black text-white leading-tight">{user.streak_count} days</p>
+              <p className="text-2xs text-zinc-500 uppercase tracking-wider">أيام متتالية</p>
+              <p className="text-lg font-black text-white leading-tight">{user.streak_count === 1 ? 'يوم واحد' : user.streak_count === 2 ? 'يومين' : `${user.streak_count} أيام`}</p>
             </div>
           </div>
         </div>
 
+        {/* ── Share card + public profile + install ─────────────────── */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <button
+            onClick={onShareCard}
+            disabled={sharingCard}
+            className="flex items-center justify-center gap-2 py-3 rounded-xl border border-brand-orange/30 bg-brand-orange/10 text-brand-amber font-bold text-sm active:scale-[0.98] transition-transform disabled:opacity-60"
+          >
+            <Share2 className="w-4 h-4" />
+            {sharingCard ? 'بنجهّز…' : 'شارك كارتك'}
+          </button>
+          <button
+            onClick={() => changePage('public-profile', { username: user.username })}
+            className="flex items-center justify-center gap-2 py-3 rounded-xl border border-zinc-800 bg-zinc-900/60 text-zinc-200 font-bold text-sm active:scale-[0.98] transition-transform"
+          >
+            <Eye className="w-4 h-4" />
+            بروفايلي العام
+          </button>
+        </div>
+        {canInstall && (
+          <button
+            onClick={() => (deferredPrompt ? handleInstallPWA() : setShowIOSInstall(true))}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-zinc-800 bg-zinc-900/60 text-white font-bold text-sm mb-3 active:scale-[0.98] transition-transform"
+          >
+            <Download className="w-4 h-4 text-brand-orange" />
+            ثبّت التطبيق على موبايلك
+          </button>
+        )}
+
         {/* ── Decoration Button ─────────────────────────────────────── */}
-        <motion.button
+        <m.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowDecorationPicker(true)}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-bold text-[14px] hover:from-orange-400 hover:to-amber-400 transition-colors mb-3 shadow-lg shadow-orange-500/15"
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-bold text-sm hover:from-orange-400 hover:to-amber-400 transition-colors mb-3 shadow-lg shadow-orange-500/15"
         >
           <Settings className="w-4 h-4" />
-          Change Profile Decoration
-        </motion.button>
+          غيّر شكل البروفايل
+        </m.button>
 
         {/* ── Actions ──────────────────────────────────────────────── */}
         <div className="flex flex-col gap-2.5">
           {/* Web Push Notifications Settings */}
-          <motion.button
+          <m.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             disabled={pushLoading}
@@ -596,10 +640,10 @@ export const Profile: React.FC<ProfileProps> = ({
             {pushLoading ? (
               <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
             ) : (
-              <span className="text-[14px]">🔔</span>
+              <span className="text-sm">🔔</span>
             )}
-            {isSubscribed ? 'Disable Notifications' : 'Enable Notifications'}
-          </motion.button>
+            {isSubscribed ? 'اقفل الإشعارات' : 'فعّل الإشعارات'}
+          </m.button>
 
           {(() => {
             const ROLE_WEIGHTS = { user: 0, moderator: 1, admin: 2, owner: 3 };
@@ -607,65 +651,65 @@ export const Profile: React.FC<ProfileProps> = ({
             return (
               <>
                 {weight >= 1 && (
-                  <motion.button
+                  <m.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setCurrentPage('moderator-dashboard')}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 font-bold text-[13px] hover:bg-emerald-500/18 transition-colors"
                   >
                     <ShieldCheck className="w-4 h-4" />
-                    Moderator Dashboard
-                  </motion.button>
+                    لوحة المشرفين
+                  </m.button>
                 )}
                 {weight >= 2 && (
-                  <motion.button
+                  <m.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setCurrentPage('admin')}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-violet-500/10 border border-violet-500/25 text-violet-400 font-bold text-[13px] hover:bg-violet-500/18 transition-colors"
                   >
                     <LayoutDashboard className="w-4 h-4" />
-                    {user.role === 'owner' ? 'Owner Dashboard' : 'Admin Dashboard'}
-                  </motion.button>
+                    {user.role === 'owner' ? 'لوحة المالك' : 'لوحة الإدارة'}
+                  </m.button>
                 )}
               </>
             );
           })()}
-          <motion.button
+          <m.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-500/20 text-red-400 font-bold text-[13px] hover:bg-red-500/10 transition-colors"
           >
-            <LogOut className="w-4 h-4" />
-            Logout
-          </motion.button>
+            <LogOut className="rtl:-scale-x-100 w-4 h-4" />
+            تسجيل الخروج
+          </m.button>
         </div>
       </div>
 
       {/* ── Decoration Picker Modal ───────────────────────────────────── */}
       <AnimatePresence>
         {showDecorationPicker && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowDecorationPicker(false)}
-            className="fixed inset-0 z-[11000] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+            className="fixed inset-0 z-[11000] bg-black/90 flex items-end sm:items-center justify-center p-4"
           >
-            <motion.div
+            <m.div
               initial={{ y: 60, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 60, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 280, damping: 28 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-2xl border border-white/8 bg-zinc-900/95 backdrop-blur-xl p-5 max-h-[85vh] overflow-y-auto"
+              className="w-full max-w-md rounded-2xl border border-white/8 bg-zinc-900/95 p-5 max-h-[85vh] overflow-y-auto"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4.5 h-4.5 text-orange-400" />
-                  <h3 className="text-[16px] font-black text-white">Profile Decoration</h3>
+                  <h3 className="text-base font-black text-white">شكل البروفايل</h3>
                 </div>
                 <button
                   onClick={() => setShowDecorationPicker(false)}
@@ -674,17 +718,17 @@ export const Profile: React.FC<ProfileProps> = ({
                   <X className="w-4.5 h-4.5" />
                 </button>
               </div>
-              <p className="text-[12px] text-zinc-500 mb-5">
-                Choose a frame or title to display on your profile across the app.
+              <p className="text-xs text-zinc-500 mb-5">
+                اختار فريم أو لقب يظهر جنب اسمك في كل التطبيق.
               </p>
 
               {/* Frames Section */}
               <div className="mb-5">
-                <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-3">Avatar Frames</p>
+                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">الفريمات</p>
                 <div className="flex flex-wrap gap-2.5">
                   {/* None */}
                   <FrameOption
-                    label="None"
+                    label="ولا حاجة"
                     equipped={equippedFrame === 'none'}
                     onClick={() => handleEquipFrame('none')}
                   >
@@ -724,10 +768,10 @@ export const Profile: React.FC<ProfileProps> = ({
 
               {/* Titles Section */}
               <div>
-                <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-3">Display Titles</p>
+                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">الألقاب</p>
                 <div className="flex flex-wrap gap-2">
                   {/* No Title */}
-                  <motion.button
+                  <m.button
                     whileHover={{ scale: 1.04 }}
                     whileTap={{ scale: 0.96 }}
                     onClick={() => {
@@ -736,33 +780,33 @@ export const Profile: React.FC<ProfileProps> = ({
                       handleUpdateProfile(undefined, undefined, undefined, 'none');
                       setShowDecorationPicker(false);
                     }}
-                    className={`px-4 py-2 rounded-xl text-[12px] font-bold border transition-all ${
+                    className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
                       equippedTitle === 'none'
                         ? 'border-orange-500/60 bg-orange-500/10 text-orange-400'
                         : 'border-white/10 bg-white/3 text-zinc-400 hover:text-white hover:border-white/20'
                     }`}
                   >
-                    No Title
-                  </motion.button>
+                    من غير لقب
+                  </m.button>
 
 
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       {/* ── Crop Modal ────────────────────────────────────────────────── */}
       <AnimatePresence>
         {cropModalOpen && cropImageSrc && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[12000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[12000] bg-black/80 flex items-center justify-center p-4"
           >
-            <motion.div
+            <m.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -770,8 +814,8 @@ export const Profile: React.FC<ProfileProps> = ({
               className="w-full max-w-sm rounded-2xl border border-white/8 bg-zinc-900/95 p-5 space-y-4"
             >
               <div className="text-center">
-                <h3 className="text-[18px] font-black text-white">Adjust Photo</h3>
-                <p className="text-[12px] text-zinc-500 mt-0.5">Drag to pan, slide to zoom</p>
+                <h3 className="text-lg font-black text-white">ظبّط الصورة</h3>
+                <p className="text-xs text-zinc-500 mt-0.5">اسحب عشان تحرّك، واستخدم الشريط للتكبير</p>
               </div>
 
               {/* Crop Viewport */}
@@ -785,7 +829,7 @@ export const Profile: React.FC<ProfileProps> = ({
               >
                 <img
                   src={cropImageSrc}
-                  alt="Crop preview"
+                  alt="معاينة"
                   onLoad={(e) => {
                     const img = e.currentTarget;
                     setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
@@ -810,9 +854,9 @@ export const Profile: React.FC<ProfileProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-zinc-500">
                     <ZoomIn className="w-3.5 h-3.5" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider">Zoom</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">تكبير</span>
                   </div>
-                  <span className="text-[11px] font-bold text-orange-400">{Math.round(cropZoom * 100)}%</span>
+                  <span className="text-xs font-bold text-orange-400">{Math.round(cropZoom * 100)}%</span>
                 </div>
                 <input
                   type="range"
@@ -827,27 +871,27 @@ export const Profile: React.FC<ProfileProps> = ({
 
               {/* Crop Actions */}
               <div className="flex gap-2.5">
-                <motion.button
+                <m.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => { setCropModalOpen(false); setCropImageSrc(null); }}
                   className="flex-1 py-2.5 rounded-xl border border-white/10 text-zinc-400 font-bold text-[13px] hover:text-white hover:border-white/20 transition-colors"
                 >
-                  Cancel
-                </motion.button>
-                <motion.button
+                  إلغاء
+                </m.button>
+                <m.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={handleCropSave}
                   className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-bold text-[13px]"
                 >
                   Crop &amp; Save
-                </motion.button>
+                </m.button>
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </m.div>
   );
 };

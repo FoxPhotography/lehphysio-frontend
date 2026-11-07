@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { textDir } from '../../utils/format';
+import { m, AnimatePresence, PanInfo } from 'framer-motion';
 import { HighlightWrapper } from '../notifications/HighlightWrapper';
 import { UserAvatar } from '../UserAvatar';
 import { 
@@ -255,11 +256,11 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
         }
       } else {
         const errData = await res.json().catch(() => ({}));
-        showToast(errData.error || 'Failed to post comment');
+        showToast(errData.error || 'معرفناش ننشر التعليق');
       }
     } catch (err) {
       console.error('Error posting comment:', err);
-      showToast('Network error: Could not submit comment');
+      showToast('مشكلة في النت: التعليق ماتبعتش');
     } finally {
       setSubmitting(false);
     }
@@ -268,7 +269,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
   // Like / Unlike comment
   const handleToggleLike = async (commentId: number) => {
     if (!user) {
-      showToast('Please log in to like comments! 🔒');
+      showToast('سجّل دخول عشان تعمل لايك! 🔒');
       return;
     }
 
@@ -310,11 +311,11 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
         if (onCommentCountChange && postId) {
           onCommentCountChange(postId, -1);
         }
-        showToast('Comment deleted');
+        showToast('التعليق اتمسح');
       }
     } catch (e) {
       console.error('Error deleting comment:', e);
-      showToast('Failed to delete comment');
+      showToast('معرفناش نمسح التعليق');
     }
   };
 
@@ -327,11 +328,11 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
         setEditingCommentId(null);
         setEditCommentText('');
         fetchComments();
-        showToast('Comment updated');
+        showToast('التعليق اتعدّل');
       }
     } catch (e) {
       console.error('Error editing comment:', e);
-      showToast('Failed to update comment');
+      showToast('معرفناش نعدّل التعليق');
     }
   };
 
@@ -365,7 +366,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
       <div 
         key={c.id} 
         id={`sheet-comment-${c.id}`}
-        className={`group relative transition-all ${isReply ? 'ml-8 mt-2 pl-3 border-l-2 border-zinc-800/80' : 'mb-4'}`}
+        className={`group relative transition-all ${isReply ? 'ms-8 mt-2 ps-3 border-s-2 border-zinc-800/80' : 'mb-4'}`}
       >
         <div className="flex gap-3 items-start">
           <UserAvatar 
@@ -377,22 +378,22 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
 
           <div className="flex-1 min-w-0">
             {/* Comment bubble */}
-            <div className="bg-zinc-900/60 hover:bg-zinc-900/80 transition-colors border border-zinc-800/60 rounded-2xl p-3 text-left relative">
+            <div className="bg-zinc-900/60 hover:bg-zinc-900/80 transition-colors border border-zinc-800/60 rounded-2xl p-3 text-start relative">
               <div className="flex items-center justify-between gap-2 mb-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-xs font-black text-white hover:text-brand-orange cursor-pointer transition-colors">
                     {c.username}
                   </span>
                   {c.batch && (
-                    <span className="text-[8px] font-bold bg-zinc-800/80 text-zinc-400 px-1.5 py-0.5 rounded-md border border-zinc-700/40">
+                    <span className="text-2xs font-bold bg-zinc-800/80 text-zinc-400 px-1.5 py-0.5 rounded-md border border-zinc-700/40">
                       {c.batch}
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] text-zinc-500 font-medium">
-                    {new Date(c.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                  <span className="text-2xs text-zinc-500 font-medium">
+                    {new Date(c.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                   </span>
 
                   {/* 3-dots options menu */}
@@ -415,11 +416,11 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                               className="fixed inset-0 z-40" 
                               onClick={() => setActiveMenuCommentId(null)} 
                             />
-                            <motion.div
+                            <m.div
                               initial={{ opacity: 0, scale: 0.9, y: -5 }}
                               animate={{ opacity: 1, scale: 1, y: 0 }}
                               exit={{ opacity: 0, scale: 0.9, y: -5 }}
-                              className="absolute right-0 top-7 z-50 bg-zinc-950 border border-zinc-800 rounded-xl p-1.5 flex flex-col gap-1 min-w-[120px] shadow-2xl"
+                              className="absolute end-0 top-7 z-50 bg-zinc-950 border border-zinc-800 rounded-xl p-1.5 flex flex-col gap-1 min-w-[120px] shadow-2xl"
                             >
                               {isOwner ? (
                                 <>
@@ -429,20 +430,20 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                                       setEditCommentText(c.content);
                                       setActiveMenuCommentId(null);
                                     }}
-                                    className="w-full flex items-center gap-2 p-2 font-bold text-xs text-brand-amber rounded-lg hover:bg-zinc-900 cursor-pointer text-left transition-colors"
+                                    className="w-full flex items-center gap-2 p-2 font-bold text-xs text-brand-amber rounded-lg hover:bg-zinc-900 cursor-pointer text-start transition-colors"
                                   >
                                     <Edit2 className="w-3.5 h-3.5" />
-                                    <span>Edit</span>
+                                    <span>تعديل</span>
                                   </button>
                                   <button
                                     onClick={() => {
                                       handleDeleteComment(c.id, isReply, parentId);
                                       setActiveMenuCommentId(null);
                                     }}
-                                    className="w-full flex items-center gap-2 p-2 font-bold text-xs text-red-400 rounded-lg hover:bg-zinc-900 cursor-pointer text-left transition-colors"
+                                    className="w-full flex items-center gap-2 p-2 font-bold text-xs text-red-400 rounded-lg hover:bg-zinc-900 cursor-pointer text-start transition-colors"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
-                                    <span>Delete</span>
+                                    <span>حذف</span>
                                   </button>
                                 </>
                               ) : (
@@ -453,13 +454,13 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                                     }
                                     setActiveMenuCommentId(null);
                                   }}
-                                  className="w-full flex items-center gap-2 p-2 font-bold text-xs text-amber-400 rounded-lg hover:bg-zinc-900 cursor-pointer text-left transition-colors"
+                                  className="w-full flex items-center gap-2 p-2 font-bold text-xs text-amber-400 rounded-lg hover:bg-zinc-900 cursor-pointer text-start transition-colors"
                                 >
                                   <AlertTriangle className="w-3.5 h-3.5" />
-                                  <span>Report</span>
+                                  <span>إبلاغ</span>
                                 </button>
                               )}
-                            </motion.div>
+                            </m.div>
                           </>
                         )}
                       </AnimatePresence>
@@ -481,27 +482,27 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => setEditingCommentId(null)}
-                      className="px-3 py-1 rounded-lg text-[10px] font-bold text-zinc-400 hover:text-white border border-zinc-800 cursor-pointer"
+                      className="px-3 py-1 rounded-lg text-2xs font-bold text-zinc-400 hover:text-white border border-zinc-800 cursor-pointer"
                     >
-                      Cancel
+                      إلغاء
                     </button>
                     <button
                       onClick={() => handleSaveEdit(c.id)}
-                      className="px-3 py-1 rounded-lg text-[10px] font-extrabold bg-brand-orange text-black cursor-pointer shadow-md"
+                      className="px-3 py-1 rounded-lg text-2xs font-extrabold bg-brand-orange text-black cursor-pointer shadow-md"
                     >
-                      Save
+                      حفظ
                     </button>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-zinc-200 font-medium leading-relaxed whitespace-pre-wrap break-words">
+                <p dir={textDir(c.content)} className="text-xs text-zinc-200 font-medium leading-relaxed whitespace-pre-wrap break-words">
                   {renderFormattedText(c.content)}
                 </p>
               )}
             </div>
 
             {/* Sub-actions (Like, Reply, Reply count) */}
-            <div className="flex items-center gap-4 mt-1 px-1.5 text-[11px]">
+            <div className="flex items-center gap-4 mt-1 px-1.5 text-xs">
               <button
                 onClick={() => handleToggleLike(c.id)}
                 className={`flex items-center gap-1 font-bold cursor-pointer transition-colors ${
@@ -509,7 +510,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                 }`}
               >
                 <Heart className={`w-3.5 h-3.5 ${c.has_liked ? 'fill-current' : ''}`} />
-                <span>{c.likes_count > 0 ? c.likes_count : 'Like'}</span>
+                <span>{c.likes_count > 0 ? c.likes_count : 'لايك'}</span>
               </button>
 
               {!isReply && (
@@ -520,8 +521,8 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                   }}
                   className="flex items-center gap-1 font-bold text-zinc-500 hover:text-brand-orange cursor-pointer transition-colors"
                 >
-                  <CornerUpLeft className="w-3.5 h-3.5" />
-                  <span>Reply</span>
+                  <CornerUpLeft className="rtl:-scale-x-100 w-3.5 h-3.5" />
+                  <span>رد</span>
                 </button>
               )}
             </div>
@@ -531,26 +532,26 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
               <div className="mt-2">
                 <button
                   onClick={() => setExpandedReplies(prev => ({ ...prev, [c.id]: !prev[c.id] }))}
-                  className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-brand-orange/90 hover:text-brand-orange cursor-pointer py-1"
+                  className="inline-flex items-center gap-1.5 text-xs font-extrabold text-brand-orange/90 hover:text-brand-orange cursor-pointer py-1"
                 >
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isRepliesExpanded ? 'rotate-180' : ''}`} />
                   <span>
                     {isRepliesExpanded 
-                      ? 'Hide replies' 
+                      ? 'إخفاء الردود' 
                       : `View ${c.replies?.length} ${c.replies?.length === 1 ? 'reply' : 'replies'}`}
                   </span>
                 </button>
 
                 <AnimatePresence>
                   {isRepliesExpanded && (
-                    <motion.div
+                    <m.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       className="overflow-hidden space-y-2 mt-1"
                     >
                       {c.replies?.map(reply => renderCommentItem(reply, true, c.id))}
-                    </motion.div>
+                    </m.div>
                   )}
                 </AnimatePresence>
               </div>
@@ -566,17 +567,17 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
       {isOpen && (
         <div className="fixed inset-0 z-[9999] flex flex-col justify-end">
           {/* Dimmed Blurred Backdrop */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={handlePanelClose}
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm cursor-pointer"
+            className="fixed inset-0 bg-black/75 cursor-pointer"
           />
 
           {/* Slide-Up Bottom Sheet Panel */}
-          <motion.div
+          <m.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -586,7 +587,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
             dragElastic={{ top: 0, bottom: 0.5 }}
             dragSnapToOrigin
             onDragEnd={handleDragEnd}
-            className="relative z-10 w-full max-w-2xl mx-auto bg-zinc-950/95 border-t md:border border-zinc-800/80 rounded-t-[28px] md:rounded-[28px] md:mb-4 shadow-[0_-15px_40px_rgba(0,0,0,0.8)] backdrop-blur-2xl flex flex-col max-h-[88vh] h-[85vh] overflow-hidden"
+            className="relative z-10 w-full max-w-2xl mx-auto bg-zinc-950/95 border-t md:border border-zinc-800/80 rounded-t-[28px] md:rounded-[28px] md:mb-4 shadow-[0_-15px_40px_rgba(0,0,0,0.8)] flex flex-col max-h-[88vh] h-[85vh] overflow-hidden"
           >
             {/* Top Drag Handle Header */}
             <div className="pt-3 pb-2 px-5 flex flex-col border-b border-zinc-800/60 bg-zinc-950/80 select-none">
@@ -599,11 +600,11 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                   </div>
                   <div>
                     <h3 className="text-sm font-black text-white">
-                      Comments {comments.length > 0 && `(${comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0)})`}
+                      التعليقات {comments.length > 0 && `(${comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0)})`}
                     </h3>
                     {postAuthorName && (
-                      <p className="text-[10px] text-zinc-500 font-semibold">
-                        Post by @{postAuthorName}
+                      <p className="text-2xs text-zinc-500 font-semibold">
+                        Post by <bdi dir="ltr">@{postAuthorName}</bdi>
                       </p>
                     )}
                   </div>
@@ -612,7 +613,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                 <button
                   onClick={handlePanelClose}
                   className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer transition-all hover:scale-105 active:scale-95"
-                  title="Close comments"
+                  title="قفل التعليقات"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -627,15 +628,15 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-16 text-zinc-500 text-xs gap-3">
                   <Loader2 className="w-6 h-6 animate-spin text-brand-orange" />
-                  <span className="font-bold">Loading comments...</span>
+                  <span className="font-bold">بنحمّل التعليقات…</span>
                 </div>
               ) : comments.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center space-y-2">
                   <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800/80 flex items-center justify-center text-zinc-600 mb-1">
                     <MessageSquare className="w-6 h-6" />
                   </div>
-                  <p className="text-sm font-extrabold text-zinc-300">No comments yet</p>
-                  <p className="text-xs text-zinc-500 font-medium">Be the first to share your thoughts!</p>
+                  <p className="text-sm font-extrabold text-zinc-300">مفيش تعليقات لسه</p>
+                  <p className="text-xs text-zinc-500 font-medium">كن أول واحد يكتب رأيه!</p>
                 </div>
               ) : (
                 comments.map(c => renderCommentItem(c))
@@ -645,14 +646,14 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
             {/* Mentions Autocomplete Floating Box */}
             <AnimatePresence>
               {mentionSearch !== null && getFilteredUsernames().length > 0 && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute bottom-20 left-4 right-4 z-30 bg-zinc-900 border border-zinc-700/80 rounded-2xl p-2 shadow-2xl max-h-40 overflow-y-auto"
+                  className="absolute bottom-20 start-4 end-4 z-30 bg-zinc-900 border border-zinc-700/80 rounded-2xl p-2 shadow-2xl max-h-40 overflow-y-auto"
                 >
-                  <div className="text-[10px] font-black text-zinc-400 uppercase tracking-wider px-2 py-1">
-                    Mention user
+                  <div className="text-2xs font-black text-zinc-400 uppercase tracking-wider px-2 py-1">
+                    منشن حد
                   </div>
                   {getFilteredUsernames().map((u: any, idx: number) => (
                     <div
@@ -663,25 +664,25 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                       }`}
                     >
                       <UserAvatar username={u.username} avatarUrl={u.avatar_url} size={22} />
-                      <span className="text-xs font-bold">@{u.username}</span>
+                      <span className="text-xs font-bold"><bdi dir="ltr">@{u.username}</bdi></span>
                     </div>
                   ))}
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
 
             {/* Replying banner indicator */}
             <AnimatePresence>
               {replyingTo && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   className="bg-brand-orange/10 border-t border-brand-orange/20 px-4 py-2 flex items-center justify-between text-xs"
                 >
                   <div className="flex items-center gap-1.5 text-brand-orange font-bold">
-                    <CornerUpLeft className="w-3.5 h-3.5" />
-                    <span>Replying to @{replyingTo.username}</span>
+                    <CornerUpLeft className="rtl:-scale-x-100 w-3.5 h-3.5" />
+                    <span>Replying to <bdi dir="ltr">@{replyingTo.username}</bdi></span>
                   </div>
                   <button
                     onClick={() => setReplyingTo(null)}
@@ -689,7 +690,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
 
@@ -721,8 +722,8 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                       data-form-type="other"
                       value={commentText}
                       onChange={handleInputChange}
-                      placeholder={replyingTo ? `Reply to @${replyingTo.username}...` : 'Write a comment... (Type @ to mention)'}
-                      className="w-full bg-zinc-900/80 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-full py-2.5 pl-4 pr-4 text-xs font-semibold placeholder-zinc-500 outline-none transition-all"
+                      placeholder={replyingTo ? `Reply to @${replyingTo.username}...` : 'اكتب تعليق… (@ للمنشن)'}
+                      className="w-full bg-zinc-900/80 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-full py-2.5 ps-4 pe-4 text-xs font-semibold placeholder-zinc-500 outline-none transition-all"
                     />
                   </div>
 
@@ -734,17 +735,17 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                     {submitting ? (
                       <Loader2 className="w-4 h-4 animate-spin text-black" />
                     ) : (
-                      <Send className="w-4 h-4 fill-current ml-0.5" />
+                      <Send className="rtl:-scale-x-100 w-4 h-4 fill-current ms-0.5" />
                     )}
                   </button>
                 </form>
               ) : (
                 <div className="text-center py-2 text-xs text-zinc-500 font-bold">
-                  Please log in to join the conversation.
+                  سجّل دخول عشان تشارك في النقاش.
                 </div>
               )}
             </div>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </AnimatePresence>

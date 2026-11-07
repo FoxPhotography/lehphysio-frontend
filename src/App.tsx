@@ -24,7 +24,8 @@ import { useAppAuth } from './hooks/useAppAuth';
 
 // Layout & Routing
 import { MainLayout } from './layouts/MainLayout';
-import { AppRouter } from './routes/router';
+import { AppRouter, prefetchCorePages } from './routes/router';
+import { useStableProps } from './hooks/useStableProps';
 import { CommentsSlideUpPanel } from './components/home/CommentsSlideUpPanel';
 
 const getUserId = (user: any, token: string): string | null => {
@@ -77,6 +78,7 @@ function InnerApp() {
     currentPage,
     setCurrentPage,
     changePage,
+    setPageFromUrl,
     showToast,
     showConfirm,
     triggerXpPopup,
@@ -204,15 +206,15 @@ function InnerApp() {
     const ref = user ? user.username : '';
     const shareLink = `${window.location.origin}/post/${postId}${ref ? '?ref=' + ref : ''}`;
     const targetPost = communityPosts.find(p => p.id === postId) || newsPosts.find(p => p.id === postId);
-    const postTitle = targetPost?.title || 'LehPhysio Community Post';
-    const postText = targetPost?.content ? `${targetPost.content.substring(0, 100)}...` : 'Check out this post on LehPhysio!';
+    const postTitle = targetPost?.title || 'بوست من مجتمع ليه فيزيو';
+    const postText = targetPost?.content ? `${targetPost.content.substring(0, 100)}...` : 'شوف البوست ده على ليه فيزيو!';
 
     // Always copy link to clipboard reliably
     try {
       await copyToClipboard(shareLink);
-      showToast('Post link copied to clipboard! 🔗');
+      showToast('اتنسخ لينك البوست! 🔗');
     } catch {
-      showToast('Post link copied to clipboard! 🔗');
+      showToast('اتنسخ لينك البوست! 🔗');
     }
 
     // Open native share sheet on mobile or desktop browsers if supported
@@ -237,6 +239,7 @@ function InnerApp() {
   const { handleUrlRouting } = useUrlRouting({
     token,
     setCurrentPage,
+    setPageFromUrl,
     setCommunityTab,
     setSelectedEpisodeId,
     setSelectedPostId,
@@ -246,6 +249,11 @@ function InnerApp() {
     showToast,
     openCommentsPanel: handleOpenCommentsPanel,
   });
+
+  // Warm the most-visited code-split pages after first paint
+  useEffect(() => {
+    prefetchCorePages();
+  }, []);
 
   // Initial Fetching & Routing Setup
   useEffect(() => {
@@ -376,7 +384,7 @@ function InnerApp() {
   // Handle reconnect background validation and safe updates
   useEffect(() => {
     const handleReconnectSync = () => {
-      showToast('Real-time connection restored. Syncing...');
+      showToast('رجع الاتصال، بنحدّث البيانات…');
       fetchEpisodes(true);
       fetchCommunityPosts(undefined, true);
       fetchNewsPosts(true);
@@ -440,16 +448,16 @@ function InnerApp() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.is_correct ? `✅ Correct Answer! +${data.xp_awarded} XP ⚡` : `❌ Wrong Answer! +${data.xp_awarded} XP ⚡`);
+        showToast(data.is_correct ? `✅ إجابة صح! +${data.xp_awarded} XP ⚡` : `❌ إجابة غلط، بس كسبت +${data.xp_awarded} XP ⚡`);
         playChatSound(data.is_correct ? 'win' : 'error');
         fetchDailyQuestion();
         fetchUserProfile();
       } else {
-        showToast(data.error || 'Failed to submit answer.');
+        showToast(data.error || 'معرفناش نبعت الإجابة.');
         playChatSound('error');
       }
     } catch (err) {
-      showToast('Connection error.');
+      showToast('مشكلة في الاتصال.');
       playChatSound('error');
     }
   };
@@ -617,7 +625,7 @@ function InnerApp() {
       const data = await res.json();
       setAdminMessage(data.message || data.error);
       if (res.ok) {
-        showToast('XP Code created successfully! 🔑');
+        showToast('كود الـ XP اتعمل! 🔑');
         if (data.code) {
           const newCodeObj = {
             ...data.code,
@@ -638,7 +646,7 @@ function InnerApp() {
         setAdminCodeForm({ code: '', xp_reward: 50, type: 'social', episode_id: '', max_uses: 1000, expiry_date: '' });
       }
     } catch (err) {
-      setAdminMessage('Failed to connect to the server.');
+      setAdminMessage('مش قادرين نوصل للسيرفر.');
     } finally {
       setAdminSubmitting(false);
     }
@@ -650,13 +658,13 @@ function InnerApp() {
       const res = await authService.toggleUserRole(userId, newRole, token);
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || 'User role updated! 🎉');
+        showToast(data.message || 'الصلاحية اتغيرت! 🎉');
         fetchAdminUsers();
       } else {
-        showToast(data.error || 'Failed to update role.');
+        showToast(data.error || 'معرفناش نغيّر الصلاحية.');
       }
     } catch (e) {
-      showToast('Connection failed.');
+      showToast('الاتصال فشل.');
     }
   };
 
@@ -676,42 +684,42 @@ function InnerApp() {
         body: JSON.stringify(body)
       });
       if (res.ok) {
-        showToast('Suggestion moderation updated successfully!');
+        showToast('الاقتراح اتراجع!');
         fetchAdminSuggestions();
         fetchPublicSuggestions();
       } else {
         const data = await res.json();
-        showToast(data.error || 'Failed to update suggestion.');
+        showToast(data.error || 'معرفناش نحدّث الاقتراح.');
       }
     } catch (e) {
-      showToast('Connection failed.');
+      showToast('الاتصال فشل.');
     }
   };
 
   const handleCreateSuggestion = async (title: string, content: string) => {
     if (!token) {
-      showToast('You must be logged in to submit a suggestion. 🔐');
+      showToast('سجّل دخول عشان تقدّم اقتراح. 🔐');
       return;
     }
     try {
       const res = await communityService.createSuggestion(title, content, token);
       const data = await res.json();
       if (res.ok) {
-        showToast('Thank you! Suggestion submitted successfully. 💡');
+        showToast('شكرًا! الاقتراح وصل. 💡');
         fetchPublicSuggestions();
         triggerXpPopup(xpSettings.suggestion_create !== undefined ? xpSettings.suggestion_create : 50);
         fetchUserProfile();
       } else {
-        showToast(data.error || 'Failed to submit suggestion.');
+        showToast(data.error || 'معرفناش نبعت الاقتراح.');
       }
     } catch (e) {
-      showToast('Connection failed.');
+      showToast('الاتصال فشل.');
     }
   };
 
   const handleUpvoteSuggestion = async (suggestionId: number) => {
     if (!token) {
-      showToast('You must be logged in to upvote suggestions. 🔐');
+      showToast('سجّل دخول عشان تصوّت. 🔐');
       return;
     }
     try {
@@ -721,10 +729,10 @@ function InnerApp() {
         playChatSound('success');
         fetchPublicSuggestions();
       } else {
-        showToast(data.error || 'Failed to upvote.');
+        showToast(data.error || 'معرفناش نسجّل صوتك.');
       }
     } catch (e) {
-      showToast('Connection failed.');
+      showToast('الاتصال فشل.');
     }
   };
 
@@ -741,14 +749,14 @@ function InnerApp() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || 'Suggestion edited successfully. ⏳');
+        showToast(data.message || 'التعديل اتبعت للمراجعة. ⏳');
         fetchPublicSuggestions();
         fetchAdminSuggestions();
       } else {
-        showToast(data.error || 'Failed to edit suggestion.');
+        showToast(data.error || 'معرفناش نعدّل الاقتراح.');
       }
     } catch (e) {
-      showToast('Connection failed.');
+      showToast('الاتصال فشل.');
     }
   };
 
@@ -763,14 +771,14 @@ function InnerApp() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || 'Pending changes discarded.');
+        showToast(data.message || 'التعديلات المعلّقة اتلغت.');
         fetchPublicSuggestions();
         fetchAdminSuggestions();
       } else {
-        showToast(data.error || 'Failed to discard revision.');
+        showToast(data.error || 'معرفناش نلغي التعديل.');
       }
     } catch (e) {
-      showToast('Connection failed.');
+      showToast('الاتصال فشل.');
     }
   };
 
@@ -809,7 +817,6 @@ function InnerApp() {
               setHasMorePosts(false);
             }
             const updated = [...prev, ...newPosts];
-            console.log('[FetchPosts] Loaded older posts count:', newPosts.length, 'total count:', updated.length);
             return updated;
           });
         }
@@ -864,12 +871,12 @@ function InnerApp() {
           return merged;
         });
       } else if (showSpinner) {
-        showToast('Offline: showing cached feed.');
+        showToast('أوفلاين: بنعرض آخر بوستات اتحمّلت.');
       }
     } catch (e) {
       console.error(e);
       if (showSpinner) {
-        showToast('Offline: showing cached feed.');
+        showToast('أوفلاين: بنعرض آخر بوستات اتحمّلت.');
       }
     } finally {
       if (showSpinner) {
@@ -893,7 +900,6 @@ function InnerApp() {
           setNewsPosts(prev => {
             const pending = prev.filter(p => p.pending);
             const merged = mergePendingAndFresh(pending, cache.data);
-            console.log('[FetchNews] Loaded news from cache. Count:', merged.length);
             return merged;
           });
           const cacheAge = Date.now() - cache.cachedAt;
@@ -930,7 +936,7 @@ function InnerApp() {
     setRedeemError('');
     setRedeemSuccess('');
     if (!token) {
-      setRedeemError('Please login first.');
+      setRedeemError('سجّل دخول الأول.');
       return;
     }
     try {
@@ -948,7 +954,7 @@ function InnerApp() {
         playChatSound('error');
       }
     } catch (e) {
-      setRedeemError('Failed to activate code.');
+      setRedeemError('الكود ماشتغلش.');
     }
   };
 
@@ -1082,7 +1088,7 @@ function InnerApp() {
 
   const handleLikeEpisode = async (episodeId: number) => {
     if (!token) {
-      showToast('Please login to like episodes.');
+      showToast('سجّل دخول عشان تعمل لايك.');
       return;
     }
     playChatSound('react');
@@ -1127,7 +1133,7 @@ function InnerApp() {
     const ref = user ? user.username : '';
     const shareLink = `${window.location.origin}/episodes/${episodeId}${ref ? '?ref=' + ref : ''}`;
     navigator.clipboard.writeText(shareLink).catch(() => {});
-    showToast('Episode link copied to clipboard! 🔗');
+    showToast('اتنسخ لينك الحلقة! 🔗');
   };
 
   const handleQuizSubmit = async (quizId: number) => {
@@ -1213,18 +1219,15 @@ function InnerApp() {
     };
 
     // Insert the post immediately into the current feed and save it to the cache
-    console.log('[CreatePost] Optimistically inserting pending post:', pendingPost);
     if (isNews) {
       setNewsPosts(prev => {
         const updated = [pendingPost, ...prev];
-        console.log('[CreatePost] News posts after optimistic insert count:', updated.length);
         if (userId) feedCacheService.set(`news_${userId}`, updated);
         return updated;
       });
     } else {
       setCommunityPosts(prev => {
         const updated = [pendingPost, ...prev];
-        console.log('[CreatePost] Community posts after optimistic insert count:', updated.length);
         if (userId) feedCacheService.set(`feed_${userId}`, updated);
         return updated;
       });
@@ -1233,10 +1236,9 @@ function InnerApp() {
     try {
       const res = await communityService.createPost(title, content, imageUrl, isNews, token);
       const data = await res.json();
-      console.log('[CreatePost] API response status:', res.status, 'data:', data);
 
       if (res.ok) {
-        showToast(data.message || 'Post published! 🎉');
+        showToast(data.message || 'البوست اتنشر! 🎉');
         fetchUserProfile();
 
         if (isNews) {
@@ -1252,7 +1254,6 @@ function InnerApp() {
               }
               return p;
             });
-            console.log('[CreatePost] News posts after updating temp ID:', updated);
             if (userId) feedCacheService.set(`news_${userId}`, updated);
             return updated;
           });
@@ -1270,14 +1271,13 @@ function InnerApp() {
               }
               return p;
             });
-            console.log('[CreatePost] Community posts after updating temp ID:', updated);
             if (userId) feedCacheService.set(`feed_${userId}`, updated);
             return updated;
           });
           fetchCommunityPosts(undefined, true);
         }
       } else {
-        showToast(data.error || 'Failed to create post.');
+        showToast(data.error || 'معرفناش ننشر البوست.');
         if (isNews) {
           setNewsPosts(prev => {
             const updated = prev.filter(p => p.id !== tempId);
@@ -1293,7 +1293,7 @@ function InnerApp() {
         }
       }
     } catch (err) {
-      showToast('Connection failed.');
+      showToast('الاتصال فشل.');
       if (isNews) {
         setNewsPosts(prev => {
           const updated = prev.filter(p => p.id !== tempId);
@@ -1317,7 +1317,7 @@ function InnerApp() {
       const res = await communityService.editPost(postId, content, imageUrl, token);
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || 'Post updated successfully!');
+        showToast(data.message || 'البوست اتعدّل!');
         
         setCommunityPosts(prev => {
           const updated = prev.map(p => {
@@ -1354,17 +1354,17 @@ function InnerApp() {
         fetchCommunityPosts(undefined, true);
         fetchNewsPosts(true);
       } else {
-        showToast(data.error || 'Failed to update post.');
+        showToast(data.error || 'معرفناش نعدّل البوست.');
       }
     } catch (err) {
-      showToast('Connection error.');
+      showToast('مشكلة في الاتصال.');
     }
   };
 
   const handleDeletePost = async (postId: number) => {
     showConfirm(
-      'Delete Post',
-      'Are you sure you want to delete this post? This action cannot be undone.',
+      'حذف البوست',
+      'متأكد إنك عايز تمسح البوست؟ مش هتقدر ترجّعه.',
       async () => {
         if (!token || !user) return;
         const userId = getUserId(user, token);
@@ -1372,7 +1372,7 @@ function InnerApp() {
           const res = await communityService.deletePost(postId, token);
           const data = await res.json();
           if (res.ok) {
-            showToast(data.message || 'Post deleted successfully.');
+            showToast(data.message || 'البوست اتمسح.');
             
             setCommunityPosts(prev => {
               const updated = prev.filter(p => p.id !== postId);
@@ -1388,20 +1388,20 @@ function InnerApp() {
             fetchCommunityPosts(undefined, true);
             fetchNewsPosts(true);
           } else {
-            showToast(data.error || 'Failed to delete post.');
+            showToast(data.error || 'معرفناش نمسح البوست.');
           }
         } catch (err) {
-          showToast('Connection error.');
+          showToast('مشكلة في الاتصال.');
         }
       },
-      undefined, 'Delete', 'Cancel', 'danger'
+      undefined, 'احذف', 'إلغاء', 'danger'
     );
   };
 
   const handleCancelPostRevision = async (postId: number) => {
     showConfirm(
-      'Cancel Pending Revision',
-      'Are you sure you want to discard your pending edit draft? This will revert the post to the live approved version.',
+      'إلغاء التعديل المعلّق',
+      'متأكد إنك عايز تلغي التعديل؟ البوست هيرجع للنسخة المنشورة.',
       async () => {
         if (!token || !user) return;
         const userId = getUserId(user, token);
@@ -1412,7 +1412,7 @@ function InnerApp() {
           });
           const data = await res.json();
           if (res.ok) {
-            showToast(data.message || 'Pending revision discarded.');
+            showToast(data.message || 'التعديل المعلّق اتلغى.');
             
             setCommunityPosts(prev => {
               const updated = prev.map(p => {
@@ -1427,13 +1427,13 @@ function InnerApp() {
 
             fetchCommunityPosts(undefined, true);
           } else {
-            showToast(data.error || 'Failed to cancel revision.');
+            showToast(data.error || 'معرفناش نلغي التعديل.');
           }
         } catch (err) {
-          showToast('Connection error.');
+          showToast('مشكلة في الاتصال.');
         }
       },
-      undefined, 'Discard', 'Cancel', 'warning'
+      undefined, 'إلغاء التعديل', 'إلغاء', 'warning'
     );
   };
 
@@ -1516,8 +1516,8 @@ function InnerApp() {
 
   const handleDeleteSuggestion = (suggestionId: number) => {
     showConfirm(
-      'Delete Suggestion',
-      'Are you sure you want to delete this suggestion? This action cannot be undone.',
+      'حذف الاقتراح',
+      'متأكد إنك عايز تمسح الاقتراح؟ مش هتقدر ترجّعه.',
       async () => {
         if (!token) return;
         try {
@@ -1527,23 +1527,23 @@ function InnerApp() {
           });
           const data = await res.json();
           if (res.ok) {
-            showToast(data.message || 'Suggestion deleted.');
+            showToast(data.message || 'الاقتراح اتمسح.');
             fetchPublicSuggestions();
             fetchAdminSuggestions();
           } else {
-            showToast(data.error || 'Failed to delete suggestion.');
+            showToast(data.error || 'معرفناش نمسح الاقتراح.');
           }
         } catch (err) {
-          showToast('Connection error.');
+          showToast('مشكلة في الاتصال.');
         }
       },
-      undefined, 'Delete', 'Cancel', 'danger'
+      undefined, 'احذف', 'إلغاء', 'danger'
     );
   };
 
   const handleAdminDeleteUser = (userId: number, username: string) => {
     showConfirm(
-      'Delete User Permanently',
+      'حذف المستخدم نهائيًا',
       `⚠️ This will permanently delete user "${username}" and ALL their data (posts, messages, suggestions, XP, etc). This cannot be undone!`,
       async () => {
         if (!token) return;
@@ -1554,22 +1554,22 @@ function InnerApp() {
           });
           const data = await res.json();
           if (res.ok) {
-            showToast(data.message || 'User deleted successfully.');
+            showToast(data.message || 'المستخدم اتمسح.');
             fetchAdminUsers();
           } else {
-            showToast(data.error || 'Failed to delete user.');
+            showToast(data.error || 'معرفناش نمسح المستخدم.');
           }
         } catch (err) {
-          showToast('Connection error.');
+          showToast('مشكلة في الاتصال.');
         }
       },
-      undefined, 'Delete User', 'Cancel', 'danger'
+      undefined, 'حذف المستخدم', 'إلغاء', 'danger'
     );
   };
 
   const handleAdminDeleteCode = (codeId: number | string, codeName: string) => {
     showConfirm(
-      'Delete XP Code',
+      'حذف كود XP',
       `Are you sure you want to delete the XP Code "${codeName}"? This action cannot be undone.`,
       async () => {
         if (!token) return;
@@ -1577,18 +1577,18 @@ function InnerApp() {
           const res = await gameService.adminDeleteCode(codeId, token);
           const data = await res.json();
           if (res.ok) {
-            showToast(data.message || 'XP Code deleted successfully.');
+            showToast(data.message || 'الكود اتمسح.');
             setAdminCodes((prev: any[]) => prev.filter(c => String(c.id ?? c._id) !== String(codeId)));
           } else {
-            showToast(data.error || 'Failed to delete XP Code.');
+            showToast(data.error || 'معرفناش نمسح الكود.');
           }
         } catch (err) {
-          showToast('Connection error.');
+          showToast('مشكلة في الاتصال.');
         }
       },
       undefined,
-      'Delete',
-      'Cancel',
+      'احذف',
+      'إلغاء',
       'danger'
     );
   };
@@ -1615,14 +1615,14 @@ function InnerApp() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || 'Action applied!');
+        showToast(data.message || 'اتنفّذ!');
         setModerationUser(null);
         fetchAdminUsers();
       } else {
-        showToast(data.error || 'Failed to apply action.');
+        showToast(data.error || 'معرفناش ننفّذ.');
       }
     } catch (err) {
-      showToast('Connection failed.');
+      showToast('الاتصال فشل.');
     }
   };
 
@@ -1643,7 +1643,7 @@ function InnerApp() {
       const data = await res.json();
       setAdminMessage(data.message || data.error);
       if (res.ok) {
-        showToast('Episode created successfully! 🎬');
+        showToast('الحلقة اتضافت! 🎬');
         fetchEpisodes();
         setAdminEpisodeForm({
           episode_number: '',
@@ -1653,7 +1653,7 @@ function InnerApp() {
         });
       }
     } catch (err) {
-      setAdminMessage('Failed to connect to the server.');
+      setAdminMessage('مش قادرين نوصل للسيرفر.');
     } finally {
       setAdminSubmitting(false);
     }
@@ -1661,7 +1661,7 @@ function InnerApp() {
 
   const handleShopPurchase = async (item: any): Promise<boolean> => {
     if (!token) {
-      showToast('Please login to buy cosmetics.');
+      showToast('سجّل دخول عشان تشتري.');
       return false;
     }
     try {
@@ -1672,17 +1672,17 @@ function InnerApp() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || 'Purchased successfully! 🛍️');
+        showToast(data.message || 'اتشترى! 🛍️');
         playChatSound('win');
         fetchUserProfile();
         return true;
       } else {
-        showToast(data.error || 'Failed to purchase item.');
+        showToast(data.error || 'معرفناش نكمّل الشراء.');
         playChatSound('error');
         return false;
       }
     } catch (err) {
-      showToast('Connection error.');
+      showToast('مشكلة في الاتصال.');
       return false;
     }
   };
@@ -1701,15 +1701,15 @@ function InnerApp() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || 'Opened daily surprise box! You earned +50 XP ⚡');
+        showToast(data.message || 'فتحت صندوق اليوم! كسبت +50 XP ⚡');
         playChatSound('win');
         fetchUserProfile();
       } else {
-        showToast(data.error || 'Failed to claim daily surprise box.');
+        showToast(data.error || 'معرفناش نفتح الصندوق.');
         playChatSound('error');
       }
     } catch (err) {
-      showToast('Connection error.');
+      showToast('مشكلة في الاتصال.');
     }
   };
 
@@ -1730,13 +1730,13 @@ function InnerApp() {
         token
       );
       if (res.ok) {
-        showToast('Report submitted successfully! Thank you. ⚠️');
+        showToast('البلاغ وصل، شكرًا ليك. ⚠️');
       } else {
         const data = await res.json();
-        showToast(data.error || 'Failed to submit report.');
+        showToast(data.error || 'معرفناش نبعت البلاغ.');
       }
     } catch (err) {
-      showToast('Error submitting report.');
+      showToast('حصل خطأ في إرسال البلاغ.');
     } finally {
       setReportTarget(null);
       setReportReason('Spam');
@@ -1746,33 +1746,33 @@ function InnerApp() {
   const renderReportModal = () => {
     if (!reportTarget) return null;
     return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999] animate-fade-in">
         <div className="glass-card w-full max-w-md p-6 relative flex flex-col gap-5 border border-white/10 shadow-xl">
           <div className="flex items-center gap-3 text-red-450">
             <AlertTriangle className="w-6 h-6 shrink-0" />
-            <h3 className="text-lg font-black tracking-tight">Report Content</h3>
+            <h3 className="text-lg font-black tracking-tight">إبلاغ عن محتوى</h3>
           </div>
           
-          <div className="flex flex-col gap-4 text-left">
+          <div className="flex flex-col gap-4 text-start">
             {reportTarget.preview && (
               <div className="p-3.5 rounded-xl bg-zinc-950/40 border border-white/5 max-h-24 overflow-y-auto">
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Content Preview</p>
+                <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wider">المحتوى</p>
                 <p className="text-xs text-zinc-300 mt-1 leading-normal italic font-mono">"{reportTarget.preview}"</p>
               </div>
             )}
 
             <div>
-              <label className="text-[11px] font-black text-zinc-400 uppercase tracking-wider">Reason for Report</label>
+              <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">سبب الإبلاغ</label>
               <select 
                 value={reportReason} 
                 onChange={(e) => setReportReason(e.target.value)}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm text-white font-bold mt-1.5 focus:border-red-500/50 outline-none cursor-pointer"
               >
-                <option value="Spam">Spam</option>
-                <option value="Harassment or Abuse">Harassment or Abuse</option>
-                <option value="Inappropriate Content">Inappropriate Content</option>
-                <option value="Misinformation">Misinformation</option>
-                <option value="Other">Other</option>
+                <option value="Spam">سبام / إزعاج</option>
+                <option value="تنمّر أو إساءة">تنمّر أو إساءة</option>
+                <option value="محتوى غير لائق">محتوى غير لائق</option>
+                <option value="معلومات غلط">معلومات غلط</option>
+                <option value="Other">سبب تاني</option>
               </select>
             </div>
           </div>
@@ -1782,13 +1782,13 @@ function InnerApp() {
               onClick={handleConfirmReport}
               className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black text-xs py-3 rounded-xl cursor-pointer transition-all active:scale-97"
             >
-              Submit Report
+              ابعت البلاغ
             </button>
             <button 
               onClick={() => setReportTarget(null)}
               className="border border-zinc-800 hover:bg-zinc-900 text-zinc-400 font-bold text-xs py-3 px-5 rounded-xl cursor-pointer transition-all"
             >
-              Cancel
+              إلغاء
             </button>
           </div>
         </div>
@@ -1799,40 +1799,40 @@ function InnerApp() {
   const renderModerationModal = () => {
     if (!moderationUser) return null;
     return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999] animate-fade-in">
         <div className="glass-card w-full max-w-md p-6 relative flex flex-col gap-5 border border-red-500/25 shadow-red-glow">
           <div className="flex items-center gap-3 text-red-500">
             <ShieldAlert className="w-6 h-6 shrink-0" />
             <h3 className="text-lg font-black tracking-tight">Action Against@{moderationUser.username}</h3>
           </div>
           
-          <div className="flex flex-col gap-4 text-left">
+          <div className="flex flex-col gap-4 text-start">
             <div>
-              <label className="text-[11px] font-black text-zinc-400 uppercase tracking-wider">Action</label>
+              <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">الإجراء</label>
               <select 
                 value={moderationAction} 
                 onChange={(e) => setModerationAction(e.target.value)}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm text-white font-bold mt-1.5 focus:border-red-500/50 outline-none"
               >
-                <option value="mute">Mute</option>
-                <option value="unmute">Unmute</option>
-                <option value="ban">Ban</option>
-                <option value="unban">Unban</option>
+                <option value="mute">كتم</option>
+                <option value="unmute">إلغاء الكتم</option>
+                <option value="ban">حظر</option>
+                <option value="unban">إلغاء الحظر</option>
               </select>
             </div>
 
             {['mute', 'ban'].includes(moderationAction) && (
               <div>
-                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-wider">Duration</label>
+                <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">المدة</label>
                 <select 
                   value={moderationDuration} 
                   onChange={(e) => setModerationDuration(e.target.value)}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm text-white font-bold mt-1.5 focus:border-red-500/50 outline-none"
                 >
-                  <option value="1h">1 Hour</option>
-                  <option value="1d">1 Day</option>
-                  <option value="7d">7 Days</option>
-                  <option value="permanent">Permanent</option>
+                  <option value="1h">ساعة</option>
+                  <option value="1d">يوم</option>
+                  <option value="7d">7 أيام</option>
+                  <option value="permanent">دائم</option>
                 </select>
               </div>
             )}
@@ -1843,13 +1843,13 @@ function InnerApp() {
               onClick={handleAdminModerateUser}
               className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black text-xs py-3 rounded-xl cursor-pointer transition-all active:scale-97"
             >
-              Confirm Action
+              تأكيد
             </button>
             <button 
               onClick={() => setModerationUser(null)}
               className="border border-zinc-800 hover:bg-zinc-900 text-zinc-400 font-bold text-xs py-3 px-5 rounded-xl cursor-pointer transition-all"
             >
-              Cancel
+              إلغاء
             </button>
           </div>
         </div>
@@ -1864,7 +1864,7 @@ function InnerApp() {
       unseenCount={unseenCount}
       setCommunityTab={setCommunityTab}
     >
-      <AppRouter
+      <StableAppRouter
         loginReward={loginReward}
         dailyQuestion={dailyQuestion}
         handleAnswerQuestion={handleAnswerQuestion}
@@ -1981,6 +1981,12 @@ function InnerApp() {
       {renderReportModal()}
     </MainLayout>
   );
+}
+
+// Gives every handler App passes down a stable identity (see useStableProps).
+function StableAppRouter(props: React.ComponentProps<typeof AppRouter>) {
+  const stable = useStableProps(props);
+  return <AppRouter {...stable} />;
 }
 
 function App() {

@@ -1,5 +1,6 @@
+import { timeAgo } from '../../utils/format';
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   CheckCircle, XCircle, MessageSquare, Reply, AtSign,
   FileText, Tv, Trash2, Shield, UserPlus, VolumeX, Volume2, Lock, Unlock
@@ -21,7 +22,7 @@ const TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
   episode_approved: <CheckCircle className="w-3 h-3" />,
   episode_rejected: <XCircle className="w-3 h-3" />,
   new_comment: <MessageSquare className="w-3 h-3" />,
-  comment_reply: <Reply className="w-3 h-3" />,
+  comment_reply: <Reply className="rtl:-scale-x-100 w-3 h-3" />,
   mention_comment: <AtSign className="w-3 h-3" />,
   mention_chat: <AtSign className="w-3 h-3" />,
   new_post: <FileText className="w-3 h-3" />,
@@ -65,28 +66,17 @@ const TYPE_ACCENT: Record<NotificationType, string> = {
   moderation_report_pending: '#ef4444',
 };
 
-function timeAgo(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diffSec = Math.floor((now - then) / 1000);
-
-  if (diffSec < 60) return 'Just now';
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
-  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
-  if (diffSec < 604800) return `${Math.floor(diffSec / 86400)}d ago`;
-  return `${Math.floor(diffSec / 604800)}w ago`;
-}
 
 export const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onNavigate, onDelete }) => {
   const { _id, type, title, body, is_read, created_at, actor_id } = notification;
   const accentColor = TYPE_ACCENT[type] || 'var(--color-brand-orange)';
 
   const actorObj = actor_id && typeof actor_id === 'object' ? actor_id : null;
-  const senderName = actorObj?.username || 'System';
+  const senderName = actorObj?.username || 'النظام';
   const senderAvatar = actorObj?.avatar_url || null;
 
   return (
-    <motion.div
+    <m.div
       layout
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -105,7 +95,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
           size={36}
         />
         <div
-          className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border shadow-md"
+          className="absolute -bottom-1 -end-1 w-5 h-5 rounded-full flex items-center justify-center border shadow-md"
           style={{
             background: '#0a0a0a',
             borderColor: `${accentColor}40`,
@@ -118,7 +108,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0 space-y-0.5 text-left">
+      <div className="flex-1 min-w-0 space-y-0.5 text-start">
         <div className="flex items-start justify-between gap-2">
           <h4
             className={`text-[12.5px] leading-tight truncate ${
@@ -128,7 +118,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
             {title}
           </h4>
           <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
-            <span className="text-[10px] font-bold text-zinc-500">
+            <span className="text-2xs font-bold text-zinc-500">
               {timeAgo(created_at)}
             </span>
             {!is_read && (
@@ -143,7 +133,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
           </div>
         </div>
         <p
-          className={`text-[11px] leading-relaxed line-clamp-2 ${
+          className={`text-xs leading-relaxed line-clamp-2 ${
             is_read ? 'text-zinc-500' : 'text-zinc-400 font-medium'
           }`}
         >
@@ -157,11 +147,11 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
           e.stopPropagation();
           onDelete(_id);
         }}
-        className="absolute top-3.5 right-3.5 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-150 cursor-pointer z-20 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/10 hover:border-red-500/20 active:scale-95"
-        aria-label="Delete notification"
+        className="absolute top-3.5 end-3.5 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-150 cursor-pointer z-20 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/10 hover:border-red-500/20 active:scale-95"
+        aria-label="امسح الإشعار"
       >
         <Trash2 className="w-3.5 h-3.5" />
       </button>
-    </motion.div>
+    </m.div>
   );
 };

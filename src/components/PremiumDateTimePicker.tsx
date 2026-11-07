@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Calendar as CalendarIcon,
   Clock as ClockIcon,
@@ -20,7 +20,7 @@ interface PremiumDateTimePickerProps {
 export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
   value,
   onChange,
-  label = 'Publish At',
+  label = 'النشر في',
   required = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,7 +39,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedHour, setSelectedHour] = useState<number>(12); // 1-12
   const [selectedMinute, setSelectedMinute] = useState<number>(0); // 0-59
-  const [selectedPeriod, setSelectedPeriod] = useState<'AM' | 'PM'>('AM');
+  const [selectedPeriod, setSelectedPeriod] = useState<'ص' | 'م'>('ص');
   const [validationError, setValidationError] = useState<string | null>(null);
 
   // Sync internal state when picker opens or value changes
@@ -49,7 +49,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
       if (!isNaN(d.getTime())) {
         setSelectedDate(new Date(d.getFullYear(), d.getMonth(), d.getDate()));
         let h = d.getHours();
-        const period = h >= 12 ? 'PM' : 'AM';
+        const period = h >= 12 ? 'م' : 'ص';
         h = h % 12;
         if (h === 0) h = 12;
         setSelectedHour(h);
@@ -62,7 +62,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
     const now = new Date();
     setSelectedDate(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
     let nextHour = now.getHours() + 1;
-    const period = nextHour >= 24 ? 'AM' : (nextHour >= 12 ? 'PM' : 'AM');
+    const period = nextHour >= 24 ? 'ص' : (nextHour >= 12 ? 'م' : 'ص');
     nextHour = nextHour % 12;
     if (nextHour === 0) nextHour = 12;
     setSelectedHour(nextHour);
@@ -75,8 +75,8 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
     if (!selectedDate) return null;
     const d = new Date(selectedDate);
     let h = selectedHour;
-    if (selectedPeriod === 'PM' && h < 12) h += 12;
-    if (selectedPeriod === 'AM' && h === 12) h = 0;
+    if (selectedPeriod === 'م' && h < 12) h += 12;
+    if (selectedPeriod === 'ص' && h === 12) h = 0;
     d.setHours(h, selectedMinute, 0, 0);
     return d;
   };
@@ -84,7 +84,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
   useEffect(() => {
     const chosen = getSelectedDateTimeObj();
     if (chosen && chosen < new Date()) {
-      setValidationError('Cannot schedule a time in the past.');
+      setValidationError('مينفعش تختار وقت فات.');
     } else {
       setValidationError(null);
     }
@@ -144,14 +144,14 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
     const chosen = getSelectedDateTimeObj();
     if (!chosen) return;
     if (chosen < new Date()) {
-      setValidationError('Cannot schedule a time in the past.');
+      setValidationError('مينفعش تختار وقت فات.');
       return;
     }
 
     // Format local time component to "YYYY-MM-DDTHH:mm"
     let h24 = selectedHour;
-    if (selectedPeriod === 'PM' && h24 < 12) h24 += 12;
-    if (selectedPeriod === 'AM' && h24 === 12) h24 = 0;
+    if (selectedPeriod === 'م' && h24 < 12) h24 += 12;
+    if (selectedPeriod === 'ص' && h24 === 12) h24 = 0;
 
     const y = chosen.getFullYear();
     const m = String(chosen.getMonth() + 1).padStart(2, '0');
@@ -165,13 +165,13 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
 
   // Format visual label for closed button state
   const getFormattedLabel = () => {
-    if (!value) return 'Post Immediately (On Save)';
+    if (!value) return 'انشر فورًا (عند الحفظ)';
     const d = new Date(value);
-    if (isNaN(d.getTime())) return 'Post Immediately (On Save)';
+    if (isNaN(d.getTime())) return 'انشر فورًا (عند الحفظ)';
 
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     let h = d.getHours();
-    const period = h >= 12 ? 'PM' : 'AM';
+    const period = h >= 12 ? 'م' : 'ص';
     h = h % 12;
     if (h === 0) h = 12;
 
@@ -181,8 +181,8 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
   };
 
   return (
-    <div className="space-y-1.5 text-left">
-      {label && <label className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider block">{label}</label>}
+    <div className="space-y-1.5 text-start">
+      {label && <label className="text-2xs font-bold text-zinc-550 uppercase tracking-wider block">{label}</label>}
       
       <button
         type="button"
@@ -191,30 +191,30 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
           setTimeMode('hour');
           setIsOpen(true);
         }}
-        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs hover:border-white/20 transition-all text-left font-bold cursor-pointer"
+        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs hover:border-white/20 transition-all text-start font-bold cursor-pointer"
       >
         <span className="flex items-center gap-2">
           {value ? <ClockIcon className="w-4 h-4 text-emerald-400" /> : <CalendarIcon className="w-4 h-4 text-zinc-500" />}
           <span>{getFormattedLabel()}</span>
         </span>
-        <span className="text-[10px] text-emerald-400 uppercase tracking-wider font-extrabold">Configure</span>
+        <span className="text-2xs text-emerald-400 uppercase tracking-wider font-extrabold">ظبّط</span>
       </button>
 
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[99999]">
-            <motion.div
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999]">
+            <m.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="glass-card w-full max-w-sm p-5 border border-white/10 relative flex flex-col gap-4 text-white overflow-hidden text-left bg-zinc-950/90 rounded-3xl"
+              className="glass-card w-full max-w-sm p-5 border border-white/10 relative flex flex-col gap-4 text-white overflow-hidden text-start bg-zinc-950/90 rounded-3xl"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
                 <div className="flex items-center gap-2">
                   <ClockIcon className="w-4 h-4 text-emerald-400" />
-                  <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">Schedule Publication</h3>
+                  <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">جدولة النشر</h3>
                 </div>
                 <button
                   type="button"
@@ -227,17 +227,17 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
 
               {/* Digital Readout Summary */}
               <div className="bg-white/3 border border-white/5 rounded-2xl p-3 flex flex-col gap-1 items-center justify-center text-center">
-                <span className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider">Target Publication Time</span>
+                <span className="text-2xs font-bold text-zinc-550 uppercase tracking-wider">وقت النشر</span>
                 <span className="text-sm font-black text-emerald-400">
-                  {selectedDate ? selectedDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Date Selected'}
-                  {' at '}
+                  {selectedDate ? selectedDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'مفيش تاريخ'}
+                  {' الساعة '}
                   {String(selectedHour).padStart(2, '0')}:{String(selectedMinute).padStart(2, '0')} {selectedPeriod}
                 </span>
               </div>
 
               {/* Validation Alert */}
               {validationError && (
-                <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-[10px] font-bold leading-tight">
+                <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-2xs font-bold leading-tight">
                   <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>{validationError}</span>
                 </div>
@@ -247,7 +247,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
               <div className="relative min-h-[260px] overflow-hidden">
                 <AnimatePresence mode="wait">
                   {phase === 'date' ? (
-                    <motion.div
+                    <m.div
                       key="calendar-phase"
                       initial={{ x: -20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
@@ -266,14 +266,14 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                             onClick={handlePrevMonth}
                             className="w-7 h-7 rounded-lg border border-white/8 bg-white/3 flex items-center justify-center text-zinc-400 hover:text-white cursor-pointer hover:border-white/15"
                           >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="rtl:-scale-x-100 w-4 h-4" />
                           </button>
                           <button
                             type="button"
                             onClick={handleNextMonth}
                             className="w-7 h-7 rounded-lg border border-white/8 bg-white/3 flex items-center justify-center text-zinc-400 hover:text-white cursor-pointer hover:border-white/15"
                           >
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="rtl:-scale-x-100 w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -281,7 +281,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                       {/* Day Name Headers */}
                       <div className="grid grid-cols-7 gap-1 text-center">
                         {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-                          <span key={d} className="text-[10px] font-extrabold text-zinc-650 uppercase py-1">{d}</span>
+                          <span key={d} className="text-2xs font-extrabold text-zinc-650 uppercase py-1">{d}</span>
                         ))}
                       </div>
 
@@ -317,9 +317,9 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                           );
                         })}
                       </div>
-                    </motion.div>
+                    </m.div>
                   ) : (
-                    <motion.div
+                    <m.div
                       key="time-phase"
                       initial={{ x: 20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
@@ -332,9 +332,9 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                         <button
                           type="button"
                           onClick={() => setPhase('date')}
-                          className="flex items-center gap-1 text-[10px] font-black uppercase text-zinc-550 hover:text-white cursor-pointer transition-all"
+                          className="flex items-center gap-1 text-2xs font-black uppercase text-zinc-550 hover:text-white cursor-pointer transition-all"
                         >
-                          <ChevronLeft className="w-3 h-3" /> Back to Calendar
+                          <ChevronLeft className="rtl:-scale-x-100 w-3 h-3" /> رجوع للتقويم
                         </button>
                       </div>
 
@@ -351,7 +351,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                                 : 'text-zinc-550 hover:text-zinc-300'
                             }`}
                           >
-                            Hour
+                            الساعة
                           </button>
                           <button
                             type="button"
@@ -362,7 +362,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                                 : 'text-zinc-550 hover:text-zinc-300'
                             }`}
                           >
-                            Minute
+                            الدقيقة
                           </button>
                         </div>
 
@@ -377,12 +377,12 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                                 setSelectedMinute(prev => (prev === 0 ? 59 : prev - 1));
                               }
                             }}
-                            className="w-5 h-5 rounded flex items-center justify-center text-[11px] font-black bg-white/3 hover:bg-white/8 text-zinc-400 hover:text-white cursor-pointer"
+                            className="w-5 h-5 rounded flex items-center justify-center text-xs font-black bg-white/3 hover:bg-white/8 text-zinc-400 hover:text-white cursor-pointer"
                           >
                             -
                           </button>
-                          <span className="text-[10px] font-black text-zinc-500 w-12 text-center select-none uppercase">
-                            {timeMode === 'hour' ? 'Hour' : 'Min'}
+                          <span className="text-2xs font-black text-zinc-500 w-12 text-center select-none uppercase">
+                            {timeMode === 'hour' ? 'الساعة' : 'د'}
                           </span>
                           <button
                             type="button"
@@ -393,7 +393,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                                 setSelectedMinute(prev => (prev === 59 ? 0 : prev + 1));
                               }
                             }}
-                            className="w-5 h-5 rounded flex items-center justify-center text-[11px] font-black bg-white/3 hover:bg-white/8 text-zinc-400 hover:text-white cursor-pointer"
+                            className="w-5 h-5 rounded flex items-center justify-center text-xs font-black bg-white/3 hover:bg-white/8 text-zinc-400 hover:text-white cursor-pointer"
                           >
                             +
                           </button>
@@ -406,7 +406,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                         <div className="w-2 h-2 rounded-full bg-emerald-400 z-20" />
 
                         {/* Animated Clock Hand line */}
-                        <motion.div
+                        <m.div
                           className="absolute left-1/2 bottom-1/2 w-[2px] bg-emerald-500 origin-bottom z-10"
                           style={{ height: '38%' }}
                           animate={{ rotate: handAngle }}
@@ -416,7 +416,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-emerald-400 border border-black shadow-lg flex items-center justify-center">
                             <div className="w-1.5 h-1.5 rounded-full bg-black" />
                           </div>
-                        </motion.div>
+                        </m.div>
 
                         {/* Clock Dial numbers */}
                         {timeMode === 'hour' ? (
@@ -460,7 +460,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                                 key={`min-${min}`}
                                 type="button"
                                 onClick={() => handleClockClick(min)}
-                                className={`absolute w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all cursor-pointer z-25 ${
+                                className={`absolute w-7 h-7 rounded-full flex items-center justify-center text-2xs font-bold transition-all cursor-pointer z-25 ${
                                   selectedMinute === min
                                     ? 'text-emerald-400 scale-110 font-extrabold bg-emerald-500/10'
                                     : 'text-zinc-500 hover:text-white hover:bg-white/5'
@@ -480,7 +480,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
 
                       {/* AM / PM Selector */}
                       <div className="flex gap-2 w-full max-w-[120px] pt-1">
-                        {(['AM', 'PM'] as const).map((period) => (
+                        {(['ص', 'م'] as const).map((period) => (
                           <button
                             key={period}
                             type="button"
@@ -495,7 +495,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                           </button>
                         ))}
                       </div>
-                    </motion.div>
+                    </m.div>
                   )}
                 </AnimatePresence>
               </div>
@@ -510,7 +510,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                   }}
                   className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black text-xs py-2.5 rounded-xl cursor-pointer transition-all active:scale-[0.98] flex items-center justify-center gap-1.5"
                 >
-                  <Check className="w-3.5 h-3.5" /> Post Immediately (On Save)
+                  <Check className="w-3.5 h-3.5" /> انشر فورًا (عند الحفظ)
                 </button>
                 <div className="flex gap-2 w-full">
                   <button
@@ -518,7 +518,7 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                     onClick={() => setIsOpen(false)}
                     className="flex-1 border border-zinc-800 hover:bg-zinc-900/60 text-zinc-400 font-bold text-xs py-2.5 rounded-xl cursor-pointer transition-all active:scale-[0.98]"
                   >
-                    Cancel
+                    إلغاء
                   </button>
                   <button
                     type="button"
@@ -526,11 +526,11 @@ export const PremiumDateTimePicker: React.FC<PremiumDateTimePickerProps> = ({
                     onClick={handleConfirm}
                     className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-2.5 rounded-xl cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
                   >
-                    <Check className="w-3.5 h-3.5" /> Schedule
+                    <Check className="w-3.5 h-3.5" /> جدولة
                   </button>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>

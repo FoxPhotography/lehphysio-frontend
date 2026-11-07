@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   ShieldAlert,
   FileText,
@@ -178,7 +178,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       }
     } catch (err) {
       console.error('Error resolving report:', err);
-      setMessage('Failed to process request due to a server error.');
+      setMessage('حصل خطأ في السيرفر.');
     } finally {
       setLoading(false);
     }
@@ -236,12 +236,12 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
     e.preventDefault();
     const cleanQuestion = qQuestion.trim();
     if (!cleanQuestion) {
-      setMessage('Please enter the question text.');
+      setMessage('اكتب نص السؤال.');
       return;
     }
     const cleanOpts = qOptions.map(opt => opt.trim()).filter(Boolean);
     if (cleanOpts.length < 2) {
-      setMessage('Please provide at least two choices.');
+      setMessage('لازم اختيارين على الأقل.');
       return;
     }
     setQSubmitting(true);
@@ -282,15 +282,15 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       }
     } catch (err) {
       console.error('Error saving question:', err);
-      setMessage('Failed to connect to server.');
+      setMessage('مش قادرين نوصل للسيرفر.');
     } finally {
       setQSubmitting(false);
     }
   };
 
   // Delete QOTD
-  const handleQDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this question?')) return;
+  const handleQDelete = (id: number) => {
+    const run = async () => {
     try {
       const res = await fetch(`${apiBase}/api/questions/admin/${id}`, {
         method: 'DELETE',
@@ -298,15 +298,18 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       });
       const data = await res.json();
       if (res.ok) {
-        setMessage('Question deleted successfully.');
+        setMessage('السؤال اتمسح.');
         fetchQuestions();
       } else {
         setMessage(data.error || 'Failed to delete question.');
       }
     } catch (err) {
       console.error('Error deleting question:', err);
-      setMessage('Failed to connect to server.');
+      setMessage('مش قادرين نوصل للسيرفر.');
     }
+  };
+    if (showConfirm) showConfirm('حذف السؤال', 'متأكد إنك عايز تحذف السؤال ده؟', run, undefined, 'احذف', 'إلغاء', 'danger');
+    else run();
   };
 
   // Fetch statistics of QOTD
@@ -324,7 +327,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       }
     } catch (err) {
       console.error('Error fetching stats:', err);
-      setMessage('Failed to connect to server.');
+      setMessage('مش قادرين نوصل للسيرفر.');
     } finally {
       setStatsLoading(false);
     }
@@ -405,7 +408,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
         setMessage(data.error || 'Failed to approve post.');
       }
     } catch (err) {
-      setMessage('Failed to connect to server.');
+      setMessage('مش قادرين نوصل للسيرفر.');
     }
   };
 
@@ -440,7 +443,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
         setMessage(data.error || 'Failed to reject post.');
       }
     } catch (err) {
-      setMessage('Failed to connect to server.');
+      setMessage('مش قادرين نوصل للسيرفر.');
     }
   };
 
@@ -457,20 +460,20 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       });
       if (res.ok) {
         if (action === 'approve_revision') {
-          setMessage('Suggestion edit approved!');
+          setMessage('التعديل اتقبل!');
         } else if (action === 'reject_revision') {
-          setMessage('Suggestion edit rejected.');
+          setMessage('التعديل اترفض.');
         } else if (action === 'approve_delete') {
-          setMessage('Suggestion deletion approved.');
+          setMessage('الحذف اتقبل.');
         } else if (action === 'reject_delete') {
-          setMessage('Suggestion deletion rejected.');
+          setMessage('الحذف اترفض.');
         } else {
           setMessage(status === 'approved' ? 'Suggestion approved!' : 'Suggestion rejected.');
         }
         fetchSuggestions();
       }
     } catch (err) {
-      setMessage('Failed to moderate suggestion.');
+      setMessage('معرفناش نراجع الاقتراح.');
     }
   };
 
@@ -478,7 +481,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
   const handleUserModerateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser) {
-      setMessage('Please select a user to moderate.');
+      setMessage('اختار مستخدم الأول.');
       return;
     }
     setModSubmitting(true);
@@ -506,7 +509,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
         setMessage(data.error || 'Failed to moderate user.');
       }
     } catch (err) {
-      setMessage('Failed to connect to server.');
+      setMessage('مش قادرين نوصل للسيرفر.');
     } finally {
       setModSubmitting(false);
     }
@@ -523,10 +526,10 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
   const pendingRevisions = pendingPosts.filter(p => p.is_edit_draft);
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-3xl mx-auto px-4 pt-20 xl:pt-6 space-y-5 pb-16"
+      className="w-full max-w-3xl mx-auto px-4 xl:pt-6 space-y-5"
     >
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -534,9 +537,9 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
           <ShieldAlert className="w-5 h-5 text-emerald-400" />
         </div>
         <div>
-          <h1 className="text-xl font-black text-white leading-tight">Moderator Dashboard</h1>
-          <p className="text-[12px] text-zinc-500">
-            Daily content moderation &amp; user management
+          <h1 className="text-xl font-black text-white leading-tight">لوحة المشرفين</h1>
+          <p className="text-xs text-zinc-500">
+            مراجعة المحتوى وإدارة المستخدمين
           </p>
         </div>
       </div>
@@ -544,12 +547,12 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       {/* Tabs */}
       <div className="flex gap-1.5 flex-wrap">
         {[
-          { id: 'posts', label: 'Pending Posts', icon: <FileText className="w-3.5 h-3.5" />, count: pendingNewPosts.length },
-          { id: 'revisions', label: 'Post Revisions', icon: <FileEdit className="w-3.5 h-3.5" />, count: pendingRevisions.length },
-          { id: 'suggestions', label: 'Suggestions', icon: <Lightbulb className="w-3.5 h-3.5" />, count: suggestions.filter(s => s.status === 'pending').length },
-          { id: 'qotd', label: 'Daily Question', icon: <HelpCircle className="w-3.5 h-3.5" /> },
-          { id: 'users', label: 'User Actions', icon: <UserCheck className="w-3.5 h-3.5" /> },
-          { id: 'reports', label: 'Reports Queue', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+          { id: 'posts', label: 'بوستات مستنية', icon: <FileText className="w-3.5 h-3.5" />, count: pendingNewPosts.length },
+          { id: 'revisions', label: 'تعديلات البوستات', icon: <FileEdit className="w-3.5 h-3.5" />, count: pendingRevisions.length },
+          { id: 'suggestions', label: 'الاقتراحات', icon: <Lightbulb className="w-3.5 h-3.5" />, count: suggestions.filter(s => s.status === 'pending').length },
+          { id: 'qotd', label: 'سؤال اليوم', icon: <HelpCircle className="w-3.5 h-3.5" /> },
+          { id: 'users', label: 'إجراءات المستخدمين', icon: <UserCheck className="w-3.5 h-3.5" /> },
+          { id: 'reports', label: 'البلاغات', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -557,7 +560,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
               setActiveTab(tab.id as any);
               setMessage('');
             }}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === tab.id
                 ? 'bg-emerald-500 text-black font-extrabold shadow-md shadow-emerald-500/20'
                 : 'bg-white/5 border border-white/8 text-zinc-400 hover:text-white hover:border-white/15'
@@ -566,7 +569,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
             {tab.icon}
             {tab.label}
             {tab.count !== undefined && tab.count > 0 && (
-              <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+              <span className={`px-1.5 py-0.5 rounded-md text-2xs font-bold ${
                 activeTab === tab.id ? 'bg-black/25 text-black' : 'bg-emerald-500/15 text-emerald-400'
               }`}>
                 {tab.count}
@@ -579,7 +582,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       {/* Message Banner */}
       <AnimatePresence>
         {message && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -587,7 +590,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
           >
             <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
             <span>{message}</span>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
@@ -595,7 +598,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       {loading && pendingPosts.length === 0 && suggestions.length === 0 && usersList.length === 0 && questionsList.length === 0 && !selectedStats && (
         <div className="rounded-2xl border border-white/8 bg-zinc-900/60 p-12 text-center">
           <div className="w-8 h-8 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-zinc-500 text-xs">Loading queue items...</p>
+          <p className="text-zinc-500 text-xs">بنحمّل…</p>
         </div>
       )}
 
@@ -604,28 +607,28 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
         <div className="space-y-4">
           {pendingNewPosts.length === 0 ? (
             <div className="rounded-2xl border border-white/8 bg-zinc-900/40 p-8 text-center text-zinc-500 text-[13px]">
-              No new posts pending approval.
+              مفيش بوستات مستنية موافقة.
             </div>
           ) : (
             pendingNewPosts.map((post) => (
-              <div key={post.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-5 space-y-4">
+              <div key={post.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center">
                     {post.avatar_url ? (
                       <img src={post.avatar_url} alt={post.username} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-[14px] font-bold text-zinc-400">{post.username[0].toUpperCase()}</span>
+                      <span className="text-sm font-bold text-zinc-400">{post.username[0].toUpperCase()}</span>
                     )}
                   </div>
                   <div>
-                    <h4 className="text-[13px] font-black text-white">@{post.username}</h4>
-                    <p className="text-[10px] text-zinc-500">{post.batch} · {new Date(post.created_at).toLocaleString()}</p>
+                    <h4 className="text-[13px] font-black text-white"><bdi dir="ltr">@{post.username}</bdi></h4>
+                    <p className="text-2xs text-zinc-500">{post.batch} · {new Date(post.created_at).toLocaleString()}</p>
                   </div>
                 </div>
 
-                <div className="space-y-2 text-left">
-                  {post.title && <h3 className="text-sm font-bold text-white leading-tight">{post.title}</h3>}
-                  <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">{post.content}</p>
+                <div className="space-y-2 text-start">
+                  {post.title && <h3 dir="auto" className="text-sm font-bold text-white leading-tight">{post.title}</h3>}
+                  <p dir="auto" className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">{post.content}</p>
                   {post.image_url && (
                     <div className="rounded-xl overflow-hidden max-h-60 border border-white/10">
                       <img src={post.image_url} alt="Post Attachment" className="w-full h-full object-cover" />
@@ -638,13 +641,13 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                     onClick={() => handleApprovePost(post.id, false)}
                     className="flex-1 bg-emerald-500 text-black font-black text-xs py-2.5 rounded-xl cursor-pointer hover:bg-emerald-400 transition-all flex items-center justify-center gap-1.5"
                   >
-                    <CheckCircle className="w-4 h-4" /> Approve Post
+                    <CheckCircle className="w-4 h-4" /> اقبل البوست
                   </button>
                   <button
                     onClick={() => handleOpenRejectionModal(post.id, false)}
                     className="border border-red-500/25 bg-red-500/5 hover:bg-red-500/10 text-red-400 font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer transition-all flex items-center justify-center gap-1.5"
                   >
-                    <XCircle className="w-4 h-4" /> Reject
+                    <XCircle className="w-4 h-4" /> ارفض
                   </button>
                 </div>
               </div>
@@ -658,32 +661,32 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
         <div className="space-y-4">
           {pendingRevisions.length === 0 ? (
             <div className="rounded-2xl border border-white/8 bg-zinc-900/40 p-8 text-center text-zinc-500 text-[13px]">
-              No post revisions pending approval.
+              مفيش تعديلات مستنية موافقة.
             </div>
           ) : (
             pendingRevisions.map((post) => (
-              <div key={post.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-5 space-y-4">
+              <div key={post.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center">
                     {post.avatar_url ? (
                       <img src={post.avatar_url} alt={post.username} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-[14px] font-bold text-zinc-400">{post.username[0].toUpperCase()}</span>
+                      <span className="text-sm font-bold text-zinc-400">{post.username[0].toUpperCase()}</span>
                     )}
                   </div>
                   <div>
-                    <h4 className="text-[13px] font-black text-white">@{post.username}</h4>
-                    <p className="text-[10px] text-zinc-500">Revision Request · {new Date(post.created_at).toLocaleString()}</p>
+                    <h4 className="text-[13px] font-black text-white"><bdi dir="ltr">@{post.username}</bdi></h4>
+                    <p className="text-2xs text-zinc-500">Revision Request · {new Date(post.created_at).toLocaleString()}</p>
                   </div>
                 </div>
 
                 {/* Compare Layout */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Original Live version */}
-                  <div className="rounded-xl border border-white/5 bg-zinc-950/40 p-4 space-y-2 relative text-left">
-                    <span className="absolute top-2.5 right-2.5 bg-zinc-800 text-zinc-400 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">Live Approved</span>
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Original Post</p>
-                    {post.original_title && <h4 className="text-[12px] font-bold text-zinc-400 leading-tight">{post.original_title}</h4>}
+                  <div className="rounded-xl border border-white/5 bg-zinc-950/40 p-4 space-y-2 relative text-start">
+                    <span className="absolute top-2.5 end-2.5 bg-zinc-800 text-zinc-400 text-2xs font-bold px-1.5 py-0.5 rounded uppercase">المنشور حاليًا</span>
+                    <p className="text-2xs text-zinc-500 font-bold uppercase tracking-wide">البوست الأصلي</p>
+                    {post.original_title && <h4 className="text-xs font-bold text-zinc-400 leading-tight">{post.original_title}</h4>}
                     <p className="text-xs text-zinc-400 leading-relaxed whitespace-pre-line truncate-5">{post.original_content}</p>
                     {post.original_image_url && (
                       <div className="rounded-lg overflow-hidden h-24 border border-white/5 mt-1.5 opacity-60">
@@ -693,11 +696,11 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   </div>
 
                   {/* Pending Revision */}
-                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/3 p-4 space-y-2 relative text-left">
-                    <span className="absolute top-2.5 right-2.5 bg-emerald-500/20 text-emerald-400 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">New Edit</span>
-                    <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wide">Revision Draft</p>
-                    {post.title && <h4 className="text-[12px] font-black text-white leading-tight">{post.title}</h4>}
-                    <p className="text-xs text-zinc-200 leading-relaxed whitespace-pre-line">{post.content}</p>
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/3 p-4 space-y-2 relative text-start">
+                    <span className="absolute top-2.5 end-2.5 bg-emerald-500/20 text-emerald-400 text-2xs font-bold px-1.5 py-0.5 rounded uppercase">التعديل الجديد</span>
+                    <p className="text-2xs text-emerald-400 font-bold uppercase tracking-wide">مسودة التعديل</p>
+                    {post.title && <h4 dir="auto" className="text-xs font-black text-white leading-tight">{post.title}</h4>}
+                    <p dir="auto" className="text-xs text-zinc-200 leading-relaxed whitespace-pre-line">{post.content}</p>
                     {post.image_url && (
                       <div className="rounded-lg overflow-hidden h-28 border border-white/10 mt-1.5">
                         <img src={post.image_url} alt="Revision Attachment" className="w-full h-full object-cover" />
@@ -711,13 +714,13 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                     onClick={() => handleApprovePost(post.id, true)}
                     className="flex-1 bg-emerald-500 text-black font-black text-xs py-2.5 rounded-xl cursor-pointer hover:bg-emerald-400 transition-all flex items-center justify-center gap-1.5"
                   >
-                    <CheckCircle className="w-4 h-4" /> Approve Revision
+                    <CheckCircle className="w-4 h-4" /> اقبل التعديل
                   </button>
                   <button
                     onClick={() => handleOpenRejectionModal(post.id, true)}
                     className="border border-red-500/25 bg-red-500/5 hover:bg-red-500/10 text-red-400 font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer transition-all flex items-center justify-center gap-1.5"
                   >
-                    <XCircle className="w-4 h-4" /> Reject Revision
+                    <XCircle className="w-4 h-4" /> ارفض التعديل
                   </button>
                 </div>
               </div>
@@ -731,7 +734,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
         <div className="space-y-4">
           {suggestions.length === 0 ? (
             <div className="rounded-2xl border border-white/8 bg-zinc-900/40 p-8 text-center text-zinc-500 text-[13px]">
-              No suggestions in database.
+              مفيش اقتراحات.
             </div>
           ) : (
             <div className="space-y-3">
@@ -759,7 +762,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 return (
                   <div
                     key={s.id}
-                    className={`rounded-2xl border p-4.5 space-y-4 text-left transition-all ${
+                    className={`rounded-2xl border p-4.5 space-y-4 text-start transition-all ${
                       s.delete_pending ? 'border-red-500/25 bg-red-500/5' :
                       s.edit_draft ? 'border-amber-500/25 bg-amber-500/5' :
                       s.status === 'approved' ? 'border-emerald-500/20 bg-emerald-500/3' :
@@ -769,80 +772,80 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h4 className="text-[13px] font-bold text-white">
+                        <h4 dir="auto" className="text-[13px] font-bold text-white">
                           {s.title}
                         </h4>
-                        <p className="text-[10px] text-zinc-500">
-                          Submitted by @{s.username} ({s.batch || 'User'}) · {new Date(s.created_at).toLocaleDateString()}
+                        <p className="text-2xs text-zinc-500">
+                          Submitted by <bdi dir="ltr">@{s.username}</bdi> ({s.batch || 'User'}) · {new Date(s.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wide border shrink-0 ${statusBg}`}>
+                      <span className={`px-2 py-0.5 rounded-lg text-2xs font-black uppercase tracking-wide border shrink-0 ${statusBg}`}>
                         {statusLabel}
                       </span>
                     </div>
                     
                     {s.edit_draft ? (
                       <div className="p-3.5 border border-amber-500/20 bg-amber-500/5 rounded-xl space-y-3">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-bold">
-                          <FileEdit className="w-3.5 h-3.5" /> Revision Edit Request Pending
+                        <span className="text-2xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-bold">
+                          <FileEdit className="w-3.5 h-3.5" /> طلب تعديل مستني
                         </span>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <span className="text-[9px] font-bold text-zinc-500 uppercase">Original</span>
-                            <h5 className="text-xs font-bold text-zinc-400">{s.title}</h5>
-                            <p className="text-[11px] text-zinc-500">{s.content}</p>
+                            <span className="text-2xs font-bold text-zinc-500 uppercase">الأصلي</span>
+                            <h5 dir="auto" className="text-xs font-bold text-zinc-400">{s.title}</h5>
+                            <p dir="auto" className="text-xs text-zinc-500">{s.content}</p>
                           </div>
                           <div className="space-y-1">
-                            <span className="text-[9px] font-bold text-amber-500 uppercase">New Draft</span>
+                            <span className="text-2xs font-bold text-amber-500 uppercase">المسودة الجديدة</span>
                             <h5 className="text-xs font-bold text-white">{s.edit_draft.title}</h5>
-                            <p className="text-[11px] text-zinc-300">{s.edit_draft.content}</p>
+                            <p className="text-xs text-zinc-300">{s.edit_draft.content}</p>
                           </div>
                         </div>
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleSuggestionStatus(s.id, 'approved', 'approve_revision')}
-                            className="bg-emerald-500/20 border border-emerald-500/30 hover:bg-emerald-500/30 text-emerald-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            className="bg-emerald-500/20 border border-emerald-500/30 hover:bg-emerald-500/30 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
                           >
-                            <Check className="w-3 h-3" /> Approve Revision
+                            <Check className="w-3 h-3" /> اقبل التعديل
                           </button>
                           <button
                             onClick={() => {
                               const reason = prompt("Enter rejection reason (optional):");
                               handleSuggestionStatus(s.id, 'rejected', 'reject_revision', reason || undefined);
                             }}
-                            className="bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            className="bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-400 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
                           >
-                            <XCircle className="w-3 h-3" /> Reject Revision
+                            <XCircle className="w-3 h-3" /> ارفض التعديل
                           </button>
                         </div>
                       </div>
                     ) : s.delete_pending ? (
                       <div className="p-3 border border-red-500/20 bg-red-500/5 rounded-xl space-y-2">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-red-400 flex items-center gap-1.5 font-bold">
-                          <AlertTriangle className="w-3.5 h-3.5" /> Deletion Request Pending
+                        <span className="text-2xs font-black uppercase tracking-wider text-red-400 flex items-center gap-1.5 font-bold">
+                          <AlertTriangle className="w-3.5 h-3.5" /> طلب حذف مستني
                         </span>
-                        <p className="text-xs text-zinc-300 leading-relaxed">{s.content}</p>
+                        <p dir="auto" className="text-xs text-zinc-300 leading-relaxed">{s.content}</p>
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleSuggestionStatus(s.id, 'rejected', 'approve_delete')}
-                            className="bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            className="bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-400 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
                           >
-                            <Check className="w-3 h-3" /> Approve Deletion
+                            <Check className="w-3 h-3" /> اقبل الحذف
                           </button>
                           <button
                             onClick={() => handleSuggestionStatus(s.id, 'approved', 'reject_delete')}
-                            className="border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            className="border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
                           >
-                            <XCircle className="w-3 h-3" /> Keep Suggestion
+                            <XCircle className="w-3 h-3" /> سيب الاقتراح
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <p className="text-xs text-zinc-300 leading-relaxed">{s.content}</p>
+                      <p dir="auto" className="text-xs text-zinc-300 leading-relaxed">{s.content}</p>
                     )}
 
                     <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                      <span className="flex items-center gap-1 text-[11px] text-orange-400 font-bold">
+                      <span className="flex items-center gap-1 text-xs text-orange-400 font-bold">
                         <ThumbsUp className="w-3.5 h-3.5" /> {s.upvotes || 0} Upvotes
                       </span>
 
@@ -850,18 +853,18 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleSuggestionStatus(s.id, 'approved')}
-                            className="bg-emerald-500/15 border border-emerald-500/25 hover:bg-emerald-500/25 text-emerald-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            className="bg-emerald-500/15 border border-emerald-500/25 hover:bg-emerald-500/25 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
                           >
-                            <Check className="w-3 h-3" /> Approve
+                            <Check className="w-3 h-3" /> اقبل
                           </button>
                           <button
                             onClick={() => {
                               const reason = prompt("Enter rejection reason (optional):");
                               handleSuggestionStatus(s.id, 'rejected', undefined, reason || undefined);
                             }}
-                            className="bg-red-500/15 border border-red-500/25 hover:bg-red-500/25 text-red-400 text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            className="bg-red-500/15 border border-red-500/25 hover:bg-red-500/25 text-red-400 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
                           >
-                            <XCircle className="w-3 h-3" /> Reject
+                            <XCircle className="w-3 h-3" /> ارفض
                           </button>
                         </div>
                       )}
@@ -879,21 +882,21 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
           {/* User selector column */}
           <div className="md:col-span-2 rounded-2xl border border-white/8 bg-zinc-900/60 p-4 space-y-4">
-            <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">Select Member</h3>
+            <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">اختار عضو</h3>
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search username or email..."
+                placeholder="ابحث بالاسم أو الإيميل…"
                 value={userSearchQuery}
                 onChange={(e) => setUserSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 text-xs focus:outline-none focus:border-emerald-500/50"
+                className="w-full ps-8 pe-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 text-xs focus:outline-none focus:border-emerald-500/50"
               />
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             </div>
 
-            <div className="max-h-80 overflow-y-auto space-y-1 pr-1">
+            <div className="max-h-80 overflow-y-auto space-y-1 pe-1">
               {filteredUsers.length === 0 ? (
-                <p className="text-center text-zinc-600 text-xs py-4">No users found.</p>
+                <p className="text-center text-zinc-600 text-xs py-4">مفيش مستخدمين.</p>
               ) : (
                 filteredUsers.map((u) => {
                   const ROLE_WEIGHTS = { user: 0, moderator: 1, admin: 2, owner: 3 };
@@ -906,7 +909,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                       key={u.id}
                       disabled={!isModeratable}
                       onClick={() => setSelectedUser(u)}
-                      className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all ${
+                      className={`w-full flex items-center justify-between p-2 rounded-xl text-start transition-all ${
                         selectedUser?.id === u.id
                           ? 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 font-bold'
                           : isModeratable 
@@ -914,10 +917,10 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                             : 'opacity-40 cursor-not-allowed border border-transparent'
                       }`}
                     >
-                      <div className="min-w-0 flex-1 pr-2">
-                        <p className="text-xs font-bold truncate">@{u.username}</p>
+                      <div className="min-w-0 flex-1 pe-2">
+                        <p className="text-xs font-bold truncate"><bdi dir="ltr">@{u.username}</bdi></p>
                         <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase border ${
+                          <span className={`px-1.5 py-0.5 rounded text-2xs font-black uppercase border ${
                             u.role === 'owner' ? 'bg-amber-500/15 text-amber-400 border-amber-500/25' :
                             u.role === 'admin' ? 'bg-orange-500/15 text-orange-400 border-orange-500/25' :
                             u.role === 'moderator' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25' :
@@ -926,16 +929,16 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                             {u.role === 'user' ? 'Student' : u.role === 'moderator' ? 'Moderator' : u.role === 'admin' ? 'Admin' : 'Owner'}
                           </span>
                           {u.role === 'owner' && (
-                            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[8px] font-black uppercase tracking-wider animate-pulse">
-                              Protected
+                            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-2xs font-black uppercase tracking-wider animate-pulse">
+                              محمي
                             </span>
                           )}
-                          <span className="text-[10px] text-zinc-500">{u.batch}</span>
+                          <span className="text-2xs text-zinc-500">{u.batch}</span>
                         </div>
                       </div>
                       <div className="flex gap-1.5 items-center flex-shrink-0">
-                        {u.is_muted ? <span title="Muted"><VolumeX className="w-3.5 h-3.5 text-orange-400" /></span> : null}
-                        {u.is_banned ? <span title="Banned"><UserX className="w-3.5 h-3.5 text-red-500" /></span> : null}
+                        {u.is_muted ? <span title="مكتوم"><VolumeX className="w-3.5 h-3.5 text-orange-400" /></span> : null}
+                        {u.is_banned ? <span title="محظور"><UserX className="w-3.5 h-3.5 text-red-500" /></span> : null}
                       </div>
                     </button>
                   );
@@ -946,21 +949,21 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
 
           {/* Action form column */}
           <div className="md:col-span-3 rounded-2xl border border-white/8 bg-zinc-900/60 p-5">
-            <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider mb-4">Moderation Action</h3>
+            <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider mb-4">الإجراء</h3>
             {selectedUser ? (
-              <form onSubmit={handleUserModerateSubmit} className="space-y-4 text-left">
+              <form onSubmit={handleUserModerateSubmit} className="space-y-4 text-start">
                 <div className="p-3 bg-zinc-950/40 rounded-xl border border-white/5 flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-white">
                     {selectedUser.username[0].toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-xs font-black text-white">Targeting: @{selectedUser.username}</p>
-                    <p className="text-[10px] text-zinc-500">Currently: {selectedUser.is_banned ? 'Banned' : selectedUser.is_muted ? 'Muted' : 'Normal'}</p>
+                    <p className="text-xs font-black text-white">Targeting: <bdi dir="ltr">@{selectedUser.username}</bdi></p>
+                    <p className="text-2xs text-zinc-500">Currently: {selectedUser.is_banned ? 'Banned' : selectedUser.is_muted ? 'Muted' : 'Normal'}</p>
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Action Type</label>
+                  <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">نوع الإجراء</label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { id: 'mute', label: 'Mute User', icon: <VolumeX className="w-3.5 h-3.5" /> },
@@ -987,7 +990,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
 
                 {['mute', 'ban'].includes(modAction) && (
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Duration</label>
+                    <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">المدة</label>
                     <div className="relative">
                       <select
                         value={modDuration}
@@ -997,17 +1000,17 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                         <option value="1h">1 Hour</option>
                         <option value="1d">1 Day</option>
                         <option value="7d">7 Days</option>
-                        <option value="permanent">Permanent</option>
+                        <option value="permanent">دائم</option>
                       </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
+                      <ChevronDown className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
                     </div>
                   </div>
                 )}
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Rejection/Moderation Reason</label>
+                  <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">السبب</label>
                   <textarea
-                    placeholder="Provide details or reasons for this action (optional)..."
+                    placeholder="اكتب السبب (اختياري)…"
                     value={modReason}
                     onChange={(e) => setModReason(e.target.value)}
                     rows={3}
@@ -1025,7 +1028,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
               </form>
             ) : (
               <div className="h-48 flex items-center justify-center border-2 border-dashed border-white/5 rounded-xl text-zinc-600 text-xs font-bold">
-                Select a member on the left to moderate
+                اختار عضو من القايمة
               </div>
             )}
           </div>
@@ -1037,35 +1040,35 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
         <div className="space-y-4">
           {reports.length === 0 ? (
             <div className="rounded-2xl border border-white/8 bg-zinc-900/40 p-8 text-center text-zinc-500 text-[13px]">
-              No content reports pending moderation.
+              مفيش بلاغات مستنية.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {reports.map((report) => (
-                <div key={report.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 backdrop-blur-xl p-5 space-y-4 text-left">
+                <div key={report.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4 text-start">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center border border-white/10">
                         {report.reporter?.avatar_url ? (
                           <img src={report.reporter.avatar_url} alt={report.reporter.username} className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-[12px] font-bold text-zinc-400">
+                          <span className="text-xs font-bold text-zinc-400">
                             {report.reporter?.username ? report.reporter.username[0].toUpperCase() : '?'}
                           </span>
                         )}
                       </div>
                       <div>
-                        <h4 className="text-[12px] font-black text-white">
-                          Reporter: <span className="text-zinc-400">@{report.reporter?.username || 'Unknown'}</span>
+                        <h4 className="text-xs font-black text-white">
+                          المُبلّغ: <span className="text-zinc-400">@{report.reporter?.username || 'Unknown'}</span>
                         </h4>
-                        <p className="text-[9px] text-zinc-500">
+                        <p className="text-2xs text-zinc-500">
                           {new Date(report.created_at).toLocaleString()}
                         </p>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                      <span className={`px-2 py-0.5 rounded text-2xs font-extrabold uppercase ${
                         report.target_type === 'post' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
                         report.target_type === 'comment' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
                         'bg-pink-500/10 text-pink-400 border border-pink-500/20'
@@ -1073,7 +1076,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                         Reported {report.target_type}
                       </span>
                       
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                      <span className={`px-2 py-0.5 rounded text-2xs font-extrabold uppercase ${
                         report.status === 'pending' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/25 animate-pulse' :
                         report.status === 'resolved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25' :
                         'bg-zinc-800 text-zinc-400 border border-white/10'
@@ -1085,14 +1088,14 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
 
                   <div className="space-y-3">
                     <div className="p-3.5 rounded-xl bg-red-500/5 border border-red-500/10">
-                      <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider">Reason for Report</p>
+                      <p className="text-2xs text-red-400 font-bold uppercase tracking-wider">سبب البلاغ</p>
                       <p className="text-xs text-zinc-200 mt-1 font-medium italic">"{report.reason}"</p>
                     </div>
 
                     <div 
                       onClick={() => handleReportClick(report)}
                       className="p-3.5 rounded-xl bg-zinc-950/40 border border-white/5 hover:border-brand-orange/40 hover:bg-zinc-950/60 cursor-pointer transition-all group"
-                      title="Click to view content"
+                      title="اضغط لعرض المحتوى"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -1100,21 +1103,21 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                             {report.target_user?.avatar_url ? (
                               <img src={report.target_user.avatar_url} alt={report.target_user.username} className="w-full h-full object-cover" />
                             ) : (
-                              <span className="text-[9px] font-bold text-zinc-400">
+                              <span className="text-2xs font-bold text-zinc-400">
                                 {report.target_user?.username ? report.target_user.username[0].toUpperCase() : '?'}
                               </span>
                             )}
                           </div>
-                          <p className="text-[10px] text-zinc-400">
-                            Author: <span className="text-white font-bold">@{report.target_user?.username || 'Unknown'}</span>
+                          <p className="text-2xs text-zinc-400">
+                            الكاتب: <span className="text-white font-bold">@{report.target_user?.username || 'Unknown'}</span>
                           </p>
                         </div>
-                        <span className="text-[9.5px] font-bold text-brand-orange opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                          <Eye className="w-3.5 h-3.5" /> View Content
+                        <span className="text-2xs font-bold text-brand-orange opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                          <Eye className="w-3.5 h-3.5" /> اعرض المحتوى
                         </span>
                       </div>
                       <p className="text-xs text-zinc-300 leading-relaxed bg-zinc-900/50 p-2.5 rounded-lg border border-white/5 whitespace-pre-line font-mono">
-                        {report.content_preview || <span className="text-zinc-600 italic">No content preview available.</span>}
+                        {report.content_preview || <span className="text-zinc-600 italic">مفيش معاينة.</span>}
                       </p>
                     </div>
                   </div>
@@ -1125,19 +1128,19 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                         onClick={() => handleReportClick(report)}
                         className="flex-1 bg-brand-orange/10 hover:bg-brand-orange/20 text-brand-orange font-bold text-xs py-2.5 rounded-xl cursor-pointer border border-brand-orange/30 transition-all flex items-center justify-center gap-1.5"
                       >
-                        <Eye className="w-4 h-4" /> Go to Content
+                        <Eye className="w-4 h-4" /> روح للمحتوى
                       </button>
                       <button
                         onClick={() => handleResolveReport(report.id, 'dismiss')}
                         className="flex-1 bg-zinc-850 hover:bg-zinc-800 text-white font-bold text-xs py-2.5 rounded-xl cursor-pointer border border-white/10 transition-all flex items-center justify-center gap-1.5"
                       >
-                        <Check className="w-4 h-4 text-emerald-400" /> Keep Content (Dismiss)
+                        <Check className="w-4 h-4 text-emerald-400" /> سيب المحتوى (تجاهل)
                       </button>
                       <button
                         onClick={() => handleResolveReport(report.id, 'resolve_delete')}
                         className="flex-1 bg-red-500 text-black font-black text-xs py-2.5 rounded-xl cursor-pointer hover:bg-red-400 transition-all flex items-center justify-center gap-1.5"
                       >
-                        <Trash2 className="w-4 h-4" /> Delete Content
+                        <Trash2 className="w-4 h-4" /> امسح المحتوى
                       </button>
                     </div>
                   )}
@@ -1152,17 +1155,17 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       {activeTab === 'qotd' && !loading && (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
           {/* Daily Questions List (Left column, col-span-3) */}
-          <div className="md:col-span-3 rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4 text-left">
-            <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">Daily Questions List</h3>
+          <div className="md:col-span-3 rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4 text-start">
+            <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">أسئلة اليوم</h3>
             
             <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
+              <table className="w-full text-xs text-start">
                 <thead>
                   <tr className="border-b border-white/8 text-zinc-500 font-bold">
-                    <th className="pb-2">Question</th>
-                    <th className="pb-2">Publish At</th>
-                    <th className="pb-2 text-center">Status</th>
-                    <th className="pb-2 text-center">Actions</th>
+                    <th className="pb-2">السؤال</th>
+                    <th className="pb-2">موعد النشر</th>
+                    <th className="pb-2 text-center">الحالة</th>
+                    <th className="pb-2 text-center">إجراءات</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -1177,17 +1180,17 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
 
                     return (
                       <tr key={q._id || q.id} className="hover:bg-white/2 transition-colors">
-                        <td className="py-3 pr-3 font-medium text-white max-w-[200px] truncate" title={q.question}>
+                        <td className="py-3 pe-3 font-medium text-white max-w-[200px] truncate" title={q.question}>
                           {q.question}
-                          <div className="text-[10px] text-zinc-500 font-normal mt-0.5">
-                            Correct Option: <span className="text-emerald-400 font-bold">#{q.correct_answer + 1}</span>
+                          <div className="text-2xs text-zinc-500 font-normal mt-0.5">
+                            الإجابة الصح: <span className="text-emerald-400 font-bold">#{q.correct_answer + 1}</span>
                           </div>
                         </td>
-                        <td className="py-3 pr-3 text-zinc-400 text-[10px]">
+                        <td className="py-3 pe-3 text-zinc-400 text-2xs">
                           {q.publish_at ? new Date(q.publish_at).toLocaleString() : 'Not Set'}
                         </td>
-                        <td className="py-3 pr-3 text-center">
-                          <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wide border ${badgeClass}`}>
+                        <td className="py-3 pe-3 text-center">
+                          <span className={`px-2 py-0.5 rounded-lg text-2xs font-black uppercase tracking-wide border ${badgeClass}`}>
                             {q.status}
                           </span>
                         </td>
@@ -1197,14 +1200,14 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                               <>
                                 <button
                                   onClick={() => handleEditClick(q)}
-                                  title="Edit"
+                                  title="تعديل"
                                   className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/5 border border-white/8 text-zinc-400 hover:text-white cursor-pointer hover:border-white/15 transition-all"
                                 >
                                   <FileEdit className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                   onClick={() => handleQDelete(q._id || q.id)}
-                                  title="Delete"
+                                  title="حذف"
                                   className="w-7 h-7 rounded-lg flex items-center justify-center bg-red-500/10 border border-red-500/25 text-red-400 hover:bg-red-500/20 cursor-pointer transition-all"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -1213,7 +1216,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                             ) : (
                               <button
                                 onClick={() => fetchQStats(q._id || q.id)}
-                                title="View Statistics"
+                                title="الإحصائيات"
                                 className="w-7 h-7 rounded-lg flex items-center justify-center bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/25 cursor-pointer transition-all"
                               >
                                 <BarChart3 className="w-3.5 h-3.5" />
@@ -1227,7 +1230,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   {questionsList.length === 0 && (
                     <tr>
                       <td colSpan={4} className="text-center py-8 text-zinc-500">
-                        No daily questions found. Create one on the right!
+                        مفيش أسئلة. اعمل سؤال جديد!
                       </td>
                     </tr>
                   )}
@@ -1237,17 +1240,17 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
           </div>
 
           {/* Create/Edit Question Form (Right column, col-span-2) */}
-          <div className="md:col-span-2 rounded-2xl border border-white/8 bg-zinc-900/60 p-5 text-left space-y-4">
+          <div className="md:col-span-2 rounded-2xl border border-white/8 bg-zinc-900/60 p-5 text-start space-y-4">
             <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
               {editingQuestionId ? 'Edit Daily Question' : 'Create Daily Question'}
             </h3>
             
             <form onSubmit={handleQSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Question Text</label>
+                <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">نص السؤال</label>
                 <textarea
                   required
-                  placeholder="e.g. Which muscle is responsible for shoulder abduction beyond 90 degrees?"
+                  placeholder="مثلًا: إيه العضلة المسؤولة عن رفع الكتف فوق 90 درجة؟"
                   value={qQuestion}
                   onChange={(e) => setQQuestion(e.target.value)}
                   rows={2}
@@ -1256,7 +1259,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Choices & Correct Answer</label>
+                <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider block">الاختيارات والإجابة الصح</label>
                 {[0, 1, 2, 3].map((idx) => (
                   <div key={idx} className="flex items-center gap-2">
                     <input
@@ -1279,7 +1282,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                         onChange={() => setQCorrect(idx)}
                         className="accent-emerald-500 w-3.5 h-3.5"
                       />
-                      <span className="text-[10px] font-bold text-zinc-400">Correct</span>
+                      <span className="text-2xs font-bold text-zinc-400">صح</span>
                     </label>
                   </div>
                 ))}
@@ -1294,17 +1297,17 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 />
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider block">Status</label>
+                  <label className="text-2xs font-bold text-zinc-550 uppercase tracking-wider block">الحالة</label>
                   <div className="relative">
                     <select
                       value={qStatus}
                       onChange={(e) => setQStatus(e.target.value as any)}
                       className="w-full bg-zinc-950 border border-white/10 rounded-xl p-2.5 text-xs text-white font-bold focus:border-emerald-500/50 outline-none appearance-none cursor-pointer"
                     >
-                      <option value="Draft">Draft</option>
-                      <option value="Scheduled">Scheduled</option>
+                      <option value="Draft">مسودة</option>
+                      <option value="Scheduled">مجدول</option>
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-550 pointer-events-none" />
+                    <ChevronDown className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-550 pointer-events-none" />
                   </div>
                 </div>
               </div>
@@ -1331,7 +1334,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                     }}
                     className="border border-zinc-800 hover:bg-zinc-900/60 text-zinc-400 font-bold text-xs py-3 px-5 rounded-xl cursor-pointer transition-all active:scale-[0.98]"
                   >
-                    Cancel
+                    إلغاء
                   </button>
                 )}
               </div>
@@ -1344,8 +1347,8 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       {/* Rejection reason modal */}
       <AnimatePresence>
         {rejectionPostId !== null && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
-            <motion.div
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999] animate-fade-in">
+            <m.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -1358,10 +1361,10 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 </h3>
               </div>
 
-              <div className="space-y-1.5 text-left">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Reason (Optional)</label>
+              <div className="space-y-1.5 text-start">
+                <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">السبب (اختياري)</label>
                 <textarea
-                  placeholder="Write the reason for rejection to share with the author..."
+                  placeholder="اكتب سبب الرفض عشان يوصل للكاتب…"
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
                   rows={4}
@@ -1374,7 +1377,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   onClick={handleRejectPostSubmit}
                   className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black text-xs py-3 rounded-xl cursor-pointer transition-all active:scale-[0.98]"
                 >
-                  Confirm Rejection
+                  أكّد الرفض
                 </button>
                 <button
                   onClick={() => setRejectionPostId(null)}
@@ -1383,23 +1386,23 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   إلغاء
                 </button>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         )}
 
         {/* QOTD Stats Modal */}
         {selectedStats && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
-            <motion.div
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999] animate-fade-in">
+            <m.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="glass-card w-full max-w-md p-6 relative flex flex-col gap-5 border border-white/10 text-left"
+              className="glass-card w-full max-w-md p-6 relative flex flex-col gap-5 border border-white/10 text-start"
             >
               <div className="flex items-center justify-between border-b border-white/5 pb-3">
                 <div className="flex items-center gap-2.5 text-emerald-400">
                   <BarChart3 className="w-5 h-5 flex-shrink-0" />
-                  <h3 className="text-base font-black tracking-tight">Question Statistics</h3>
+                  <h3 className="text-base font-black tracking-tight">إحصائيات السؤال</h3>
                 </div>
                 <button 
                   onClick={() => setSelectedStats(null)}
@@ -1416,21 +1419,21 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
 
                 <div className="grid grid-cols-2 gap-3 text-center">
                   <div className="bg-white/3 border border-white/5 rounded-xl p-3">
-                    <p className="text-[9px] text-zinc-500 font-bold uppercase">Unique Participants</p>
+                    <p className="text-2xs text-zinc-500 font-bold uppercase">عدد المشاركين</p>
                     <p className="text-lg font-black text-white mt-0.5">{selectedStats.unique_participants}</p>
                   </div>
                   <div className="bg-white/3 border border-white/5 rounded-xl p-3">
-                    <p className="text-[9px] text-zinc-500 font-bold uppercase">Total Answers</p>
+                    <p className="text-2xs text-zinc-500 font-bold uppercase">إجمالي الإجابات</p>
                     <p className="text-lg font-black text-white mt-0.5">{selectedStats.total_answers}</p>
                   </div>
                   <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3">
-                    <p className="text-[9px] text-emerald-400 font-bold uppercase">Correct Answers</p>
+                    <p className="text-2xs text-emerald-400 font-bold uppercase">إجابات صح</p>
                     <p className="text-lg font-black text-emerald-400 mt-0.5">
                       {selectedStats.correct_answers} ({selectedStats.correct_percentage}%)
                     </p>
                   </div>
                   <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-3">
-                    <p className="text-[9px] text-red-400 font-bold uppercase">Wrong Answers</p>
+                    <p className="text-2xs text-red-400 font-bold uppercase">إجابات غلط</p>
                     <p className="text-lg font-black text-red-400 mt-0.5">
                       {selectedStats.wrong_answers} ({selectedStats.total_answers > 0 ? 100 - selectedStats.correct_percentage : 0}%)
                     </p>
@@ -1438,7 +1441,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 </div>
 
                 <div className="space-y-3 pt-2">
-                  <p className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider">Answer Distribution</p>
+                  <p className="text-2xs font-bold text-zinc-550 uppercase tracking-wider">توزيع الإجابات</p>
                   <div className="space-y-2">
                     {selectedStats.options.map((option: string, idx: number) => {
                       const count = selectedStats.option_counts[idx] || 0;
@@ -1448,11 +1451,11 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                       return (
                         <div key={idx} className="space-y-1">
                           <div className="flex justify-between text-xs font-bold text-zinc-300">
-                            <span className="truncate pr-2 flex items-center gap-1.5">
+                            <span className="truncate pe-2 flex items-center gap-1.5">
                               {option}
-                              {isCorrect && <span className="bg-emerald-500/20 text-emerald-400 text-[8px] font-bold px-1.5 py-0.2 rounded border border-emerald-500/20">Correct</span>}
+                              {isCorrect && <span className="bg-emerald-500/20 text-emerald-400 text-2xs font-bold px-1.5 py-0.2 rounded border border-emerald-500/20">صح</span>}
                             </span>
-                            <span className="shrink-0 text-[10px] text-zinc-550 font-extrabold">
+                            <span className="shrink-0 text-2xs text-zinc-550 font-extrabold">
                               {count} answers ({pct}%)
                             </span>
                           </div>
@@ -1468,10 +1471,10 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </m.div>
   );
 };

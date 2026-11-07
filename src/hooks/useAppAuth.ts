@@ -86,7 +86,7 @@ export const useAppAuth = ({
       }
     } catch (err) {
       setAuthSuccess('');
-      setAuthError('Connection error occurred.');
+      setAuthError('حصلت مشكلة في الاتصال.');
     }
   };
 
@@ -108,11 +108,11 @@ export const useAppAuth = ({
         }, 1500);
       } else {
         setAuthSuccess('');
-        setAuthError(data.error || 'Failed to register.');
+        setAuthError(data.error || 'معرفناش نعمل الحساب.');
       }
     } catch (err) {
       setAuthSuccess('');
-      setAuthError('Connection error occurred.');
+      setAuthError('حصلت مشكلة في الاتصال.');
     }
   };
 
@@ -158,7 +158,7 @@ export const useAppAuth = ({
       }
     } catch (e) {
       setAuthSuccess('');
-      setAuthError('Failed to activate account.');
+      setAuthError('معرفناش نفعّل الحساب.');
     }
   };
 
@@ -182,7 +182,7 @@ export const useAppAuth = ({
       }
     } catch (e) {
       setAuthSuccess('');
-      setAuthError('Connection error occurred.');
+      setAuthError('حصلت مشكلة في الاتصال.');
     }
   };
 
@@ -205,7 +205,7 @@ export const useAppAuth = ({
       }
     } catch (e) {
       setAuthSuccess('');
-      setAuthError('Connection error occurred.');
+      setAuthError('حصلت مشكلة في الاتصال.');
     }
   };
 

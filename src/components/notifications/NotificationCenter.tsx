@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   CheckCheck, Trash2, Settings, BellOff, Loader2, MessageSquare, AtSign, Tv, Shield
 } from 'lucide-react';
@@ -131,38 +131,38 @@ export const NotificationCenter: React.FC = () => {
   if (!isOpen) return null;
 
   const renderEmptyState = () => {
-    let title = 'No notifications yet';
-    let description = 'We\'ll notify you when something important happens.';
+    let title = 'مفيش إشعارات لسه';
+    let description = 'هنبلّغك أول ما يحصل حاجة مهمة.';
     let icon = <BellOff className="w-8 h-8 text-zinc-500" />;
 
     if (activeFilter === 'unread') {
-      title = 'You\'re all caught up';
-      description = 'No unread notifications to review.';
+      title = 'مفيش جديد';
+      description = 'مفيش إشعارات جديدة.';
       icon = (
         <div className="relative">
           <CheckCheck className="w-8 h-8 text-emerald-400" />
-          <motion.div
+          <m.div
             animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400"
+            className="absolute -top-1 -end-1 w-2.5 h-2.5 rounded-full bg-emerald-400"
           />
         </div>
       );
     } else if (activeFilter === 'mentions') {
-      title = 'No mentions found';
-      description = 'Notifications where you are mentioned will appear here.';
+      title = 'مفيش منشنات';
+      description = 'لما حد يعملك منشن هتلاقيه هنا.';
       icon = <AtSign className="w-8 h-8 text-zinc-500" />;
     } else if (activeFilter === 'comments') {
-      title = 'No comments or replies';
-      description = 'Activity on your posts and comments will show up here.';
+      title = 'مفيش تعليقات أو ردود';
+      description = 'التفاعل على بوستاتك وتعليقاتك هيظهر هنا.';
       icon = <MessageSquare className="w-8 h-8 text-zinc-500" />;
     } else if (activeFilter === 'posts') {
-      title = 'No posts or episodes';
-      description = 'New content updates from the community will appear here.';
+      title = 'مفيش بوستات أو حلقات';
+      description = 'المحتوى الجديد هيظهر هنا.';
       icon = <Tv className="w-8 h-8 text-zinc-500" />;
     } else if (activeFilter === 'moderation') {
-      title = 'No moderation updates';
-      description = 'Updates on your post approvals and settings will show here.';
+      title = 'مفيش تحديثات مراجعة';
+      description = 'قبول ورفض بوستاتك هيظهر هنا.';
       icon = <Shield className="w-8 h-8 text-zinc-500" />;
     }
 
@@ -174,7 +174,7 @@ export const NotificationCenter: React.FC = () => {
           {icon}
         </div>
         <p className="text-sm font-black text-white">{title}</p>
-        <p className="text-[11px] mt-1 text-zinc-500 font-bold max-w-[200px] leading-relaxed">
+        <p className="text-xs mt-1 text-zinc-500 font-bold max-w-[200px] leading-relaxed">
           {description}
         </p>
       </div>
@@ -184,16 +184,16 @@ export const NotificationCenter: React.FC = () => {
   return (
     <>
       {/* Mobile backdrop */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[998] bg-black/50 backdrop-blur-sm md:hidden"
+        className="fixed inset-0 z-[998] bg-black/70 md:hidden"
         onClick={() => { setIsOpen(false); setShowPreferences(false); }}
       />
 
       {/* Panel Container */}
-      <motion.div
+      <m.div
         ref={panelRef}
         initial={{ opacity: 0, y: -8, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -219,7 +219,7 @@ export const NotificationCenter: React.FC = () => {
           {showPreferences ? (
             <NotificationPreferencesPanel key="preferences" />
           ) : (
-            <motion.div
+            <m.div
               key="notifications"
               initial={{ opacity: 0, x: -16 }}
               animate={{ opacity: 1, x: 0 }}
@@ -234,10 +234,10 @@ export const NotificationCenter: React.FC = () => {
               >
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-black tracking-tight text-white">
-                    Notifications
+                    الإشعارات
                   </h3>
                   {unreadCount > 0 && (
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-brand-orange/15 text-brand-orange border border-brand-orange/20 animate-pulse">
+                    <span className="px-2 py-0.5 rounded-full text-2xs font-black bg-brand-orange/15 text-brand-orange border border-brand-orange/20 animate-pulse">
                       {unreadCount}
                     </span>
                   )}
@@ -247,7 +247,7 @@ export const NotificationCenter: React.FC = () => {
                     <button
                       onClick={(e) => { e.stopPropagation(); markAllAsRead(); }}
                       className="p-2 rounded-xl transition-all cursor-pointer bg-white/3 border border-white/5 text-zinc-400 hover:text-brand-orange hover:border-brand-orange/25 active:scale-95"
-                      title="Mark all as read"
+                      title="علّم الكل كمقروء"
                     >
                       <CheckCheck className="w-4 h-4" />
                     </button>
@@ -255,7 +255,7 @@ export const NotificationCenter: React.FC = () => {
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowPreferences(true); }}
                     className="p-2 rounded-xl transition-all cursor-pointer bg-white/3 border border-white/5 text-zinc-400 hover:text-brand-orange hover:border-brand-orange/25 active:scale-95"
-                    title="Notification Settings"
+                    title="إعدادات الإشعارات"
                   >
                     <Settings className="w-4 h-4" />
                   </button>
@@ -268,25 +268,25 @@ export const NotificationCenter: React.FC = () => {
                 style={{ borderColor: 'rgba(255,255,255,0.06)' }}
               >
                 {([
-                  { id: 'all', label: 'All' },
-                  { id: 'unread', label: 'Unread' },
-                  { id: 'mentions', label: 'Mentions' },
-                  { id: 'comments', label: 'Comments' },
-                  { id: 'posts', label: 'Posts' },
-                  { id: 'moderation', label: 'Moderation' }
+                  { id: 'all', label: 'الكل' },
+                  { id: 'unread', label: 'غير مقروء' },
+                  { id: 'mentions', label: 'المنشن' },
+                  { id: 'comments', label: 'التعليقات' },
+                  { id: 'posts', label: 'البوستات' },
+                  { id: 'moderation', label: 'المراجعة' }
                 ] as const).map((filterItem) => {
                   const isActive = activeFilter === filterItem.id;
                   return (
                     <button
                       key={filterItem.id}
                       onClick={() => setFilter(filterItem.id)}
-                      className="relative px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer capitalize shrink-0 focus-visible:outline-none"
+                      className="relative px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer capitalize shrink-0 focus-visible:outline-none"
                       style={{
                         color: isActive ? 'var(--color-brand-orange)' : 'var(--text-secondary)',
                       }}
                     >
                       {isActive && (
-                        <motion.div
+                        <m.div
                           layoutId="activeFilterTab"
                           className="absolute inset-0 rounded-xl bg-brand-orange/10 border border-brand-orange/20"
                           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
@@ -295,7 +295,7 @@ export const NotificationCenter: React.FC = () => {
                       <span className="relative z-10 flex items-center gap-1">
                         {filterItem.label}
                         {filterItem.id === 'unread' && unreadCount > 0 && (
-                          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-500/15 text-red-500 border border-red-500/20">
+                          <span className="px-1.5 py-0.5 rounded-full text-2xs font-black bg-red-500/15 text-red-500 border border-red-500/20">
                             {unreadCount > 99 ? '99+' : unreadCount}
                           </span>
                         )}
@@ -321,8 +321,8 @@ export const NotificationCenter: React.FC = () => {
                         <>
                           {groups.today.length > 0 && (
                             <div className="flex flex-col">
-                              <div className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-500 bg-zinc-950/20 sticky top-0 backdrop-blur-sm z-[2] border-b border-white/3">
-                                Today
+                              <div className="px-4 py-2 text-2xs font-black uppercase tracking-wider text-zinc-500 bg-zinc-950/20 sticky top-0 z-[2] border-b border-white/3">
+                                النهارده
                               </div>
                               {groups.today.map((notif) => (
                                 <NotificationItem
@@ -336,8 +336,8 @@ export const NotificationCenter: React.FC = () => {
                           )}
                           {groups.yesterday.length > 0 && (
                             <div className="flex flex-col">
-                              <div className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-500 bg-zinc-950/20 sticky top-0 backdrop-blur-sm z-[2] border-b border-white/3">
-                                Yesterday
+                              <div className="px-4 py-2 text-2xs font-black uppercase tracking-wider text-zinc-500 bg-zinc-950/20 sticky top-0 z-[2] border-b border-white/3">
+                                امبارح
                               </div>
                               {groups.yesterday.map((notif) => (
                                 <NotificationItem
@@ -351,8 +351,8 @@ export const NotificationCenter: React.FC = () => {
                           )}
                           {groups.thisWeek.length > 0 && (
                             <div className="flex flex-col">
-                              <div className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-500 bg-zinc-950/20 sticky top-0 backdrop-blur-sm z-[2] border-b border-white/3">
-                                This Week
+                              <div className="px-4 py-2 text-2xs font-black uppercase tracking-wider text-zinc-500 bg-zinc-950/20 sticky top-0 z-[2] border-b border-white/3">
+                                الأسبوع ده
                               </div>
                               {groups.thisWeek.map((notif) => (
                                 <NotificationItem
@@ -366,8 +366,8 @@ export const NotificationCenter: React.FC = () => {
                           )}
                           {groups.older.length > 0 && (
                             <div className="flex flex-col">
-                              <div className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-500 bg-zinc-950/20 sticky top-0 backdrop-blur-sm z-[2] border-b border-white/3">
-                                Older
+                              <div className="px-4 py-2 text-2xs font-black uppercase tracking-wider text-zinc-500 bg-zinc-950/20 sticky top-0 z-[2] border-b border-white/3">
+                                أقدم
                               </div>
                               {groups.older.map((notif) => (
                                 <NotificationItem
@@ -404,17 +404,17 @@ export const NotificationCenter: React.FC = () => {
                 >
                   <button
                     onClick={(e) => { e.stopPropagation(); clearRead(); }}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer border border-red-500/15 bg-red-500/5 text-red-400 hover:bg-red-500/10 active:scale-[0.99]"
+                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border border-red-500/15 bg-red-500/5 text-red-400 hover:bg-red-500/10 active:scale-[0.99]"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    Clear read notifications
+                    امسح المقروء
                   </button>
                 </div>
               )}
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </m.div>
     </>
   );
 };

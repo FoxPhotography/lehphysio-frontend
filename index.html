@@ -1,30 +1,27 @@
 <!doctype html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 
 <head>
-  <!-- Google Search & Browser Favicons -->
-  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
-  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
-  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png" />
-  <link rel="icon" type="image/png" sizes="512x512" href="/icon-512x512.png" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
 
-  <!-- PWA Manifest & Mobile Meta Tags -->
+  <!-- Icons -->
+  <link rel="icon" href="/favicon.ico" sizes="48x48" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+  <!-- PWA -->
   <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#f97316" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="color-scheme" content="dark" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="LehPhysio" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <link rel="apple-touch-icon" sizes="192x192" href="/icon-192x192.png" />
-  <link rel="apple-touch-icon" sizes="512x512" href="/icon-512x512.png" />
 
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <!-- Backend: open the TLS connection early -->
+  <link rel="preconnect" href="https://lehphysio.up.railway.app" crossorigin />
+  <link rel="preconnect" href="https://res.cloudinary.com" />
 
   <!-- Structured Data (JSON-LD) for Google Search Logo & Knowledge Graph -->
   <script type="application/ld+json">
@@ -104,18 +101,7 @@
     content="🎙️ المنصة التفاعلية الأولى لطلاب العلاج الطبيعي! شاهد الحلقات، نافس في الكويزات، اجمع الـ XP، وتصدر قائمة المتصدرين!" />
   <meta name="twitter:image" content="https://www.lehphysio.site/og-banner.png" />
 
-  <!-- Discord & Mobile Browser Theme Accent Color -->
-  <meta name="theme-color" content="#f97316" />
-  <meta name="msapplication-TileColor" content="#0d0e12" />
-
-  <!-- Google Fonts Outfit -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
-    rel="stylesheet" />
-
-  <!-- Tabler Icons CSS CDN -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css" />
+  <meta name="msapplication-TileColor" content="#050505" />
 </head>
 
 <body>

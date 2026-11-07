@@ -6,6 +6,28 @@ import { chatService } from '../services/chatService';
 import { playChatSound } from '../utils/helpers';
 import { ChatMessage } from '../types';
 
+// Chat cache: written at most once per 1.5s, off the critical path, and only the
+// latest 200 messages (enough to open the chat instantly). Writing 1000 messages
+// synchronously on every incoming message used to block the main thread.
+const CHAT_CACHE_LIMIT = 200;
+let chatCacheTimer: ReturnType<typeof setTimeout> | null = null;
+let chatCachePending: { userId: number | string; messages: any[] } | null = null;
+const scheduleChatCache = (userId: number | string, messages: any[]) => {
+  chatCachePending = { userId, messages };
+  if (chatCacheTimer) return;
+  chatCacheTimer = setTimeout(() => {
+    chatCacheTimer = null;
+    const pending = chatCachePending;
+    chatCachePending = null;
+    if (!pending) return;
+    try {
+      localStorage.setItem(`chat_cache_${pending.userId}`, JSON.stringify(pending.messages.slice(-CHAT_CACHE_LIMIT)));
+    } catch {
+      /* quota exceeded or private mode: the cache is only an optimisation */
+    }
+  }, 1500);
+};
+
 export const useChat = (communityTab: 'feed' | 'chat') => {
   const { token, user, showToast, showConfirm, currentPage } = useAuth();
   const socket = useSocket();
@@ -112,7 +134,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
       setIsFindingTargetMessage(false);
       setDeepLinkTarget(null);
       window.history.replaceState({}, '', '/chat');
-      showToast('Could not locate the message. It might have been deleted.');
+      showToast('الرسالة مش موجودة، ممكن تكون اتمسحت.');
     }
   }, [isFindingTargetMessage, chatMessages, deepLinkTarget]);
 
@@ -153,7 +175,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
 
               if (userRef.current?.id) {
                 const cacheSlice = mergedMessages.slice(-1000);
-                localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(cacheSlice));
+                scheduleChatCache(userRef.current.id, cacheSlice);
               }
 
               return mergedMessages;
@@ -211,7 +233,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
 
             if (userRef.current?.id) {
               const cacheSlice = mergedMessages.slice(-1000);
-              localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(cacheSlice));
+              scheduleChatCache(userRef.current.id, cacheSlice);
             }
 
             return mergedMessages;
@@ -249,7 +271,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
           setChatMessages(prev => {
             const filtered = prev.filter(m => m.id !== payload.messageId);
             if (userRef.current?.id) {
-              localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(filtered.slice(-1000)));
+              scheduleChatCache(userRef.current.id, filtered.slice(-1000));
             }
             return filtered;
           });
@@ -257,7 +279,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
           setChatMessages(prev => {
             const filtered = prev.filter(m => !payload.messageIds.includes(m.id));
             if (userRef.current?.id) {
-              localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(filtered.slice(-1000)));
+              scheduleChatCache(userRef.current.id, filtered.slice(-1000));
             }
             return filtered;
           });
@@ -265,7 +287,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
           setChatMessages(prev => {
             const updated = prev.map(m => m.id === payload.messageId ? { ...m, message: payload.message, is_edited: 1 } : m);
             if (userRef.current?.id) {
-              localStorage.setItem(`chat_cache_${userRef.current.id}`, JSON.stringify(updated.slice(-1000)));
+              scheduleChatCache(userRef.current.id, updated.slice(-1000));
             }
             return updated;
           });
@@ -406,9 +428,9 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     swipeMessageIdRef.current = null;
   };
 
-  const handleSendChatMessage = async (e: React.FormEvent) => {
+  const handleSendChatMessage = async (e: React.FormEvent, text?: string) => {
     e.preventDefault();
-    const messageText = chatInput.trim();
+    const messageText = (text ?? chatInput).trim();
     if (!messageText || !token) return;
 
     if (editingMessage) {
@@ -423,7 +445,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     const optimisticId = -Date.now();
     const optimisticMsg: ChatMessage = {
       id: optimisticId,
-      username: user?.username || 'Me',
+      username: user?.username || 'أنا',
       message: messageText,
       timestamp: new Date().toISOString(),
       avatar_url: user?.avatar_url || null,
@@ -451,12 +473,12 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
         chatMessagesRef.current = chatMessagesRef.current.map(m => m.id === optimisticId ? { ...m, id: data.id, isPending: false, equipped_frame: data.equipped_frame || m.equipped_frame, avatar_url: data.avatar_url || m.avatar_url } : m);
       } else {
         setChatMessages(prev => prev.filter(m => m.id !== optimisticId));
-        showToast(data.error || 'Failed to send message');
+        showToast(data.error || 'الرسالة ماتبعتتش');
       }
     } catch (err) {
       console.error(err);
       setChatMessages(prev => prev.filter(m => m.id !== optimisticId));
-      showToast('Network error: Failed to send message');
+      showToast('مشكلة في النت: الرسالة ماتبعتتش');
     }
   };
 
@@ -480,11 +502,11 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
       if (res.ok) {
         setChatInput('');
         setEditingMessage(null);
-        showToast('Message edited successfully');
+        showToast('الرسالة اتعدّلت');
         fetchChatMessages();
       } else {
         const data = await res.json();
-        showToast(data.error || 'Failed to edit message');
+        showToast(data.error || 'معرفناش نعدّل الرسالة');
       }
     } catch (err) {
       console.error(err);
@@ -494,17 +516,17 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
   const handleDeleteMessage = async (messageId: number) => {
     if (!token) return;
     showConfirm(
-      'Delete Message',
-      'Are you sure you want to delete this message?',
+      'حذف الرسالة',
+      'متأكد إنك عايز تمسح الرسالة؟',
       async () => {
         try {
           const res = await chatService.deleteMessage(messageId, token);
           if (res.ok) {
-            showToast('Message deleted');
+            showToast('الرسالة اتمسحت');
             fetchChatMessages();
           } else {
             const data = await res.json();
-            showToast(data.error || 'Failed to delete message');
+            showToast(data.error || 'معرفناش نمسح الرسالة');
           }
         } catch (err) {
           console.error(err);
@@ -516,19 +538,19 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
   const handleBulkDeleteMessages = async () => {
     if (!token || selectedMessageIds.length === 0) return;
     showConfirm(
-      'Delete Multiple Messages',
+      'حذف رسايل',
       `Are you sure you want to delete ${selectedMessageIds.length} selected messages?`,
       async () => {
         try {
           const res = await chatService.bulkDeleteMessages(selectedMessageIds, token);
           if (res.ok) {
-            showToast('Selected messages deleted');
+            showToast('الرسايل اتمسحت');
             setIsMultiSelectMode(false);
             setSelectedMessageIds([]);
             fetchChatMessages();
           } else {
             const data = await res.json();
-            showToast(data.error || 'Failed to delete messages');
+            showToast(data.error || 'معرفناش نمسح الرسايل');
           }
         } catch (err) {
           console.error(err);

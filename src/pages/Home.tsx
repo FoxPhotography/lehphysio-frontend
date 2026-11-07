@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
+import { Thumb } from '../components/common/Thumb';
+import { cld } from '../utils/image';
 import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
 import { useNotifications } from '../context/NotificationContext';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { 
   Gift, 
   Play, 
@@ -156,19 +158,19 @@ export const Home: React.FC<HomeProps> = ({
   }, [deepLinkTarget, communityPosts]);
 
   return (
-    <div className="space-y-10 pt-20 xl:pt-6 pb-20 max-w-4xl mx-auto px-4">
+    <div className="space-y-10 xl:pt-6 max-w-4xl mx-auto px-4">
       {/* Banner alerts */}
       {loginReward && loginReward.daily_login && (
-        <motion.div 
+        <m.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-3 px-5 py-4 bg-brand-orange/10 border border-brand-orange/20 text-white rounded-2xl shadow-ambient"
         >
           <Gift className="w-5 h-5 text-brand-orange shrink-0" />
           <span className="text-sm font-bold">
-            Welcome back! You earned <strong className="text-brand-orange">+{xpSettings.daily_login || 10} XP</strong> for your daily login.
+            أهلًا بيك تاني! كسبت <strong className="text-brand-orange" dir="ltr">+{xpSettings.daily_login || 10} XP</strong> عشان دخلت النهارده.
           </span>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Hero podcast card - latest episode */}
@@ -178,24 +180,23 @@ export const Home: React.FC<HomeProps> = ({
           const latestEp = sorted.length > 0 ? sorted[0] : null;
           return latestEp ? (
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-8 items-center relative z-10">
-              <div 
-                className="md:col-span-2 aspect-[16/9] w-full rounded-2xl bg-zinc-900 bg-cover bg-center relative shadow-2xl flex items-center justify-center overflow-hidden group-hover:scale-[1.01] transition-transform duration-500 border border-zinc-800/40" 
-                style={{ backgroundImage: `url(${latestEp.thumbnail_url || 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop'})` }}
-              >
-                <div className="absolute inset-0 bg-black/40 bg-radial-gradient" />
-                <Play className="w-16 h-16 text-brand-orange filter drop-shadow-[0_0_15px_rgba(255,106,0,0.6)] animate-float-mic relative z-10 shrink-0" />
+              <div className="md:col-span-2 aspect-[16/9] w-full rounded-2xl bg-zinc-900 relative shadow-2xl overflow-hidden border border-zinc-800/40">
+                <Thumb src={latestEp.thumbnail_url} width={480} eager className="group-hover:scale-[1.02] transition-transform duration-500" />
+                <span className="absolute bottom-3 end-3 w-11 h-11 rounded-full bg-brand-orange text-black flex items-center justify-center shadow-lg z-10" aria-hidden>
+                  <Play className="w-5 h-5 fill-current ms-0.5" />
+                </span>
               </div>
-              <div className="md:col-span-3 flex flex-col gap-4 text-left">
+              <div className="md:col-span-3 flex flex-col gap-4 text-start">
                 <div className="flex gap-2">
-                  <span className="text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
-                    New Episode
+                  <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
+                    حلقة جديدة
                   </span>
-                  <span className="text-[10px] font-bold tracking-wider bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md uppercase">
-                    EP.{latestEp.id}
+                  <span className="text-2xs font-bold tracking-wider bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md uppercase">
+                    حلقة {latestEp.id}
                   </span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-black text-white leading-tight">
-                  {latestEp.title_ar || 'New Episode'}
+                  {latestEp.title_ar || 'حلقة جديدة'}
                 </h2>
                 <p className="text-zinc-400 text-sm font-medium line-clamp-2 leading-relaxed">
                   {latestEp.description || ''}
@@ -205,38 +206,35 @@ export const Home: React.FC<HomeProps> = ({
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-sm px-6 py-3 rounded-full cursor-pointer hover:shadow-orange-intense hover:scale-102 active:scale-98 transition-all shadow-orange-glow" 
                     onClick={() => navigateToEpisode(latestEp.id)}
                   >
-                    <Play className="w-4 h-4 fill-current" /> Watch Now
+                    <Play className="w-4 h-4 fill-current" /> اتفرج دلوقتي
                   </button>
                 </div>
               </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-8 items-center relative z-10">
-              <div 
-                className="md:col-span-2 aspect-[16/9] w-full rounded-2xl bg-zinc-900 bg-cover bg-center relative shadow-2xl flex items-center justify-center overflow-hidden border border-zinc-800/40" 
-                style={{ backgroundImage: `url('https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop')` }}
-              >
-                <div className="absolute inset-0 bg-black/40 bg-radial-gradient" />
-                <Play className="w-16 h-16 text-brand-orange filter drop-shadow-[0_0_15px_rgba(255,106,0,0.6)] animate-float-mic relative z-10 shrink-0" />
+              <div className="md:col-span-2 aspect-[16/9] w-full rounded-2xl bg-zinc-900 relative shadow-2xl overflow-hidden border border-zinc-800/40 flex items-center justify-center">
+                <Thumb width={480} />
+                <Play className="w-12 h-12 text-brand-orange relative z-10" />
               </div>
-              <div className="md:col-span-3 flex flex-col gap-4 text-left">
+              <div className="md:col-span-3 flex flex-col gap-4 text-start">
                 <div className="flex gap-2">
-                  <span className="text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
-                    Podcast
+                  <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
+                    البودكاست
                   </span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-black text-white leading-tight">
                   Leh Physio?
                 </h2>
                 <p className="text-zinc-400 text-sm font-medium leading-relaxed">
-                  Listen. Learn. Elevate your level.
+                  اسمع. اتعلم. علّي مستواك.
                 </p>
                 <div className="mt-2">
                   <button 
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-sm px-6 py-3 rounded-full cursor-pointer hover:shadow-orange-intense hover:scale-102 active:scale-98 transition-all shadow-orange-glow" 
                     onClick={() => setCurrentPage('episodes')}
                   >
-                    <Play className="w-4 h-4 fill-current" /> Browse Episodes
+                    <Play className="w-4 h-4 fill-current" /> تصفّح الحلقات
                   </button>
                 </div>
               </div>
@@ -247,17 +245,17 @@ export const Home: React.FC<HomeProps> = ({
 
       {/* Streak Panel */}
       <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="text-left">
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">Leh Physio?</h1>
-          <p className="text-zinc-400 text-xs md:text-sm font-medium mt-1">Listen. Learn. Elevate your level.</p>
+        <div className="text-start">
+          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">ليه فيزيو؟</h1>
+          <p className="text-zinc-400 text-xs md:text-sm font-medium mt-1">اسمع. اتعلم. علّي مستواك.</p>
         </div>
         <button 
           className="self-start sm:self-auto flex items-center gap-2.5 px-5 py-2.5 rounded-2xl text-brand-amber font-extrabold text-sm border border-brand-orange/30 fire-glow-badge cursor-pointer transition-all duration-300 hover:scale-103 active:scale-97 group" 
           onClick={() => setCurrentPage('profile')}
         >
           <Flame className="w-5 h-5 text-brand-orange fill-current animate-fire-pulse" />
-          <span>{activeStreak} Day Streak</span>
-          <ChevronLeft className="w-4 h-4 text-zinc-500 group-hover:-translate-x-0.5 transition-transform" />
+          <span>{activeStreak} يوم متتالي</span>
+          <ChevronLeft className="rtl:-scale-x-100 w-4 h-4 text-zinc-500 group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5 transition-transform" />
         </button>
       </section>
 
@@ -285,7 +283,7 @@ export const Home: React.FC<HomeProps> = ({
         <div className="flex items-center">
           <span className="flex items-center gap-2.5 text-lg font-black text-white">
             <ListVideo className="w-5 h-5 text-brand-orange" />
-            <span>All Episodes</span>
+            <span>كل الحلقات</span>
           </span>
         </div>
         
@@ -296,21 +294,19 @@ export const Home: React.FC<HomeProps> = ({
               className="min-w-64 max-w-64 snap-start glass-card p-4 hover:border-brand-orange/30 group flex flex-col gap-3 cursor-pointer"
               onClick={() => navigateToEpisode(ep.id)}
             >
-              <div 
-                className="w-full aspect-[16/9] rounded-xl bg-zinc-900 bg-cover bg-center relative overflow-hidden flex items-center justify-center border border-zinc-800/40" 
-                style={{ backgroundImage: `url(${ep.thumbnail_url || 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=280&auto=format&fit=crop'})` }}
-              >
-                <div className="absolute inset-0 bg-black/30 bg-radial-gradient" />
+              <div className="w-full aspect-[16/9] rounded-xl bg-zinc-900 relative overflow-hidden flex items-center justify-center border border-zinc-800/40">
+                <Thumb src={ep.thumbnail_url} width={256} />
+                <div className="absolute inset-0 bg-black/20" />
                 <button 
                   className="w-10 h-10 rounded-full bg-brand-orange text-black flex items-center justify-center hover:scale-110 active:scale-95 cursor-pointer relative z-10 transition-transform shadow-lg shrink-0" 
                   onClick={(e) => { e.stopPropagation(); navigateToEpisode(ep.id); }}
                 >
-                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                  <Play className="w-4 h-4 fill-current ms-0.5" />
                 </button>
               </div>
-              <div className="text-left">
-                <h4 className="text-sm font-black text-white truncate">{ep.title_ar}</h4>
-                <div className="text-[10px] text-zinc-500 font-extrabold mt-1">Episode {ep.id}</div>
+              <div className="text-start">
+                <h4 dir="auto" className="text-sm font-black text-white truncate">{ep.title_ar}</h4>
+                <div className="text-2xs text-zinc-500 font-extrabold mt-1">الحلقة {ep.id}</div>
               </div>
             </div>
           ))}
@@ -322,19 +318,19 @@ export const Home: React.FC<HomeProps> = ({
         <div className="flex flex-row items-center justify-between w-full gap-2">
           <span className="flex items-center gap-2 text-sm sm:text-lg font-black text-white shrink">
             <Sparkles className="w-4 h-4 sm:w-5 h-5 text-brand-orange animate-pulse shrink-0" />
-            <span className="truncate">Official News & Announcements</span>
+            <span className="truncate">الأخبار والإعلانات الرسمية</span>
           </span>
           <button 
             onClick={() => setCurrentPage('news')} 
-            className="text-[10px] sm:text-xs font-black text-brand-orange hover:text-brand-amber transition-colors flex items-center gap-1 cursor-pointer bg-brand-orange/5 px-2.5 py-1.5 rounded-xl border border-brand-orange/15 hover:border-brand-orange/30 shrink-0 whitespace-nowrap"
+            className="text-2xs sm:text-xs font-black text-brand-orange hover:text-brand-amber transition-colors flex items-center gap-1 cursor-pointer bg-brand-orange/5 px-2.5 py-1.5 rounded-xl border border-brand-orange/15 hover:border-brand-orange/30 shrink-0 whitespace-nowrap"
           >
-            View All
+            عرض الكل
           </button>
         </div>
         
         {newsPosts.length === 0 ? (
           <div className="glass-card p-6 text-center text-zinc-500 text-xs font-bold border border-dashed border-zinc-800">
-            No official announcements yet. Stay tuned! 📢
+            مفيش إعلانات رسمية لسه. خليك متابع! 📢
           </div>
         ) : (
           <div className="flex gap-4 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory">
@@ -345,35 +341,35 @@ export const Home: React.FC<HomeProps> = ({
                 onClick={() => setCurrentPage('news')}
               >
                 {/* Visual Glow */}
-                <div className="absolute top-0 right-0 w-24 h-24 bg-brand-orange/5 blur-2xl rounded-full" />
+                <div className="absolute top-0 end-0 w-24 h-24 bg-brand-orange/5 blur-2xl rounded-full" />
                 
-                <div className="space-y-2 text-left relative z-10">
-                  <div className="flex items-center justify-between text-[9px] font-black text-brand-orange uppercase tracking-wider">
-                    <span>LehPhysio Official</span>
-                    <span>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                <div className="space-y-2 text-start relative z-10">
+                  <div className="flex items-center justify-between text-2xs font-black text-brand-orange uppercase tracking-wider">
+                    <span>ليه فيزيو — رسمي</span>
+                    <span>{new Date(post.created_at).toLocaleDateString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric' })}</span>
                   </div>
                   <h4 className="text-xs font-extrabold text-white leading-relaxed line-clamp-2">
                     {post.title || post.content.substring(0, 40) + '...'}
                   </h4>
-                  <p className="text-[11px] text-zinc-400 font-medium leading-relaxed line-clamp-3">
+                  <p dir="auto" className="text-xs text-zinc-400 font-medium leading-relaxed line-clamp-3">
                     {post.content}
                   </p>
                 </div>
                 
                 {post.image_url && (
                   <div className="w-full aspect-[2/1] rounded-lg overflow-hidden border border-zinc-800/40 relative shrink-0">
-                    <img src={post.image_url} alt="News thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <img src={cld(post.image_url, { w: 320, h: 160, crop: 'fill' })} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
                 )}
                 
                 <div className="flex items-center justify-between border-t border-white/5 pt-2 shrink-0">
                   <div className="flex items-center gap-1.5">
                     <div className="w-5 h-5 rounded-full overflow-hidden border border-white/10 shrink-0">
-                      <img src={post.avatar_url || '/icons/icon-192x192.png'} alt="LehPhysio" className="w-full h-full object-cover" />
+                      <img src={post.avatar_url ? cld(post.avatar_url, { w: 20, h: 20, crop: 'fill' }) : '/icon-192.webp'} alt="" loading="lazy" className="w-full h-full object-cover" />
                     </div>
-                    <span className="text-[10px] font-black text-zinc-300 truncate max-w-[120px]">@{post.username}</span>
+                    <span className="text-2xs font-black text-zinc-300 truncate max-w-[120px]"><bdi dir="ltr">@{post.username}</bdi></span>
                   </div>
-                  <span className="text-[10px] font-extrabold text-brand-orange group-hover:translate-x-1 transition-transform">Read Details →</span>
+                  <span className="text-2xs font-extrabold text-brand-orange group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">اقرا التفاصيل ←</span>
                 </div>
               </div>
             ))}
@@ -386,25 +382,25 @@ export const Home: React.FC<HomeProps> = ({
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2.5 text-lg font-black text-white">
             <MessageSquare className="w-5 h-5 text-brand-orange" />
-            <span>Community Feed</span>
+            <span>مجتمع الطلبة</span>
           </span>
           {isRefreshingFeed && (
-            <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-bold uppercase tracking-wider animate-pulse">
+            <div className="flex items-center gap-1.5 text-2xs text-zinc-500 font-bold uppercase tracking-wider animate-pulse">
               <div className="w-3 h-3 border-2 border-brand-orange border-t-transparent rounded-full animate-spin" />
-              <span>Updating...</span>
+              <span>بنحدّث…</span>
             </div>
           )}
         </div>
 
         {/* Question of the Day */}
         {dailyQuestion && dailyQuestion.active && dailyQuestion.question && (
-          <div className="glass-card p-5 text-left space-y-4 border border-brand-orange/20 relative overflow-hidden">
+          <div className="glass-card p-5 text-start space-y-4 border border-brand-orange/20 relative overflow-hidden">
             <div className="flex gap-2 relative z-10">
-              <span className="text-[10px] font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
-                Question of the Day
+              <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
+                سؤال اليوم
               </span>
             </div>
-            <h3 className="text-base font-extrabold text-white leading-relaxed relative z-10">
+            <h3 dir="auto" className="text-base font-extrabold text-white leading-relaxed relative z-10">
               {dailyQuestion.question.question}
             </h3>
             <div className="flex flex-col gap-2.5 relative z-10">
@@ -412,6 +408,8 @@ export const Home: React.FC<HomeProps> = ({
                 const isSelected = dailyQuestion.has_answered && dailyQuestion.user_answer?.selected_answer === idx;
                 const isCorrectOption = dailyQuestion.has_answered && dailyQuestion.question.correct_answer === idx;
                 const showCorrectness = dailyQuestion.has_answered;
+                const total = dailyQuestion.stats?.total_answers || 0;
+                const share = total > 0 ? Math.round(((dailyQuestion.stats.option_counts?.[idx] || 0) / total) * 100) : null;
 
                 let btnStyles = 'border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 text-zinc-300';
                 if (showCorrectness) {
@@ -420,21 +418,29 @@ export const Home: React.FC<HomeProps> = ({
                   } else if (isSelected) {
                     btnStyles = 'border-red-500 bg-red-500/5 text-red-400 font-extrabold';
                   } else {
-                    btnStyles = 'border-zinc-900 bg-zinc-950/20 text-zinc-600 opacity-60';
+                    btnStyles = 'border-zinc-800/80 bg-zinc-950/40 text-zinc-400';
                   }
                 }
 
                 return (
                   <button
                     key={idx}
-                    className={`w-full text-left p-3.5 rounded-xl border font-bold text-xs relative overflow-hidden transition-all duration-200 group active:scale-99 ${btnStyles} disabled:cursor-default`}
+                    className={`w-full text-start p-3.5 rounded-xl border font-bold text-xs relative overflow-hidden transition-all duration-200 group active:scale-99 ${btnStyles} disabled:cursor-default`}
                     onClick={() => handleAnswerQuestion && handleAnswerQuestion(dailyQuestion.question.id, idx)}
                     disabled={dailyQuestion.has_answered}
                   >
-                    <div className="flex justify-between items-center relative z-10">
-                      <span>{option}</span>
+                    {showCorrectness && share !== null && (
+                      <span
+                        aria-hidden
+                        className={`absolute inset-y-0 start-0 ${isCorrectOption ? 'bg-emerald-500/15' : isSelected ? 'bg-red-500/15' : 'bg-zinc-700/25'} transition-[width] duration-700`}
+                        style={{ width: `${share}%` }}
+                      />
+                    )}
+                    <div className="flex justify-between items-center gap-3 relative z-10">
+                      <span dir="auto" className="text-sm">{option}</span>
                       {showCorrectness && (
-                        <span>
+                        <span className="flex items-center gap-2 shrink-0">
+                          {share !== null && <span dir="ltr" className="text-xs font-black tabular-nums">{share}%</span>}
                           {isCorrectOption && '✅'}
                           {isSelected && !isCorrectOption && '❌'}
                         </span>
@@ -446,14 +452,17 @@ export const Home: React.FC<HomeProps> = ({
             </div>
 
             {dailyQuestion.has_answered && (
-              <p className="text-[10px] text-brand-amber font-extrabold flex items-center gap-1.5 uppercase tracking-wide">
+              <p className="text-2xs text-brand-amber font-extrabold flex items-center gap-1.5 uppercase tracking-wide">
                 <Zap className="w-3.5 h-3.5 fill-current animate-fire-pulse" />
                 <span>
                   {dailyQuestion.user_answer?.is_correct 
-                    ? `✅ Correct Answer (+${dailyQuestion.user_answer?.xp_awarded} XP earned!)` 
-                    : `❌ Wrong Answer (+${dailyQuestion.user_answer?.xp_awarded} XP earned!)`
+                    ? `✅ إجابة صح (+${dailyQuestion.user_answer?.xp_awarded} XP)` 
+                    : `❌ إجابة غلط (+${dailyQuestion.user_answer?.xp_awarded} XP)`
                   }
                 </span>
+                {dailyQuestion.stats?.total_answers > 0 && (
+                  <span className="ms-auto text-zinc-500 normal-case tracking-normal">جاوب {dailyQuestion.stats.total_answers} طالب</span>
+                )}
               </p>
             )}
           </div>
@@ -471,7 +480,7 @@ export const Home: React.FC<HomeProps> = ({
         {/* Posts feed */}
         <div className="space-y-4">
           {communityPosts.length === 0 ? (
-            <p className="text-zinc-500 text-xs md:text-sm font-medium py-12 text-center">No posts available at the moment.</p>
+            <p className="text-zinc-500 text-xs md:text-sm font-medium py-12 text-center">مفيش بوستات دلوقتي.</p>
           ) : (
             communityPosts.map((post: any) => (
               <PostCard

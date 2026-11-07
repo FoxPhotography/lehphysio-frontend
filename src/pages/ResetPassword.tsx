@@ -38,7 +38,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
     setLocalError('');
 
     if (newPassword !== confirmPassword) {
-      setLocalError('Passwords do not match.');
+      setLocalError('كلمتين السر مش متطابقين.');
       return;
     }
 
@@ -52,16 +52,16 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
 
   return (
     <AuthLayout
-      title="Reset Password"
-      subtitle={`Code sent to ${email}`}
+      title="تغيير كلمة السر"
+      subtitle={`الكود اتبعت على ${email}`}
     >
       <form id="reset-password-form" onSubmit={handleSubmit} className="space-y-5">
         <AuthError message={localError || authError} />
         <AuthSuccess message={authSuccess} />
 
         <div className="space-y-1.5">
-          <label className="text-[12px] font-bold text-zinc-400 uppercase tracking-wider text-center block">
-            6-Digit Code
+          <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider text-center block">
+            الكود (6 أرقام)
           </label>
           <OtpInput
             value={code}
@@ -78,12 +78,12 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
           />
         </div>
 
-        <FormField label="New Password" icon={<Lock className="w-3 h-3" />}>
+        <FormField label="كلمة السر الجديدة" icon={<Lock className="w-3 h-3" />}>
           <AuthInput
             id="new-password-input"
             type="password"
             icon={<Lock className="w-4 h-4" />}
-            placeholder="Your new password"
+            placeholder="كلمة السر الجديدة"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             required
@@ -92,12 +92,12 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
           />
         </FormField>
 
-        <FormField label="Confirm New Password" icon={<Lock className="w-3 h-3" />}>
+        <FormField label="أكّد كلمة السر" icon={<Lock className="w-3 h-3" />}>
           <AuthInput
             id="confirm-password-input"
             type="password"
             icon={<Lock className="w-4 h-4" />}
-            placeholder="Confirm your new password"
+            placeholder="اكتبها تاني للتأكيد"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
@@ -106,12 +106,12 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({
           />
         </FormField>
 
-        <AuthSubmitButton label={loading ? "Updating..." : "Update Password"} disabled={loading} />
+        <AuthSubmitButton label={loading ? "بنحدّث…" : "حدّث كلمة السر"} disabled={loading} />
       </form>
 
       <p className="text-center text-[13px] text-zinc-500 mt-5">
-        Remember your password?{' '}
-        <AuthLink onClick={() => !loading && setCurrentPage('login')}>Login</AuthLink>
+        افتكرت كلمة السر؟{' '}
+        <AuthLink onClick={() => !loading && setCurrentPage('login')}>دخول</AuthLink>
       </p>
     </AuthLayout>
   );

@@ -402,7 +402,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       // Authenticate socket
       if (user?.id && socket?.connected) {
-        socket.emit('authenticate', user.id);
+        socket.emit('authenticate', localStorage.getItem('token'));
       }
       
       isInitialized.current = true;
@@ -418,7 +418,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Re-authenticate socket when user.id becomes available (delayed login)
   useEffect(() => {
     if (user?.id && socket?.connected) {
-      socket.emit('authenticate', user.id);
+      socket.emit('authenticate', localStorage.getItem('token'));
     }
   }, [user?.id, socket]);
 

@@ -104,7 +104,7 @@ export const useGames = () => {
   }, [activeGameRoom?.code, currentPage, token, user?.username, socket]);
 
   const handleCreateGameRoom = async () => {
-    if (!token) { showToast('Please login to play 🔐'); return; }
+    if (!token) { showToast('سجّل دخول عشان تلعب 🔐'); return; }
     setIsGameLoading(true);
     setGameError('');
     try {
@@ -117,15 +117,15 @@ export const useGames = () => {
         setGameError(data.error);
       }
     } catch (e) {
-      setGameError('Connection to server failed.');
+      setGameError('مش قادرين نوصل للسيرفر.');
     } finally {
       setIsGameLoading(false);
     }
   };
 
   const handleJoinGameRoom = async (code: string) => {
-    if (!token) { showToast('Please login to play 🔐'); return; }
-    if (!code) { setGameError('Enter room code.'); return; }
+    if (!token) { showToast('سجّل دخول عشان تلعب 🔐'); return; }
+    if (!code) { setGameError('اكتب كود الغرفة.'); return; }
     setIsGameLoading(true);
     setGameError('');
     try {
@@ -139,7 +139,7 @@ export const useGames = () => {
         setGameError(data.error);
       }
     } catch (e) {
-      setGameError('Incorrect room code.');
+      setGameError('كود الغرفة غلط.');
     } finally {
       setIsGameLoading(false);
     }
@@ -282,7 +282,7 @@ export const useGames = () => {
         setGamePlayError(data.error);
       }
     } catch (e) {
-      setGamePlayError('Failed to save game score.');
+      setGamePlayError('معرفناش نسجّل النتيجة.');
     }
   };
 
@@ -290,7 +290,7 @@ export const useGames = () => {
   const handleSpinWheelClick = async () => {
     if (isSpinning) return;
     if (!token) {
-      showToast('Please login to play 🔐');
+      showToast('سجّل دخول عشان تلعب 🔐');
       return;
     }
     setIsSpinning(true);
@@ -306,7 +306,7 @@ export const useGames = () => {
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error || 'Failed to spin the wheel.');
+        showToast(data.error || 'العجلة مالفّتش.');
         setIsSpinning(false);
         (window as any).__isSpinningWheel = false;
         return;
@@ -357,7 +357,7 @@ export const useGames = () => {
         
         // Show results
         if (try_again) {
-          showToast('Try Again! You get another spin! 🍀');
+          showToast('جرّب تاني! ليك لفة كمان! 🍀');
         } else {
           showToast(`Spin Wheel: You won ${prizeLabel}`);
           if (xpAmount > 0) {
@@ -374,7 +374,7 @@ export const useGames = () => {
       }, duration);
 
     } catch (err) {
-      showToast('Connection error.');
+      showToast('مشكلة في الاتصال.');
       setIsSpinning(false);
       (window as any).__isSpinningWheel = false;
     }

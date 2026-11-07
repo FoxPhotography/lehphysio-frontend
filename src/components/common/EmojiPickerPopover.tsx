@@ -1,6 +1,17 @@
-import React, { useEffect, useRef } from 'react';
-import EmojiPicker, { Theme, EmojiClickData, EmojiStyle } from 'emoji-picker-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { Suspense, lazy, useEffect, useRef } from 'react';
+import type { EmojiClickData, Theme, EmojiStyle } from 'emoji-picker-react';
+
+// The picker is ~300KB. Load it only when someone actually opens it.
+const EmojiPicker = lazy(() => import('emoji-picker-react'));
+const PickerFallback: React.FC<{ height: number | string }> = ({ height }) => (
+  <div style={{ height }} className="w-full flex items-center justify-center text-zinc-500 text-xs font-bold">
+    <div className="w-5 h-5 border-2 border-brand-orange border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+const DARK = 'dark' as Theme;
+// Native emoji: no per-emoji image downloads, and they match what the keyboard inserts.
+const NATIVE = 'native' as EmojiStyle;
+import { m, AnimatePresence } from 'framer-motion';
 
 interface EmojiPickerPopoverProps {
   isOpen: boolean;
@@ -62,7 +73,7 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
     return (
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <m.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: typeof height === 'number' ? height : 280, opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -78,10 +89,10 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
               [&_.epr-skin-tones]:!hidden
               ${className}`}
           >
-            <EmojiPicker
+            <Suspense fallback={<PickerFallback height={height} />}><EmojiPicker
               onEmojiClick={handleEmojiClick}
-              theme={Theme.DARK}
-              emojiStyle={EmojiStyle.APPLE}
+              theme={DARK}
+              emojiStyle={NATIVE}
               searchDisabled={true}
               skinTonesDisabled={true}
               autoFocusSearch={false}
@@ -91,8 +102,8 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
               previewConfig={{
                 showPreview: false,
               }}
-            />
-          </motion.div>
+            /></Suspense>
+          </m.div>
         )}
       </AnimatePresence>
     );
@@ -102,30 +113,30 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
   const getPositionClasses = () => {
     switch (activePosition) {
       case 'top-right':
-        return 'bottom-full right-0 mb-2';
+        return 'bottom-full end-0 mb-2';
       case 'top-left':
-        return 'bottom-full left-0 mb-2';
+        return 'bottom-full start-0 mb-2';
       case 'bottom-right':
-        return 'top-full right-0 mt-2';
+        return 'top-full end-0 mt-2';
       case 'bottom-left':
-        return 'top-full left-0 mt-2';
+        return 'top-full start-0 mt-2';
       case 'centered':
         return 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[10000]';
       default:
-        return 'bottom-full left-0 mb-2';
+        return 'bottom-full start-0 mb-2';
     }
   };
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
+        <m.div
           ref={containerRef}
           initial={{ opacity: 0, scale: 0.94, y: activePosition.startsWith('top') ? 8 : -8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: activePosition.startsWith('top') ? 8 : -8 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          className={`absolute ${getPositionClasses()} z-[10001] shadow-2xl rounded-2xl overflow-hidden border border-zinc-800/90 bg-zinc-950/95 backdrop-blur-xl w-[320px] sm:w-[350px] max-w-[calc(100vw-32px)]
+          className={`absolute ${getPositionClasses()} z-[10001] shadow-2xl rounded-2xl overflow-hidden border border-zinc-800/90 bg-zinc-950/95 w-[320px] sm:w-[350px] max-w-[calc(100vw-32px)]
             [&_.EmojiPickerReact]:!border-0 
             [&_.EmojiPickerReact]:!bg-transparent 
             [&_.EmojiPickerReact]:!w-full 
@@ -136,10 +147,10 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
             ${className}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <EmojiPicker
+          <Suspense fallback={<PickerFallback height={height} />}><EmojiPicker
             onEmojiClick={handleEmojiClick}
-            theme={Theme.DARK}
-            emojiStyle={EmojiStyle.APPLE}
+            theme={DARK}
+            emojiStyle={NATIVE}
             searchDisabled={true}
             skinTonesDisabled={true}
             autoFocusSearch={false}
@@ -149,8 +160,8 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
             previewConfig={{
               showPreview: false,
             }}
-          />
-        </motion.div>
+          /></Suspense>
+        </m.div>
       )}
     </AnimatePresence>
   );

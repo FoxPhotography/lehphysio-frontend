@@ -20,14 +20,14 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-2.5 text-lg font-black text-white">
           <Trophy className="w-5 h-5 text-brand-orange" />
-          <span>Leaderboard</span>
+          <span>الترتيب</span>
         </span>
         <button 
           className="flex items-center gap-1 text-xs font-bold text-brand-orange hover:text-brand-amber cursor-pointer transition-colors" 
           onClick={() => setCurrentPage('leaderboard')}
         >
-          <span>View All</span>
-          <ChevronLeft className="w-4 h-4" />
+          <span>عرض الكل</span>
+          <ChevronLeft className="rtl:-scale-x-100 w-4 h-4" />
         </button>
       </div>
 
@@ -45,18 +45,18 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
                   size={56} 
                 />
               </div>
-              <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-zinc-400 text-black flex items-center justify-center shadow-lg z-20">
+              <span className="absolute -bottom-1 -end-1 w-5 h-5 rounded-full bg-zinc-400 text-black flex items-center justify-center shadow-lg z-20">
                 <Medal className="w-3.5 h-3.5" />
               </span>
             </div>
-            <span className="text-[11px] font-bold text-white text-center max-w-[68px] truncate leading-tight">
+            <span className="text-xs font-bold text-white text-center max-w-[68px] truncate leading-tight">
               {second ? second.username : '—'}
             </span>
-            <span className="text-[10px] text-zinc-500 font-medium">
+            <span className="text-2xs text-zinc-500 font-medium">
               {second ? `${second.xp.toLocaleString()} XP` : '0 XP'}
             </span>
             <div className="w-16 sm:w-20 h-16 rounded-t-xl bg-gradient-to-t from-zinc-400 to-zinc-300 opacity-80 flex items-start justify-center pt-1.5">
-              <span className="text-[11px] font-black text-black/70">2</span>
+              <span className="text-xs font-black text-black/70">2</span>
             </div>
           </div>
 
@@ -71,18 +71,18 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
                   size={68} 
                 />
               </div>
-              <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-lg z-20">
+              <span className="absolute -bottom-1 -end-1 w-5 h-5 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-lg z-20">
                 <Crown className="w-3.5 h-3.5" />
               </span>
             </div>
-            <span className="text-[11px] font-bold text-white text-center max-w-[68px] truncate leading-tight">
+            <span className="text-xs font-bold text-white text-center max-w-[68px] truncate leading-tight">
               {first ? first.username : '—'}
             </span>
-            <span className="text-[10px] text-zinc-500 font-medium">
+            <span className="text-2xs text-zinc-500 font-medium">
               {first ? `${first.xp.toLocaleString()} XP` : '0 XP'}
             </span>
             <div className="w-16 sm:w-20 h-24 rounded-t-xl bg-gradient-to-t from-amber-500 to-yellow-400 opacity-80 flex items-start justify-center pt-1.5">
-              <span className="text-[11px] font-black text-black/70">1</span>
+              <span className="text-xs font-black text-black/70">1</span>
             </div>
           </div>
 
@@ -97,18 +97,18 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
                   size={52} 
                 />
               </div>
-              <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-700 text-white flex items-center justify-center shadow-lg z-20">
+              <span className="absolute -bottom-1 -end-1 w-5 h-5 rounded-full bg-amber-700 text-white flex items-center justify-center shadow-lg z-20">
                 <Star className="w-3.5 h-3.5" />
               </span>
             </div>
-            <span className="text-[11px] font-bold text-white text-center max-w-[68px] truncate leading-tight">
+            <span className="text-xs font-bold text-white text-center max-w-[68px] truncate leading-tight">
               {third ? third.username : '—'}
             </span>
-            <span className="text-[10px] text-zinc-500 font-medium">
+            <span className="text-2xs text-zinc-500 font-medium">
               {third ? `${third.xp.toLocaleString()} XP` : '0 XP'}
             </span>
             <div className="w-16 sm:w-20 h-10 rounded-t-xl bg-gradient-to-t from-amber-700 to-amber-600 opacity-80 flex items-start justify-center pt-1.5">
-              <span className="text-[11px] font-black text-black/70">3</span>
+              <span className="text-xs font-black text-black/70">3</span>
             </div>
           </div>
 

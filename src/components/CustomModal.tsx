@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { AlertCircle, X } from 'lucide-react';
 
 interface CustomModalProps {
@@ -22,29 +22,29 @@ export const CustomModal: React.FC<CustomModalProps> = ({ modal }) => {
     <AnimatePresence>
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
         {/* Backdrop */}
-        <motion.div 
+        <m.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={() => modal.onCancel ? modal.onCancel() : modal.onConfirm()}
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+          className="absolute inset-0 bg-black/80 cursor-pointer"
         />
 
         {/* Modal Card */}
-        <motion.div 
+        <m.div 
           initial={{ opacity: 0, scale: 0.9, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 15 }}
           transition={{ type: 'spring', damping: 25, stiffness: 350 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-md bg-zinc-950/90 border border-zinc-800/80 rounded-3xl p-6 shadow-2xl z-10 backdrop-blur-md overflow-hidden text-left"
+          className="relative w-full max-w-md bg-zinc-950/90 border border-zinc-800/80 rounded-3xl p-6 shadow-2xl z-10 overflow-hidden text-start"
         >
           {/* Subtle Ambient Glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-12 bg-brand-orange/10 blur-xl pointer-events-none rounded-full" />
 
           {/* Close Button */}
           <button 
-            className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors cursor-pointer"
+            className="absolute top-4 end-4 text-zinc-500 hover:text-white transition-colors cursor-pointer"
             onClick={modal.onCancel ? modal.onCancel : modal.onConfirm}
           >
             <X className="w-5 h-5" />
@@ -84,11 +84,11 @@ export const CustomModal: React.FC<CustomModalProps> = ({ modal }) => {
                 className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-xs py-2.5 px-5 rounded-xl cursor-pointer active:scale-95 transition-all" 
                 onClick={modal.onCancel}
               >
-                {modal.cancelText || 'Cancel'}
+                {modal.cancelText || 'إلغاء'}
               </button>
             )}
           </div>
-        </motion.div>
+        </m.div>
       </div>
     </AnimatePresence>
   );

@@ -47,7 +47,7 @@ export const PostComposer: React.FC<PostComposerProps> = ({
   return (
     <form 
       onSubmit={handleSubmitPost} 
-      className="glass-card p-5 flex gap-4 items-start text-left border border-zinc-900/60"
+      className="glass-card p-5 flex gap-4 items-start text-start border border-zinc-900/60"
     >
       <UserAvatar
         username={user.username}
@@ -58,7 +58,7 @@ export const PostComposer: React.FC<PostComposerProps> = ({
       <div className="flex-1 space-y-3">
         <textarea
           className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl p-3.5 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none min-h-[90px]"
-          placeholder="What's on your mind today, champ? Share your question or achievement..."
+          placeholder="إيه اللي في دماغك النهارده؟ شارك سؤال أو إنجاز…"
           value={newPostContent}
           onChange={(e) => setNewPostContent(e.target.value)}
           maxLength={300}
@@ -67,11 +67,11 @@ export const PostComposer: React.FC<PostComposerProps> = ({
 
         {uploadedImageUrl && (
           <div className="relative rounded-xl overflow-hidden max-w-[200px] border border-zinc-800">
-            <img src={uploadedImageUrl} alt="Upload preview" className="w-full max-h-[140px] object-cover" />
+            <img src={uploadedImageUrl} alt="معاينة" className="w-full max-h-[140px] object-cover" />
             <button
               type="button"
               onClick={() => setUploadedImageUrl('')}
-              className="absolute top-2 right-2 bg-black/80 hover:bg-black/90 text-white border-none rounded-full w-6 h-6 flex items-center justify-center cursor-pointer transition-colors"
+              className="absolute top-2 end-2 bg-black/80 hover:bg-black/90 text-white border-none rounded-full w-6 h-6 flex items-center justify-center cursor-pointer transition-colors"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -80,9 +80,9 @@ export const PostComposer: React.FC<PostComposerProps> = ({
 
         <div className="flex justify-between items-center pt-2">
           <div className="flex items-center gap-2">
-            <label className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-[10px] py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5">
+            <label className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-2xs py-2 px-4 rounded-xl cursor-pointer active:scale-95 transition-all flex items-center gap-1.5">
               <ImageIcon className="w-3.5 h-3.5 shrink-0" />
-              <span>{isUploadingImage ? 'Uploading...' : 'Add Image'}</span>
+              <span>{isUploadingImage ? 'بنرفع…' : 'أضف صورة'}</span>
               <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" disabled={isUploadingImage} />
             </label>
           </div>
@@ -95,12 +95,12 @@ export const PostComposer: React.FC<PostComposerProps> = ({
             {isPosting ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Posting...</span>
+                <span>بننشر…</span>
               </>
             ) : (
               <>
-                <span>Publish</span>
-                <Send className="w-3 h-3" />
+                <span>انشر</span>
+                <Send className="rtl:-scale-x-100 w-3 h-3" />
               </>
             )}
           </button>

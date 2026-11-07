@@ -1,9 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Outfit:wght@300;400;600;800&display=swap');
-
 @import "tailwindcss";
 
+/* Self-hosted Tajawal (Arabic + Latin subsets). No third-party font request, no render-blocking chain. */
+@import "@fontsource/tajawal/400.css";
+@import "@fontsource/tajawal/500.css";
+@import "@fontsource/tajawal/700.css";
+@import "@fontsource/tajawal/800.css";
+@import "@fontsource/tajawal/900.css";
+
 @theme {
-  --font-sans: 'Tajawal', 'Outfit', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Tajawal', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', system-ui, -apple-system, sans-serif;
   --color-brand-orange: #FF6A00;
   --color-brand-amber: #FFB000;
   
@@ -16,6 +21,13 @@
   --shadow-orange-glow: 0 10px 35px rgba(255, 106, 0, 0.25);
   --shadow-orange-intense: 0 12px 40px rgba(255, 106, 0, 0.4);
   --shadow-ambient: 0 0 50px rgba(255, 106, 0, 0.08);
+
+  /* Type scale: nothing readable below 11px on mobile */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+
+  /* Bottom nav height (without the safe area) */
+  --spacing-nav: 4.5rem;
 }
 
 @layer base {
@@ -45,29 +57,14 @@
 }
 
 /* Specialized Animations & Utilities */
-@keyframes glow-gold {
-  0% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); }
-  100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), inset 0 0 8px rgba(255, 215, 0, 0.4); }
-}
-
-@keyframes glow-neon {
-  0% { box-shadow: 0 0 8px rgba(0, 255, 255, 0.4); }
-  100% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.8), inset 0 0 8px rgba(0, 255, 255, 0.4); }
-}
-
-@keyframes fireGlow {
-  0% { box-shadow: 0 0 5px rgba(255, 106, 0, 0.2); }
-  100% { box-shadow: 0 0 15px rgba(255, 106, 0, 0.4); }
-}
-
 @keyframes firePulse {
-  0% { transform: scale(1) rotate(-3deg); filter: drop-shadow(0 0 4px rgba(255, 106, 0, 0.5)); }
-  100% { transform: scale(1.15) rotate(3deg); filter: drop-shadow(0 0 12px rgba(255, 106, 0, 0.9)); }
+  0% { transform: scale(1) rotate(-3deg); }
+  100% { transform: scale(1.12) rotate(3deg); }
 }
 
 @keyframes floatMic {
-  0% { transform: translateY(-5px); filter: drop-shadow(0 0 10px rgba(255, 106, 0, 0.4)); }
-  100% { transform: translateY(5px); filter: drop-shadow(0 0 25px rgba(255, 106, 0, 0.7)); }
+  0% { transform: translateY(-5px); }
+  100% { transform: translateY(5px); }
 }
 
 @keyframes floatParticle {
@@ -83,20 +80,18 @@
 
 @utility avatar-frame-gold-glow {
   background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%) !important;
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
-  animation: glow-gold 2s infinite alternate;
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.55) !important;
 }
 
 @utility avatar-frame-neon-ring {
   background: linear-gradient(135deg, #00FFFF 0%, #008080 100%) !important;
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.6) !important;
-  animation: glow-neon 2s infinite alternate;
+  box-shadow: 0 0 16px rgba(0, 255, 255, 0.5) !important;
 }
 
 @utility fire-glow-badge {
   background: rgba(255, 106, 0, 0.1);
   border: 1px solid rgba(255, 106, 0, 0.3);
-  animation: fireGlow 2s infinite alternate;
+  box-shadow: 0 0 10px rgba(255, 106, 0, 0.25);
 }
 
 @utility animate-fire-pulse {
@@ -115,12 +110,34 @@
   animation: shimmer 3s ease-in-out infinite;
 }
 
+/* Safe areas (iPhone notch / home indicator) */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+@utility pb-nav {
+  padding-bottom: calc(var(--spacing-nav) + env(safe-area-inset-bottom, 0px) + 1rem);
+}
+@utility bottom-nav-offset {
+  bottom: calc(var(--spacing-nav) + env(safe-area-inset-bottom, 0px) + 0.75rem);
+}
+
+/* Respect "reduce motion" system setting */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Glassmorphism Presets */
 @utility glass-panel {
-  background: rgba(20, 20, 20, 0.75);
+  background: rgba(16, 16, 16, 0.92);
   border: 1px solid rgba(255, 106, 0, 0.15);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
 }
 
 @utility glass-card {
@@ -128,9 +145,7 @@
   border: 1px solid rgba(255, 106, 0, 0.15);
   border-radius: 22px;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @utility glass-card-hover {
@@ -178,8 +193,9 @@ body.keyboard-open nav {
 /* Position notification panel next to sidebar on desktop */
 @media (min-width: 1280px) {
   :root {
-    --notification-panel-left: 296px;
-    --notification-panel-right: auto;
+    /* Sidebar sits on the right in RTL, so the panel opens next to it on the right */
+    --notification-panel-left: auto;
+    --notification-panel-right: 296px;
     --notification-panel-top: 80px;
     --notification-panel-max-height: min(80vh, 600px);
     --notification-panel-width: 380px;
@@ -231,10 +247,10 @@ body.keyboard-open nav {
 
 /* Mobile Safari Anti-Zoom & Viewport Lock */
 html, body {
-  overflow-x: hidden !important;
-  max-width: 100vw !important;
+  overflow-x: clip;
   touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 @media (max-width: 767px) {
@@ -244,3 +260,8 @@ html, body {
 }
 
 
+
+/* User-generated text (posts, comments, chat) picks its own direction; align to its start */
+[dir="auto"] {
+  text-align: start;
+}
