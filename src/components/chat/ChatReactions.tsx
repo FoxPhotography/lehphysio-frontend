@@ -6,6 +6,33 @@ import { UserAvatar } from '../UserAvatar';
 import type { ChatReaction } from '../../types';
 import { QUICK_REACTIONS, normalizeEmoji } from '../../utils/chatReactions';
 
+// ─── Phone back button closes overlays ──────────────────────────────────────
+
+/**
+ * While `open`, adds a history entry so the phone's back button (or browser back)
+ * closes the overlay instead of leaving the page. Closing it any other way removes
+ * that entry again.
+ */
+function useBackButtonClose(open: boolean, onClose: () => void) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  useEffect(() => {
+    if (!open) return undefined;
+    let poppedByBack = false;
+    window.history.pushState({ ...(window.history.state || {}), lpOverlay: true }, '');
+    const onPop = () => {
+      poppedByBack = true;
+      onCloseRef.current();
+    };
+    window.addEventListener('popstate', onPop);
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      // Closed by tapping outside / choosing an action: drop the entry we added
+      if (!poppedByBack && window.history.state?.lpOverlay) window.history.back();
+    };
+  }, [open]);
+}
+
 // ─── Pill attached under a bubble ────────────────────────────────────────────
 
 interface ReactionSummaryProps {
@@ -131,6 +158,8 @@ export const MessageActionOverlay: React.FC<MessageActionOverlayProps> = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; side: number } | null>(null);
 
+  useBackButtonClose(open, onClose);
+
   // Stays "unarmed" until the press that opened the menu is released, plus a short grace
   // period — so keeping your finger down keeps the menu open, and lifting it doesn't close
   // it or hit whatever button ended up under the finger.
@@ -222,8 +251,7 @@ export const MessageActionOverlay: React.FC<MessageActionOverlayProps> = ({
             animate={{ opacity: pos ? 1 : 0, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 6 }}
             transition={{ type: 'spring', stiffness: 460, damping: 32 }}
-            onClick={(e) => e.stopPropagation()}
-            className="absolute flex flex-col gap-2 w-[min(320px,calc(100vw-24px))]"
+            className="absolute flex flex-col gap-2 w-[min(320px,calc(100vw-24px))] pointer-events-none"
             style={{
               top: pos?.top ?? -9999,
               ...(isMine ? { left: pos?.side ?? 12 } : { right: pos?.side ?? 12 }),
@@ -232,7 +260,7 @@ export const MessageActionOverlay: React.FC<MessageActionOverlayProps> = ({
           >
             {/* Quick reactions */}
             {canReact && (
-              <div className="self-stretch flex items-center justify-between gap-0.5 rounded-full bg-zinc-900/95 border border-zinc-700/70 shadow-2xl shadow-black/60 px-1.5 py-1.5">
+              <div onClick={(e) => e.stopPropagation()} className="pointer-events-auto self-stretch flex items-center justify-between gap-0.5 rounded-full bg-zinc-900/95 border border-zinc-700/70 shadow-2xl shadow-black/60 px-1.5 py-1.5">
                 {QUICK_REACTIONS.map((emoji, i) => {
                   const active = myReaction === emoji;
                   return (
@@ -272,7 +300,7 @@ export const MessageActionOverlay: React.FC<MessageActionOverlayProps> = ({
 
             {/* Message preview */}
             {preview && (
-              <div className={`max-w-full rounded-2xl px-3.5 py-2.5 border shadow-xl ${
+              <div onClick={(e) => e.stopPropagation()} className={`pointer-events-auto max-w-full rounded-2xl px-3.5 py-2.5 border shadow-xl ${
                 isMine
                   ? 'self-start bg-gradient-to-r from-brand-orange to-brand-amber text-black border-transparent'
                   : 'self-end bg-zinc-900 text-white border-zinc-800'
@@ -283,7 +311,7 @@ export const MessageActionOverlay: React.FC<MessageActionOverlayProps> = ({
             )}
 
             {/* Actions */}
-            <div className={`w-56 rounded-2xl bg-zinc-900/95 border border-zinc-800 shadow-2xl shadow-black/60 overflow-hidden ${isMine ? 'self-start' : 'self-end'}`}>
+            <div onClick={(e) => e.stopPropagation()} className={`pointer-events-auto w-56 rounded-2xl bg-zinc-900/95 border border-zinc-800 shadow-2xl shadow-black/60 overflow-hidden ${isMine ? 'self-start' : 'self-end'}`}>
               {actions.map((a, idx) => {
                 const Icon = a.icon;
                 const color =
@@ -326,6 +354,7 @@ interface ReactionDetailsSheetProps {
 
 export const ReactionDetailsSheet: React.FC<ReactionDetailsSheetProps> = ({ open, reactions, myId, avatarFor, onRemoveMine, onClose }) => {
   const [tab, setTab] = useState<string>('all');
+  useBackButtonClose(open, onClose);
   const total = reactions.reduce((s, r) => s + r.count, 0);
 
   const rows = useMemo(() => {

@@ -189,6 +189,33 @@ export const Community: React.FC<CommunityProps> = ({
 
   const avatarFor = (username: string) => (usernames || []).find((u: any) => u.username === username);
 
+  // ── Multi-select helpers ──
+  const exitSelection = () => { setIsMultiSelectMode(false); setSelectedMessageIds([]); };
+  const selectedInOrder = () => chatMessages.filter((m: any) => selectedMessageIds.includes(m.id));
+  const copySelected = async () => {
+    const msgs = selectedInOrder();
+    if (msgs.length === 0) return;
+    const text = msgs.length === 1 ? msgs[0].message : msgs.map((m: any) => `${m.username}: ${m.message}`).join('\n');
+    try { await copyToClipboard(text); showToast(msgs.length === 1 ? 'اتنسخت الرسالة 📋' : `اتنسخت ${msgs.length} رسايل 📋`); } catch { showToast('معرفناش ننسخ'); }
+    exitSelection();
+  };
+  const replyToSelected = () => {
+    const [msg] = selectedInOrder();
+    if (msg) setReplyingTo({ id: msg.id, username: msg.username, message: msg.message });
+    exitSelection();
+    setTimeout(() => document.getElementById('community-chat-input')?.focus(), 50);
+  };
+
+  // Deselecting the last message leaves selection mode (WhatsApp behaviour)
+  useEffect(() => {
+    if (isMultiSelectMode && selectedMessageIds.length === 0) setIsMultiSelectMode(false);
+  }, [isMultiSelectMode, selectedMessageIds.length]);
+
+  // Long-press while selecting shouldn't open the reactions menu
+  useEffect(() => {
+    if (isMultiSelectMode && activeContextMenu) setActiveContextMenu(null);
+  }, [isMultiSelectMode, activeContextMenu]);
+
   const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
 
   // Windowed rendering: only the newest messages are in the DOM. Scrolling to the top
@@ -500,18 +527,81 @@ export const Community: React.FC<CommunityProps> = ({
 
         {activeSubTab === 'chat' ? (
           <>
-            {/* Multi-select bar or Standard Header */}
-            {isMultiSelectMode ? (
-              <div className="flex justify-between items-center bg-brand-orange/10 border border-brand-orange/20 rounded-xl p-3 mb-3 mx-3 md:mx-0 shrink-0">
-                <span className="text-xs font-black text-white">اتحدد {selectedMessageIds.length} رسالة</span>
-                <div className="flex gap-2">
-                  {canDeleteSelected && (
-                    <button className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-2xs py-1.5 px-3 rounded-lg cursor-pointer" onClick={handleBulkDeleteMessages} disabled={selectedMessageIds.length === 0}>حذف</button>
-                  )}
-                  <button className="border border-zinc-800 hover:bg-zinc-900 text-white font-bold text-2xs py-1.5 px-3 rounded-lg cursor-pointer" onClick={() => { setIsMultiSelectMode(false); setSelectedMessageIds([]); }}>إلغاء</button>
-                </div>
-              </div>
-            ) : null}
+            {/* Selection bar */}
+            <AnimatePresence initial={false}>
+              {isMultiSelectMode && (
+                <m.div
+                  initial={{ opacity: 0, y: -10, height: 0, marginBottom: 0 }}
+                  animate={{ opacity: 1, y: 0, height: 'auto', marginBottom: 10 }}
+                  exit={{ opacity: 0, y: -10, height: 0, marginBottom: 0 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                  className="mx-3 md:mx-0 shrink-0 overflow-hidden"
+                >
+                  <div className="flex items-center gap-2 rounded-2xl bg-zinc-900/95 border border-zinc-800 shadow-lg shadow-black/40 ps-1.5 pe-1.5 py-1.5">
+                    <button
+                      type="button"
+                      onClick={exitSelection}
+                      aria-label="إلغاء التحديد"
+                      className="w-9 h-9 rounded-xl flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/[0.06] cursor-pointer transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                    <div className="flex items-baseline gap-1.5 min-w-0">
+                      <AnimatePresence mode="popLayout" initial={false}>
+                        <m.span
+                          key={selectedMessageIds.length}
+                          initial={{ y: 10, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          exit={{ y: -10, opacity: 0 }}
+                          transition={{ duration: 0.16 }}
+                          className="text-lg font-black text-white tabular-nums leading-none"
+                        >
+                          {selectedMessageIds.length}
+                        </m.span>
+                      </AnimatePresence>
+                      <span className="text-xs font-bold text-zinc-400 truncate">
+                        {selectedMessageIds.length === 1 ? 'رسالة متحددة' : 'رسايل متحددة'}
+                      </span>
+                    </div>
+
+                    <div className="ms-auto flex items-center gap-1">
+                      {selectedMessageIds.length === 1 && (
+                        <button
+                          type="button"
+                          onClick={replyToSelected}
+                          aria-label="رد"
+                          title="رد"
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/[0.06] cursor-pointer transition-colors"
+                        >
+                          <CornerUpLeft className="w-[18px] h-[18px] rtl:-scale-x-100" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={copySelected}
+                        disabled={selectedMessageIds.length === 0}
+                        aria-label="نسخ"
+                        title="نسخ"
+                        className="w-9 h-9 rounded-xl flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/[0.06] cursor-pointer transition-colors disabled:opacity-40"
+                      >
+                        <Copy className="w-[18px] h-[18px]" />
+                      </button>
+                      {canDeleteSelected && (
+                        <button
+                          type="button"
+                          onClick={handleBulkDeleteMessages}
+                          disabled={selectedMessageIds.length === 0}
+                          className="h-9 px-3 rounded-xl flex items-center gap-1.5 bg-red-500/15 text-red-400 hover:bg-red-500/25 border border-red-500/25 text-xs font-black cursor-pointer transition-colors disabled:opacity-40"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>حذف</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </m.div>
+              )}
+            </AnimatePresence>
 
             {/* Chat Messages Feed */}
             <div 
@@ -559,47 +649,79 @@ export const Community: React.FC<CommunityProps> = ({
                 const isSwiping = swipeMessageIdRef.current === msg.id;
                 const framePngUrl = getFrameImage(msg.equipped_frame);
 
+                const toggleSelect = () => setSelectedMessageIds(prev =>
+                  prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]
+                );
+
                 return (
                   <div 
                     key={msg.id} 
-                    className="flex w-full"
+                    // The whole row (not just the bubble) takes taps, long-press and swipe — like WhatsApp
+                    className={`group/msg relative flex w-full px-1.5 py-1 -my-1 rounded-2xl select-none [-webkit-touch-callout:none] transition-colors duration-200 ${
+                      isMultiSelectMode ? 'cursor-pointer ps-10' : ''
+                    } ${isSelected ? 'bg-brand-orange/[0.10]' : isMultiSelectMode ? 'hover:bg-white/[0.02]' : ''}`}
                     style={{
                       justifyContent: isMyMsg ? 'flex-end' : 'flex-start',
                     }}
+                    onClick={() => {
+                      if (isMultiSelectMode) {
+                        toggleSelect();
+                        return;
+                      }
+                      // Double-tap (or double-click) a message → quick ❤️
+                      const now = Date.now();
+                      const last = lastTapRef.current;
+                      if (last && last.id === msg.id && now - last.t < 320) {
+                        lastTapRef.current = null;
+                        const mine = (msg.reactions || []).find((r: any) => r.userReacted);
+                        // Only adds ❤️ when you have no reaction (or removes your ❤️) — never swaps another emoji
+                        if (!mine) reactTo(msg, QUICK_REACTIONS[0]);
+                        else if (normalizeEmoji(mine.emoji) === QUICK_REACTIONS[0]) reactTo(msg, QUICK_REACTIONS[0]);
+                      } else {
+                        lastTapRef.current = { id: msg.id, t: now };
+                      }
+                    }}
+                    onContextMenu={(e) => { if (isMultiSelectMode) { e.preventDefault(); return; } handleChatContextMenu(e, msg); }}
+                    onTouchStart={isMultiSelectMode ? undefined : (e) => handleChatTouchStart(e, msg)}
+                    onTouchMove={isMultiSelectMode ? undefined : (e) => handleChatTouchMove(e, msg)}
+                    onTouchEnd={isMultiSelectMode ? undefined : (e) => handleChatTouchEnd(e, msg)}
                   >
+                    {/* Selection check (row start) */}
+                    <AnimatePresence>
+                      {isMultiSelectMode && (
+                        <m.span
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                          transition={{ type: 'spring', stiffness: 520, damping: 26 }}
+                          className={`absolute start-2 top-1/2 -translate-y-1/2 w-[22px] h-[22px] rounded-full flex items-center justify-center border-2 transition-colors duration-150 ${
+                            isSelected ? 'bg-brand-orange border-brand-orange shadow-[0_0_12px_rgba(255,106,0,0.45)]' : 'border-zinc-600 bg-zinc-950/60'
+                          }`}
+                          aria-hidden
+                        >
+                          <AnimatePresence>
+                            {isSelected && (
+                              <m.span
+                                initial={{ scale: 0, rotate: -30 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                exit={{ scale: 0 }}
+                                transition={{ type: 'spring', stiffness: 700, damping: 22 }}
+                              >
+                                <Check className="w-3.5 h-3.5 text-black" strokeWidth={3.5} />
+                              </m.span>
+                            )}
+                          </AnimatePresence>
+                        </m.span>
+                      )}
+                    </AnimatePresence>
+
                     <div
                       id={`chat-msg-${msg.id}`}
-                      className={`group/msg flex items-start gap-2.5 max-w-[85%] relative rounded-2xl select-none [-webkit-touch-callout:none] cursor-pointer transition-all ${
-                        isSelected ? 'ring-2 ring-brand-orange/40 bg-brand-orange/5' : ''
-                      }`}
+                      className="flex items-start gap-2.5 max-w-[85%] relative rounded-2xl"
                       style={{ 
                         transform: `translateX(${tx}px)`,
                         transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28)',
                       }}
-                      onClick={() => {
-                        if (isMultiSelectMode) {
-                          setSelectedMessageIds(prev => 
-                            prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]
-                          );
-                          return;
-                        }
-                        // Double-tap (or double-click) a message → quick ❤️
-                        const now = Date.now();
-                        const last = lastTapRef.current;
-                        if (last && last.id === msg.id && now - last.t < 320) {
-                          lastTapRef.current = null;
-                          const mine = (msg.reactions || []).find((r: any) => r.userReacted);
-                          // Double-tapping again doesn't undo a different reaction — it only adds ❤️ when you have none
-                          if (!mine) reactTo(msg, QUICK_REACTIONS[0]);
-                          else if (normalizeEmoji(mine.emoji) === QUICK_REACTIONS[0]) reactTo(msg, QUICK_REACTIONS[0]);
-                        } else {
-                          lastTapRef.current = { id: msg.id, t: now };
-                        }
-                      }}
-                      onContextMenu={(e) => handleChatContextMenu(e, msg)}
-                      onTouchStart={(e) => handleChatTouchStart(e, msg)}
-                      onTouchMove={(e) => handleChatTouchMove(e, msg)}
-                      onTouchEnd={(e) => handleChatTouchEnd(e, msg)}
                     >
                       {/* Swipe indicators */}
                       {tx !== 0 && (
@@ -612,21 +734,6 @@ export const Community: React.FC<CommunityProps> = ({
                           }}
                         >
                           <CornerUpLeft className="rtl:-scale-x-100 w-4.5 h-4.5 text-zinc-500" />
-                        </div>
-                      )}
-
-                      {/* Checkbox for Multiselect */}
-                      {isMultiSelectMode && user && (
-                        <div 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedMessageIds(prev => 
-                              prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]
-                            );
-                          }}
-                          className="self-center ms-2 shrink-0 cursor-pointer text-brand-orange"
-                        >
-                          {isSelected ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5 text-zinc-600" />}
                         </div>
                       )}
 
