@@ -1,14 +1,15 @@
 import React from 'react';
 import { m } from 'framer-motion';
-import { ArrowRight, MessageCircle, Reply, AtSign, Users, Shield, Smartphone } from 'lucide-react';
+import { ArrowRight, MessageCircle, Reply, AtSign, Users, Shield, Smartphone, SmilePlus } from 'lucide-react';
 import type { NotificationPreferences } from '../../types';
 import { useNotifications } from '../../context/NotificationContext';
 import { useAuth } from '../../context/AuthContext';
 
 const PREF_OPTIONS: { key: keyof NotificationPreferences; label: string; description: string; icon: React.ElementType }[] = [
   { key: 'comments', label: 'التعليقات', description: 'لما حد يعلّق على بوستاتك', icon: MessageCircle },
-  { key: 'replies', label: 'الردود', description: 'لما حد يرد على تعليقاتك', icon: Reply },
+  { key: 'replies', label: 'الردود', description: 'لما حد يرد على تعليقاتك أو رسايلك في الشات', icon: Reply },
   { key: 'mentions', label: 'المنشن', description: 'لما حد يكتب @اسمك', icon: AtSign },
+  { key: 'reactions', label: 'التفاعلات', description: 'لما حد يتفاعل بإيموجي على رسايلك في الشات', icon: SmilePlus },
   { key: 'community', label: 'المحتوى الجديد', description: 'الحلقات والبوستات الجديدة', icon: Users },
   { key: 'moderation', label: 'حالة بوستاتك', description: 'لما بوستاتك أو اقتراحاتك تتقبل أو تترفض', icon: Shield },
 ];

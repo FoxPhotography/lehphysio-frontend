@@ -63,6 +63,13 @@ export interface Post {
   is_news?: boolean;
 }
 
+export interface ChatReaction {
+  emoji: string;
+  count: number;
+  userReacted: boolean;
+  users?: { id: number; username: string }[];
+}
+
 export interface ChatMessage {
   id: number;
   username: string;
@@ -75,10 +82,7 @@ export interface ChatMessage {
     username: string;
     message: string;
   } | null;
-  reactions?: {
-    emoji: string;
-    usernames: string[];
-  }[];
+  reactions?: ChatReaction[];
   isPending?: boolean;
 }
 
@@ -138,6 +142,7 @@ export type NotificationType =
   | 'episode_approved' | 'episode_rejected'
   | 'new_comment' | 'comment_reply'
   | 'mention_comment' | 'mention_chat'
+  | 'chat_reply' | 'chat_reaction'
   | 'new_post' | 'new_episode'
   | 'suggestion_approved' | 'suggestion_rejected'
   | 'user_muted' | 'user_unmuted'
@@ -164,6 +169,7 @@ export interface NotificationPreferences {
   comments: boolean;
   replies: boolean;
   mentions: boolean;
+  reactions: boolean;
   community: boolean;
   moderation: boolean;
 }

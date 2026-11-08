@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { m, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import {
-  MessageCircle, Reply, AtSign, FileText, Tv, Check, X, VolumeX, Volume2, Lock, Unlock, Award, Shield, Flag, Trash2,
+  MessageCircle, Reply, AtSign, FileText, Tv, Check, X, VolumeX, Volume2, Lock, Unlock, Award, Shield, Flag, Trash2, SmilePlus,
 } from 'lucide-react';
 import type { AppNotification, NotificationType } from '../../types';
 import { UserAvatar } from '../UserAvatar';
@@ -19,6 +19,8 @@ const ICON: Partial<Record<NotificationType, React.ElementType>> = {
   comment_reply: Reply,
   mention_comment: AtSign,
   mention_chat: AtSign,
+  chat_reply: Reply,
+  chat_reaction: SmilePlus,
   new_post: FileText,
   new_episode: Tv,
   post_approved: Check,

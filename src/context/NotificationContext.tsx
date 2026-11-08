@@ -40,6 +40,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   comments: true,
   replies: true,
   mentions: true,
+  reactions: true,
   community: true,
   moderation: true,
 };
@@ -300,7 +301,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
         break;
       }
-      case 'mention_chat': {
+      case 'mention_chat':
+      case 'chat_reply':
+      case 'chat_reaction': {
         const messageId = Number(metadata?.messageId || target_id);
         changePage('community');
         if (messageId) {
@@ -389,7 +392,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .then(async (res) => {
           if (res.ok) {
             const data = await res.json();
-            setPreferences(data || DEFAULT_PREFERENCES);
+            setPreferences({ ...DEFAULT_PREFERENCES, ...(data || {}) });
           }
         })
         .catch(err => console.error('Error fetching preferences:', err));
@@ -509,8 +512,18 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setUnreadCount(0);
     };
 
+    // A reaction taken back removes its notification; a changed reaction updates it in place
+    const handleRemoved = (data: { id: number }) => {
+      setNotifications(prev => prev.filter(n => n._id !== data.id));
+    };
+    const handleUpdated = (notif: AppNotification) => {
+      setNotifications(prev => [notif, ...prev.filter(n => n._id !== notif._id)]);
+    };
+
     socket.on('new_notification', handleNewNotification);
     socket.on('notification_created', handleNewNotification);
+    socket.on('notification_removed', handleRemoved);
+    socket.on('notification_updated', handleUpdated);
     socket.on('notification_count_update', handleCountUpdate);
     socket.on('notification_read', handleNotificationRead);
     socket.on('notifications_all_read', handleAllRead);
@@ -518,6 +531,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return () => {
       socket.off('new_notification', handleNewNotification);
       socket.off('notification_created', handleNewNotification);
+      socket.off('notification_removed', handleRemoved);
+      socket.off('notification_updated', handleUpdated);
       socket.off('notification_count_update', handleCountUpdate);
       socket.off('notification_read', handleNotificationRead);
       socket.off('notifications_all_read', handleAllRead);

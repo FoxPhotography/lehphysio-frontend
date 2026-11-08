@@ -5,6 +5,7 @@ import { useNotifications } from '../context/NotificationContext';
 import { chatService } from '../services/chatService';
 import { playChatSound } from '../utils/helpers';
 import { ChatMessage } from '../types';
+import { applyReactionToggle, summarizeRawReactions } from '../utils/chatReactions';
 
 // Chat cache: written at most once per 1.5s, off the critical path, and only the
 // latest 200 messages (enough to open the chat instantly). Writing 1000 messages
@@ -283,6 +284,16 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
             }
             return filtered;
           });
+        } else if (payload?.type === 'reaction') {
+          // Patch just this message's reactions — no full refetch
+          const nextReactions = summarizeRawReactions(payload.reactions || [], userRef.current?.id);
+          setChatMessages(prev => {
+            const updated = prev.map(m => m.id === payload.messageId ? { ...m, reactions: nextReactions } : m);
+            if (userRef.current?.id) {
+              scheduleChatCache(userRef.current.id, updated.slice(-1000));
+            }
+            return updated;
+          });
         } else if (payload?.type === 'edit') {
           setChatMessages(prev => {
             const updated = prev.map(m => m.id === payload.messageId ? { ...m, message: payload.message, is_edited: 1 } : m);
@@ -375,7 +386,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
         x: clientX,
         y: clientY
       });
-    }, 600);
+    }, 450);
 
     touchStartXRef.current = touch.clientX;
     touchStartYRef.current = touch.clientY;
@@ -482,16 +493,28 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     }
   };
 
+  // Optimistic: the bubble updates instantly, then reconciles with the server's answer
   const handleToggleReaction = async (messageId: number, emoji: string) => {
-    if (!token) return;
+    if (!token || !user || messageId < 0) return;
+    const before = chatMessagesRef.current.find(m => m.id === messageId)?.reactions || [];
+    const optimistic = applyReactionToggle(before, emoji, { id: user.id, username: user.username });
+    setChatMessages(prev => prev.map(m => m.id === messageId ? { ...m, reactions: optimistic } : m));
+    playChatSound('react');
+    if (navigator.vibrate) navigator.vibrate(12);
+
     try {
       const res = await chatService.toggleReaction(messageId, emoji, token);
-      if (res.ok) {
-        playChatSound('react');
-        fetchChatMessages();
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && Array.isArray(data.reactions)) {
+        setChatMessages(prev => prev.map(m => m.id === messageId ? { ...m, reactions: data.reactions } : m));
+      } else if (!res.ok) {
+        setChatMessages(prev => prev.map(m => m.id === messageId ? { ...m, reactions: before } : m));
+        showToast(data.error || 'معرفناش نسجّل التفاعل');
       }
     } catch (err) {
       console.error(err);
+      setChatMessages(prev => prev.map(m => m.id === messageId ? { ...m, reactions: before } : m));
+      showToast('مشكلة في النت: التفاعل ماتسجّلش');
     }
   };
 

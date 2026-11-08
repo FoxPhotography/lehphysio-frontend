@@ -30,9 +30,15 @@ import {
   Frown,
   Zap,
   AlertTriangle,
-  Plus
+  Plus,
+  Copy,
+  SmilePlus
 } from 'lucide-react';
 import { EmojiPickerPopover } from '../components/common/EmojiPickerPopover';
+import { ReactionSummary, ReactionBurst, MessageActionOverlay, ReactionDetailsSheet, type MessageAction } from '../components/chat/ChatReactions';
+import { QUICK_REACTIONS, normalizeEmoji } from '../utils/chatReactions';
+import { copyToClipboard } from '../utils/helpers';
+import { useAuth } from '../context/AuthContext';
 
 interface CommunityProps {
   user: any;
@@ -84,30 +90,6 @@ interface CommunityProps {
 const stripEmojis = (str: string) => {
   if (!str) return '';
   return str.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, '').trim();
-};
-
-const EMOJI_MAP: Record<string, string> = {
-  'like': '👍',
-  'thumbsup': '👍',
-  'heart': '❤️',
-  'love': '❤️',
-  'fire': '🔥',
-  'flame': '🔥',
-  'joy': '😂',
-  'laugh': '😂',
-  'smile': '😊',
-  'clap': '👏',
-  'sad': '😢',
-  'frown': '😢',
-  'cry': '😢',
-  'wow': '😮',
-  'skull': '💀',
-  '100': '💯'
-};
-
-const renderReactionIcon = (emoji: string) => {
-  const actualEmoji = EMOJI_MAP[emoji?.toLowerCase?.()] || emoji;
-  return <span className="text-xs md:text-sm leading-none inline-block transform hover:scale-110 transition-transform">{actualEmoji}</span>;
 };
 
 export const Community: React.FC<CommunityProps> = ({
@@ -182,6 +164,30 @@ export const Community: React.FC<CommunityProps> = ({
 
   // Emoji picker states
   const [reactionPickerMsgId, setReactionPickerMsgId] = useState<number | null>(null);
+
+  // Reactions UX: double-tap ❤️, floating burst, "who reacted" sheet
+  const { showToast } = useAuth();
+  const [reactionBurst, setReactionBurst] = useState<{ id: number; emoji: string; key: number } | null>(null);
+  const [reactionDetailsMsgId, setReactionDetailsMsgId] = useState<number | null>(null);
+  const lastTapRef = useRef<{ id: number; t: number } | null>(null);
+
+  const reactTo = (msg: any, emoji: string) => {
+    if (!user || !msg || msg.id < 0) return;
+    const mine = (msg.reactions || []).find((r: any) => r.userReacted);
+    const removing = mine && normalizeEmoji(mine.emoji) === emoji;
+    handleToggleReaction(msg.id, emoji);
+    if (!removing) {
+      setReactionBurst({ id: msg.id, emoji, key: Date.now() });
+      setTimeout(() => setReactionBurst(b => (b && b.id === msg.id ? null : b)), 650);
+    }
+  };
+
+  const openMessageMenu = (msg: any) => {
+    if (!user) return;
+    setActiveContextMenu({ messageId: msg.id, msg, x: 0, y: 0 });
+  };
+
+  const avatarFor = (username: string) => (usernames || []).find((u: any) => u.username === username);
 
   const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
 
@@ -563,7 +569,7 @@ export const Community: React.FC<CommunityProps> = ({
                   >
                     <div
                       id={`chat-msg-${msg.id}`}
-                      className={`flex items-start gap-2.5 max-w-[85%] relative rounded-2xl select-none cursor-pointer transition-all ${
+                      className={`group/msg flex items-start gap-2.5 max-w-[85%] relative rounded-2xl select-none [-webkit-touch-callout:none] cursor-pointer transition-all ${
                         isSelected ? 'ring-2 ring-brand-orange/40 bg-brand-orange/5' : ''
                       }`}
                       style={{ 
@@ -575,6 +581,19 @@ export const Community: React.FC<CommunityProps> = ({
                           setSelectedMessageIds(prev => 
                             prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]
                           );
+                          return;
+                        }
+                        // Double-tap (or double-click) a message → quick ❤️
+                        const now = Date.now();
+                        const last = lastTapRef.current;
+                        if (last && last.id === msg.id && now - last.t < 320) {
+                          lastTapRef.current = null;
+                          const mine = (msg.reactions || []).find((r: any) => r.userReacted);
+                          // Double-tapping again doesn't undo a different reaction — it only adds ❤️ when you have none
+                          if (!mine) reactTo(msg, QUICK_REACTIONS[0]);
+                          else if (normalizeEmoji(mine.emoji) === QUICK_REACTIONS[0]) reactTo(msg, QUICK_REACTIONS[0]);
+                        } else {
+                          lastTapRef.current = { id: msg.id, t: now };
                         }
                       }}
                       onContextMenu={(e) => handleChatContextMenu(e, msg)}
@@ -688,31 +707,32 @@ export const Community: React.FC<CommunityProps> = ({
                             </div>
                           </div>
 
-                          {/* Reaction row */}
-                          {msg.reactions && msg.reactions.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2 border-t border-black/10">
-                              {msg.reactions.map((react: any, rIdx: number) => (
-                                <button
-                                  key={rIdx}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleToggleReaction(msg.id, react.emoji);
-                                  }}
-                                  className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border text-2xs font-bold cursor-pointer transition-colors ${
-                                    react.userReacted 
-                                      ? 'bg-brand-orange/20 border-brand-orange/40 text-white' 
-                                      : 'bg-black/25 border-zinc-800/20 text-zinc-300'
-                                  }`}
-                                >
-                                  {renderReactionIcon(react.emoji)}
-                                  <span>{react.count}</span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
+                          <ReactionBurst emoji={reactionBurst && reactionBurst.id === msg.id ? reactionBurst.emoji : null} burstKey={reactionBurst?.key} />
                         </div>
                       </HighlightWrapper>
+
+                        {/* Reactions capsule hanging off the bubble */}
+                        {msg.reactions && msg.reactions.length > 0 && (
+                          <ReactionSummary
+                            reactions={msg.reactions}
+                            isMine={!!isMyMsg}
+                            onOpenDetails={() => setReactionDetailsMsgId(msg.id)}
+                            onToggle={(emoji) => reactTo(msg, emoji)}
+                          />
+                        )}
                       </div>
+
+                      {/* Desktop: hover shortcut to react */}
+                      {user && !isMultiSelectMode && msg.id > 0 && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openMessageMenu(msg); }}
+                          aria-label="تفاعل أو خيارات"
+                          className={`${isMyMsg ? '-order-1' : ''} hidden md:flex self-center shrink-0 w-8 h-8 rounded-full items-center justify-center text-zinc-500 hover:text-brand-orange hover:bg-zinc-900 opacity-0 group-hover/msg:opacity-100 focus:opacity-100 transition-opacity cursor-pointer`}
+                        >
+                          <SmilePlus className="w-[18px] h-[18px]" />
+                        </button>
+                      )}
 
                       {/* Incoming Avatar (Me) */}
                       {isMyMsg && (
@@ -1104,136 +1124,63 @@ export const Community: React.FC<CommunityProps> = ({
         )}
       </div>
 
-      {/* Context Menu Overlay */}
-      <AnimatePresence>
-        {activeContextMenu && (
-          <div 
-            className="fixed inset-0 z-[100] cursor-default"
-            onClick={() => setActiveContextMenu(null)}
-            onContextMenu={(e) => { e.preventDefault(); setActiveContextMenu(null); }}
-          >
-            <m.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.15 }}
-              className="absolute bg-zinc-950 border border-zinc-800 rounded-2xl p-1.5 flex flex-col gap-1 min-w-[150px] shadow-2xl z-[1000] text-start"
-              style={{
-                top: Math.min(activeContextMenu.y, window.innerHeight - 280),
-                left: Math.max(10, Math.min(activeContextMenu.x - 105, window.innerWidth - 220))
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Reactions Emoji Bar */}
-              <div className="flex justify-around items-center bg-zinc-900 border border-zinc-800/80 rounded-xl p-1 mb-1 gap-1">
-                {['👍', '❤️', '🔥', '😂', '👏', '😢'].map((emoji) => (
-                  <button
-                    key={emoji}
-                    className="p-1 text-xs hover:scale-125 hover:bg-zinc-800 rounded-lg cursor-pointer transition-transform"
-                    onClick={() => {
-                      handleToggleReaction(activeContextMenu.messageId, emoji);
-                      setActiveContextMenu(null);
-                    }}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className="p-1 text-xs text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg cursor-pointer transition-colors flex items-center justify-center"
-                  title="إيموجي أكتر"
-                  onClick={() => {
-                    setReactionPickerMsgId(activeContextMenu.messageId);
-                    setActiveContextMenu(null);
-                  }}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-              </div>
+      {/* Long-press / right-click: reactions + actions */}
+      {(() => {
+        const cm = activeContextMenu;
+        const msg = cm?.msg ? (chatMessages.find((x: any) => x.id === cm.messageId) || cm.msg) : null;
+        const isMine = !!(user && msg && msg.username === user.username);
+        const isStaff = !!(user && (user.role === 'admin' || user.role === 'owner'));
+        const actions: MessageAction[] = [];
+        if (msg) {
+          actions.push({ key: 'reply', label: 'رد', icon: CornerUpLeft, onSelect: () => setReplyingTo({ id: msg.id, username: msg.username, message: msg.message }) });
+          actions.push({ key: 'copy', label: 'نسخ النص', icon: Copy, onSelect: async () => {
+            try { await copyToClipboard(msg.message || ''); showToast('اتنسخت الرسالة 📋'); } catch { showToast('معرفناش ننسخ الرسالة'); }
+          } });
+          if (isMine) {
+            actions.push({ key: 'edit', label: 'تعديل', icon: Edit2, onSelect: () => { setEditingMessage(msg); setChatInput(msg.message); setReplyingTo(null); } });
+          }
+          actions.push({ key: 'select', label: 'تحديد', icon: CheckSquare, onSelect: () => { setIsMultiSelectMode(true); setSelectedMessageIds([msg.id]); } });
+          if (isStaff && !isMine) {
+            actions.push({ key: 'mod', label: 'إجراء على المستخدم', icon: ShieldAlert, tone: 'accent', onSelect: () => handleOpenModerationModal(msg.username, msg.user_id) });
+          }
+          if (user && !isMine) {
+            actions.push({ key: 'report', label: 'إبلاغ عن الرسالة', icon: AlertTriangle, tone: 'warning', onSelect: () => handleOpenReportModal && handleOpenReportModal('message', msg.id, msg.message) });
+          }
+          if (isMine || isStaff) {
+            actions.push({ key: 'delete', label: 'حذف', icon: Trash2, tone: 'danger', onSelect: () => handleDeleteMessage(msg.id) });
+          }
+        }
+        const mine = msg ? (msg.reactions || []).find((r: any) => r.userReacted) : null;
+        return (
+          <MessageActionOverlay
+            open={!!cm}
+            messageId={cm?.messageId ?? null}
+            isMine={isMine}
+            preview={msg ? { username: msg.username, text: msg.message } : null}
+            myReaction={mine ? normalizeEmoji(mine.emoji) : null}
+            canReact={!!msg && msg.id > 0}
+            actions={actions}
+            onReact={(emoji) => { if (msg) reactTo(msg, emoji); setActiveContextMenu(null); }}
+            onMoreEmoji={() => { if (msg) setReactionPickerMsgId(msg.id); setActiveContextMenu(null); }}
+            onClose={() => setActiveContextMenu(null)}
+          />
+        );
+      })()}
 
-              {/* Action buttons */}
-              <button 
-                className="w-full flex items-center gap-2.5 p-2 font-bold text-xs text-white rounded-lg cursor-pointer hover:bg-zinc-900/60 transition-colors"
-                onClick={() => {
-                  setReplyingTo({
-                    id: activeContextMenu.msg.id,
-                    username: activeContextMenu.msg.username,
-                    message: activeContextMenu.msg.message
-                  });
-                  setActiveContextMenu(null);
-                }}
-              >
-                <CornerUpLeft className="rtl:-scale-x-100 w-3.5 h-3.5 text-zinc-500" /> 
-                <span>رد</span>
-              </button>
-
-              {user && activeContextMenu.msg.username === user.username && (
-                <button 
-                  className="w-full flex items-center gap-2.5 p-2 font-bold text-xs text-white rounded-lg cursor-pointer hover:bg-zinc-900/60 transition-colors"
-                  onClick={() => {
-                    setEditingMessage(activeContextMenu.msg);
-                    setChatInput(activeContextMenu.msg.message);
-                    setReplyingTo(null);
-                    setActiveContextMenu(null);
-                  }}
-                >
-                  <Edit2 className="w-3.5 h-3.5 text-zinc-500" /> 
-                  <span>تعديل</span>
-                </button>
-              )}
-
-              <button 
-                className="w-full flex items-center gap-2.5 p-2 font-bold text-xs text-white rounded-lg cursor-pointer hover:bg-zinc-900/60 transition-colors"
-                onClick={() => {
-                  setIsMultiSelectMode(true);
-                  setSelectedMessageIds([activeContextMenu.messageId]);
-                  setActiveContextMenu(null);
-                }}
-              >
-                <CheckSquare className="w-3.5 h-3.5 text-zinc-500" /> 
-                <span>تحديد</span>
-              </button>
-
-              {user && (activeContextMenu.msg.username === user.username || user.role === 'admin' || user.role === 'owner') && (
-                <button 
-                  className="w-full flex items-center gap-2.5 p-2 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 transition-colors"
-                  onClick={() => {
-                    handleDeleteMessage(activeContextMenu.messageId);
-                    setActiveContextMenu(null);
-                  }}
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-red-500" /> 
-                  <span>حذف</span>
-                </button>
-              )}
-              {user && (user.role === 'admin' || user.role === 'owner') && activeContextMenu.msg.username !== user.username && (
-                <button 
-                  className="w-full flex items-center gap-2.5 p-2 font-bold text-xs text-brand-orange rounded-lg cursor-pointer hover:bg-zinc-900/60 transition-colors"
-                  onClick={() => {
-                    handleOpenModerationModal(activeContextMenu.msg.username, activeContextMenu.msg.user_id);
-                    setActiveContextMenu(null);
-                  }}
-                >
-                  <ShieldAlert className="w-3.5 h-3.5 text-brand-orange" /> 
-                  <span>إجراء على المستخدم</span>
-                </button>
-              )}
-              {user && activeContextMenu.msg.username !== user.username && (
-                <button 
-                  className="w-full flex items-center gap-2.5 p-2 font-bold text-xs text-amber-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 transition-colors"
-                  onClick={() => {
-                    handleOpenReportModal && handleOpenReportModal('message', activeContextMenu.messageId, activeContextMenu.msg.message);
-                    setActiveContextMenu(null);
-                  }}
-                >
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> 
-                  <span>إبلاغ عن الرسالة</span>
-                </button>
-              )}
-            </m.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Who reacted */}
+      {(() => {
+        const msg = reactionDetailsMsgId != null ? chatMessages.find((x: any) => x.id === reactionDetailsMsgId) : null;
+        return (
+          <ReactionDetailsSheet
+            open={!!msg && (msg.reactions || []).length > 0}
+            reactions={msg?.reactions || []}
+            myId={user?.id}
+            avatarFor={avatarFor}
+            onRemoveMine={(emoji) => { if (msg) handleToggleReaction(msg.id, emoji); }}
+            onClose={() => setReactionDetailsMsgId(null)}
+          />
+        );
+      })()}
 
       {/* Reactions Custom Emoji Picker Modal */}
       <EmojiPickerPopover
@@ -1241,7 +1188,8 @@ export const Community: React.FC<CommunityProps> = ({
         onClose={() => setReactionPickerMsgId(null)}
         onEmojiSelect={(emoji) => {
           if (reactionPickerMsgId) {
-            handleToggleReaction(reactionPickerMsgId, emoji);
+            const target = chatMessages.find((x: any) => x.id === reactionPickerMsgId);
+            if (target) reactTo(target, emoji);
           }
           setReactionPickerMsgId(null);
         }}

@@ -16,6 +16,8 @@ const COPY: Record<NotificationType, Copy> = {
   comment_reply: { action: 'رد على تعليقك', tone: 'social' },
   mention_comment: { action: 'عملك منشن في تعليق', tone: 'mention' },
   mention_chat: { action: 'عملك منشن في الشات', tone: 'mention' },
+  chat_reply: { action: 'رد على رسالتك في الشات', tone: 'social' },
+  chat_reaction: { action: 'تفاعل مع رسالتك', tone: 'mention' },
   new_post: { action: 'نشر بوست جديد', tone: 'content' },
   new_episode: { action: 'نزّلت حلقة جديدة 🎙️', tone: 'content', system: true },
   post_approved: { action: 'بوستك اتقبل واتنشر', tone: 'success', system: true },
@@ -46,7 +48,10 @@ export interface DescribedNotification extends Copy {
 
 /** The backend sends English titles; the app composes its own Arabic sentence from type + actor + metadata. */
 export function describe(n: AppNotification): DescribedNotification {
-  const copy = COPY[n.type] ?? { action: n.title || 'إشعار جديد', tone: 'content' as Tone };
+  let copy = COPY[n.type] ?? { action: n.title || 'إشعار جديد', tone: 'content' as Tone };
+  if (n.type === 'chat_reaction' && n.metadata?.emoji) {
+    copy = { ...copy, action: `تفاعل بـ ${n.metadata.emoji} على رسالتك` };
+  }
   const actor = n.actor_id && typeof n.actor_id === 'object' ? n.actor_id : null;
 
   let snippet: string | null = null;
