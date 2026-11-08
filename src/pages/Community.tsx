@@ -352,6 +352,23 @@ export const Community: React.FC<CommunityProps> = ({
     }
   }, []);
 
+  // Suggestion notification: switch to the suggestions tab (even if already on this page) and flash the card
+  useEffect(() => {
+    if (deepLinkTarget?.type !== 'suggestion') return undefined;
+    setActiveSubTab('suggestions');
+    const id = deepLinkTarget.suggestionId;
+    const t = setTimeout(() => {
+      const el = id ? document.getElementById(`suggestion-${id}`) : null;
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('deeplink-card-highlight');
+        setTimeout(() => el.classList.remove('deeplink-card-highlight'), 3500);
+      }
+      setDeepLinkTarget(null);
+    }, 450);
+    return () => clearTimeout(t);
+  }, [deepLinkTarget, suggestions]);
+
   const renderTextWithMentions = (text: string) => {
     return formatMentions(text, usernames, 'text-yellow-400 font-extrabold hover:underline cursor-pointer transition-colors');
   };
@@ -955,7 +972,7 @@ export const Community: React.FC<CommunityProps> = ({
                   }
 
                   return (
-                    <div key={s.id} className="glass-card p-4 border border-zinc-900/60 flex flex-col gap-2.5 text-start">
+                    <div key={s.id} id={`suggestion-${s.id}`} className="glass-card p-4 border border-zinc-900/60 flex flex-col gap-2.5 text-start">
                       {isEditing ? (
                         <div className="flex flex-col gap-3">
                           <div>

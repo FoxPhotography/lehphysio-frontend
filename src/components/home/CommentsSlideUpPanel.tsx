@@ -14,9 +14,11 @@ import {
   AlertTriangle, 
   Loader2, 
   MessageSquare,
-  ChevronDown
+  ChevronDown,
+  ShieldAlert
 } from 'lucide-react';
 import { communityService } from '../../services/communityService';
+import { episodeService } from '../../services/episodeService';
 import { formatMentions } from '../../utils/mentions';
 
 interface CommentItem {
@@ -43,10 +45,17 @@ interface CommentsSlideUpPanelProps {
   usernames?: any[];
   triggerXpPopup?: (amount: number) => void;
   showToast: (msg: string) => void;
-  handleOpenReportModal?: (type: 'post' | 'comment' | 'message', id: number, preview?: string) => void;
+  handleOpenReportModal?: (type: 'post' | 'comment' | 'message', id: number, preview?: string, commentKind?: 'post_comment' | 'episode_comment') => void;
+  handleOpenModerationModal?: (username: string, userId: number) => void;
   onCommentCountChange?: (postId: number, delta: number) => void;
+  /** Called after any add / edit / delete / like so the owner can refresh counts or XP. */
+  onCommentsMutated?: () => void;
   deepLinkTarget?: any;
   setDeepLinkTarget?: (val: any) => void;
+  /** What the comments belong to. `postId` holds the episode id when this is 'episode'. */
+  targetKind?: 'post' | 'episode';
+  /** Overrides the "بوست @author" line under the title (e.g. the episode title). */
+  headerSubtitle?: string;
 }
 
 export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
@@ -59,10 +68,19 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
   triggerXpPopup,
   showToast,
   handleOpenReportModal,
+  handleOpenModerationModal,
   onCommentCountChange,
+  onCommentsMutated,
   deepLinkTarget,
   setDeepLinkTarget,
+  targetKind = 'post',
+  headerSubtitle,
 }) => {
+  const isEpisode = targetKind === 'episode';
+  const commentKind: 'post_comment' | 'episode_comment' = isEpisode ? 'episode_comment' : 'post_comment';
+  // Separate URL params so the router never opens an episode's comments as a post's
+  const urlParam = isEpisode ? 'episode_comments' : 'comments';
+  const authToken = () => localStorage.getItem('token') || undefined;
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -83,6 +101,12 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
   // Expand replies tracking
   const [expandedReplies, setExpandedReplies] = useState<Record<number, boolean>>({});
 
+  // Which list is currently in `comments` ("post:12" / "episode:3"), so deep links never act on stale data
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  // Comment flashed after arriving from a notification / report
+  const [highlightedCommentId, setHighlightedCommentId] = useState<number | null>(null);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const listContainerRef = useRef<HTMLDivElement>(null);
   const isHandlingPopStateRef = useRef(false);
@@ -95,10 +119,10 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
 
     // If the URL doesn't already have comments=postId, push state
     const currentUrl = new URL(window.location.href);
-    const currentCommentsParam = currentUrl.searchParams.get('comments');
+    const currentCommentsParam = currentUrl.searchParams.get(urlParam);
     
     if (currentCommentsParam !== String(postId)) {
-      currentUrl.searchParams.set('comments', String(postId));
+      currentUrl.searchParams.set(urlParam, String(postId));
       window.history.pushState({ commentsSheetOpen: true, postId }, '', currentUrl.toString());
     }
 
@@ -120,8 +144,8 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
   const handlePanelClose = () => {
     if (!isHandlingPopStateRef.current) {
       const currentUrl = new URL(window.location.href);
-      if (currentUrl.searchParams.has('comments')) {
-        currentUrl.searchParams.delete('comments');
+      if (currentUrl.searchParams.has(urlParam)) {
+        currentUrl.searchParams.delete(urlParam);
         window.history.replaceState({}, '', currentUrl.pathname + (currentUrl.search ? currentUrl.search : ''));
       }
     }
@@ -130,49 +154,87 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
   };
 
   // Fetch comments when postId changes or panel opens
-  const fetchComments = async () => {
+  const fetchComments = async (silent = false) => {
     if (!postId) return;
-    setLoading(true);
+    const key = `${targetKind}:${postId}`;
+    if (!silent) setLoading(true);
     try {
-      const res = await communityService.fetchComments(postId);
+      const res = isEpisode
+        ? await episodeService.fetchEpisodeDetail(postId, authToken())
+        : await communityService.fetchComments(postId);
       if (res.ok) {
         const data = await res.json();
-        setComments(data || []);
+        setComments(isEpisode ? (data?.comments || []) : (data || []));
+        setLoadedKey(key);
       }
     } catch (e) {
       console.error('Error fetching comments:', e);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     if (isOpen && postId) {
+      if (loadedKey !== `${targetKind}:${postId}`) {
+        setComments([]);
+        setExpandedReplies({});
+      }
       fetchComments();
       setReplyingTo(null);
       setCommentText('');
       setEditingCommentId(null);
       setActiveMenuCommentId(null);
     }
-  }, [isOpen, postId]);
+  }, [isOpen, postId, targetKind]);
 
-  // Handle deep-link scrolling to a specific comment
+  // Deep link (notification / moderator report): expand the thread, scroll the comment
+  // into view inside the sheet and flash it for a few seconds.
   useEffect(() => {
-    if (isOpen && deepLinkTarget && deepLinkTarget.type === 'comment' && deepLinkTarget.postId === postId && comments.length > 0) {
-      const { commentId } = deepLinkTarget;
-      setTimeout(() => {
-        const el = document.getElementById(`sheet-comment-${commentId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          el.classList.add('notification-highlight');
-          setTimeout(() => {
-            el.classList.remove('notification-highlight');
-          }, 3000);
-          if (setDeepLinkTarget) setDeepLinkTarget(null);
-        }
-      }, 300);
+    if (!isOpen || !postId || !deepLinkTarget || loading) return undefined;
+    const matchesTarget = isEpisode
+      ? deepLinkTarget.type === 'episode_comment' && Number(deepLinkTarget.episodeId) === Number(postId)
+      : deepLinkTarget.type === 'comment' && Number(deepLinkTarget.postId) === Number(postId);
+    if (!matchesTarget || loadedKey !== `${targetKind}:${postId}`) return undefined;
+
+    const targetId = Number(deepLinkTarget.commentId);
+    let parentOfTarget: number | null = null;
+    const exists = comments.some(c => {
+      if (Number(c.id) === targetId) return true;
+      if ((c.replies || []).some(r => Number(r.id) === targetId)) {
+        parentOfTarget = c.id;
+        return true;
+      }
+      return false;
+    });
+
+    if (setDeepLinkTarget) setDeepLinkTarget(null);
+
+    if (!exists) {
+      showToast('التعليق ده مبقاش موجود 🤷');
+      return undefined;
     }
-  }, [isOpen, deepLinkTarget, comments, postId]);
+
+    if (parentOfTarget !== null) {
+      const pid = parentOfTarget;
+      setExpandedReplies(prev => ({ ...prev, [pid]: true }));
+    }
+
+    // Wait for the sheet's slide-up and the replies expand animation.
+    // (Not cleared on re-run: clearing the target above re-runs this effect.)
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    highlightTimerRef.current = setTimeout(() => {
+      const el = document.getElementById(`sheet-comment-${targetId}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightedCommentId(targetId);
+      highlightTimerRef.current = setTimeout(() => setHighlightedCommentId(null), 3500);
+    }, parentOfTarget !== null ? 550 : 400);
+    return undefined;
+  }, [isOpen, postId, deepLinkTarget, comments, loading, loadedKey, targetKind]);
+
+  useEffect(() => () => {
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+  }, []);
 
   // Mentions autocomplete logic
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -222,14 +284,20 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
     const parentId = replyingTo ? replyingTo.id : null;
 
     try {
-      const res = await communityService.addComment(postId, text, parentId, localStorage.getItem('token') || undefined);
+      const res = isEpisode
+        ? await episodeService.addComment(postId, text, parentId || undefined, authToken())
+        : await communityService.addComment(postId, text, parentId, authToken());
       if (res.ok) {
         const newComment = await res.json();
         if (newComment.xp_earned && triggerXpPopup) {
           triggerXpPopup(newComment.xp_earned);
         }
 
-        if (parentId) {
+        if (isEpisode) {
+          // The episode endpoint doesn't echo the comment back — reload the thread
+          await fetchComments(true);
+          if (parentId) setExpandedReplies(prev => ({ ...prev, [parentId]: true }));
+        } else if (parentId) {
           setComments(prev => prev.map(c => 
             c.id === parentId ? { ...c, replies: [...(c.replies || []), newComment] } : c
           ));
@@ -238,9 +306,10 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
           setComments(prev => [...prev, newComment]);
         }
 
-        if (onCommentCountChange) {
+        if (onCommentCountChange && !isEpisode && !parentId) {
           onCommentCountChange(postId, 1);
         }
+        onCommentsMutated?.();
 
         setCommentText('');
         setReplyingTo(null);
@@ -288,17 +357,30 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
     }));
 
     try {
-      await communityService.likeComment(commentId, localStorage.getItem('token') || undefined);
+      if (isEpisode && postId) {
+        const res = await episodeService.likeComment(postId, commentId, authToken());
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          if (data.xp_earned && triggerXpPopup) triggerXpPopup(data.xp_earned);
+          onCommentsMutated?.();
+        } else {
+          fetchComments(true);
+        }
+      } else {
+        await communityService.likeComment(commentId, authToken());
+      }
     } catch (e) {
       console.error('Error toggling comment like:', e);
-      fetchComments();
+      fetchComments(true);
     }
   };
 
   // Delete comment
   const handleDeleteComment = async (commentId: number, isReply: boolean, parentId?: number) => {
     try {
-      const res = await communityService.deleteComment(commentId, localStorage.getItem('token') || undefined);
+      const res = isEpisode
+        ? await episodeService.deleteComment(commentId, authToken())
+        : await communityService.deleteComment(commentId, authToken());
       if (res.ok) {
         if (triggerXpPopup) triggerXpPopup(-15);
         if (isReply && parentId) {
@@ -308,10 +390,14 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
         } else {
           setComments(prev => prev.filter(c => c.id !== commentId));
         }
-        if (onCommentCountChange && postId) {
+        if (onCommentCountChange && postId && !isEpisode && !isReply) {
           onCommentCountChange(postId, -1);
         }
+        onCommentsMutated?.();
         showToast('التعليق اتمسح');
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || 'معرفناش نمسح التعليق');
       }
     } catch (e) {
       console.error('Error deleting comment:', e);
@@ -323,12 +409,19 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
   const handleSaveEdit = async (commentId: number) => {
     if (!editCommentText.trim()) return;
     try {
-      const res = await communityService.editComment(commentId, editCommentText.trim(), localStorage.getItem('token') || undefined);
+      const text = editCommentText.trim();
+      const res = isEpisode
+        ? await episodeService.editComment(commentId, text, authToken())
+        : await communityService.editComment(commentId, text, authToken());
       if (res.ok) {
         setEditingCommentId(null);
         setEditCommentText('');
-        fetchComments();
+        fetchComments(true);
+        onCommentsMutated?.();
         showToast('التعليق اتعدّل');
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || 'معرفناش نعدّل التعليق');
       }
     } catch (e) {
       console.error('Error editing comment:', e);
@@ -356,7 +449,10 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
 
   // Render a single comment row
   const renderCommentItem = (c: CommentItem, isReply: boolean = false, parentId?: number) => {
-    const isOwner = user && (c.user_id === user.id || c.username === user.username || user.role === 'admin' || user.role === 'owner');
+    const isAuthor = !!user && (c.user_id === user.id || c.username === user.username);
+    const isStaff = !!user && ['moderator', 'admin', 'owner'].includes(user.role);
+    const canModerateUser = !!user && !isAuthor && (user.role === 'admin' || user.role === 'owner') && !!handleOpenModerationModal;
+    const isHighlighted = highlightedCommentId === Number(c.id);
     const isMenuOpen = activeMenuCommentId === c.id;
     const isEditing = editingCommentId === c.id;
     const hasReplies = !isReply && c.replies && c.replies.length > 0;
@@ -378,7 +474,11 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
 
           <div className="flex-1 min-w-0">
             {/* Comment bubble */}
-            <div className="bg-zinc-900/60 hover:bg-zinc-900/80 transition-colors border border-zinc-800/60 rounded-2xl p-3 text-start relative">
+            <div className={`transition-colors duration-500 border rounded-2xl p-3 text-start relative ${
+              isHighlighted
+                ? 'comment-deeplink-highlight bg-brand-orange/[0.12] border-brand-orange/60'
+                : 'bg-zinc-900/60 hover:bg-zinc-900/80 border-zinc-800/60'
+            }`}>
               <div className="flex items-center justify-between gap-2 mb-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-xs font-black text-white hover:text-brand-orange cursor-pointer transition-colors">
@@ -422,35 +522,36 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                               exit={{ opacity: 0, scale: 0.9, y: -5 }}
                               className="absolute end-0 top-7 z-50 bg-zinc-950 border border-zinc-800 rounded-xl p-1.5 flex flex-col gap-1 min-w-[120px] shadow-2xl"
                             >
-                              {isOwner ? (
-                                <>
-                                  <button
-                                    onClick={() => {
-                                      setEditingCommentId(c.id);
-                                      setEditCommentText(c.content);
-                                      setActiveMenuCommentId(null);
-                                    }}
-                                    className="w-full flex items-center gap-2 p-2 font-bold text-xs text-brand-amber rounded-lg hover:bg-zinc-900 cursor-pointer text-start transition-colors"
-                                  >
-                                    <Edit2 className="w-3.5 h-3.5" />
-                                    <span>تعديل</span>
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      handleDeleteComment(c.id, isReply, parentId);
-                                      setActiveMenuCommentId(null);
-                                    }}
-                                    className="w-full flex items-center gap-2 p-2 font-bold text-xs text-red-400 rounded-lg hover:bg-zinc-900 cursor-pointer text-start transition-colors"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    <span>حذف</span>
-                                  </button>
-                                </>
-                              ) : (
+                              {isAuthor && (
+                                <button
+                                  onClick={() => {
+                                    setEditingCommentId(c.id);
+                                    setEditCommentText(c.content);
+                                    setActiveMenuCommentId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 p-2 font-bold text-xs text-brand-amber rounded-lg hover:bg-zinc-900 cursor-pointer text-start transition-colors"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                  <span>تعديل</span>
+                                </button>
+                              )}
+                              {(isAuthor || isStaff) && (
+                                <button
+                                  onClick={() => {
+                                    handleDeleteComment(c.id, isReply, parentId);
+                                    setActiveMenuCommentId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 p-2 font-bold text-xs text-red-400 rounded-lg hover:bg-zinc-900 cursor-pointer text-start transition-colors"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>حذف</span>
+                                </button>
+                              )}
+                              {!isAuthor && (
                                 <button
                                   onClick={() => {
                                     if (handleOpenReportModal) {
-                                      handleOpenReportModal('comment', c.id, c.content);
+                                      handleOpenReportModal('comment', c.id, c.content, commentKind);
                                     }
                                     setActiveMenuCommentId(null);
                                   }}
@@ -458,6 +559,18 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                                 >
                                   <AlertTriangle className="w-3.5 h-3.5" />
                                   <span>إبلاغ</span>
+                                </button>
+                              )}
+                              {canModerateUser && (
+                                <button
+                                  onClick={() => {
+                                    handleOpenModerationModal!(c.username, c.user_id);
+                                    setActiveMenuCommentId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 p-2 font-bold text-xs text-zinc-300 rounded-lg hover:bg-zinc-900 cursor-pointer text-start transition-colors"
+                                >
+                                  <ShieldAlert className="w-3.5 h-3.5 text-brand-orange" />
+                                  <span>إجراء على العضو</span>
                                 </button>
                               )}
                             </m.div>
@@ -538,7 +651,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                   <span>
                     {isRepliesExpanded 
                       ? 'إخفاء الردود' 
-                      : `View ${c.replies?.length} ${c.replies?.length === 1 ? 'reply' : 'replies'}`}
+                      : (c.replies?.length === 1 ? 'شوف الرد' : `شوف ${c.replies?.length} ردود`)}
                   </span>
                 </button>
 
@@ -602,9 +715,13 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                     <h3 className="text-sm font-black text-white">
                       التعليقات {comments.length > 0 && `(${comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0)})`}
                     </h3>
-                    {postAuthorName && (
+                    {headerSubtitle ? (
+                      <p dir="auto" className="text-2xs text-zinc-500 font-semibold truncate max-w-[60vw] md:max-w-md">
+                        {headerSubtitle}
+                      </p>
+                    ) : postAuthorName && (
                       <p className="text-2xs text-zinc-500 font-semibold">
-                        Post by <bdi dir="ltr">@{postAuthorName}</bdi>
+                        بوست <bdi dir="ltr">@{postAuthorName}</bdi>
                       </p>
                     )}
                   </div>
@@ -682,7 +799,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                 >
                   <div className="flex items-center gap-1.5 text-brand-orange font-bold">
                     <CornerUpLeft className="rtl:-scale-x-100 w-3.5 h-3.5" />
-                    <span>Replying to <bdi dir="ltr">@{replyingTo.username}</bdi></span>
+                    <span>بترد على <bdi dir="ltr">@{replyingTo.username}</bdi></span>
                   </div>
                   <button
                     onClick={() => setReplyingTo(null)}
@@ -722,7 +839,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                       data-form-type="other"
                       value={commentText}
                       onChange={handleInputChange}
-                      placeholder={replyingTo ? `Reply to @${replyingTo.username}...` : 'اكتب تعليق… (@ للمنشن)'}
+                      placeholder={replyingTo ? `رد على @${replyingTo.username}…` : 'اكتب تعليق… (@ للمنشن)'}
                       className="w-full bg-zinc-900/80 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-full py-2.5 ps-4 pe-4 text-xs font-semibold placeholder-zinc-500 outline-none transition-all"
                     />
                   </div>

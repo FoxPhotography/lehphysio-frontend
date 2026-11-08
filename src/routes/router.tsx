@@ -79,6 +79,7 @@ interface AppRouterProps {
   episodes: any[];
   selectedPostId?: number | null;
   onOpenComments?: (postId: number, authorName?: string) => void;
+  onOpenEpisodeComments?: (episodeId: number, episodeTitle?: string) => void;
   handleSharePost?: (id: number) => void;
   handleLikeEpisode: (id: number) => Promise<void>;
   handleShareEpisode: (id: number) => void;
@@ -115,7 +116,7 @@ interface AppRouterProps {
   handleEditSuggestion: (id: number, title: string, content: string) => Promise<void>;
   handleCancelSuggestionRevision: (id: number) => Promise<void>;
   handleOpenModerationModal: (username: string, userId: number) => void;
-  handleOpenReportModal?: (type: 'post' | 'comment' | 'message', id: number, preview?: string) => void;
+  handleOpenReportModal?: (type: 'post' | 'comment' | 'message', id: number, preview?: string, commentKind?: 'post_comment' | 'episode_comment') => void;
 
   // Games page specific hook bindings
   gamesHook: any;
@@ -187,6 +188,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
   handleCancelPostRevision,
   selectedPostId,
   onOpenComments,
+  onOpenEpisodeComments,
   handleSharePost,
   episodes,
   handleLikeEpisode,
@@ -398,6 +400,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           usernames={usernamesDirectory}
           showToast={showToast}
           handleOpenReportModal={handleOpenReportModal}
+          onOpenComments={onOpenEpisodeComments}
         />
       );
     case 'community':

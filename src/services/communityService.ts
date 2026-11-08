@@ -70,7 +70,8 @@ export const communityService = {
   },
 
   async deleteComment(commentId: number, token?: string) {
-    const res = await apiFetch(`/api/community/comments/${commentId}`, {
+    // kind=post keeps the server from matching an episode comment that shares this numeric id
+    const res = await apiFetch(`/api/community/comments/${commentId}?kind=post`, {
       method: 'DELETE',
     }, token);
     return res;
@@ -84,7 +85,7 @@ export const communityService = {
   },
 
   async editComment(commentId: number, content: string, token?: string) {
-    const res = await apiFetch(`/api/community/comments/${commentId}`, {
+    const res = await apiFetch(`/api/community/comments/${commentId}?kind=post`, {
       method: 'PUT',
       body: JSON.stringify({ content }),
     }, token);

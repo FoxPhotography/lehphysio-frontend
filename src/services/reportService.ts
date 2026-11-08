@@ -6,7 +6,8 @@ export const reportService = {
     targetId: number,
     reason: string,
     contentPreview?: string,
-    token?: string
+    token?: string,
+    commentKind?: 'post_comment' | 'episode_comment'
   ) {
     const res = await apiFetch('/api/reports', {
       method: 'POST',
@@ -15,6 +16,7 @@ export const reportService = {
         target_id: targetId,
         reason,
         content_preview: contentPreview || '',
+        ...(commentKind ? { comment_kind: commentKind } : {}),
       }),
     }, token);
     return res;

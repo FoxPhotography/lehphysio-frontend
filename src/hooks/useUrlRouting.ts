@@ -157,7 +157,12 @@ export const useUrlRouting = ({
       setPageFromUrl('reset-password');
     } else if (path === '/admin') {
       setPageFromUrl('admin');
-    } else if (path === '/moderation') {
+    } else if (path === '/moderation' || path === '/moderator') {
+      // ?tab= comes from push notifications (e.g. /moderation?tab=reports)
+      const tab = params.get('tab');
+      if (tab && ['posts', 'revisions', 'suggestions', 'users', 'reports', 'qotd'].includes(tab)) {
+        localStorage.setItem('moderator_active_tab', tab);
+      }
       setPageFromUrl('moderator-dashboard');
     } else if (path.startsWith('/u/')) {
       setPageFromUrl('public-profile');

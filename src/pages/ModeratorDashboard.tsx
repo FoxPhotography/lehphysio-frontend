@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { PremiumDateTimePicker } from '../components/PremiumDateTimePicker';
 import { useNotifications } from '../context/NotificationContext';
+import { DashboardShell } from '../components/admin/DashboardShell';
 
 interface ModeratorDashboardProps {
   user: any;
@@ -86,8 +87,8 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
   const [modSubmitting, setModSubmitting] = useState(false);
 
   // Fetch pending posts (both new pending posts and revisions)
-  const fetchPendingPosts = async () => {
-    setLoading(true);
+  const fetchPendingPosts = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch(`${apiBase}/api/admin/posts/pending`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -99,13 +100,13 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
     } catch (err) {
       console.error('Failed to fetch pending posts:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   // Fetch admin suggestions review
-  const fetchSuggestions = async () => {
-    setLoading(true);
+  const fetchSuggestions = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch(`${apiBase}/api/admin/suggestions`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -117,7 +118,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
     } catch (err) {
       console.error('Failed to fetch suggestions:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -140,8 +141,8 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
   };
 
   // Fetch content reports list
-  const fetchReports = async () => {
-    setLoading(true);
+  const fetchReports = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch(`${apiBase}/api/admin/reports`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -153,7 +154,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
     } catch (err) {
       console.error('Failed to fetch reports:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -186,32 +187,70 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
 
   const { setDeepLinkTarget } = useNotifications();
 
+  // "Go to content": App resolves the target (opens the post / comments sheet / episode / chat)
   const handleReportClick = (report: any) => {
     if (report.target_type === 'post') {
-      setDeepLinkTarget({ type: 'post', postId: report.target_id });
-      setCurrentPage('home');
+      setDeepLinkTarget({ type: 'post', targetId: report.target_id, postId: report.target_id });
     } else if (report.target_type === 'comment') {
-      if (report.comment_type === 'post_comment') {
-        setDeepLinkTarget({
-          type: 'comment',
-          commentId: report.target_id,
-          postId: report.parent_id
-        });
-        setCurrentPage('home');
-      } else if (report.comment_type === 'episode_comment') {
+      if (!report.parent_id) {
+        setMessage('التعليق ده اتمسح أو مش موجود.');
+        return;
+      }
+      if (report.comment_type === 'episode_comment') {
         setDeepLinkTarget({
           type: 'episode_comment',
-          commentId: report.target_id
+          targetId: report.target_id,
+          commentId: report.target_id,
+          episodeId: report.parent_id,
         });
-        if (navigateToEpisode) {
-          navigateToEpisode(report.parent_id);
-        }
+      } else {
+        setDeepLinkTarget({
+          type: 'comment',
+          targetId: report.target_id,
+          commentId: report.target_id,
+          postId: report.parent_id,
+        });
       }
     } else if (report.target_type === 'message') {
-      setDeepLinkTarget({ type: 'chat_message', messageId: report.target_id });
+      setDeepLinkTarget({ type: 'chat_message', targetId: report.target_id, messageId: report.target_id });
       setCurrentPage('community');
     }
   };
+
+  // Report reached from a notification: scroll to its card and flash it
+  const [focusReportId, setFocusReportId] = useState<number | null>(() => {
+    const saved = Number(localStorage.getItem('moderator_focus_report'));
+    localStorage.removeItem('moderator_focus_report');
+    return saved || null;
+  });
+
+  useEffect(() => {
+    const onFocus = (e: Event) => {
+      const id = Number((e as CustomEvent).detail);
+      localStorage.removeItem('moderator_focus_report');
+      if (id) {
+        setFocusReportId(id);
+        fetchReports(true);
+      }
+    };
+    window.addEventListener('moderator_focus_report', onFocus);
+    return () => window.removeEventListener('moderator_focus_report', onFocus);
+  }, []);
+
+  useEffect(() => {
+    if (!focusReportId || activeTab !== 'reports' || loading) return undefined;
+    if (!reports.some(r => Number(r.id) === focusReportId)) return undefined;
+    const t = setTimeout(() => {
+      const el = document.getElementById(`report-${focusReportId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('deeplink-card-highlight');
+        setTimeout(() => el.classList.remove('deeplink-card-highlight'), 3500);
+      }
+      setFocusReportId(null);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [focusReportId, activeTab, loading, reports]);
 
   // Fetch all QOTDs (Moderators/Admins)
   const fetchQuestions = async () => {
@@ -368,6 +407,13 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       fetchReports();
     }
   }, [activeTab]);
+
+  // Prefetch queues silently so the sidebar badges show pending counts right away
+  useEffect(() => {
+    fetchPendingPosts(true);
+    fetchSuggestions(true);
+    fetchReports(true);
+  }, []);
 
   useEffect(() => {
     const handleTabChange = (e: Event) => {
@@ -529,55 +575,28 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
     <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-3xl mx-auto px-4 xl:pt-6 space-y-5"
+      className="w-full"
     >
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
-          <ShieldAlert className="w-5 h-5 text-emerald-400" />
-        </div>
-        <div>
-          <h1 className="text-xl font-black text-white leading-tight">لوحة المشرفين</h1>
-          <p className="text-xs text-zinc-500">
-            مراجعة المحتوى وإدارة المستخدمين
-          </p>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1.5 flex-wrap">
-        {[
-          { id: 'posts', label: 'بوستات مستنية', icon: <FileText className="w-3.5 h-3.5" />, count: pendingNewPosts.length },
-          { id: 'revisions', label: 'تعديلات البوستات', icon: <FileEdit className="w-3.5 h-3.5" />, count: pendingRevisions.length },
-          { id: 'suggestions', label: 'الاقتراحات', icon: <Lightbulb className="w-3.5 h-3.5" />, count: suggestions.filter(s => s.status === 'pending').length },
-          { id: 'qotd', label: 'سؤال اليوم', icon: <HelpCircle className="w-3.5 h-3.5" /> },
-          { id: 'users', label: 'إجراءات المستخدمين', icon: <UserCheck className="w-3.5 h-3.5" /> },
-          { id: 'reports', label: 'البلاغات', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => {
-              setActiveTab(tab.id as any);
-              setMessage('');
-            }}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === tab.id
-                ? 'bg-emerald-500 text-black font-extrabold shadow-md shadow-emerald-500/20'
-                : 'bg-white/5 border border-white/8 text-zinc-400 hover:text-white hover:border-white/15'
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
-            {tab.count !== undefined && tab.count > 0 && (
-              <span className={`px-1.5 py-0.5 rounded-md text-2xs font-bold ${
-                activeTab === tab.id ? 'bg-black/25 text-black' : 'bg-emerald-500/15 text-emerald-400'
-              }`}>
-                {tab.count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      <DashboardShell
+        accent="emerald"
+        title="لوحة المشرفين"
+        subtitle="مراجعة المحتوى وإدارة المستخدمين"
+        headerIcon={ShieldAlert}
+        roleLabel={user?.role === 'owner' ? 'مالك' : user?.role === 'admin' ? 'أدمن' : 'مشرف'}
+        activeId={activeTab}
+        onSelect={(id) => {
+          setActiveTab(id as any);
+          setMessage('');
+        }}
+        items={[
+          { id: 'posts', label: 'بوستات مستنية', hint: 'بوستات جديدة محتاجة موافقة', icon: FileText, count: pendingNewPosts.length, group: 'المحتوى' },
+          { id: 'revisions', label: 'تعديلات البوستات', hint: 'تعديلات على بوستات منشورة', icon: FileEdit, count: pendingRevisions.length, group: 'المحتوى' },
+          { id: 'suggestions', label: 'الاقتراحات', hint: 'اقتراحات الطلاب', icon: Lightbulb, count: suggestions.filter(s => s.status === 'pending').length, group: 'المحتوى' },
+          { id: 'qotd', label: 'سؤال اليوم', hint: 'جدولة الأسئلة والإحصائيات', icon: HelpCircle, group: 'المحتوى' },
+          { id: 'reports', label: 'البلاغات', hint: 'بلاغات على بوستات وتعليقات ورسايل', icon: AlertTriangle, count: reports.filter(r => r.status === 'pending').length, group: 'المجتمع' },
+          { id: 'users', label: 'إجراءات المستخدمين', hint: 'كتم وحظر وفك', icon: UserCheck, group: 'المجتمع' },
+        ]}
+      >
 
       {/* Message Banner */}
       <AnimatePresence>
@@ -1045,7 +1064,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {reports.map((report) => (
-                <div key={report.id} className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4 text-start">
+                <div key={report.id} id={`report-${report.id}`} className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5 space-y-4 text-start transition-colors">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center border border-white/10">
@@ -1073,7 +1092,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                         report.target_type === 'comment' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
                         'bg-pink-500/10 text-pink-400 border border-pink-500/20'
                       }`}>
-                        Reported {report.target_type}
+                        {report.target_type === 'post' ? 'بوست' : report.target_type === 'comment' ? (report.comment_type === 'episode_comment' ? 'تعليق على حلقة' : 'تعليق على بوست') : 'رسالة شات'}
                       </span>
                       
                       <span className={`px-2 py-0.5 rounded text-2xs font-extrabold uppercase ${
@@ -1475,6 +1494,7 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
           </div>
         )}
       </AnimatePresence>
+      </DashboardShell>
     </m.div>
   );
 };

@@ -55,7 +55,9 @@ interface EpisodeDetailProps {
   handleDeleteComment: (commentId: number) => void;
   handleEditComment: (commentId: number, content: string) => void;
   usernames?: any[];
-  handleOpenReportModal?: (type: 'post' | 'comment' | 'message', id: number, preview?: string) => void;
+  handleOpenReportModal?: (type: 'post' | 'comment' | 'message', id: number, preview?: string, commentKind?: 'post_comment' | 'episode_comment') => void;
+  /** Opens the shared comments sheet (same one posts use) for this episode. */
+  onOpenComments?: (episodeId: number, episodeTitle?: string) => void;
 }
 
 // Helper to strip emojis
@@ -90,7 +92,8 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
   handleDeleteComment,
   handleEditComment,
   usernames = [],
-  handleOpenReportModal
+  handleOpenReportModal,
+  onOpenComments
 }) => {
   const [mentionSearchText, setMentionSearchText] = useState<string | null>(null);
   const [commentsExpanded, setCommentsExpanded] = useState(true);
@@ -126,24 +129,6 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
     return undefined;
   }, [contextMenu]);
 
-  // Auto-scroll and highlight comment/reply from deep link Target or query param
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const commentIdStr = params.get('comment');
-    const commentId = commentIdStr ? parseInt(commentIdStr, 10) : (deepLinkTarget?.type === 'episode_comment' ? deepLinkTarget.commentId : null);
-
-    if (commentId && comments && comments.length > 0) {
-      setCommentsExpanded(true);
-      setTimeout(() => {
-        const el = document.getElementById(`comment-${commentId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          if (deepLinkTarget) setDeepLinkTarget(null);
-        }
-      }, 500);
-    }
-  }, [comments, deepLinkTarget, setDeepLinkTarget]);
-
   const renderTextWithMentions = (text: string) => {
     return formatMentions(text, usernames, 'text-yellow-400 font-extrabold hover:underline cursor-pointer transition-colors');
   };
@@ -160,6 +145,9 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
   if (!episodeDetail || !episode) return null;
 
   const embedUrl = getYoutubeEmbedUrl(episode.youtube_url);
+  const totalComments = comments.reduce((acc: number, c: any) => acc + 1 + (c.replies?.length || 0), 0);
+  const previewComments = [...comments].slice(-2).reverse();
+  const openComments = () => onOpenComments?.(episode.id, episode.title_ar);
 
   return (
     <div className="space-y-6 xl:pt-6 max-w-4xl mx-auto px-4 text-start">
@@ -194,15 +182,10 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
             </button>
             <button 
               className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-all" 
-              onClick={() => {
-                setCommentsExpanded(true);
-                setTimeout(() => {
-                  document.querySelector('.comments-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
-              }}
+              onClick={openComments}
             >
               <MessageCircle className="w-4 h-4" /> 
-              <span>{comments.length} تعليق</span>
+              <span>{totalComments} تعليق</span>
             </button>
             <button 
               className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-all" 
@@ -320,505 +303,53 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
         </div>
       </section>
 
-      {/* Discussions / Comments panel */}
-      <section className="comments-panel space-y-4 pt-6">
-        <div 
-          onClick={() => setCommentsExpanded(prev => !prev)}
-          className="flex justify-between items-center cursor-pointer select-none group"
+      {/* Discussion — opens the same comments sheet used on posts */}
+      <section className="comments-panel pt-2">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={openComments}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openComments(); } }}
+          className="glass-card p-4 md:p-5 border border-zinc-800/60 hover:border-brand-orange/30 transition-colors cursor-pointer group space-y-3"
         >
-          <span className="flex items-center gap-2.5 text-lg font-black text-white">
-            <MessageCircle className="w-5 h-5 text-brand-orange" />
-            <span>النقاش ({comments.length})</span>
-          </span>
-          <ChevronDown className={`w-5 h-5 text-zinc-500 group-hover:text-zinc-300 transition-transform duration-300 ${commentsExpanded ? 'rotate-0' : '-rotate-90'}`} />
-        </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-2.5">
+              <span className="w-9 h-9 rounded-xl bg-brand-orange/15 border border-brand-orange/20 flex items-center justify-center text-brand-orange">
+                <MessageCircle className="w-[18px] h-[18px]" />
+              </span>
+              <span>
+                <span className="block text-base font-black text-white leading-tight">النقاش</span>
+                <span className="block text-2xs text-zinc-500 font-semibold">
+                  {totalComments > 0 ? `${totalComments} تعليق ورد` : 'مفيش تعليقات لسه — ابدأ إنت'}
+                </span>
+              </span>
+            </span>
+            <span className="bg-brand-orange/15 group-hover:bg-brand-orange/25 border border-brand-orange/30 text-brand-orange font-black text-xs px-4 py-2 rounded-xl transition-all group-active:scale-95 whitespace-nowrap">
+              افتح التعليقات 💬
+            </span>
+          </div>
 
-        <AnimatePresence>
-          {commentsExpanded && (
-            <m.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="space-y-4 overflow-hidden"
-            >
-              {user ? (
-                <div className="glass-card p-5 relative border border-zinc-900/60 flex flex-col gap-3">
-                  {replyingToComment && (
-                    <div className="flex items-center justify-between bg-brand-orange/5 border-s-2 border-brand-orange rounded-xl px-3 py-2 mb-1 text-xs font-bold text-brand-orange">
-                      <div className="flex items-center gap-1.5">
-                        <CornerUpLeft className="rtl:-scale-x-100 w-3.5 h-3.5 shrink-0" />
-                        <span>بترد على <strong><bdi dir="ltr">@{replyingToComment.username}</bdi></strong></span>
-                      </div>
-                      <button 
-                        onClick={() => setReplyingToComment(null)}
-                        className="text-zinc-500 hover:text-white cursor-pointer"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  )}
-                  <textarea
-                    id="episode-comment-input"
-                    dir="auto"
-                    autoComplete="off"
-                    autoCorrect="on"
-                    autoCapitalize="sentences"
-                    spellCheck="true"
-                    inputMode="text"
-                    enterKeyHint="send"
-                    data-lpignore="true"
-                    data-1p-ignore="true"
-                    data-bwignore="true"
-                    data-form-type="other"
-                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl p-3.5 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none min-h-[50px] maxHeight-[120px]"
-                    placeholder={replyingToComment ? `Reply to @${replyingToComment.username}...` : "اكتب تعليقك أو معلومة طبية هنا…"}
-                    value={commentInput}
-                    onChange={(e) => {
-                      const text = e.target.value;
-                      setCommentInput(text);
-                      
-                      const cursor = e.target.selectionStart || 0;
-                      const textBeforeCursor = text.slice(0, cursor);
-                      const match = textBeforeCursor.match(/@(\w*)$/);
-                      if (match) {
-                        setMentionSearchText(match[1]);
-                        setActiveSuggestionIdx(0);
-                      } else {
-                        setMentionSearchText(null);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      const suggestionsList = getFilteredUsernames();
-                      const hasSuggestions = suggestionsList.length > 0;
-
-                      if (hasSuggestions) {
-                        if (e.key === 'ArrowDown') {
-                          e.preventDefault();
-                          setActiveSuggestionIdx(prev => (prev + 1) % suggestionsList.length);
-                          return;
-                        }
-                        if (e.key === 'ArrowUp') {
-                          e.preventDefault();
-                          setActiveSuggestionIdx(prev => (prev - 1 + suggestionsList.length) % suggestionsList.length);
-                          return;
-                        }
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const selectedUser = suggestionsList[activeSuggestionIdx];
-                          if (selectedUser) {
-                            const cursor = commentInput.length;
-                            const before = commentInput.slice(0, cursor);
-                            const after = commentInput.slice(cursor);
-                            const replacedBefore = before.replace(/@\w*$/, `@${selectedUser.username} `);
-                            setCommentInput(replacedBefore + after);
-                            setMentionSearchText(null);
-                            document.getElementById('episode-comment-input')?.focus();
-                          }
-                          return;
-                        }
-                        if (e.key === 'Escape') {
-                          e.preventDefault();
-                          setMentionSearchText(null);
-                          return;
-                        }
-                      }
-
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        if (commentInput.trim()) {
-                          handleEpisodeInteract('comment', commentInput, replyingToComment?.id);
-                        }
-                      }
-                    }}
-                    rows={1}
-                  />
-
-                  {mentionSearchText !== null && usernames.length > 0 && (() => {
-                    const suggestionsList = getFilteredUsernames();
-                    if (suggestionsList.length === 0) return null;
-                    return (
-                      <div className="absolute bottom-[calc(100%+8px)] start-0 end-0 max-h-[140px] overflow-y-auto z-[90] bg-zinc-950 border border-zinc-850 rounded-xl p-1 shadow-2xl">
-                        {suggestionsList.map((u, idx) => (
-                          <div 
-                            key={u.username} 
-                            onClick={() => {
-                              const cursor = commentInput.length;
-                              const before = commentInput.slice(0, cursor);
-                              const after = commentInput.slice(cursor);
-                              const replacedBefore = before.replace(/@\w*$/, `@${u.username} `);
-                              setCommentInput(replacedBefore + after);
-                              setMentionSearchText(null);
-                              document.getElementById('episode-comment-input')?.focus();
-                            }}
-                            onMouseEnter={() => setActiveSuggestionIdx(idx)}
-                            className={`flex items-center gap-2.5 p-2 cursor-pointer rounded-lg text-start text-xs font-bold transition-colors ${
-                              idx === activeSuggestionIdx ? 'bg-brand-orange text-black font-extrabold' : 'hover:bg-brand-orange/10 text-white'
-                            }`}
-                          >
-                            <UserAvatar username={u.username} avatarUrl={u.avatar_url} equippedFrame={u.equipped_frame} size={20} />
-                            <span><bdi dir="ltr">@{u.username}</bdi></span>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-
-                  <div className="flex justify-end gap-2 items-center">
-                    <div className="flex gap-2 items-center">
-                      {replyingToComment && (
-                        <button className="border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-2xs py-2 px-4 rounded-xl cursor-pointer transition-all" onClick={() => setReplyingToComment(null)}>إلغاء</button>
-                      )}
-                      <button 
-                        className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-2xs py-2 px-4 rounded-xl cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-md disabled:opacity-50"
-                        onClick={() => {
-                          handleEpisodeInteract('comment', commentInput, replyingToComment?.id);
-                          setMentionSearchText(null);
-                          const el = document.getElementById('episode-comment-input');
-                          if (el) el.style.height = 'auto';
-                        }} 
-                        disabled={!commentInput.trim() || episodeInteracting}
-                      >
-                        {episodeInteracting ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          replyingToComment ? 'رد' : 'انشر'
-                        )}
-                      </button>
-                    </div>
+          {previewComments.length > 0 && (
+            <div className="space-y-2 pt-1">
+              {previewComments.map((c: any) => (
+                <div key={c.id} className="flex items-start gap-2.5">
+                  <UserAvatar username={c.username} avatarUrl={c.avatar_url} equippedFrame={c.equipped_frame} size={26} />
+                  <div className="flex-1 min-w-0 bg-zinc-900/60 border border-zinc-800/60 rounded-2xl px-3 py-2">
+                    <span className="text-2xs font-black text-white">{c.username}</span>
+                    <p dir={textDir(c.content)} className="text-xs text-zinc-300 font-medium leading-relaxed line-clamp-2 break-words">
+                      {renderTextWithMentions(c.content)}
+                    </p>
                   </div>
                 </div>
-              ) : (
-                <p className="text-zinc-500 text-xs md:text-sm font-semibold py-6 text-center">
-                  سجّل دخول عشان تشارك في النقاش.
-                </p>
-              )}
-
-              <div className="space-y-4 pt-2">
-                {comments.length === 0 ? (
-                  <p className="text-zinc-500 text-xs md:text-sm font-medium py-10 text-center">
-                    مفيش تعليقات لسه. ابدأ إنت النقاش!
-                  </p>
-                ) : (
-                  comments.map((c: any) => {
-                    const isCommentHighlighted = (deepLinkTarget?.type === 'episode_comment' && deepLinkTarget?.commentId === c.id) ||
-                                                 new URLSearchParams(window.location.search).get('comment') === String(c.id);
-                    return (
-                      <HighlightWrapper
-                        key={c.id}
-                        isHighlighted={isCommentHighlighted}
-                        className="w-full"
-                      >
-                        <div 
-                          id={`comment-${c.id}`}
-                          className="glass-card p-5 text-start border border-zinc-900/60 relative group/comment"
-                        >
-                          <div className="flex justify-between items-center mb-3">
-                            <div className="flex items-center gap-3">
-                              <UserAvatar 
-                                username={c.username} 
-                                avatarUrl={c.avatar_url} 
-                                equippedFrame={c.equipped_frame} 
-                                size={32} 
-                              />
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-extrabold text-sm text-brand-orange"><bdi dir="ltr">@{c.username}</bdi></span>
-                                  {user && ((user.role === 'admin' || user.role === 'owner') && c.user_id !== user.id) && (
-                                    <button 
-                                      onClick={() => handleOpenModerationModal(c.username, c.user_id)}
-                                      className="text-2xs font-black bg-zinc-900/80 hover:bg-zinc-800 text-brand-orange border border-zinc-850 px-2 py-0.5 rounded-md flex items-center gap-1 transition-colors cursor-pointer"
-                                    >
-                                      <ShieldAlert className="w-3 h-3" /> 
-                                      <span>إجراء</span>
-                                    </button>
-                                  )}
-                                </div>
-                                <span className="text-2xs text-zinc-500 font-semibold block mt-0.5">
-                                  {new Date(c.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            {user && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const rect = e.currentTarget.getBoundingClientRect();
-                                  setContextMenu({ 
-                                    x: rect.left, 
-                                    y: rect.bottom + 4, 
-                                    commentId: c.id, 
-                                    content: c.content, 
-                                    isOwner: c.user_id === user.id || c.username === user.username,
-                                    commentUserId: c.user_id,
-                                    commentUsername: c.username
-                                  });
-                                }}
-                                className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800/60 cursor-pointer transition-colors"
-                                title="خيارات التعليق"
-                              >
-                                <MoreVertical className="w-4 h-4" />
-                              </button>
-                            )}
-                          </div>
-
-                          {editingCommentId === c.id ? (
-                            <div className="my-3 space-y-2">
-                              <textarea
-                                className="w-full bg-zinc-950 border border-zinc-800 focus:border-brand-orange text-white rounded-xl p-3 text-xs outline-none resize-none"
-                                value={editCommentText}
-                                onChange={(e) => setEditCommentText(e.target.value)}
-                                rows={3}
-                                autoFocus
-                              />
-                              <div className="flex justify-end gap-1.5">
-                                <button className="border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-2xs py-1.5 px-3 rounded-lg cursor-pointer transition-all" onClick={() => setEditingCommentId(null)}>إلغاء</button>
-                                <button 
-                                  className="bg-brand-orange text-black font-extrabold text-2xs py-1.5 px-3 rounded-lg cursor-pointer transition-all shadow-md"
-                                  onClick={() => {
-                                    if (editCommentText.trim()) {
-                                      handleEditComment(c.id, editCommentText.trim());
-                                      setEditingCommentId(null);
-                                    }
-                                  }}
-                                  disabled={!editCommentText.trim()}
-                                >
-                                  حفظ
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <p dir={textDir(c.content)} className="text-xs md:text-sm text-zinc-100 font-medium leading-relaxed">{renderTextWithMentions(c.content)}</p>
-                          )}
-                          
-                          <div className="flex gap-4 mt-4 pt-2 border-t border-zinc-900/40">
-                            <button 
-                              className={`flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer ${c.has_liked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
-                              onClick={() => handleEpisodeInteract('comment_like', undefined, c.id)}
-                            >
-                              <Heart className={`w-3.5 h-3.5 ${c.has_liked ? 'fill-current' : ''}`} /> 
-                              <span>{c.likes_count}</span>
-                            </button>
-                            {user && (
-                              <button 
-                                className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer" 
-                                onClick={() => setReplyingToComment(c)}
-                              >
-                                <CornerUpLeft className="rtl:-scale-x-100 w-3.5 h-3.5" /> 
-                                <span>رد</span>
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Nested replies list */}
-                          {c.replies && c.replies.length > 0 && (
-                            <div className="border-s-2 border-zinc-850 ps-4 ms-4 mt-4 space-y-4">
-                              {c.replies.map((r: any) => {
-                                const isReplyHighlighted = (deepLinkTarget?.type === 'episode_comment' && deepLinkTarget?.commentId === r.id) ||
-                                                           new URLSearchParams(window.location.search).get('comment') === String(r.id);
-                                return (
-                                  <HighlightWrapper
-                                    key={r.id}
-                                    isHighlighted={isReplyHighlighted}
-                                    className="w-full"
-                                  >
-                                    <div id={`comment-${r.id}`} className="bg-zinc-900/20 rounded-xl p-3 border border-zinc-900/40 relative group/reply text-start">
-                                      <div className="flex justify-between items-center mb-2">
-                                        <div className="flex items-center gap-2">
-                                          <UserAvatar 
-                                            username={r.username} 
-                                            avatarUrl={r.avatar_url} 
-                                            equippedFrame={r.equipped_frame} 
-                                            size={24} 
-                                          />
-                                          <span className="text-xs font-extrabold text-zinc-400"><bdi dir="ltr">@{r.username}</bdi></span>
-                                          {user && ((user.role === 'admin' || user.role === 'owner') && r.user_id !== user.id) && (
-                                            <button 
-                                              onClick={() => handleOpenModerationModal(r.username, r.user_id)}
-                                              className="text-2xs font-black bg-zinc-950 hover:bg-zinc-900 text-brand-orange border border-zinc-850 px-1.5 py-0.5 rounded-md flex items-center gap-0.5 transition-colors cursor-pointer"
-                                            >
-                                              <ShieldAlert className="w-2.5 h-2.5" /> 
-                                              <span>إجراء</span>
-                                            </button>
-                                          )}
-                                        </div>
-                                        <div className="flex items-center gap-3.5">
-                                          <span className="text-2xs text-zinc-500 font-semibold">
-                                            {new Date(r.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                                          </span>
-                                          {user && (
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                const rect = e.currentTarget.getBoundingClientRect();
-                                                setContextMenu({ 
-                                                  x: rect.left, 
-                                                  y: rect.bottom + 4, 
-                                                  commentId: r.id, 
-                                                  content: r.content, 
-                                                  isOwner: r.user_id === user.id || r.username === user.username,
-                                                  commentUserId: r.user_id,
-                                                  commentUsername: r.username
-                                                });
-                                              }}
-                                              className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800/60 cursor-pointer transition-colors"
-                                              title="خيارات الرد"
-                                            >
-                                              <MoreVertical className="w-3.5 h-3.5" />
-                                            </button>
-                                          )}
-                                        </div>
-                                      </div>
-
-                                      {editingCommentId === r.id ? (
-                                        <div className="my-2 space-y-2">
-                                          <textarea
-                                            className="w-full bg-zinc-950 border border-zinc-800 focus:border-brand-orange text-white rounded-lg p-2.5 text-xs outline-none resize-none"
-                                            value={editCommentText}
-                                            onChange={(e) => setEditCommentText(e.target.value)}
-                                            rows={2}
-                                            autoFocus
-                                          />
-                                          <div className="flex justify-end gap-1.5">
-                                            <button className="border border-zinc-800 text-white text-2xs py-1 px-2.5 rounded-md cursor-pointer" onClick={() => setEditingCommentId(null)}>إلغاء</button>
-                                            <button 
-                                              className="bg-brand-orange text-black font-extrabold text-2xs py-1 px-2.5 rounded-md cursor-pointer"
-                                              onClick={() => {
-                                                if (editCommentText.trim()) {
-                                                  handleEditComment(r.id, editCommentText.trim());
-                                                  setEditingCommentId(null);
-                                                }
-                                              }}
-                                              disabled={!editCommentText.trim()}
-                                            >
-                                              حفظ
-                                            </button>
-                                          </div>
-                                        </div>
-                                      ) : (
-                                        <p dir={textDir(r.content)} className="text-xs text-zinc-300 font-medium leading-relaxed">{renderTextWithMentions(r.content)}</p>
-                                      )}
-
-                                      <button 
-                                        className={`flex items-center gap-1 mt-3 text-2xs font-bold transition-colors cursor-pointer ${r.has_liked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                        onClick={() => handleEpisodeInteract('comment_like', undefined, r.id)}
-                                      >
-                                        <Heart className={`w-3 h-3 ${r.has_liked ? 'fill-current' : ''}`} /> 
-                                        <span>{r.likes_count}</span>
-                                      </button>
-                                    </div>
-                                  </HighlightWrapper>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      </HighlightWrapper>
-                    );
-                  })
-                )}
-              </div>
-            </m.div>
+              ))}
+            </div>
           )}
-        </AnimatePresence>
+
+          {!user && (
+            <p className="text-2xs text-zinc-500 font-semibold text-center pt-1">سجّل دخول عشان تشارك في النقاش.</p>
+          )}
+        </div>
       </section>
-
-      {/* Context Menu for comments */}
-      <AnimatePresence>
-        {contextMenu && (
-          <div className="fixed inset-0 z-[999] bg-black/30" onClick={() => setContextMenu(null)}>
-            <m.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.15 }}
-              style={{
-                position: 'fixed',
-                top: Math.min(contextMenu.y, typeof window !== 'undefined' ? window.innerHeight - 140 : contextMenu.y),
-                left: Math.max(12, Math.min(contextMenu.x - 110, typeof window !== 'undefined' ? window.innerWidth - 160 : contextMenu.x)),
-              }}
-              className="bg-zinc-950 border border-zinc-800/90 rounded-2xl p-1.5 flex flex-col gap-0.5 min-w-[150px] shadow-2xl z-[1000]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {user && (contextMenu.isOwner || user.role === 'moderator' || user.role === 'admin' || user.role === 'owner') ? (
-                <>
-                  <button
-                    onClick={() => {
-                      setEditingCommentId(contextMenu.commentId);
-                      setEditCommentText(contextMenu.content);
-                      setContextMenu(null);
-                    }}
-                    className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-white rounded-lg cursor-pointer hover:bg-zinc-900/60 text-start transition-colors"
-                  >
-                    <Edit2 className="w-3.5 h-3.5 text-zinc-500" />
-                    <span>تعديل التعليق</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleDeleteComment(contextMenu.commentId);
-                      setContextMenu(null);
-                    }}
-                    className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-red-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-start transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                    <span>حذف التعليق</span>
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => {
-                    handleOpenReportModal && handleOpenReportModal('comment', contextMenu.commentId, contextMenu.content);
-                    setContextMenu(null);
-                  }}
-                  className="w-full flex items-center gap-2 p-2.5 font-bold text-xs text-amber-500 rounded-lg cursor-pointer hover:bg-zinc-900/60 text-start transition-colors"
-                >
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                  <span>إبلاغ عن التعليق</span>
-                </button>
-              )}
-            </m.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Bottom inline edit form overlay */}
-      <AnimatePresence>
-        {editingCommentId && (
-          <m.div 
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-0 start-0 end-0 bg-zinc-950 border-t border-zinc-850 p-4 z-[9000] shadow-2xl flex gap-2.5 items-end"
-          >
-            <textarea
-              className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-brand-orange text-white rounded-xl p-3 text-xs outline-none resize-none"
-              value={editCommentText}
-              onChange={(e) => setEditCommentText(e.target.value)}
-              rows={2}
-              autoFocus
-            />
-            <button 
-              className="border border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer active:scale-95 transition-all" 
-              onClick={() => { setEditingCommentId(null); setEditCommentText(''); }}
-            >
-              إلغاء
-            </button>
-            <button
-              className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-xs py-2.5 px-4 rounded-xl cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-orange-glow"
-              onClick={() => {
-                if (editCommentText.trim()) {
-                  handleEditComment(editingCommentId, editCommentText.trim());
-                  setEditingCommentId(null);
-                  setEditCommentText('');
-                }
-              }}
-              disabled={!editCommentText.trim()}
-            >
-              حفظ
-            </button>
-          </m.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

@@ -83,6 +83,15 @@ export const PostDetail: React.FC<PostDetailProps> = ({
     fetchSinglePost();
   }, [postId, communityPosts]);
 
+  // A post notification lands here with the post flashing; release the target once the highlight is done
+  useEffect(() => {
+    if (deepLinkTarget?.type === 'post' && post && Number(deepLinkTarget.postId) === Number(post.id)) {
+      const t = setTimeout(() => setDeepLinkTarget(null), 3500);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [deepLinkTarget, post?.id]);
+
   const handleBackToFeed = () => {
     setCurrentPage('home');
   };

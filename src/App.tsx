@@ -13,7 +13,7 @@ import { feedCacheService } from './services/feedCacheService';
 // Context
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider, useSocket } from './context/SocketContext';
-import { NotificationProvider } from './context/NotificationContext';
+import { NotificationProvider, useNotifications } from './context/NotificationContext';
 
 // Hooks
 import { useChat } from './hooks/useChat';
@@ -96,6 +96,7 @@ function InnerApp() {
   } = useAuth();
 
   const socket = useSocket();
+  const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
   const inProgressRequests = useRef<Record<string, boolean>>({});
 
   // App Data
@@ -110,7 +111,7 @@ function InnerApp() {
   const [newPostContent, setNewPostContent] = useState('');
 
   // Reporting state
-  const [reportTarget, setReportTarget] = useState<{ type: 'post' | 'comment' | 'message'; id: number; preview?: string } | null>(null);
+  const [reportTarget, setReportTarget] = useState<{ type: 'post' | 'comment' | 'message'; id: number; preview?: string; commentKind?: 'post_comment' | 'episode_comment' } | null>(null);
   const [reportReason, setReportReason] = useState('Spam');
 
   // Forms
@@ -181,11 +182,17 @@ function InnerApp() {
 
   // Post Details & Comments Sheet State
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
-  const [activeCommentsPost, setActiveCommentsPost] = useState<{ id: number; author?: string } | null>(null);
+  const [activeCommentsPost, setActiveCommentsPost] = useState<{ id: number; author?: string; kind?: 'post' | 'episode'; subtitle?: string } | null>(null);
   const [isCommentsPanelOpen, setIsCommentsPanelOpen] = useState(false);
 
   const handleOpenCommentsPanel = (postId: number, authorName?: string) => {
-    setActiveCommentsPost({ id: postId, author: authorName });
+    setActiveCommentsPost({ id: postId, author: authorName, kind: 'post' });
+    setIsCommentsPanelOpen(true);
+  };
+
+  // Episode discussions use the exact same sheet as post comments
+  const handleOpenEpisodeComments = (episodeId: number, episodeTitle?: string) => {
+    setActiveCommentsPost({ id: episodeId, kind: 'episode', subtitle: episodeTitle ? `الحلقة: ${episodeTitle}` : undefined });
     setIsCommentsPanelOpen(true);
   };
 
@@ -395,28 +402,7 @@ function InnerApp() {
     return () => window.removeEventListener('socket_reconnect', handleReconnectSync);
   }, [token, user?.batch, leaderboardTab]);
 
-  // Scroll to targeted community post
-  useEffect(() => {
-    const path = window.location.pathname;
-    if (path.startsWith('/post/') && communityPosts.length > 0) {
-      const idStr = path.substring('/post/'.length);
-      const id = parseInt(idStr);
-      if (!isNaN(id)) {
-        setTimeout(() => {
-          const el = document.getElementById(`post-${id}`);
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.style.border = '2px solid var(--orange)';
-            setTimeout(() => {
-              el.style.transition = 'border 1.5s ease-out';
-              el.style.border = '1px solid var(--card-border)';
-            }, 3000);
-            window.history.replaceState({}, '', '/');
-          }
-        }, 400);
-      }
-    }
-  }, [communityPosts]);
+  // (/post/:id links render PostDetail directly; deep-link highlighting lives there.)
 
 
 
@@ -996,6 +982,54 @@ function InnerApp() {
     setEpisodeDetailLoading(true);
     fetchEpisodeDetail(id);
   };
+
+  // ── Deep links (notifications, moderator reports, push / shared URLs) ──────
+  // Arriving on /post/:id?comment=X or /episodes/:id?comment=X from outside the app
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const commentId = parseInt(params.get('comment') || '', 10);
+    if (!commentId) return;
+    const postMatch = window.location.pathname.match(/^\/posts?\/(\d+)/);
+    const epMatch = window.location.pathname.match(/^\/episodes\/(\d+)/);
+    if (postMatch) {
+      setDeepLinkTarget({ type: 'comment', postId: Number(postMatch[1]), commentId });
+    } else if (epMatch) {
+      setDeepLinkTarget({ type: 'episode_comment', episodeId: Number(epMatch[1]), commentId });
+    }
+    params.delete('comment');
+    const qs = params.toString();
+    window.history.replaceState(window.history.state, '', window.location.pathname + (qs ? `?${qs}` : ''));
+  }, []);
+
+  useEffect(() => {
+    const t = deepLinkTarget;
+    if (!t) return;
+
+    // Posts & post comments always open on the post page, so old posts work too
+    if ((t.type === 'post' || t.type === 'comment') && t.postId) {
+      const pid = Number(t.postId);
+      setSelectedPostId(pid);
+      if (currentPage !== 'post-detail') changePage('post-detail', { id: pid });
+      if (t.type === 'comment' && !(isCommentsPanelOpen && activeCommentsPost?.kind !== 'episode' && activeCommentsPost?.id === pid)) {
+        handleOpenCommentsPanel(pid);
+      }
+      return;
+    }
+
+    if (t.type === 'episode' && t.episodeId) {
+      navigateToEpisode(Number(t.episodeId));
+      setDeepLinkTarget(null);
+      return;
+    }
+
+    if (t.type === 'episode_comment' && t.episodeId) {
+      const eid = Number(t.episodeId);
+      if (selectedEpisodeId !== eid || currentPage !== 'episode-detail') navigateToEpisode(eid);
+      if (!(isCommentsPanelOpen && activeCommentsPost?.kind === 'episode' && activeCommentsPost?.id === eid)) {
+        handleOpenEpisodeComments(eid);
+      }
+    }
+  }, [deepLinkTarget]);
 
   async function fetchEpisodeDetail(id: number) {
     try {
@@ -1713,8 +1747,8 @@ function InnerApp() {
     }
   };
 
-  const handleOpenReportModal = (type: 'post' | 'comment' | 'message', id: number, preview?: string) => {
-    setReportTarget({ type, id, preview });
+  const handleOpenReportModal = (type: 'post' | 'comment' | 'message', id: number, preview?: string, commentKind?: 'post_comment' | 'episode_comment') => {
+    setReportTarget({ type, id, preview, commentKind });
     setReportReason('Spam');
   };
 
@@ -1727,7 +1761,8 @@ function InnerApp() {
         reportTarget.id,
         reportReason,
         reportTarget.preview,
-        token
+        token,
+        reportTarget.commentKind
       );
       if (res.ok) {
         showToast('البلاغ وصل، شكرًا ليك. ⚠️');
@@ -1876,8 +1911,13 @@ function InnerApp() {
         handleLikePost={handleLikePost}
         handleDeletePost={handleDeletePost}
         handleCancelPostRevision={handleCancelPostRevision}
-        selectedPostId={selectedPostId}
+        selectedPostId={
+          (deepLinkTarget && (deepLinkTarget.type === 'post' || deepLinkTarget.type === 'comment') && deepLinkTarget.postId)
+            ? Number(deepLinkTarget.postId)
+            : selectedPostId
+        }
         onOpenComments={handleOpenCommentsPanel}
+        onOpenEpisodeComments={handleOpenEpisodeComments}
         handleSharePost={handleSharePost}
         episodes={episodes}
         handleLikeEpisode={handleLikeEpisode}
@@ -1969,6 +2009,21 @@ function InnerApp() {
         isOpen={isCommentsPanelOpen}
         onClose={handleCloseCommentsPanel}
         postId={activeCommentsPost?.id || null}
+        targetKind={activeCommentsPost?.kind || 'post'}
+        headerSubtitle={
+          activeCommentsPost?.kind === 'episode'
+            ? (activeCommentsPost.subtitle || (episodeDetail?.episode?.id === activeCommentsPost.id && episodeDetail?.episode?.title_ar ? `الحلقة: ${episodeDetail.episode.title_ar}` : undefined))
+            : undefined
+        }
+        deepLinkTarget={deepLinkTarget}
+        setDeepLinkTarget={setDeepLinkTarget}
+        handleOpenModerationModal={handleOpenModerationModal}
+        onCommentsMutated={() => {
+          fetchUserProfile();
+          if (activeCommentsPost?.kind === 'episode' && activeCommentsPost.id === selectedEpisodeId) {
+            fetchEpisodeDetail(activeCommentsPost.id);
+          }
+        }}
         postAuthorName={activeCommentsPost?.author}
         user={user}
         usernames={usernamesDirectory}

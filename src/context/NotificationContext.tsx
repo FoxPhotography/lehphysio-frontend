@@ -248,99 +248,93 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
     setIsOpen(false);
 
-    const { type, target_id, target_type, metadata } = notification;
+    const { type, target_id, metadata } = notification;
 
+    // Moderation queue: open the dashboard on the right tab (works whether it's mounted or not)
+    const openModeration = (tab: string, focusReportId?: number | string | null) => {
+      localStorage.setItem('moderator_active_tab', tab);
+      if (focusReportId) localStorage.setItem('moderator_focus_report', String(focusReportId));
+      changePage('moderator-dashboard');
+      window.history.replaceState({}, '', `/moderation?tab=${tab}`);
+      window.dispatchEvent(new CustomEvent('change_moderator_tab', { detail: tab }));
+      if (focusReportId) {
+        window.dispatchEvent(new CustomEvent('moderator_focus_report', { detail: Number(focusReportId) }));
+      }
+    };
+
+    // Posts / comments / episodes are resolved by App (it owns the selected post,
+    // the comments sheet and the episode loader) from the deep-link target.
     switch (type) {
       case 'new_post':
       case 'post_approved':
       case 'post_rejected':
       case 'post_update_approved':
       case 'post_update_rejected': {
-        const postId = metadata?.postId || target_id;
-        if (postId) {
-          setDeepLinkTarget({ type: 'post', targetId: postId, postId });
-          changePage('home');
-          window.history.replaceState({}, '', `/post/${postId}`);
-        }
+        const postId = Number(metadata?.postId || target_id);
+        if (postId) setDeepLinkTarget({ type: 'post', targetId: postId, postId });
+        else changePage('home');
         break;
       }
       case 'new_comment':
       case 'comment_reply':
       case 'mention_comment': {
-        const postId = metadata?.postId;
-        const commentId = metadata?.commentId || target_id;
-        if (postId) {
-          setDeepLinkTarget({ type: 'comment', targetId: commentId, postId, commentId });
+        const postId = Number(metadata?.postId);
+        const commentId = Number(metadata?.commentId || target_id);
+        if (postId && commentId) {
+          setDeepLinkTarget({ type: 'comment', targetId: commentId, postId, commentId, parentCommentId: metadata?.parentCommentId || null });
+        } else if (postId) {
+          setDeepLinkTarget({ type: 'post', targetId: postId, postId });
+        } else {
           changePage('home');
-          window.history.replaceState({}, '', `/post/${postId}?comment=${commentId}`);
         }
         break;
       }
       case 'new_episode':
       case 'episode_approved':
       case 'episode_rejected': {
-        const episodeId = metadata?.episodeId || target_id;
-        if (episodeId) {
+        const episodeId = Number(metadata?.episodeId || target_id);
+        if (episodeId && type !== 'episode_rejected') {
           setDeepLinkTarget({ type: 'episode', targetId: episodeId, episodeId });
-          changePage('episode-detail', { id: episodeId });
-          window.history.replaceState({}, '', `/episodes/${episodeId}`);
         } else {
           changePage('episodes');
         }
         break;
       }
       case 'mention_chat': {
-        const messageId = metadata?.messageId || target_id;
+        const messageId = Number(metadata?.messageId || target_id);
+        changePage('community');
         if (messageId) {
           setDeepLinkTarget({ type: 'chat_message', targetId: messageId, messageId });
-          changePage('community');
           window.history.replaceState({}, '', `/chat#message-${messageId}`);
         }
         break;
       }
       case 'suggestion_approved':
       case 'suggestion_rejected': {
-        const suggestionId = metadata?.suggestionId || target_id;
+        const suggestionId = Number(metadata?.suggestionId || target_id);
         setDeepLinkTarget({ type: 'suggestion', targetId: suggestionId, suggestionId });
         changePage('community');
         window.history.replaceState({}, '', `/chat?tab=suggestions`);
         break;
       }
-      case 'moderation_post_pending': {
-        localStorage.setItem('moderator_active_tab', 'posts');
-        changePage('moderator-dashboard');
-        window.history.replaceState({}, '', `/moderator?tab=posts`);
-        window.dispatchEvent(new CustomEvent('change_moderator_tab', { detail: 'posts' }));
+      case 'moderation_post_pending':
+        openModeration('posts');
         break;
-      }
-      case 'moderation_post_edited': {
-        localStorage.setItem('moderator_active_tab', 'revisions');
-        changePage('moderator-dashboard');
-        window.history.replaceState({}, '', `/moderator?tab=revisions`);
-        window.dispatchEvent(new CustomEvent('change_moderator_tab', { detail: 'revisions' }));
+      case 'moderation_post_edited':
+        openModeration('revisions');
         break;
-      }
-      case 'moderation_suggestion_pending': {
-        localStorage.setItem('moderator_active_tab', 'suggestions');
-        changePage('moderator-dashboard');
-        window.history.replaceState({}, '', `/moderator?tab=suggestions`);
-        window.dispatchEvent(new CustomEvent('change_moderator_tab', { detail: 'suggestions' }));
+      case 'moderation_suggestion_pending':
+        openModeration('suggestions');
         break;
-      }
-      case 'moderation_report_pending': {
-        localStorage.setItem('moderator_active_tab', 'reports');
-        changePage('moderator-dashboard');
-        window.history.replaceState({}, '', `/moderator?tab=reports`);
-        window.dispatchEvent(new CustomEvent('change_moderator_tab', { detail: 'reports' }));
+      case 'moderation_report_pending':
+        openModeration('reports', metadata?.reportId || target_id);
         break;
-      }
       case 'user_muted':
       case 'user_unmuted':
       case 'user_banned':
       case 'user_unbanned':
       case 'user_role_updated': {
         changePage('profile');
-        window.history.replaceState({}, '', `/profile`);
         break;
       }
       default:

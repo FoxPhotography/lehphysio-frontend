@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { RoleSelectModal } from '../components/RoleSelectModal';
+import { DashboardShell, type DashboardNavItem } from '../components/admin/DashboardShell';
 import {
   Video,
   Key,
@@ -217,16 +218,16 @@ export const Admin: React.FC<AdminProps> = ({
   };
 
   // Dynamic Tabs
-  const tabs = [
-    { id: 'episodes',   label: 'الحلقات',    icon: <Video    className="w-3.5 h-3.5" /> },
-    { id: 'codes',      label: 'أكواد XP',    icon: <Key      className="w-3.5 h-3.5" /> },
-    { id: 'users',      label: 'المستخدمين',       icon: <Users    className="w-3.5 h-3.5" /> },
-    { id: 'frames',     label: 'الفريمات',      icon: <Frame    className="w-3.5 h-3.5" /> },
-    { id: 'xp_settings',label: 'إعدادات XP', icon: <Settings className="w-3.5 h-3.5" /> },
-    { id: 'system_profile', label: 'الحساب الرسمي', icon: <User className="w-3.5 h-3.5" /> },
+  const tabs: DashboardNavItem[] = [
+    { id: 'episodes',       label: 'الحلقات',       hint: 'إضافة وتعديل الحلقات',      icon: Video,    group: 'المحتوى' },
+    { id: 'frames',         label: 'الفريمات',      hint: 'فريمات الصور الشخصية',      icon: Frame,    group: 'المحتوى' },
+    { id: 'codes',          label: 'أكواد XP',      hint: 'أكواد السر والمكافآت',       icon: Key,      group: 'النقاط' },
+    { id: 'xp_settings',    label: 'إعدادات XP',    hint: 'قيم النقاط لكل نشاط',       icon: Settings, group: 'النقاط' },
+    { id: 'users',          label: 'المستخدمين',     hint: 'الأدوار والإجراءات',        icon: Users,    group: 'الإدارة' },
+    { id: 'system_profile', label: 'الحساب الرسمي', hint: 'اسم وصورة حساب ليه فيزيو', icon: User,     group: 'الإدارة' },
     ...(user?.role === 'owner' ? [
-      { id: 'audit_logs', label: 'سجل العمليات', icon: <ShieldAlert className="w-3.5 h-3.5" /> }
-    ] : [])
+      { id: 'audit_logs', label: 'سجل العمليات', hint: 'كل إجراءات المشرفين', icon: ShieldAlert, group: 'الإدارة' },
+    ] : []),
   ];
 
   // Audit Logs state
@@ -655,40 +656,18 @@ export const Admin: React.FC<AdminProps> = ({
     <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-3xl mx-auto px-4 xl:pt-6 space-y-5"
+      className="w-full"
     >
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-500/10 border border-orange-500/25 flex items-center justify-center">
-          <ShieldCheck className="w-5 h-5 text-orange-400" />
-        </div>
-        <div>
-          <h1 className="text-xl font-black text-white leading-tight">لوحة الإدارة</h1>
-          <p className="text-xs text-zinc-500">
-            {user?.role === 'owner' ? 'لوحة المالك' : 'لوحة الأدمن'}
-          </p>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1.5 flex-wrap">
-        {tabs.map((tab) => (
-          <m.button
-            key={tab.id}
-            onClick={() => setAdminSection(tab.id)}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
-              adminSection === tab.id
-                ? 'bg-orange-500 text-black shadow-md shadow-orange-500/20'
-                : 'bg-white/5 border border-white/8 text-zinc-400 hover:text-white hover:border-white/15'
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
-          </m.button>
-        ))}
-      </div>
+      <DashboardShell
+        accent="orange"
+        title="لوحة الإدارة"
+        subtitle={user?.role === 'owner' ? 'لوحة المالك' : 'لوحة الأدمن'}
+        headerIcon={ShieldCheck}
+        roleLabel={user?.role === 'owner' ? 'مالك' : 'أدمن'}
+        items={tabs}
+        activeId={adminSection}
+        onSelect={setAdminSection}
+      >
 
       {/* Admin Message Banner */}
       <AnimatePresence>
@@ -1613,6 +1592,7 @@ export const Admin: React.FC<AdminProps> = ({
         onConfirm={handleConfirmRoleChange}
         isLoading={roleLoading}
       />
+      </DashboardShell>
     </m.div>
   );
 };

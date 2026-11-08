@@ -40,15 +40,24 @@ export const episodeService = {
     return res;
   },
 
+  async likeComment(episodeId: number, commentId: number, token?: string) {
+    const res = await apiFetch(`/api/episodes/${episodeId}/interact`, {
+      method: 'POST',
+      body: JSON.stringify({ type: 'comment_like', parent_id: commentId }),
+    }, token);
+    return res;
+  },
+
   async deleteComment(commentId: number, token?: string) {
-    const res = await apiFetch(`/api/community/comments/${commentId}`, {
+    // kind=episode: episode comments live in a separate id space from post comments
+    const res = await apiFetch(`/api/community/comments/${commentId}?kind=episode`, {
       method: 'DELETE',
     }, token);
     return res;
   },
 
   async editComment(commentId: number, content: string, token?: string) {
-    const res = await apiFetch(`/api/community/comments/${commentId}`, {
+    const res = await apiFetch(`/api/community/comments/${commentId}?kind=episode`, {
       method: 'PUT',
       body: JSON.stringify({ content }),
     }, token);
