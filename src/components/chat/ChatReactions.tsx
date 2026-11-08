@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { Plus, X } from 'lucide-react';
@@ -82,6 +82,23 @@ export const ReactionBurst: React.FC<{ emoji: string | null; burstKey?: number }
 
 // ─── Long-press / right-click overlay ────────────────────────────────────────
 
+// Is a finger / mouse button currently held anywhere on the page? The overlay opens
+// while the long-press is still held, so it must ignore the release (and the click
+// the browser synthesizes from it) instead of treating it as "tap outside → close".
+let pressIsDown = false;
+if (typeof window !== 'undefined') {
+  const down = () => { pressIsDown = true; };
+  const up = (e: Event) => {
+    const te = e as TouchEvent;
+    pressIsDown = te.touches ? te.touches.length > 0 : false;
+  };
+  window.addEventListener('touchstart', down, { capture: true, passive: true });
+  window.addEventListener('touchend', up, { capture: true, passive: true });
+  window.addEventListener('touchcancel', up, { capture: true, passive: true });
+  window.addEventListener('mousedown', down, true);
+  window.addEventListener('mouseup', up, true);
+}
+
 export interface MessageAction {
   key: string;
   label: string;
@@ -113,6 +130,42 @@ export const MessageActionOverlay: React.FC<MessageActionOverlayProps> = ({
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; side: number } | null>(null);
+
+  // Stays "unarmed" until the press that opened the menu is released, plus a short grace
+  // period — so keeping your finger down keeps the menu open, and lifting it doesn't close
+  // it or hit whatever button ended up under the finger.
+  const armedRef = useRef(false);
+  useEffect(() => {
+    if (!open) { armedRef.current = false; return undefined; }
+    armedRef.current = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const arm = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => { armedRef.current = true; }, 350);
+    };
+    const onRelease = (e: Event) => {
+      const te = e as TouchEvent;
+      if (te.touches && te.touches.length > 0) return;
+      window.removeEventListener('touchend', onRelease, true);
+      window.removeEventListener('touchcancel', onRelease, true);
+      window.removeEventListener('mouseup', onRelease, true);
+      arm();
+    };
+    if (pressIsDown) {
+      window.addEventListener('touchend', onRelease, true);
+      window.addEventListener('touchcancel', onRelease, true);
+      window.addEventListener('mouseup', onRelease, true);
+    } else {
+      // Opened by a click (e.g. the desktop hover button): nothing is held
+      arm();
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener('touchend', onRelease, true);
+      window.removeEventListener('touchcancel', onRelease, true);
+      window.removeEventListener('mouseup', onRelease, true);
+    };
+  }, [open]);
 
   useLayoutEffect(() => {
     if (!open || messageId == null) { setPos(null); return undefined; }
@@ -146,9 +199,14 @@ export const MessageActionOverlay: React.FC<MessageActionOverlayProps> = ({
     <AnimatePresence>
       {open && (
         <div
-          className="fixed inset-0 z-[1100]"
-          onClick={onClose}
-          onContextMenu={(e) => { e.preventDefault(); onClose(); }}
+          className="fixed inset-0 z-[1100] select-none [-webkit-touch-callout:none]"
+          onClickCapture={(e) => {
+            // Swallow the release-click of the long-press that opened the menu
+            if (!armedRef.current) { e.preventDefault(); e.stopPropagation(); }
+          }}
+          onClick={() => { if (armedRef.current) onClose(); }}
+          // Android fires contextmenu during a long-press — never let it close the menu
+          onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
         >
           <m.div
             initial={{ opacity: 0 }}
