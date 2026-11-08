@@ -209,9 +209,8 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({
 
         {/* ── Content column ─────────────────────────────── */}
         <div className="min-w-0 space-y-5">
-          {/* Mobile: title row */}
-          <div className="xl:hidden flex items-center justify-between gap-3">
-            {brand}
+          {/* Mobile: title row — menu button on the right, same side the drawer slides in from */}
+          <div className="xl:hidden flex items-center gap-3">
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
@@ -225,6 +224,7 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({
                 </span>
               )}
             </button>
+            {brand}
           </div>
 
           {/* Mobile: sticky current-section bar */}
