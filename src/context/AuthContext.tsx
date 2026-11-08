@@ -110,7 +110,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentPage, _setCurrentPage] = useState(() => pageFromPath(window.location.pathname));
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
-  const [confirmEmail, setConfirmEmail] = useState(() => localStorage.getItem('confirmEmail') || '');
+  const [confirmEmail, setConfirmEmail] = useState(() => {
+    // One-tap link from the verification email: /confirm?email=...&code=...
+    if (window.location.pathname === '/confirm') {
+      const fromLink = new URLSearchParams(window.location.search).get('email');
+      if (fromLink) {
+        localStorage.setItem('confirmEmail', fromLink);
+        return fromLink;
+      }
+    }
+    return localStorage.getItem('confirmEmail') || '';
+  });
   const [forgotEmail, setForgotEmail] = useState('');
 
   // Cosmetics

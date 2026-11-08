@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { OtpInput } from '../components/OtpInput';
 import {
@@ -25,7 +25,25 @@ export const Confirm: React.FC<ConfirmProps> = ({
   authError,
   authSuccess,
   handleConfirm,
-}) => (
+}) => {
+  // Opened from the email's "فعّل حسابي" button: fill the code and submit automatically
+  const autoSubmitted = useRef(false);
+  useEffect(() => {
+    if (autoSubmitted.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const code = (params.get('code') || '').replace(/\D/g, '').slice(0, 6);
+    if (code.length !== 6) return;
+    autoSubmitted.current = true;
+    setConfirmCode(code);
+    // Drop the code from the address bar / history
+    window.history.replaceState(window.history.state, '', '/confirm');
+    setTimeout(() => {
+      const form = document.getElementById('verify-form') as HTMLFormElement | null;
+      form?.requestSubmit();
+    }, 150);
+  }, []);
+
+  return (
   <AuthLayout
     title="تأكيد الحساب"
     subtitle={confirmEmail ? `Enter the 6-digit code sent to ${confirmEmail}` : "اكتب الكود المكوّن من 6 أرقام اللي وصلك على الإيميل"}
@@ -54,4 +72,5 @@ export const Confirm: React.FC<ConfirmProps> = ({
       <AuthSubmitButton label="تأكيد الحساب" />
     </form>
   </AuthLayout>
-);
+  );
+};
