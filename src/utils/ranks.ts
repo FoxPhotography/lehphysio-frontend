@@ -3,11 +3,11 @@
  * Names follow a PT career ladder: amateur → trainee → therapist → consultant → legend.
  */
 export const RANKS = [
-  { tier: 1, min: 0, name: 'هاوٍ', emoji: '🧪' },
-  { tier: 2, min: 500, name: 'متدرّب', emoji: '⚡' },
+  { tier: 1, min: 0, name: 'مستجد', emoji: '🧪' },
+  { tier: 2, min: 500, name: 'نازل تدريب', emoji: '⚡' },
   { tier: 3, min: 1500, name: 'ثيرابيست', emoji: '🦴' },
-  { tier: 4, min: 3000, name: 'استشاري', emoji: '🧠' },
-  { tier: 5, min: 6000, name: 'أسطورة فيزيو', emoji: '👑' },
+  { tier: 4, min: 3000, name: 'كبير الفيزيو', emoji: '🧠' },
+  { tier: 5, min: 6000, name: 'فحل الفيزيو', emoji: '👑' },
 ] as const;
 
 /** Display name for a rank object from the API (uses the tier, so old server names are replaced too). */

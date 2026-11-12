@@ -74,7 +74,7 @@ export const useUrlRouting = ({
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          showToast(`You came via a link from @${refUsername}! 🎉`);
+          showToast(`أهلًا بيك! جيت من طرف @${refUsername} 🎉`);
         }
       })
       .catch(err => console.error('Error tracking share visit:', err));

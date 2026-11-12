@@ -95,7 +95,7 @@ export async function renderShareCard(d: ShareCardData): Promise<Blob | null> {
   const stats: [string, string][] = [
     [d.totalXp.toLocaleString('en-US'), 'XP'],
     [d.globalRank ? `#${d.globalRank}` : '—', 'الترتيب'],
-    [String(d.streak ?? 0), 'أيام متتالية'],
+    [String(d.streak ?? 0), 'يوم ستريك 🔥'],
   ];
   stats.forEach(([value, label], i) => {
     const x = W / 2 + (1 - i) * 320; // right-to-left order
@@ -131,7 +131,7 @@ export async function shareCard(d: ShareCardData, profileUrl: string): Promise<'
   const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
   try {
     if (nav.canShare?.({ files: [file] })) {
-      await nav.share({ files: [file], title: 'ليه فيزيو؟', text: `رتبتي على ليه فيزيو: ${d.rankName} 🔥\n${profileUrl}` });
+      await nav.share({ files: [file], title: 'ليه فيزيو؟', text: `بص أنا وصلت لفين على ليه فيزيو 👀\nبقيت ${d.rankName}${d.streak ? ` وعندي ستريك ${d.streak} يوم 🔥` : ''}\nتعالى نافسني 👇\n${profileUrl}` });
       return 'shared';
     }
   } catch (e) {

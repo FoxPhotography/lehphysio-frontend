@@ -1,6 +1,6 @@
 import React from 'react';
 import { StreakAura, StreakFlame } from '../streak/Streak';
-import { getStreakTheme } from '../../utils/streakTheme';
+import { getStreakTheme, nextTierLine } from '../../utils/streakTheme';
 import { rankProgress } from '../../utils/ranks';
 import { daysLabel } from '../../utils/format';
 
@@ -56,15 +56,15 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ user, leaderboard = [] }) 
 
       <div className={card} style={{ borderColor: theme.key !== 'none' ? `rgb(${theme.glow} / 0.35)` : undefined }}>
         <StreakAura days={streak} density="lite" />
-        <span className="text-xs font-bold text-zinc-300 relative z-10">أيام متتالية</span>
+        <span className="text-xs font-bold text-zinc-300 relative z-10">الستريك بتاعك</span>
         <div className="relative z-10 flex items-center gap-2 mt-1">
           <StreakFlame days={streak} size={28} />
           <span className="text-xl font-black text-white">{daysLabel(streak)}</span>
         </div>
-        <span className="relative z-10 text-2xs font-extrabold mt-1.5" style={{ color: theme.text }}>
+        <span className="relative z-10 text-2xs font-extrabold mt-1.5 leading-snug" style={{ color: theme.text }}>
           {theme.key === 'none'
             ? 'ادخل النهارده وولّع الستريك 🔥'
-            : theme.next ? `${theme.name} · باقي ${theme.next.at - streak} على ${theme.next.name}` : `${theme.name} · ${theme.tagline}`}
+            : `${theme.name} 🔥 ${nextTierLine(theme, streak)}`}
         </span>
       </div>
     </section>

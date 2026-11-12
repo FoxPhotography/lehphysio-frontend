@@ -655,7 +655,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (days >= 15) {
       return {
         name: "سوبرنوفا",
-        badge: "في القمة!",
+        badge: "فحل",
         outer: ["#002080", "#00bfff", "#e0ffff"],
         mid: ["#0055ff", "#00ffff", "#ffffff"],
         inner: ["#00ffff", "#ffffff", "#ffffff"],
@@ -668,7 +668,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (days >= 7) {
       return {
         name: "بلازما",
-        badge: "عاصفة بلازما!",
+        badge: "ولعة ومحدش قدك",
         outer: ["#310062", "#8a2be2", "#ff007f"],
         mid: ["#4b0082", "#ff00ff", "#ffffff"],
         inner: ["#ff00ff", "#ffffff", "#ffffff"],
@@ -680,8 +680,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     if (days >= 3) {
       return {
-        name: "اللهب الدهبي",
-        badge: "لهب دهبي!",
+        name: "اون فاير",
+        badge: "انت اون فاير",
         outer: ["#b8860b", "#ffaa00", "#ffea80"],
         mid: ["#d4af37", "#ffdf00", "#ffffff"],
         inner: ["#ffdf00", "#ffffff", "#ffffff"],
@@ -692,8 +692,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     }
     return {
-      name: "الشرارة",
-      badge: "ولّعها!",
+      name: "شرارة",
+      badge: "لسه بتسخّن 🔥",
       outer: ["#d90429", "#f77f00", "#fcbf49"],
       mid: ["#f77f00", "#fcbf49", "#eae2b7"],
       inner: ["#fcbf49", "#ffffff", "#ffffff"],

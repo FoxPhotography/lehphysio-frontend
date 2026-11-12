@@ -348,7 +348,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
                   className="space-y-1.5"
                 >
                     <h1 className={`text-4xl ${tier.textClass} tracking-tighter leading-none select-none`}>
-                      {streakOverlay.days} يوم متتالي!
+                      {streakOverlay.days} يوم ورا بعض! 🔥
                     </h1>
                   <p className="text-sm font-bold text-zinc-400 select-none uppercase tracking-wide">
                     أيامك المتتالية

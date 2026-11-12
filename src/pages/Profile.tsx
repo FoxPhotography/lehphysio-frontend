@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StreakAura, StreakFlame, StreakName, StreakChip } from '../components/streak/Streak';
-import { getStreakTheme } from '../utils/streakTheme';
+import { getStreakTheme, nextTierLine } from '../utils/streakTheme';
 import { rankName, rankEmoji } from '../utils/ranks';
 import { m, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -64,7 +64,7 @@ const BATCHES = [
 ];
 
 // ─── Next rank names ───────────────────────────────────────────────────────────
-const RANK_NAMES = ['هاوٍ', 'متدرّب', 'ثيرابيست', 'استشاري', 'أسطورة فيزيو'];
+const RANK_NAMES = ['مستجد', 'نازل تدريب', 'ثيرابيست', 'كبير الفيزيو', 'فحل الفيزيو'];
 
 // ─── Rank thresholds ───────────────────────────────────────────────────────────
 const RANK_THRESHOLDS = [0, 500, 1500, 3000, 6000];
@@ -490,7 +490,7 @@ export const Profile: React.FC<ProfileProps> = ({
             <span>{user.total_xp - currentThreshold} XP في الرتبة دي</span>
             <span>
               {nextThreshold
-                ? `باقي ${(nextThreshold - user.total_xp).toLocaleString('en-US')} XP على ${RANK_NAMES[currentTier] || 'أعلى رتبة'}`
+                ? `فاضلك ${(nextThreshold - user.total_xp).toLocaleString('en-US')} XP وتبقى ${RANK_NAMES[currentTier] || 'في القمة'}`
                 : 'أعلى رتبة'}
             </span>
           </div>
@@ -528,11 +528,10 @@ export const Profile: React.FC<ProfileProps> = ({
               <StreakFlame days={streak} size={34} />
             </div>
             <div className="relative z-10 min-w-0">
-              <p className="text-2xs text-zinc-400 uppercase tracking-wider">أيام متتالية</p>
+              <p className="text-2xs text-zinc-400 uppercase tracking-wider">الستريك</p>
               <p className="text-lg font-black text-white leading-tight">{user.streak_count === 1 ? 'يوم واحد' : user.streak_count === 2 ? 'يومين' : `${user.streak_count || 0} أيام`}</p>
-              <p className="text-2xs font-extrabold truncate" style={{ color: streakTheme.text }}>
-                {streakTheme.next ? `${streakTheme.name} · باقي ${streakTheme.next.at - streak} على ${streakTheme.next.name}` : `${streakTheme.name} · ${streakTheme.tagline}`}
-              </p>
+              <p className="text-2xs font-black leading-snug mt-0.5" style={{ color: streakTheme.text }}>{streakTheme.name}</p>
+              <p className="text-[10px] font-bold leading-snug text-zinc-400">{nextTierLine(streakTheme, streak)}</p>
             </div>
           </div>
         </div>
