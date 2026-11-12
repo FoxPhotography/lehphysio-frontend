@@ -4,6 +4,7 @@ import React from 'react';
 import { m } from 'framer-motion';
 import { Trophy, Crown, Medal, Star } from 'lucide-react';
 import { UserAvatar } from '../components/UserAvatar';
+import { StreakNameplate, StreakName, StreakChip } from '../components/streak/Streak';
 
 // Helper: strip emojis from DB fields
 const stripEmojis = (str: string) => {
@@ -93,6 +94,7 @@ const PodiumEntry: React.FC<{
       <span className="text-2xs text-zinc-500 font-medium">
         {empty ? '0 XP' : `${person.xp.toLocaleString()} XP`}
       </span>
+      {!empty && (person.streak_count || 0) > 0 && <StreakChip days={person.streak_count} size="xs" />}
 
       {/* Podium Bar */}
       <div className={`w-16 sm:w-20 ${cfg.barH} rounded-t-xl bg-gradient-to-t ${cfg.barColor} opacity-80 flex items-start justify-center pt-1.5`}>
@@ -193,10 +195,12 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(idx, 10) * 0.03 }}
-                  className={`cursor-pointer flex items-center gap-3 px-4 py-3 border-b border-white/5 last:border-b-0 transition-colors ${
-                    isMe ? 'bg-orange-500/6 border-s-2 border-s-orange-500' : 'hover:bg-white/2'
+                  className={`cursor-pointer border-b border-white/5 last:border-b-0 transition-colors ${
+                    isMe ? 'bg-orange-500/6' : 'hover:bg-white/2'
                   }`}
                 >
+                  {/* Nameplate in the person's current streak colours */}
+                  <StreakNameplate days={u.streak_count || 0} className="flex items-center gap-3 px-4 py-3">
                   {/* Rank Number */}
                   <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black flex-shrink-0 ${
                     idx === 0 ? 'bg-amber-500 text-black' :
@@ -218,22 +222,26 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   {/* Name + Batch */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className={`text-[13px] font-bold truncate ${isMe ? 'text-orange-400' : 'text-white'}`}>
-                        {u.username}
+                      <span className={`text-[13px] font-black truncate ${isMe ? 'text-orange-400' : 'text-white'}`}>
+                        <StreakName days={u.streak_count || 0}>{u.username}</StreakName>
                       </span>
                       {isMe && (
                         <span className="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 text-2xs font-black">إنت</span>
                       )}
                     </div>
-                    <p className="text-xs text-zinc-500 truncate">
-                      {u.batch}{rankLabel ? ` · ${rankLabel}` : ''}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                      {(u.streak_count || 0) > 0 && <StreakChip days={u.streak_count} size="xs" />}
+                      <p className="text-xs text-zinc-400 truncate">
+                        {u.batch}{rankLabel ? ` · ${rankLabel}` : ''}
+                      </p>
+                    </div>
                   </div>
 
                   {/* XP Badge */}
-                  <div className="px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 flex-shrink-0">
+                  <div className="px-2.5 py-1 rounded-lg bg-black/40 border border-orange-500/25 flex-shrink-0">
                     <span className="text-xs font-black text-orange-400" dir="ltr">{u.xp.toLocaleString()} XP</span>
                   </div>
+                  </StreakNameplate>
                 </m.div>
               );
             })}

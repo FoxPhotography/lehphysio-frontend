@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { StreakAura, StreakFlame, StreakName, StreakChip } from '../components/streak/Streak';
+import { getStreakTheme } from '../utils/streakTheme';
 import { ArrowRight, Flame, Share2, Trophy, Zap } from 'lucide-react';
 import { API_BASE } from '../services/api';
 import { UserAvatar } from '../components/UserAvatar';
@@ -100,6 +102,7 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
   }
 
   const { next, pct, remaining } = rankProgress(data.total_xp);
+  const streakTheme = getStreakTheme(data.streak_count);
   const profileUrl = `${window.location.origin}/u/${encodeURIComponent(data.username)}`;
 
   const onShare = async () => {
@@ -122,17 +125,24 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
         <ArrowRight className="w-4 h-4" /> رجوع
       </button>
 
-      <section className="glass-card p-6 flex flex-col items-center text-center gap-3 relative overflow-hidden">
-        <div aria-hidden className="absolute -top-24 inset-x-0 mx-auto w-72 h-72 rounded-full bg-brand-orange/15 blur-3xl" />
-        <UserAvatar username={data.username} avatarUrl={data.avatar_url} equippedFrame={data.equipped_frame} size={112} eager className="mt-2" />
-        <div className="relative">
-          <h1 className="text-2xl font-black text-white" dir="auto">{data.username}</h1>
-          {data.batch && <p className="text-sm text-zinc-500 font-bold mt-0.5">{data.batch}</p>}
+      <section
+        className="glass-card p-6 pt-8 flex flex-col items-center text-center gap-3 relative overflow-hidden"
+        style={{ borderColor: streakTheme.key !== 'none' ? `rgb(${streakTheme.glow} / 0.35)` : undefined, boxShadow: streakTheme.key !== 'none' ? `0 20px 60px -25px rgb(${streakTheme.glow} / 0.55)` : undefined }}
+      >
+        {/* The profile's background is the owner's current streak colour, alive */}
+        <StreakAura days={data.streak_count} />
+        <div className="relative z-10">
+          <UserAvatar username={data.username} avatarUrl={data.avatar_url} equippedFrame={data.equipped_frame} size={112} eager className="mt-2" />
         </div>
-        <span className="relative text-sm font-black text-brand-amber bg-brand-orange/10 border border-brand-orange/30 rounded-full px-4 py-1.5">
+        <div className="relative z-10">
+          <h1 className="text-2xl font-black text-white" dir="auto"><StreakName days={data.streak_count}>{data.username}</StreakName></h1>
+          {data.batch && <p className="text-sm text-zinc-400 font-bold mt-0.5">{data.batch}</p>}
+        </div>
+        {data.streak_count > 0 && <StreakChip days={data.streak_count} size="md" showName className="relative z-10" />}
+        <span className="relative z-10 text-sm font-black text-brand-amber bg-black/40 border border-brand-orange/30 rounded-full px-4 py-1.5">
           {rankEmoji(data.rank)} {rankName(data.rank)}
         </span>
-        <div className="w-full mt-2">
+        <div className="relative z-10 w-full mt-2">
           <div className="h-2 rounded-full bg-zinc-900 overflow-hidden">
             <div className="h-full bg-gradient-to-l from-brand-orange to-brand-amber rounded-full" style={{ width: `${pct}%` }} />
           </div>
@@ -145,7 +155,7 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
       <section className="grid grid-cols-3 gap-3" aria-label="الإحصائيات">
         <Stat icon={<Zap className="w-5 h-5 text-brand-orange" />} value={data.total_xp.toLocaleString('en-US')} label="XP" />
         <Stat icon={<Trophy className="w-5 h-5 text-brand-amber" />} value={`#${data.global_rank}`} label="الترتيب" />
-        <Stat icon={<Flame className="w-5 h-5 text-brand-orange fill-current" />} value={daysLabel(data.streak_count)} label="متتالية" />
+        <Stat icon={<StreakFlame days={data.streak_count} size={24} />} value={daysLabel(data.streak_count)} label={data.streak_count > 0 ? streakTheme.name : 'متتالية'} accent={data.streak_count > 0 ? streakTheme.text : undefined} />
       </section>
 
       <button
@@ -160,10 +170,10 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
   );
 };
 
-const Stat: React.FC<{ icon: React.ReactNode; value: string; label: string }> = ({ icon, value, label }) => (
+const Stat: React.FC<{ icon: React.ReactNode; value: string; label: string; accent?: string }> = ({ icon, value, label, accent }) => (
   <div className="glass-card p-3.5 flex flex-col items-center gap-1.5 text-center">
     {icon}
     <span className="text-base font-black text-white" dir="auto">{value}</span>
-    <span className="text-2xs text-zinc-500 font-bold">{label}</span>
+    <span className="text-2xs font-bold" style={{ color: accent || '#71717a' }}>{label}</span>
   </div>
 );

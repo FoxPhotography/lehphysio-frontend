@@ -296,3 +296,199 @@ html, body {
   animation: commentDeeplinkPulse 1.6s ease-in-out 2;
   border-color: rgba(255, 106, 0, 0.55) !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STREAK THEME — colours come from --s1/--s2/--s3 (deep→bright→core), --sg
+   (glow "r g b") and --si (intensity 0..1), set per tier in utils/streakTheme.
+   Animations use transform/opacity only so many can run at once.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes streak-drift {
+  0%, 100% { transform: translate3d(-5%, -3%, 0) scale(1); }
+  50% { transform: translate3d(5%, 4%, 0) scale(1.18); }
+}
+@keyframes streak-spin { to { transform: rotate(360deg); } }
+@keyframes streak-spin-rev { to { transform: rotate(-360deg); } }
+@keyframes streak-ember {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translate3d(var(--dx, 0), -160px, 0) scale(0.15); opacity: 0; }
+}
+@keyframes streak-ember-short {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate3d(var(--dx, 0), -52px, 0) scale(0.2); opacity: 0; }
+}
+@keyframes streak-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(45deg); }
+}
+@keyframes streak-sheen {
+  0% { transform: translateX(-160%) skewX(-22deg); }
+  55%, 100% { transform: translateX(420%) skewX(-22deg); }
+}
+@keyframes streak-slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes streak-text-pan { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
+@keyframes streak-breathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes streak-chip-glow {
+  0%, 100% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--s2) 45%, transparent), 0 0 10px rgb(var(--sg) / 0.25); }
+  50% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--s3) 70%, transparent), 0 0 22px rgb(var(--sg) / 0.55); }
+}
+
+/* ── Chip ── */
+.streak-chip {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--s1) 32%, #0a0a0b), color-mix(in srgb, var(--s2) 14%, #0a0a0b));
+  animation: streak-chip-glow 2.6s ease-in-out infinite;
+}
+.streak-chip--off { background: rgba(39, 39, 42, 0.6); animation: none; box-shadow: 0 0 0 1px rgba(63, 63, 70, 0.8); }
+
+/* ── Aura (animated background) ── */
+.streak-aura {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+  background: radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--s1) 38%, #09090b) 0%, #09090b 70%);
+}
+.streak-aura--off { background: none; }
+.streak-aura__glow {
+  position: absolute;
+  inset: -35%;
+  background:
+    radial-gradient(32% 28% at 30% 22%, rgb(var(--sg) / 0.55), transparent 70%),
+    radial-gradient(30% 26% at 74% 30%, color-mix(in srgb, var(--s1) 70%, transparent), transparent 70%),
+    radial-gradient(26% 24% at 55% 62%, color-mix(in srgb, var(--s3) 30%, transparent), transparent 70%);
+  filter: blur(14px);
+  animation: streak-drift 10s ease-in-out infinite;
+  will-change: transform;
+}
+.streak-aura__ring {
+  position: absolute;
+  left: -40%;
+  top: -95%;
+  width: 180%;
+  aspect-ratio: 1;
+  background: conic-gradient(from 0deg, transparent 0 12%, var(--s2) 20%, transparent 30% 50%, var(--s3) 58%, transparent 68% 82%, var(--s1) 90%, transparent 100%);
+  opacity: calc(0.12 + var(--si) * 0.22);
+  filter: blur(30px);
+  animation: streak-spin 16s linear infinite;
+  will-change: transform;
+}
+.streak-aura__ring--rev { opacity: calc(0.06 + var(--si) * 0.14); animation: streak-spin-rev 24s linear infinite; top: -60%; }
+.streak-aura__embers span {
+  position: absolute;
+  bottom: -6px;
+  left: var(--x);
+  width: var(--sz);
+  height: var(--sz);
+  border-radius: 9999px;
+  background: radial-gradient(circle, #fff 0%, var(--s3) 35%, var(--s2) 65%, transparent 72%);
+  box-shadow: 0 0 10px rgb(var(--sg) / 0.95);
+  animation: streak-ember var(--dur) linear infinite;
+  animation-delay: var(--delay);
+  will-change: transform, opacity;
+}
+.streak-aura__sparkles span {
+  position: absolute;
+  background: radial-gradient(circle, #fff 0 18%, transparent 20%),
+    linear-gradient(90deg, transparent 45%, var(--s3) 50%, transparent 55%),
+    linear-gradient(0deg, transparent 45%, var(--s3) 50%, transparent 55%);
+  filter: drop-shadow(0 0 4px rgb(var(--sg) / 1));
+  animation: streak-twinkle 2.8s ease-in-out infinite;
+}
+.streak-aura__vignette {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 45%, rgba(9, 9, 11, 0.35) 80%, rgba(9, 9, 11, 0.6));
+}
+.streak-aura--plasma .streak-aura__glow { animation-duration: 7s; }
+.streak-aura--supernova .streak-aura__glow { animation-duration: 6s; }
+.streak-aura--supernova .streak-aura__ring { animation-duration: 10s; }
+
+/* ── Nameplate (leaderboard rows) ── */
+.streak-plate { position: relative; isolation: isolate; overflow: hidden; }
+.streak-plate__bg {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 200%;
+  z-index: -2;
+  background: linear-gradient(100deg,
+    color-mix(in srgb, var(--s1) 34%, transparent) 0%,
+    color-mix(in srgb, var(--s2) 12%, transparent) 25%,
+    color-mix(in srgb, var(--s1) 34%, transparent) 50%,
+    color-mix(in srgb, var(--s2) 12%, transparent) 75%,
+    color-mix(in srgb, var(--s1) 34%, transparent) 100%);
+  animation: streak-slide calc(9s - var(--si) * 4s) linear infinite;
+  will-change: transform;
+}
+.streak-plate__sheen { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.streak-plate__sheen::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 28%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / calc(0.06 + var(--si) * 0.12)), transparent);
+  animation: streak-sheen calc(6s - var(--si) * 2.5s) ease-in-out infinite;
+  will-change: transform;
+}
+.streak-plate__edge {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 3px;
+  z-index: 1;
+  background: linear-gradient(to bottom, var(--s3), var(--s2), var(--s1));
+  box-shadow: 0 0 14px rgb(var(--sg) / 0.9), 0 0 4px rgb(var(--sg) / 1);
+  animation: streak-breathe 2.4s ease-in-out infinite;
+}
+.streak-plate::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--s2), transparent);
+  opacity: calc(0.25 + var(--si) * 0.5);
+  pointer-events: none;
+}
+.streak-plate__embers { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.streak-plate__embers span {
+  position: absolute;
+  bottom: -4px;
+  left: var(--x);
+  width: var(--sz);
+  height: var(--sz);
+  border-radius: 9999px;
+  background: radial-gradient(circle, #fff 0%, var(--s3) 40%, transparent 72%);
+  box-shadow: 0 0 8px rgb(var(--sg) / 0.95);
+  animation: streak-ember-short var(--dur) linear infinite;
+  animation-delay: var(--delay);
+}
+
+/* ── Gradient username ── */
+.streak-text {
+  background: linear-gradient(90deg, var(--s3), #ffffff, var(--s2), var(--s3));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: streak-text-pan 3.2s linear infinite;
+  filter: drop-shadow(0 0 8px rgb(var(--sg) / 0.45));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streak-aura *, .streak-plate *, .streak-plate__sheen::after, .streak-chip, .streak-text { animation: none !important; }
+}
+
+/* Aura limited to the top of a long card (profile header) */
+.streak-aura.streak-aura--header { bottom: auto; height: min(480px, 100%); }
+.streak-aura.streak-aura--header .streak-aura__vignette {
+  background: linear-gradient(to bottom, transparent 30%, rgba(24, 24, 27, 0.6) 70%, rgba(24, 24, 27, 0.98));
+}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { StreakChip } from '../streak/Streak';
 import { Trophy, ChevronLeft, Crown, Medal, Star } from 'lucide-react';
 import { UserAvatar } from '../UserAvatar';
 
@@ -55,6 +56,7 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
             <span className="text-2xs text-zinc-500 font-medium">
               {second ? `${second.xp.toLocaleString()} XP` : '0 XP'}
             </span>
+            {second && (second.streak_count || 0) > 0 && <StreakChip days={second.streak_count} size="xs" className="mt-1" />}
             <div className="w-16 sm:w-20 h-16 rounded-t-xl bg-gradient-to-t from-zinc-400 to-zinc-300 opacity-80 flex items-start justify-center pt-1.5">
               <span className="text-xs font-black text-black/70">2</span>
             </div>
@@ -81,6 +83,7 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
             <span className="text-2xs text-zinc-500 font-medium">
               {first ? `${first.xp.toLocaleString()} XP` : '0 XP'}
             </span>
+            {first && (first.streak_count || 0) > 0 && <StreakChip days={first.streak_count} size="xs" className="mt-1" />}
             <div className="w-16 sm:w-20 h-24 rounded-t-xl bg-gradient-to-t from-amber-500 to-yellow-400 opacity-80 flex items-start justify-center pt-1.5">
               <span className="text-xs font-black text-black/70">1</span>
             </div>
@@ -107,6 +110,7 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
             <span className="text-2xs text-zinc-500 font-medium">
               {third ? `${third.xp.toLocaleString()} XP` : '0 XP'}
             </span>
+            {third && (third.streak_count || 0) > 0 && <StreakChip days={third.streak_count} size="xs" className="mt-1" />}
             <div className="w-16 sm:w-20 h-10 rounded-t-xl bg-gradient-to-t from-amber-700 to-amber-600 opacity-80 flex items-start justify-center pt-1.5">
               <span className="text-xs font-black text-black/70">3</span>
             </div>

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { StreakAura, StreakFlame, StreakName, StreakChip } from '../components/streak/Streak';
+import { getStreakTheme } from '../utils/streakTheme';
 import { rankName, rankEmoji } from '../utils/ranks';
 import { m, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -139,6 +141,7 @@ export const Profile: React.FC<ProfileProps> = ({
   };
   const streak = user.streak_count || 0;
   const tier = getFlameTier(streak);
+  const streakTheme = getStreakTheme(streak);
 
   const containerClass = 
     streak >= 15 ? 'bg-cyan-500/15 border border-cyan-500/20' :
@@ -312,7 +315,10 @@ export const Profile: React.FC<ProfileProps> = ({
       className="w-full max-w-lg mx-auto px-4 xl:pt-6 space-y-4"
     >
       {/* ── Profile Card ──────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-white/8 bg-zinc-900/60 p-6">
+      <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-zinc-900/60 p-6" style={{ borderColor: streakTheme.key !== 'none' ? `rgb(${streakTheme.glow} / 0.28)` : undefined }}>
+        {/* Animated background in the current streak colour */}
+        <StreakAura days={streak} className="streak-aura--header" />
+        <div className="relative z-10">
 
         {/* Avatar Section */}
         <div className="flex flex-col items-center mb-6">
@@ -386,7 +392,8 @@ export const Profile: React.FC<ProfileProps> = ({
           </div>
 
           {/* Username */}
-          <h2 className="text-2xl font-black text-white mb-1">{user.username}</h2>
+          <h2 className="text-2xl font-black text-white mb-1"><StreakName days={streak}>{user.username}</StreakName></h2>
+          {streak > 0 && <StreakChip days={streak} size="sm" showName className="mb-2" />}
 
           {/* Admin / Owner Badge */}
           {(user.role === 'admin' || user.role === 'owner') && (
@@ -515,72 +522,17 @@ export const Profile: React.FC<ProfileProps> = ({
               <p className="text-lg font-black text-white leading-tight">{user.total_xp?.toLocaleString()}</p>
             </div>
           </div>
-          <div className="rounded-xl border border-white/8 bg-black/30 p-3.5 flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-lg ${containerClass} flex items-center justify-center flex-shrink-0 relative overflow-visible`}>
-              <svg viewBox="0 0 100 100" className={`w-8 h-8 ${shadowClass} select-none`}>
-                <defs>
-                  <linearGradient id="profileOuterFlame" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor={tier.outer[0]} stopOpacity="0.9" />
-                    <stop offset="60%" stopColor={tier.outer[1]} stopOpacity="0.8" />
-                    <stop offset="100%" stopColor={tier.outer[2]} stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient id="profileMidFlame" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor={tier.mid[0]} stopOpacity="0.95" />
-                    <stop offset="50%" stopColor={tier.mid[1]} stopOpacity="0.85" />
-                    <stop offset="100%" stopColor={tier.mid[2]} stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient id="profileInnerFlame" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor={tier.inner[0]} stopOpacity="1" />
-                    <stop offset="50%" stopColor={tier.inner[1]} stopOpacity="0.9" />
-                    <stop offset="100%" stopColor={tier.inner[2]} stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-
-                {/* 1. Outer Flame */}
-                <m.path
-                  d="M50,95 C70,95 85,80 82,58 C80,38 65,30 50,2 C35,30 20,38 18,58 C15,80 30,95 50,95 Z"
-                  fill="url(#profileOuterFlame)"
-                  animate={{
-                    scaleY: [1, 1.08, 0.96, 1.05, 1],
-                    scaleX: [1, 0.95, 1.05, 0.98, 1],
-                    skewX: [0, -3, 3, -2, 0],
-                    y: [0, -4, 2, -3, 0]
-                  }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  style={{ transformOrigin: "50px 95px" }}
-                />
-
-                {/* 2. Middle Flame */}
-                <m.path
-                  d="M50,90 C65,90 75,78 72,58 C70,40 60,32 50,15 C40,32 30,40 28,58 C25,78 35,90 50,90 Z"
-                  fill="url(#profileMidFlame)"
-                  animate={{
-                    scaleY: [1, 0.93, 1.1, 0.97, 1],
-                    scaleX: [1, 1.08, 0.92, 1.03, 1],
-                    skewX: [0, 4, -4, 2, 0],
-                    y: [0, 3, -5, 2, 0]
-                  }}
-                  transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-                  style={{ transformOrigin: "50px 90px" }}
-                />
-
-                {/* 3. Inner Flame */}
-                <m.path
-                  d="M50,85 C60,85 68,75 66,58 C64,42 58,35 50,28 C42,35 36,42 34,58 C32,75 40,85 50,85 Z"
-                  fill="url(#profileInnerFlame)"
-                  animate={{
-                    scaleY: [1, 1.12, 0.9, 1.08, 1],
-                    scaleX: [1, 0.9, 1.1, 0.95, 1],
-                    y: [0, -2, 1, -1, 0]
-                  }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                  style={{ transformOrigin: "50px 85px" }}
-                />
-              </svg>
+          <div className="relative overflow-hidden rounded-xl border bg-black/30 p-3.5 flex items-center gap-3" style={{ borderColor: `rgb(${streakTheme.glow} / ${streakTheme.key === 'none' ? 0.15 : 0.35})` }}>
+            <StreakAura days={streak} density="lite" />
+            <div className="relative z-10 w-9 h-9 flex items-center justify-center flex-shrink-0">
+              <StreakFlame days={streak} size={34} />
             </div>
-            <div className="min-w-0">
-              <p className="text-2xs text-zinc-500 uppercase tracking-wider">أيام متتالية</p>
-              <p className="text-lg font-black text-white leading-tight">{user.streak_count === 1 ? 'يوم واحد' : user.streak_count === 2 ? 'يومين' : `${user.streak_count} أيام`}</p>
+            <div className="relative z-10 min-w-0">
+              <p className="text-2xs text-zinc-400 uppercase tracking-wider">أيام متتالية</p>
+              <p className="text-lg font-black text-white leading-tight">{user.streak_count === 1 ? 'يوم واحد' : user.streak_count === 2 ? 'يومين' : `${user.streak_count || 0} أيام`}</p>
+              <p className="text-2xs font-extrabold truncate" style={{ color: streakTheme.text }}>
+                {streakTheme.next ? `${streakTheme.name} · باقي ${streakTheme.next.at - streak} على ${streakTheme.next.name}` : `${streakTheme.name} · ${streakTheme.tagline}`}
+              </p>
             </div>
           </div>
         </div>
@@ -685,6 +637,7 @@ export const Profile: React.FC<ProfileProps> = ({
             <LogOut className="rtl:-scale-x-100 w-4 h-4" />
             تسجيل الخروج
           </m.button>
+        </div>
         </div>
       </div>
 

@@ -3,6 +3,7 @@ import { Thumb } from '../components/common/Thumb';
 import { cld } from '../utils/image';
 import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
 import { useNotifications } from '../context/NotificationContext';
+import { StreakChip } from '../components/streak/Streak';
 import { m } from 'framer-motion';
 import { 
   Gift, 
@@ -249,14 +250,14 @@ export const Home: React.FC<HomeProps> = ({
           <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">ليه فيزيو؟</h1>
           <p className="text-zinc-400 text-xs md:text-sm font-medium mt-1">اسمع. اتعلم. علّي مستواك.</p>
         </div>
-        <button 
-          className="self-start sm:self-auto flex items-center gap-2.5 px-5 py-2.5 rounded-2xl text-brand-amber font-extrabold text-sm border border-brand-orange/30 fire-glow-badge cursor-pointer transition-all duration-300 hover:scale-103 active:scale-97 group" 
+        <StreakChip
+          days={activeStreak}
+          size="md"
+          showName
           onClick={() => setCurrentPage('profile')}
-        >
-          <Flame className="w-5 h-5 text-brand-orange fill-current animate-fire-pulse" />
-          <span>{activeStreak} يوم متتالي</span>
-          <ChevronLeft className="rtl:-scale-x-100 w-4 h-4 text-zinc-500 group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5 transition-transform" />
-        </button>
+          className="self-start sm:self-auto group hover:scale-103"
+          trailing={<ChevronLeft className="relative rtl:-scale-x-100 w-4 h-4 text-zinc-400 group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5 transition-transform" />}
+        />
       </section>
 
       {/* Quick XP actions grid */}

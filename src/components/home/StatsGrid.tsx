@@ -1,5 +1,6 @@
 import React from 'react';
-import { Flame } from 'lucide-react';
+import { StreakAura, StreakFlame } from '../streak/Streak';
+import { getStreakTheme } from '../../utils/streakTheme';
 import { rankProgress } from '../../utils/ranks';
 import { daysLabel } from '../../utils/format';
 
@@ -20,6 +21,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ user, leaderboard = [] }) 
   const totalRanked = user.total_users || leaderboard.length || 1;
   const topPct = rankNum && totalRanked > 0 ? Math.ceil((rankNum / totalRanked) * 100) : null;
   const streak = user.streak_count || 0;
+  const theme = getStreakTheme(streak);
 
   return (
     <section className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4" aria-label="إحصائياتك">
@@ -52,13 +54,18 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ user, leaderboard = [] }) 
         )}
       </div>
 
-      <div className={card}>
-        <span className={label}>أيام متتالية</span>
-        <div className="flex items-center gap-2 mt-1">
-          <Flame className="w-6 h-6 text-brand-orange fill-current" />
+      <div className={card} style={{ borderColor: theme.key !== 'none' ? `rgb(${theme.glow} / 0.35)` : undefined }}>
+        <StreakAura days={streak} density="lite" />
+        <span className="text-xs font-bold text-zinc-300 relative z-10">أيام متتالية</span>
+        <div className="relative z-10 flex items-center gap-2 mt-1">
+          <StreakFlame days={streak} size={28} />
           <span className="text-xl font-black text-white">{daysLabel(streak)}</span>
         </div>
-        <span className="text-2xs text-zinc-500 font-bold mt-1.5">ادخل كل يوم عشان متكسرهاش</span>
+        <span className="relative z-10 text-2xs font-extrabold mt-1.5" style={{ color: theme.text }}>
+          {theme.key === 'none'
+            ? 'ادخل النهارده وولّع الستريك 🔥'
+            : theme.next ? `${theme.name} · باقي ${theme.next.at - streak} على ${theme.next.name}` : `${theme.name} · ${theme.tagline}`}
+        </span>
       </div>
     </section>
   );
