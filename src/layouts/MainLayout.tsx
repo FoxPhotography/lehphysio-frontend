@@ -122,8 +122,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-orange/[0.03] to-transparent animate-shimmer pointer-events-none" />
 
             <div className="flex items-start gap-3.5 relative z-10">
-              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-brand-orange/30 shadow-lg shadow-brand-orange/10 shrink-0 bg-brand-orange">
-                <img src="/icon-192.webp" width={96} height={96} alt="Leh Physio" className="w-full h-full object-cover" />
+              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-brand-orange/30 shadow-lg shadow-brand-orange/10 shrink-0 bg-[#240605]">
+                <img src="/icon-192x192.png" width={96} height={96} alt="Leh Physio" className="w-full h-full object-cover" />
               </div>
 
               <div className="flex-1 min-w-0">
@@ -169,8 +169,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
             className="fixed bottom-nav-offset md:bottom-6 end-4 start-4 md:start-auto md:w-[420px] z-[9999] rounded-3xl border border-white/10 bg-zinc-950/95 p-6 shadow-[0_12px_45px_rgba(0,0,0,0.8)] flex flex-col gap-4 text-start font-sans"
           >
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-brand-orange/30 shadow-lg shadow-brand-orange/10 shrink-0 bg-brand-orange">
-                <img src="/icon-192.webp" width={96} height={96} alt="LehPhysio" className="w-full h-full object-cover" />
+              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-brand-orange/30 shadow-lg shadow-brand-orange/10 shrink-0 bg-[#240605]">
+                <img src="/icon-192x192.png" width={96} height={96} alt="LehPhysio" className="w-full h-full object-cover" />
               </div>
 
               <div className="flex-1 min-w-0">
