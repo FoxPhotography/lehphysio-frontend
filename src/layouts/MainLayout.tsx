@@ -239,7 +239,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
 
               <div className="flex-1 min-w-0 text-start">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-black text-white leading-tight">متفوتش الستريك! 🔥</h4>
+                  <h4 className="text-sm font-black text-white leading-tight">فعّل الإشعارات 🔔</h4>
                   <button 
                     onClick={dismissPushPrompt}
                     className="text-zinc-500 hover:text-zinc-300 cursor-pointer transition-colors p-1 -mt-1 -me-1 shrink-0 rounded-lg"
@@ -249,7 +249,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
                   </button>
                 </div>
                 <p className="text-xs text-zinc-300 font-medium leading-relaxed mt-1.5">
-                  فعّل الإشعارات عشان يوصلك تذكير بالستريك كل يوم قبل ما يضيع عليك، وتنبيهات الكومنتات والتفاعل في وقتها.
+                  فعّل الإشعارات عشان يوصلك كل جديد أول بأول.
                 </p>
               </div>
             </div>
