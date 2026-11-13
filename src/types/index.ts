@@ -148,7 +148,8 @@ export type NotificationType =
   | 'user_muted' | 'user_unmuted'
   | 'user_banned' | 'user_unbanned'
   | 'user_role_updated'
-  | 'moderation_post_pending' | 'moderation_post_edited' | 'moderation_suggestion_pending' | 'moderation_report_pending';
+  | 'moderation_post_pending' | 'moderation_post_edited' | 'moderation_suggestion_pending' | 'moderation_report_pending'
+  | 'streak_reminder';
 
 export interface AppNotification {
   _id: number;

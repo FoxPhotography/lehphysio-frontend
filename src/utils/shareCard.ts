@@ -103,11 +103,11 @@ export async function renderShareCard(d: ShareCardData): Promise<Blob | null> {
   ctx.save();
   ctx.translate(cx, cy);
   ctx.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < 14; i++) {
-    const a = (Math.PI * 2 * i) / 14 + rand(i) * 0.2;
+  for (let i = 0; i < 12; i++) {
+    const a = (Math.PI * 2 * i) / 12 + rand(i) * 0.2;
     const len = 900 + rand(i + 50) * 400;
     const g = ctx.createLinearGradient(0, 0, Math.cos(a) * len, Math.sin(a) * len);
-    g.addColorStop(0, rgba(t.glow, 0.16 + t.intensity * 0.08));
+    g.addColorStop(0, rgba(t.glow, 0.07 + t.intensity * 0.06));
     g.addColorStop(1, rgba(t.glow, 0));
     ctx.fillStyle = g;
     ctx.beginPath();
@@ -128,14 +128,22 @@ export async function renderShareCard(d: ShareCardData): Promise<Blob | null> {
     g.addColorStop(0.25, t.c3);
     g.addColorStop(0.6, rgba(t.glow, 0.5));
     g.addColorStop(1, rgba(t.glow, 0));
-    ctx.globalAlpha = 0.35 + rand(i + 600) * 0.65;
+    // Softer in the middle band where the text sits
+    const inText = x > 150 && x < W - 150 && y > 1000 && y < 1720;
+    ctx.globalAlpha = (0.3 + rand(i + 600) * 0.6) * (inText ? 0.35 : 1);
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(x, y, rad * 3, 0, Math.PI * 2); ctx.fill();
   }
   ctx.globalAlpha = 1;
   if (t.key === 'plasma' || t.key === 'supernova' || t.key === 'gold') {
     const n = t.key === 'supernova' ? 18 : t.key === 'plasma' ? 12 : 7;
-    for (let i = 0; i < n; i++) drawSparkle(ctx, 60 + rand(i + 800) * (W - 120), 120 + rand(i + 900) * (H - 240), 10 + rand(i + 1000) * 18, t.c3);
+    for (let i = 0; i < n; i++) {
+      // Keep sparkles off the name / rank / stats
+      const onLeft = rand(i + 700) < 0.5;
+      const x = onLeft ? 70 + rand(i + 800) * 170 : W - 240 + rand(i + 800) * 170;
+      const y = 120 + rand(i + 900) * (H - 240);
+      drawSparkle(ctx, x, y, 10 + rand(i + 1000) * 18, t.c3);
+    }
   }
 
   // Frame
@@ -235,7 +243,7 @@ export async function renderShareCard(d: ShareCardData): Promise<Blob | null> {
     ctx.fillStyle = t.text;
     ctx.save();
     ctx.shadowColor = rgba(t.glow, 0.7); ctx.shadowBlur = 24;
-    ctx.fillText(`ستريك ${t.name} · ${t.tagline}`, cx, 1420);
+    ctx.fillText(`🔥 ستريك ${t.name}`, cx, 1420);
     ctx.restore();
   }
 

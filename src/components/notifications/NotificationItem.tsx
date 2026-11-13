@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { m, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import {
-  MessageCircle, Reply, AtSign, FileText, Tv, Check, X, VolumeX, Volume2, Lock, Unlock, Award, Shield, Flag, Trash2, SmilePlus,
+  MessageCircle, Reply, AtSign, FileText, Tv, Check, X, VolumeX, Volume2, Lock, Unlock, Award, Shield, Flag, Trash2, SmilePlus, Flame,
 } from 'lucide-react';
 import type { AppNotification, NotificationType } from '../../types';
 import { UserAvatar } from '../UserAvatar';
@@ -40,6 +40,7 @@ const ICON: Partial<Record<NotificationType, React.ElementType>> = {
   moderation_post_edited: Shield,
   moderation_suggestion_pending: Shield,
   moderation_report_pending: Flag,
+  streak_reminder: Flame,
 };
 
 const SWIPE_DELETE = 96;

@@ -37,6 +37,7 @@ const COPY: Record<NotificationType, Copy> = {
   moderation_post_edited: { action: 'عدّل بوست ومستني مراجعتك', tone: 'staff' },
   moderation_suggestion_pending: { action: 'بعت اقتراح مستني مراجعتك', tone: 'staff' },
   moderation_report_pending: { action: 'بلّغ عن محتوى', tone: 'danger' },
+  streak_reminder: { action: 'تذكير بالستريك 🔥', tone: 'warning', system: true },
 };
 
 export interface DescribedNotification extends Copy {
@@ -59,6 +60,7 @@ export function describe(n: AppNotification): DescribedNotification {
   if (quoted) snippet = quoted[1].replace(/\.\.\.$/, '…');
   if (!snippet && n.metadata?.reason) snippet = String(n.metadata.reason);
   if (!snippet && n.type === 'new_episode' && n.body) snippet = n.body;
+  if (!snippet && n.type === 'streak_reminder' && n.body) snippet = n.body;
 
   return {
     ...copy,
