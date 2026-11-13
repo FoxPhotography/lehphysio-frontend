@@ -60,6 +60,10 @@ interface AuthContextType {
   deferredPrompt: any;
   showInstallBanner: boolean;
   setShowInstallBanner: React.Dispatch<React.SetStateAction<boolean>>;
+  showPushPrompt: boolean;
+  setShowPushPrompt: React.Dispatch<React.SetStateAction<boolean>>;
+  enablePushNotifications: () => Promise<boolean>;
+  dismissPushPrompt: () => void;
   isSubscribed: boolean;
   pushLoading: boolean;
   isStandalone: boolean;
@@ -156,6 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // PWA & Push
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [showPushPrompt, setShowPushPrompt] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
@@ -538,6 +543,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [token]);
 
+  // Auto-prompt to enable notifications when app is installed or opened
+  useEffect(() => {
+    let isMounted = true;
+    let timerId: any = null;
+
+    if (!token || !user) return () => {};
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return () => {};
+    if (Notification.permission === 'denied') return () => {};
+
+    // Check if dismissed recently (cooldown: 4 days)
+    const dismissedAt = localStorage.getItem('push_prompt_dismissed');
+    if (dismissedAt) {
+      const daysSince = (Date.now() - Number(dismissedAt)) / (1000 * 60 * 60 * 24);
+      if (daysSince < 4) return () => {};
+    }
+
+    navigator.serviceWorker.ready.then(async (reg) => {
+      try {
+        const sub = await reg.pushManager.getSubscription();
+        if (!isMounted) return;
+        if (sub) {
+          setIsSubscribed(true);
+          return;
+        }
+        setIsSubscribed(false);
+
+        // If running as an installed PWA (standalone), prompt quickly after 2.5s
+        // If in regular browser, wait 4.5s so it doesn't collide with install prompt
+        const delay = isStandalone ? 2500 : 4500;
+        timerId = setTimeout(() => {
+          if (isMounted) setShowPushPrompt(true);
+        }, delay);
+      } catch (e) {
+        // Ignore service worker query errors
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [token, user, isStandalone]);
+
+  // Listen to PWA installation completion
+  useEffect(() => {
+    const onAppInstalled = () => {
+      setShowInstallBanner(false);
+      setDeferredPrompt(null);
+      setIsStandalone(true);
+      localStorage.removeItem('pwa_install_dismissed');
+      // Prompt for notifications right after installation!
+      setTimeout(() => {
+        if (!isSubscribed && Notification.permission !== 'denied') {
+          setShowPushPrompt(true);
+        }
+      }, 1000);
+    };
+
+    window.addEventListener('appinstalled', onAppInstalled);
+    return () => window.removeEventListener('appinstalled', onAppInstalled);
+  }, [isSubscribed]);
+
   const handleInstallPWA = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
@@ -546,6 +613,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setShowInstallBanner(false);
       setDeferredPrompt(null);
       localStorage.removeItem('pwa_install_dismissed');
+      setTimeout(() => {
+        if (!isSubscribed && Notification.permission !== 'denied') {
+          setShowPushPrompt(true);
+        }
+      }, 1200);
     }
   };
 
@@ -557,6 +629,90 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const dismissIOSInstall = () => {
     setShowIOSInstall(false);
     localStorage.setItem('ios_pwa_install_dismissed', Date.now().toString());
+  };
+
+  const dismissPushPrompt = () => {
+    setShowPushPrompt(false);
+    localStorage.setItem('push_prompt_dismissed', Date.now().toString());
+  };
+
+  const enablePushNotifications = async (): Promise<boolean> => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      showToast('الإشعارات غير مدعومة على هذا الجهاز أو المتصفح.');
+      return false;
+    }
+
+    setPushLoading(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const existingSub = await reg.pushManager.getSubscription();
+
+      if (existingSub) {
+        setIsSubscribed(true);
+        setShowPushPrompt(false);
+        showToast('الإشعارات مفعلة بالفعل على هذا الجهاز! 🔔');
+        return true;
+      }
+
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        showToast('يرجى تفعيل صلاحية الإشعارات من إعدادات المتصفح.');
+        setPushLoading(false);
+        return false;
+      }
+
+      const keyRes = await authService.getVapidKey();
+      if (!keyRes.ok) {
+        const errData = await keyRes.json().catch(() => ({}));
+        showToast(errData.error || 'فشل تشغيل الإشعارات: يرجى التحقق من اتصال السيرفر.');
+        setPushLoading(false);
+        return false;
+      }
+      const keyData = await keyRes.json();
+      
+      const urlBase64ToUint8Array = (base64String: string) => {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+      };
+
+      const convertedKey = urlBase64ToUint8Array(keyData.publicKey);
+
+      const newSub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedKey
+      });
+
+      const devType = /iPad|iPhone|iPod/.test(navigator.userAgent) ? 'ios' : (/Android/.test(navigator.userAgent) ? 'android' : 'desktop');
+      await authService.subscribePush(newSub, devType, token);
+
+      setIsSubscribed(true);
+      setShowPushPrompt(false);
+      localStorage.removeItem('push_prompt_dismissed');
+      showToast('تم تفعيل الإشعارات بنجاح! 🔔');
+      return true;
+    } catch (err) {
+      console.error('Error enabling push notifications:', err);
+      const e = err as { name?: string; message?: string };
+      const msg = (e?.message || '').toLowerCase();
+      if (e?.name === 'AbortError' || msg.includes('push service')) {
+        showToast('خدمة الإشعارات مقفولة في المتصفح ده. لو بتستخدم Brave فعّل "Use Google services for push messaging" من الإعدادات، أو جرّب Chrome/Edge.');
+      } else if (e?.name === 'NotAllowedError') {
+        showToast('الإشعارات مقفولة للموقع أو لويندوز. فعّلها من إعدادات المتصفح ومن Windows Settings > Notifications.');
+      } else if (e?.name === 'InvalidStateError') {
+        showToast('في اشتراك قديم متعارض. امسح بيانات الموقع وجرّب تاني.');
+      } else {
+        showToast(`حدث خطأ أثناء تفعيل الإشعارات (${e?.name || 'Error'}: ${e?.message || 'unknown'})`);
+      }
+      return false;
+    } finally {
+      setPushLoading(false);
+    }
   };
 
   const handleTogglePushNotifications = async () => {
@@ -576,59 +732,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsSubscribed(false);
         showToast('تم إلغاء تفعيل الإشعارات.');
       } else {
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-          showToast('يرجى تفعيل صلاحية الإشعارات من إعدادات المتصفح.');
-          setPushLoading(false);
-          return;
-        }
-
-        const keyRes = await authService.getVapidKey();
-        if (!keyRes.ok) {
-          const errData = await keyRes.json().catch(() => ({}));
-          showToast(errData.error || 'فشل تشغيل الإشعارات: يرجى إعادة تشغيل السيرفر (Backend Server) لقراءة مفاتيح الإشعارات الجديدة.');
-          setPushLoading(false);
-          return;
-        }
-        const keyData = await keyRes.json();
-        
-        const urlBase64ToUint8Array = (base64String: string) => {
-          const padding = '='.repeat((4 - base64String.length % 4) % 4);
-          const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-          const rawData = window.atob(base64);
-          const outputArray = new Uint8Array(rawData.length);
-          for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-          }
-          return outputArray;
-        };
-
-        const convertedKey = urlBase64ToUint8Array(keyData.publicKey);
-
-        const newSub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: convertedKey
-        });
-
-        const devType = /iPad|iPhone|iPod/.test(navigator.userAgent) ? 'ios' : (/Android/.test(navigator.userAgent) ? 'android' : 'desktop');
-        await authService.subscribePush(newSub, devType, token);
-
-        setIsSubscribed(true);
-        showToast('تم تفعيل الإشعارات بنجاح! 🔔');
+        await enablePushNotifications();
       }
     } catch (err) {
       console.error('Error toggling push notifications:', err);
-      const e = err as { name?: string; message?: string };
-      const msg = (e?.message || '').toLowerCase();
-      if (e?.name === 'AbortError' || msg.includes('push service')) {
-        showToast('خدمة الإشعارات مقفولة في المتصفح ده. لو بتستخدم Brave فعّل "Use Google services for push messaging" من الإعدادات، أو جرّب Chrome/Edge.');
-      } else if (e?.name === 'NotAllowedError') {
-        showToast('الإشعارات مقفولة للموقع أو لويندوز. فعّلها من إعدادات المتصفح ومن Windows Settings > Notifications.');
-      } else if (e?.name === 'InvalidStateError') {
-        showToast('في اشتراك قديم متعارض. امسح بيانات الموقع وجرّب تاني.');
-      } else {
-        showToast(`حدث خطأ أثناء تفعيل الإشعارات (${e?.name || 'Error'}: ${e?.message || 'unknown'})`);
-      }
     } finally {
       setPushLoading(false);
     }
@@ -777,7 +884,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       xpPopups, triggerXpPopup, xpSettings,
       usernamesDirectory, fetchUserProfile, fetchUsernamesDirectory, handleUpdateProfile, handleUploadImage,
       equippedFrame, setEquippedFrame, equippedTitle, setEquippedTitle, unlockedCosmetics, setUnlockedCosmetics,
-      deferredPrompt, showInstallBanner, setShowInstallBanner, isSubscribed, pushLoading, isStandalone,
+      deferredPrompt, showInstallBanner, setShowInstallBanner,
+      showPushPrompt, setShowPushPrompt, enablePushNotifications, dismissPushPrompt,
+      isSubscribed, pushLoading, isStandalone,
       showIOSInstall, setShowIOSInstall, handleInstallPWA, dismissInstallBanner, handleTogglePushNotifications, dismissIOSInstall,
       streakOverlay, setStreakOverlay, getFlameTier, getAvatarFrameClass, handleLogout, isOffline
     }}>

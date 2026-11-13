@@ -1,6 +1,6 @@
 import React from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { X, WifiOff } from 'lucide-react';
+import { X, WifiOff, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Sidebar } from '../components/Sidebar';
 import { MobileHeader } from '../components/MobileHeader';
@@ -37,6 +37,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
     // iOS banner
     showIOSInstall,
     dismissIOSInstall,
+    // Push notification prompt
+    showPushPrompt,
+    dismissPushPrompt,
+    enablePushNotifications,
+    isSubscribed,
+    pushLoading,
     // StreakCelebration
     streakOverlay,
     setStreakOverlay,
@@ -210,6 +216,63 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
                 className="flex-1 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs py-3 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-[0.97] transition-all shadow-orange-glow text-center"
               >
                 فهمت ذلك
+              </button>
+            </div>
+          </m.div>
+        )}
+
+        {/* Push Notification Activation Prompt */}
+        {!notificationsOpen && showPushPrompt && !isSubscribed && !showInstallBanner && !showIOSInstall && (
+          <m.div
+            initial={{ opacity: 0, y: 70, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.92 }}
+            transition={{ type: 'spring', damping: 22, stiffness: 220 }}
+            className="fixed bottom-nav-offset md:bottom-6 end-4 start-4 md:start-auto md:w-[410px] z-[9999] rounded-2xl border border-brand-orange/30 bg-zinc-950/95 backdrop-blur-xl p-5 shadow-[0_12px_45px_rgba(242,101,34,0.2)] flex flex-col gap-4 overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-orange/[0.04] to-transparent animate-shimmer pointer-events-none" />
+
+            <div className="flex items-start gap-3.5 relative z-10">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-orange/20 to-amber-500/10 border border-brand-orange/30 flex items-center justify-center shrink-0 shadow-lg shadow-brand-orange/15 text-brand-orange">
+                <Bell className="w-6 h-6 animate-pulse" />
+              </div>
+
+              <div className="flex-1 min-w-0 text-start">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-black text-white leading-tight">متفوتش الستريك! 🔥</h4>
+                  <button 
+                    onClick={dismissPushPrompt}
+                    className="text-zinc-500 hover:text-zinc-300 cursor-pointer transition-colors p-1 -mt-1 -me-1 shrink-0 rounded-lg"
+                    aria-label="إغلاق"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-xs text-zinc-300 font-medium leading-relaxed mt-1.5">
+                  فعّل الإشعارات عشان يوصلك تذكير بالستريك كل يوم قبل ما يضيع عليك، وتنبيهات الكومنتات والتفاعل في وقتها.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2.5 relative z-10">
+              <button 
+                onClick={enablePushNotifications}
+                disabled={pushLoading}
+                className="flex-1 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs py-3 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-[0.97] transition-all shadow-orange-glow flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {pushLoading ? (
+                  <div className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />
+                ) : (
+                  <Bell className="w-4 h-4" />
+                )}
+                <span>{pushLoading ? 'جارِ التفعيل...' : 'فعّل الإشعارات دلوقتي 🔔'}</span>
+              </button>
+              <button 
+                onClick={dismissPushPrompt}
+                disabled={pushLoading}
+                className="border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/60 text-zinc-400 font-bold text-xs py-3 px-4 rounded-xl cursor-pointer transition-all active:scale-[0.97]"
+              >
+                بعدين
               </button>
             </div>
           </m.div>
