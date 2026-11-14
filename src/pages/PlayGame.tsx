@@ -351,24 +351,49 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             مفيش رسايل لسه. سلّم على صحابك أو خمّن الإجابة! 👋
           </div>
         ) : (
-          room.answersLog.map((log: any, idx: number) => (
-            <m.div
-              key={idx}
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              className={`flex items-start gap-1.5 text-xs leading-relaxed ${getLogStyle(log.type)}`}
-            >
-              {getLogIcon(log.type)}
-              {log.type === 'chat' ? (
-                <span>
-                  <strong className="text-zinc-200">@{log.text.split(':')[0]}:</strong>
-                  {log.text.substring(log.text.indexOf(':'))}
-                </span>
-              ) : (
-                <span>{log.text}</span>
-              )}
-            </m.div>
-          ))
+          room.answersLog.map((log: any, idx: number) => {
+            const isChat = log.type === 'chat';
+            const colonIdx = isChat && typeof log.text === 'string' ? log.text.indexOf(':') : -1;
+            const sender = colonIdx !== -1 ? log.text.slice(0, colonIdx).trim() : '';
+            const msgBody = colonIdx !== -1 ? log.text.substring(colonIdx + 1) : log.text;
+            const isMe = Boolean(
+              isChat &&
+              user?.username &&
+              sender &&
+              sender.trim().toLowerCase() === user.username.trim().toLowerCase()
+            );
+
+            const textColor = isChat
+              ? (isMe ? 'text-orange-400' : 'text-sky-300')
+              : getLogStyle(log.type);
+
+            const icon = isChat
+              ? <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isMe ? 'text-orange-400' : 'text-sky-400'}`} />
+              : getLogIcon(log.type);
+
+            return (
+              <m.div
+                key={idx}
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                className={`flex items-start gap-1.5 text-xs leading-relaxed ${textColor}`}
+              >
+                {icon}
+                {isChat ? (
+                  <span>
+                    <strong className={isMe ? 'text-orange-300 font-bold' : 'text-sky-200 font-bold'}>
+                      @{sender}:
+                    </strong>
+                    <span className={isMe ? 'text-orange-400 font-medium' : 'text-sky-300 font-medium'}>
+                      {msgBody}
+                    </span>
+                  </span>
+                ) : (
+                  <span>{log.text}</span>
+                )}
+              </m.div>
+            );
+          })
         )}
         <div ref={chatEndRef} />
       </div>
