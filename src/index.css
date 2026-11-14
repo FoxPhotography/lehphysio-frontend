@@ -314,3 +314,6 @@ html, body {
 /* Horizontal chip rows without a visible scrollbar */
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* App-like: no pinch / double-tap zoom anywhere */
+html, body { touch-action: pan-x pan-y; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }

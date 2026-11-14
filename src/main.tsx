@@ -33,3 +33,13 @@ createRoot(document.getElementById('root')!).render(
     </LazyMotion>
   </StrictMode>,
 )
+
+// iOS Safari ignores user-scalable=no → block pinch-zoom gestures manually
+if (typeof document !== 'undefined') {
+  const block = (e: Event) => e.preventDefault();
+  document.addEventListener('gesturestart', block, { passive: false } as AddEventListenerOptions);
+  document.addEventListener('gesturechange', block, { passive: false } as AddEventListenerOptions);
+  document.addEventListener('touchmove', (e: TouchEvent) => {
+    if (e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+}

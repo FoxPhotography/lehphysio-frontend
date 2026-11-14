@@ -25,6 +25,7 @@ import {
   AlertCircle,
   AlertTriangle
 } from 'lucide-react';
+import { commentLook, bubbleProps, CommentBubbleLayers, CommentName } from '../components/streak/CommentLook';
 import { episodeNumber, seasonName } from '../utils/episode';
 import { formatMentions } from '../utils/mentions';
 import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
@@ -333,17 +334,18 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
 
           {previewComments.length > 0 && (
             <div className="space-y-2 pt-1">
-              {previewComments.map((c: any) => (
+              {previewComments.map((c: any) => { const look = commentLook(c, user); const bp = bubbleProps(look); return (
                 <div key={c.id} className="flex items-start gap-2.5">
                   <UserAvatar username={c.username} avatarUrl={c.avatar_url} equippedFrame={c.equipped_frame} size={26} />
-                  <div className="flex-1 min-w-0 bg-zinc-900/60 border border-zinc-800/60 rounded-2xl px-3 py-2">
-                    <span className="text-2xs font-black text-white">{c.username}</span>
+                  <div className={`flex-1 min-w-0 rounded-2xl px-3 py-2 relative ${look.fancy ? bp.className : 'bg-zinc-900/60 border border-zinc-800/60'}`} style={bp.style}>
+                    <CommentBubbleLayers look={look} />
+                    <CommentName look={look} className="text-2xs font-black text-white">{c.username}</CommentName>
                     <p dir={textDir(c.content)} className="text-xs text-zinc-300 font-medium leading-relaxed line-clamp-2 break-words">
                       {renderTextWithMentions(c.content)}
                     </p>
                   </div>
                 </div>
-              ))}
+              ); })}
             </div>
           )}
 

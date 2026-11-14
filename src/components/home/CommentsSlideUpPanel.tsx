@@ -20,6 +20,7 @@ import {
 import { communityService } from '../../services/communityService';
 import { episodeService } from '../../services/episodeService';
 import { formatMentions } from '../../utils/mentions';
+import { commentLook, bubbleProps, CommentBubbleLayers, CommentName } from '../streak/CommentLook';
 
 interface CommentItem {
   id: number;
@@ -34,6 +35,8 @@ interface CommentItem {
   likes_count: number;
   has_liked?: boolean;
   replies?: CommentItem[];
+  streak_count?: number;
+  cosmetics?: any;
 }
 
 interface CommentsSlideUpPanelProps {
@@ -460,6 +463,8 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
     const isEditing = editingCommentId === c.id;
     const hasReplies = !isReply && c.replies && c.replies.length > 0;
     const isRepliesExpanded = expandedReplies[c.id];
+    const look = commentLook(c, user);
+    const bp = bubbleProps(look);
 
     return (
       <div 
@@ -480,13 +485,14 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
             <div className={`transition-colors duration-500 border rounded-2xl p-3 text-start relative ${
               isHighlighted
                 ? 'comment-deeplink-highlight bg-brand-orange/[0.12] border-brand-orange/60'
-                : 'bg-zinc-900/60 hover:bg-zinc-900/80 border-zinc-800/60'
-            }`}>
+                : look.fancy ? bp.className : 'bg-zinc-900/60 hover:bg-zinc-900/80 border-zinc-800/60'
+            }`} style={!isHighlighted ? bp.style : undefined}>
+              {!isHighlighted && <CommentBubbleLayers look={look} />}
               <div className="flex items-center justify-between gap-2 mb-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs font-black text-white hover:text-brand-orange cursor-pointer transition-colors">
+                  <CommentName look={look} className="text-xs font-black text-white cursor-pointer">
                     {c.username}
-                  </span>
+                  </CommentName>
                   {c.batch && (
                     <span className="text-2xs font-bold bg-zinc-800/80 text-zinc-400 px-1.5 py-0.5 rounded-md border border-zinc-700/40">
                       {c.batch}

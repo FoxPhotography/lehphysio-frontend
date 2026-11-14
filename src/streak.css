@@ -203,3 +203,7 @@
 .streak-flame--anim .sf-i { transform-origin: 50px 85px; animation: sf-flick-a 1.6s ease-in-out infinite; }
 .fx-lite .streak-flame--anim path { animation: none; }
 @media (prefers-reduced-motion: reduce) { .streak-flame--anim path { animation: none; } }
+
+/* Comment bubbles: layers clipped in their own box so dropdown menus can overflow */
+.streak-bubble.streak-bubble--open { overflow: visible; }
+.streak-bubble__layers { position: absolute; inset: 0; z-index: -1; overflow: hidden; border-radius: inherit; pointer-events: none; }

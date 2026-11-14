@@ -6,6 +6,7 @@ import { UserAvatar } from '../UserAvatar';
 import { Loader2, CornerUpLeft, X, Heart, MoreVertical, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { API_BASE } from '../../services/api';
 import { formatMentions } from '../../utils/mentions';
+import { commentLook, CommentName } from '../streak/CommentLook';
 
 interface CommentsSectionProps {
   postId: number;
@@ -298,7 +299,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center mb-1">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-extrabold text-brand-orange"><bdi dir="ltr">@{c.username}</bdi></span>
+                            <CommentName look={commentLook(c, user)} className="text-xs font-extrabold text-brand-orange"><bdi dir="ltr">@{c.username}</bdi></CommentName>
                             <span className="text-2xs font-bold bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-md">{c.batch}</span>
                           </div>
                           
@@ -372,7 +373,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                                 <UserAvatar username={r.username} avatarUrl={r.avatar_url} equippedFrame={r.equipped_frame} size={22} />
                                 <div className="flex-1 min-w-0">
                                   <div className="flex justify-between items-center mb-0.5">
-                                    <span className="text-xs font-bold text-zinc-400"><bdi dir="ltr">@{r.username}</bdi></span>
+                                    <CommentName look={commentLook(r, user)} className="text-xs font-bold text-zinc-400"><bdi dir="ltr">@{r.username}</bdi></CommentName>
                                     <div className="flex items-center gap-2">
                                       <span className="text-2xs text-zinc-600 font-semibold">
                                         {new Date(r.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
