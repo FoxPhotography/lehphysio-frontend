@@ -354,13 +354,17 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           room.answersLog.map((log: any, idx: number) => {
             const isChat = log.type === 'chat';
             const colonIdx = isChat && typeof log.text === 'string' ? log.text.indexOf(':') : -1;
-            const sender = colonIdx !== -1 ? log.text.slice(0, colonIdx).trim() : '';
+            const rawSender = colonIdx !== -1 ? log.text.slice(0, colonIdx).trim() : (log.username || '');
+            const cleanSender = rawSender.replace(/^@+/, '').trim().toLowerCase();
             const msgBody = colonIdx !== -1 ? log.text.substring(colonIdx + 1) : log.text;
+            const myUsername = (user?.username || '').replace(/^@+/, '').trim().toLowerCase();
             const isMe = Boolean(
               isChat &&
-              user?.username &&
-              sender &&
-              sender.trim().toLowerCase() === user.username.trim().toLowerCase()
+              myUsername &&
+              (
+                (log.username && log.username.replace(/^@+/, '').trim().toLowerCase() === myUsername) ||
+                (cleanSender && cleanSender === myUsername)
+              )
             );
 
             const textColor = isChat
@@ -381,10 +385,10 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                 {icon}
                 {isChat ? (
                   <span>
-                    <strong className={isMe ? 'text-orange-300 font-bold' : 'text-sky-200 font-bold'}>
-                      @{sender}:
+                    <strong className={isMe ? 'text-orange-400 font-bold' : 'text-sky-300 font-bold'}>
+                      @{rawSender.replace(/^@+/, '')}:
                     </strong>
-                    <span className={isMe ? 'text-orange-400 font-medium' : 'text-sky-300 font-medium'}>
+                    <span className={isMe ? 'text-orange-300 font-semibold' : 'text-sky-200 font-medium'}>
                       {msgBody}
                     </span>
                   </span>

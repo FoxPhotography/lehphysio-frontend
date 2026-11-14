@@ -741,6 +741,7 @@ export const StreakNameplate: React.FC<{
       {(t.key === 'snow' || t.key === ('cos-snow' as any) || override?.fx === 'snow') && (
         <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
           <PixelSnow
+            engine="2d"
             variant="snowflake"
             density={0.25}
             speed={1.2}
@@ -831,6 +832,7 @@ export const StreakBubbleLayers: React.FC<{ days: number; override?: Override }>
       {(t.key === 'snow' || t.key === ('cos-snow' as any) || override?.fx === 'snow') && (
         <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
           <PixelSnow
+            engine="2d"
             variant="snowflake"
             density={0.25}
             speed={1.2}

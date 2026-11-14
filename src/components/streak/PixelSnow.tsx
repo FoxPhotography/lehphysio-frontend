@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type HTMLAttributes } from 'react';
-
+import React, { useEffect, useRef, useState, type HTMLAttributes } from 'react';
 import './PixelSnow.css';
 
 export type PixelSnowVariant = 'snowflake' | 'square' | 'round';
@@ -27,6 +26,7 @@ export interface PixelSnowProps extends HTMLAttributes<HTMLDivElement> {
   lightMode?: boolean;
   paused?: boolean;
   dpr?: number;
+  engine?: 'auto' | '2d' | 'webgl';
 }
 
 type Settings = {
@@ -53,7 +53,6 @@ type Settings = {
 };
 
 type Program = { program: WebGLProgram; uniforms: Record<string, WebGLUniformLocation | null> };
-
 type Target = { texture: WebGLTexture | null; framebuffer: WebGLFramebuffer | null; width: number; height: number };
 
 type Flake = {
@@ -372,76 +371,295 @@ const buildAtlas = () => {
   return { data, width, height };
 };
 
-export default function PixelSnow({
-  color = '#ffffff',
-  variant = 'snowflake',
-  density = 0.5,
-  speed = 1,
-  wind = 0.25,
-  sway = 0.5,
-  flakeSize = 1,
-  pixelSize = 3,
-  depth = 0.6,
-  brightness = 1,
-  glow = 0.8,
-  twinkle = 0.35,
-  accumulate = false,
-  mouseInteraction = true,
-  intro = true,
-  fade = 0,
-  opacity = 1,
-  lightMode = false,
-  paused = false,
-  dpr,
-  className = '',
-  ...rest
-}: PixelSnowProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+const toRgb = (color: string) => {
+  const match = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color.trim());
+  if (!match) return [1, 1, 1];
+  const hex = match[1].length === 3 ? match[1].replace(/./g, digit => digit + digit) : match[1];
+  return [0, 2, 4].map(index => parseInt(hex.slice(index, index + 2), 16) / 255);
+};
+
+// ─── Lightweight 2D Canvas Engine (Immune to WebGL context limits & GPU crash) ───
+function PixelSnow2D({ settings, className }: { settings: Settings; className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wakeRef = useRef<(() => void) | null>(null);
-  const settings: Settings = {
-    color: String(color),
-    variant: Math.max(0, VARIANTS.indexOf(variant)),
-    density: clamp(density, 0, 1),
-    speed,
-    wind: clamp(wind, -2, 2),
-    sway: Math.max(0, sway),
-    flakeSize: clamp(flakeSize, 0, 2),
-    pixelSize: Math.round(clamp(pixelSize, 1, 12)),
-    depth: clamp(depth, 0, 1),
-    brightness: Math.max(0, brightness),
-    glow: Math.max(0, glow),
-    twinkle: clamp(twinkle, 0, 1),
-    accumulate,
-    mouseInteraction,
-    intro,
-    fade: clamp(fade, 0, 1),
-    opacity: clamp(opacity, 0, 1),
-    lightMode,
-    paused,
-    dpr
-  };
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
 
   useEffect(() => {
-    const container = containerRef.current;
     const canvas = canvasRef.current;
-    const gl = canvas?.getContext('webgl2', {
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { alpha: true });
+    if (!ctx) return;
+
+    let raf = 0;
+    let visible = true;
+    let last = 0;
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+
+    interface Flake2D {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      size: number;
+      swayPhase: number;
+      swaySpeed: number;
+      alpha: number;
+      twinklePhase: number;
+      twinkleSpeed: number;
+    }
+
+    let flakes: Flake2D[] = [];
+    let cols = 0;
+    let pile = new Float32Array(0);
+
+    const initPile = (w: number, h: number, c: number) => {
+      if (!settingsRef.current.accumulate || c <= 0) return;
+      pile = new Float32Array(c);
+      // Pre-seed snow accumulation bank so snow is immediately visible at the bottom
+      const cap = Math.min(Math.max(3.5, h * 0.2), 12);
+      for (let i = 0; i < c; i++) {
+        const norm = i / c;
+        const dune = 0.55 + 0.45 * Math.sin(norm * 14 + 1.2) * Math.sin(norm * 7 + 0.5);
+        pile[i] = cap * dune * 0.7;
+      }
+    };
+
+    const populate = () => {
+      const s = settingsRef.current;
+      const count = Math.min(26, Math.max(8, Math.round(s.density * 34)));
+      if (flakes.length === count) return;
+      flakes = [];
+      for (let i = 0; i < count; i++) {
+        flakes.push({
+          x: Math.random() * (width || 120),
+          y: Math.random() * (height || 80),
+          vx: (Math.random() - 0.5) * 8 + s.wind * 10,
+          vy: (14 + Math.random() * 20) * Math.max(0.4, s.speed),
+          size: Math.random() < 0.25 ? 3 : (Math.random() < 0.6 ? 2 : 1),
+          swayPhase: Math.random() * Math.PI * 2,
+          swaySpeed: 1.5 + Math.random() * 2.5,
+          alpha: 0.45 + Math.random() * 0.5,
+          twinklePhase: Math.random() * Math.PI * 2,
+          twinkleSpeed: 2 + Math.random() * 3,
+        });
+      }
+    };
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      width = Math.max(1, Math.round(rect.width));
+      height = Math.max(1, Math.round(rect.height));
+      const isMobile = typeof window !== 'undefined' &&
+        (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768);
+      dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.5);
+
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+
+      const newCols = Math.max(16, Math.ceil(width / 3));
+      if (newCols !== cols) {
+        cols = newCols;
+        initPile(width, height, cols);
+      }
+      populate();
+    };
+
+    const frame = (now: number) => {
+      raf = 0;
+      if (!visible || document.hidden) return;
+      const s = settingsRef.current;
+      const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
+      last = now;
+
+      ctx.save();
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+
+      // ─── 1. Snow Accumulation at the bottom ──────────────────
+      if (s.accumulate && cols > 0 && pile.length === cols) {
+        const cap = Math.min(Math.max(4, height * 0.25), 14);
+        if (s.speed > 0) {
+          const grow = (0.15 + s.density * 0.4) * dt * Math.min(1.2, s.speed);
+          for (let i = 0; i < cols; i++) {
+            if (pile[i] < cap) {
+              const norm = i / cols;
+              const dune = 0.6 + 0.4 * Math.sin(norm * 14 + 1.2);
+              pile[i] += grow * dune * 0.4;
+            }
+          }
+        }
+        // Smooth neighbors
+        for (let i = 1; i < cols - 1; i++) {
+          const diff = (pile[i - 1] + pile[i + 1]) * 0.5 - pile[i];
+          pile[i] += diff * 0.05;
+        }
+
+        // Draw snow bank polygon
+        ctx.beginPath();
+        ctx.moveTo(0, height);
+        for (let i = 0; i < cols; i++) {
+          const px = (i / (cols - 1)) * width;
+          const py = height - Math.max(0, pile[i]);
+          ctx.lineTo(px, py);
+        }
+        ctx.lineTo(width, height);
+        ctx.closePath();
+
+        // Snow body fill
+        ctx.fillStyle = s.color || '#e0f2fe';
+        ctx.globalAlpha = 0.82 * (s.opacity ?? 1);
+        ctx.fill();
+
+        // Bright white crest line
+        ctx.beginPath();
+        for (let i = 0; i < cols; i++) {
+          const px = (i / (cols - 1)) * width;
+          const py = height - Math.max(0, pile[i]);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.95 * (s.opacity ?? 1);
+        ctx.stroke();
+
+        // Sparkles on crest
+        for (let i = 2; i < cols - 2; i += 4) {
+          const spark = Math.sin(now * 0.003 + i * 2.3);
+          if (spark > 0.86) {
+            const px = (i / (cols - 1)) * width;
+            const py = height - Math.max(0, pile[i]);
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 0.95 * (s.opacity ?? 1);
+            ctx.fillRect(px - 0.5, py - 1, 1.5, 1.5);
+          }
+        }
+      }
+
+      // ─── 2. Falling Flakes ──────────────────────────────────
+      const cap = Math.min(Math.max(4, height * 0.25), 14);
+      for (const flake of flakes) {
+        flake.swayPhase += flake.swaySpeed * dt;
+        const sway = Math.sin(flake.swayPhase) * (s.sway * 14);
+        flake.x += (flake.vx + sway + s.wind * 12) * dt;
+        flake.y += flake.vy * dt;
+
+        if (flake.x < -8) flake.x += width + 16;
+        else if (flake.x > width + 8) flake.x -= width + 16;
+
+        const col = Math.floor((flake.x / width) * (cols - 1));
+        const currentPile = (s.accumulate && col >= 0 && col < cols) ? pile[col] : 0;
+        const floorY = height - currentPile;
+
+        if (flake.y >= floorY - 1) {
+          if (s.accumulate && col >= 0 && col < cols) {
+            pile[col] = Math.min(cap, pile[col] + 0.35);
+            if (col > 0) pile[col - 1] = Math.min(cap, pile[col - 1] + 0.15);
+            if (col < cols - 1) pile[col + 1] = Math.min(cap, pile[col + 1] + 0.15);
+          }
+          flake.y = -5;
+          flake.x = Math.random() * width;
+        }
+
+        const twinkle = 0.75 + 0.25 * Math.sin(now * 0.003 * flake.twinkleSpeed + flake.twinklePhase);
+        const alpha = flake.alpha * twinkle * (s.opacity ?? 1);
+        ctx.fillStyle = s.color || '#e0f2fe';
+        ctx.globalAlpha = alpha;
+
+        const fx = Math.floor(flake.x);
+        const fy = Math.floor(flake.y);
+
+        if (flake.size === 1) {
+          ctx.fillRect(fx, fy, 1.5, 1.5);
+        } else if (flake.size === 2) {
+          ctx.fillRect(fx, fy, 2.5, 2.5);
+        } else {
+          // 3x3 pixel cross snowflake
+          ctx.fillRect(fx, fy - 1, 1, 3);
+          ctx.fillRect(fx - 1, fy, 3, 1);
+        }
+      }
+
+      ctx.restore();
+
+      if (!s.paused) {
+        raf = requestAnimationFrame(frame);
+      } else {
+        last = 0;
+      }
+    };
+
+    const wake = () => {
+      if (!raf && visible && !document.hidden && !settingsRef.current.paused) {
+        last = 0;
+        raf = requestAnimationFrame(frame);
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(canvas);
+
+    const intersection = new IntersectionObserver(
+      entries => {
+        visible = entries.some(e => e.isIntersecting);
+        if (visible) wake();
+        else if (raf) {
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+      },
+      { threshold: 0.05 }
+    );
+    intersection.observe(canvas);
+
+    resize();
+    wake();
+
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      resizeObserver.disconnect();
+      intersection.disconnect();
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className={`pixel-snow-canvas ${className || ''}`} aria-hidden="true" />;
+}
+
+// ─── Full WebGL2 Bloom Engine (For large hero banners / profiles) ───
+function PixelSnowWebGL({
+  settings,
+  onError,
+  className
+}: {
+  settings: Settings;
+  onError: () => void;
+  className?: string;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wakeRef = useRef<(() => void) | null>(null);
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return undefined;
+    const gl = canvas.getContext('webgl2', {
       alpha: true,
       premultipliedAlpha: true,
       antialias: false,
       depth: false,
       stencil: false
     });
-    if (!container || !canvas || !gl) return undefined;
+    if (!gl) {
+      onError();
+      return undefined;
+    }
 
     const handleContextLost = (e: Event) => {
       e.preventDefault();
-      if (raf) {
-        cancelAnimationFrame(raf);
-        raf = 0;
-      }
+      onError();
     };
     canvas.addEventListener('webglcontextlost', handleContextLost, false);
 
@@ -452,7 +670,10 @@ export default function PixelSnow({
       up: link(gl, QUAD_VERTEX, UP, ['aPosition']),
       composite: link(gl, QUAD_VERTEX, COMPOSITE, ['aPosition'])
     } as Record<string, Program>;
-    if (Object.values(programs).some(entry => !entry)) return undefined;
+    if (Object.values(programs).some(entry => !entry)) {
+      onError();
+      return undefined;
+    }
 
     const atlas = buildAtlas();
     const atlasTexture = gl.createTexture();
@@ -498,81 +719,76 @@ export default function PixelSnow({
       target.height = height;
       gl.bindTexture(gl.TEXTURE_2D, target.texture);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      if (!target.framebuffer) return;
       gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.texture, 0);
     };
+
     const snow = createTarget(gl.NEAREST);
+    const down = [createTarget(gl.LINEAR), createTarget(gl.LINEAR), createTarget(gl.LINEAR)];
+    const up = [createTarget(gl.LINEAR), createTarget(gl.LINEAR)];
     const pileTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, pileTexture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    const instances = new Float32Array(MAX_FLAKES * 4);
+    const view = { width: 0, height: 0, ratio: 1, pixel: 3, gridWidth: 0, gridHeight: 0 };
+    const flakes: Flake[] = [];
     let pile = new Float32Array(0);
     let pileWidth = 0;
-    const down = [createTarget(gl.LINEAR), createTarget(gl.LINEAR), createTarget(gl.LINEAR)];
-    const up = [createTarget(gl.LINEAR), createTarget(gl.LINEAR)];
-
-    const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    const colorCache = new Map<string, number[]>();
-    const toRgb = (value: string): number[] => {
-      const cached = colorCache.get(value);
-      if (cached) return cached;
-      let rgb = [1, 1, 1];
-      if (probe) {
-        probe.clearRect(0, 0, 1, 1);
-        probe.fillStyle = '#ffffff';
-        probe.fillStyle = value;
-        probe.fillRect(0, 0, 1, 1);
-        const [r, g, b] = probe.getImageData(0, 0, 1, 1).data;
-        rgb = [r / 255, g / 255, b / 255];
-      }
-      colorCache.set(value, rgb);
-      return rgb;
-    };
-
-    const rng = seeded(4271);
-    const flakes: Flake[] = [];
-    const view = { width: 1, height: 1, ratio: 1, pixel: 1, gridWidth: 1, gridHeight: 1 };
-    const pointer = { x: 0, y: 0, vx: 0, vy: 0, inside: false, time: 0 };
-    const state = { time: 0, intro: settingsRef.current.intro && !reduce ? 0 : 1, push: 0 };
-    const instances = new Float32Array(MAX_FLAKES * 4);
+    const rng = seeded(1);
+    const state = { time: 0, intro: 0, push: 0 };
+    const pointer = { x: 0, y: 0, vx: 0, vy: 0, time: 0, inside: false };
     let raf = 0;
     let last = 0;
     let visible = true;
+    const reduce = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const pickLevel = (r: number, s: Settings) => {
-      const shift = s.flakeSize - 1;
-      let total = 0;
-      const weights = LEVEL_WEIGHTS.map((weight, level) => weight * Math.pow(2.2, shift * (level - 1.5)));
-      const sum = weights.reduce((a, b) => a + b, 0);
-      for (let level = 0; level < LEVELS; level++) {
-        total += weights[level] / sum;
-        if (r <= total) return level;
-      }
-      return LEVELS - 1;
-    };
-
-    const spawn = (flake: Flake, s: Settings, top: boolean) => {
-      flake.level = pickLevel(rng(), s);
-      flake.x = rng() * (view.width + 40) - 20;
-      flake.y = top ? -10 - rng() * 30 : rng() * view.height;
-      flake.vx = 0;
-      flake.vy = LEVEL_FALL[flake.level];
+    const spawn = (flake: Flake, s: Settings, edge: boolean) => {
+      const level = flake.level;
+      flake.reveal = edge ? (s.intro && state.intro < 1 ? rng() : -1) : -1;
+      flake.x = rng() * view.width;
+      flake.y = edge ? (s.speed < 0 ? view.height + 10 + rng() * 20 : -10 - rng() * 20) : rng() * view.height;
+      flake.vx = (rng() - 0.5) * 8;
+      flake.vy = LEVEL_FALL[level] * (0.8 + rng() * 0.4);
       flake.phase = rng() * Math.PI * 2;
-      flake.rate = 0.6 + rng() * 0.9;
-      flake.sparkle = rng() * 100;
+      flake.rate = 0.8 + rng() * 0.8;
+      flake.sparkle = rng() * Math.PI * 2;
       flake.drift = 0.7 + rng() * 0.6;
-      flake.alt = rng() < 0.5;
-      flake.reveal = rng();
-      flake.levelSize = s.flakeSize;
+      flake.alt = rng() > 0.5;
     };
 
     const populate = (s: Settings) => {
-      const target = Math.round(clamp((view.width * view.height * s.density) / 1100, 0, MAX_FLAKES));
+      const area = (view.width * view.height) / (1000 * 700);
+      const target = clamp(Math.round(s.density * 180 * Math.max(0.4, area)), 0, MAX_FLAKES);
       while (flakes.length < target) {
-        const flake = {} as Flake;
+        let level = 0;
+        const roll = rng();
+        let acc = 0;
+        for (let i = 0; i < LEVEL_WEIGHTS.length; i++) {
+          acc += LEVEL_WEIGHTS[i];
+          if (roll <= acc) {
+            level = i;
+            break;
+          }
+        }
+        const flake: Flake = {
+          level,
+          x: 0,
+          y: 0,
+          vx: 0,
+          vy: 0,
+          phase: 0,
+          rate: 0,
+          sparkle: 0,
+          drift: 0,
+          alt: false,
+          reveal: -1,
+          levelSize: level === 0 ? 1 : 2 + level
+        };
         spawn(flake, s, false);
         flakes.push(flake);
       }
@@ -580,23 +796,20 @@ export default function PixelSnow({
     };
 
     const simulate = (s: Settings, dt: number) => {
+      const wind = s.wind * 85;
       const fall = s.speed;
-      const windSpeed = s.wind * 46;
-      const radius = 120;
-      const pushing = state.push > 0.001 && pointer.inside;
-      const margin = 24;
-      const settle = s.accumulate && fall > 0 && pile.length > 0;
+      const sway = s.sway;
+      const radius = 90;
+      const pushing = state.push > 0.001;
+      const settle = s.accumulate && pile.length > 0 && fall > 0;
+      const margin = 20;
       for (const flake of flakes) {
-        if (flake.levelSize !== s.flakeSize) {
-          flake.level = pickLevel(rng(), s);
-          flake.levelSize = s.flakeSize;
-        }
         const level = flake.level;
-        const parallax = 1 - s.depth * (1 - (level + 1) / LEVELS) * 0.75;
-        const swing = Math.sin(state.time * flake.rate + flake.phase) * s.sway * (6 + level * 7);
-        const targetX = (windSpeed * parallax + swing) * flake.drift;
-        const targetY = LEVEL_FALL[level] * parallax * fall * flake.drift;
-        const ease = 1 - Math.exp(-dt * 2.2);
+        flake.phase += flake.rate * dt;
+        const wave = Math.sin(flake.phase);
+        const targetX = wind * (0.6 + level * 0.1) + wave * sway * (12 + level * 6) * flake.drift;
+        const targetY = LEVEL_FALL[level] * fall * (0.85 + flake.drift * 0.2);
+        const ease = 1 - Math.exp(-dt * 3.5);
         flake.vx += (targetX - flake.vx) * ease;
         flake.vy += (targetY - flake.vy) * ease;
         if (pushing) {
@@ -817,13 +1030,14 @@ export default function PixelSnow({
 
     const resize = () => {
       const s = settingsRef.current;
-      const width = Math.max(1, container.clientWidth);
-      const height = Math.max(1, container.clientHeight);
-    const isMobile =
-      typeof window !== 'undefined' &&
-      (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768);
-    const defaultMaxDpr = isMobile ? 0.45 : 0.6;
-    const ratio = Math.min(s.dpr || defaultMaxDpr, defaultMaxDpr);
+      const rect = canvas.getBoundingClientRect();
+      const width = Math.max(1, Math.round(rect.width));
+      const height = Math.max(1, Math.round(rect.height));
+      const isMobile =
+        typeof window !== 'undefined' &&
+        (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768);
+      const defaultMaxDpr = isMobile ? 0.45 : 0.6;
+      const ratio = Math.min(s.dpr || defaultMaxDpr, defaultMaxDpr);
       view.width = width;
       view.height = height;
       view.ratio = ratio;
@@ -832,14 +1046,23 @@ export default function PixelSnow({
       canvas.height = Math.max(1, Math.round(height * ratio));
       view.gridWidth = Math.max(1, Math.ceil(width / view.pixel));
       view.gridHeight = Math.max(1, Math.ceil(height / view.pixel));
-      if (pile.length !== view.gridWidth) pile = new Float32Array(view.gridWidth);
+      if (pile.length !== view.gridWidth) {
+        pile = new Float32Array(view.gridWidth);
+        if (s.accumulate) {
+          const cap = Math.max(4, view.gridHeight * 0.08);
+          for (let i = 0; i < pile.length; i++) {
+            const dune = 0.55 + 0.45 * Math.sin(i * 0.045 + Math.sin(i * 0.013) * 2.1) * Math.sin(i * 0.021 + 1.3);
+            pile[i] = cap * dune * 0.65;
+          }
+        }
+      }
       populate(s);
       render();
       wake();
     };
 
     const onPointerMove = (event: PointerEvent) => {
-      const rect = container.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
       const now = performance.now();
@@ -866,7 +1089,7 @@ export default function PixelSnow({
     };
 
     const resizeObserver = new ResizeObserver(resize);
-    resizeObserver.observe(container);
+    resizeObserver.observe(canvas);
     const intersection = new IntersectionObserver(entries => {
       visible = entries.some(entry => entry.isIntersecting);
       if (visible) {
@@ -877,7 +1100,7 @@ export default function PixelSnow({
         raf = 0;
       }
     }, { threshold: 0.05 });
-    intersection.observe(container);
+    intersection.observe(canvas);
     window.addEventListener('pointermove', onPointerMove, { passive: true });
     document.documentElement.addEventListener('pointerleave', onPointerLeave);
     document.addEventListener('visibilitychange', onVisibility);
@@ -920,7 +1143,6 @@ export default function PixelSnow({
       gl.deleteBuffer(instanceBuffer);
       gl.deleteVertexArray(quadVao);
       gl.deleteVertexArray(flakeVao);
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
   }, []);
 
@@ -928,9 +1150,77 @@ export default function PixelSnow({
     wakeRef.current?.();
   });
 
+  return <canvas ref={canvasRef} className={`pixel-snow-canvas ${className || ''}`} aria-hidden="true" />;
+}
+
+// ─── Main PixelSnow Component ───────────────────────────────────────────────
+export default function PixelSnow({
+  color = '#ffffff',
+  variant = 'snowflake',
+  density = 0.5,
+  speed = 1,
+  wind = 0.25,
+  sway = 0.5,
+  flakeSize = 1,
+  pixelSize = 3,
+  depth = 0.6,
+  brightness = 1,
+  glow = 0.8,
+  twinkle = 0.35,
+  accumulate = false,
+  mouseInteraction = true,
+  intro = true,
+  fade = 0,
+  opacity = 1,
+  lightMode = false,
+  paused = false,
+  dpr,
+  engine = 'auto',
+  className = '',
+  ...rest
+}: PixelSnowProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const isMobile =
+    typeof window !== 'undefined' &&
+    (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768);
+
+  const [activeEngine, setActiveEngine] = useState<'2d' | 'webgl'>(() => {
+    if (engine === '2d') return '2d';
+    if (engine === 'webgl') return 'webgl';
+    return isMobile ? '2d' : 'webgl';
+  });
+
+  const settings: Settings = {
+    color: String(color),
+    variant: Math.max(0, VARIANTS.indexOf(variant)),
+    density: clamp(density, 0, 1),
+    speed,
+    wind: clamp(wind, -2, 2),
+    sway: Math.max(0, sway),
+    flakeSize: clamp(flakeSize, 0, 2),
+    pixelSize: Math.round(clamp(pixelSize, 1, 12)),
+    depth: clamp(depth, 0, 1),
+    brightness: Math.max(0, brightness),
+    glow: Math.max(0, glow),
+    twinkle: clamp(twinkle, 0, 1),
+    accumulate,
+    mouseInteraction,
+    intro,
+    fade: clamp(fade, 0, 1),
+    opacity: clamp(opacity, 0, 1),
+    lightMode,
+    paused,
+    dpr
+  };
+
   return (
     <div ref={containerRef} className={`pixel-snow-container${className ? ` ${className}` : ''}`} {...rest}>
-      <canvas ref={canvasRef} className="pixel-snow-canvas" aria-hidden="true" />
+      {activeEngine === '2d' ? (
+        <PixelSnow2D settings={settings} />
+      ) : (
+        <PixelSnowWebGL settings={settings} onError={() => setActiveEngine('2d')} />
+      )}
     </div>
   );
 }
