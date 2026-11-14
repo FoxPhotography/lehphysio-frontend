@@ -191,7 +191,6 @@ export const DEFAULT_LOCAL_FRAMES: Record<number, string> = {
   7: '/frames/7.png',
   8: '/frames/8.png',
   9: '/frames/9.png',
-  10: 'crystalized',
 };
 
 // Frame image cache: pre-populated with all bundled frames so it is NEVER empty
@@ -201,7 +200,6 @@ let framesCache: any[] = [
   { _id: 7, id: 7, name: 'Golden starburst', price: 1500, image_url: '/frames/7.png' },
   { _id: 4, id: 4, name: 'Legendary', price: 3000, image_url: '/frames/4.png' },
   { _id: 1, id: 1, name: 'Pookie', price: 6000, image_url: '/frames/1.png' },
-  { _id: 10, id: 10, name: 'كرة الكريستال (Ember Sphere)', price: 10000, image_url: 'crystalized' },
 ];
 
 export const setFramesCache = (frames: any[]) => {
@@ -232,7 +230,6 @@ export const getFrameImage = (frameId: string | null | undefined): string | null
   if (!frameId || frameId === 'none') return null;
   // CSS frame names are not PNG overlays
   if (frameId === 'gold-glow' || frameId === 'neon-ring') return null;
-  if (frameId === 'crystalized' || frameId === 'crystalized-ball') return 'crystalized';
   const numericId = parseInt(frameId, 10);
   if (isNaN(numericId)) return null;
   if (DEFAULT_LOCAL_FRAMES[numericId]) {

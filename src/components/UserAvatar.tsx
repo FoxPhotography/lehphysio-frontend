@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { DEFAULT_FIT, getCachedFit, measureFrame, type FrameFit } from '../utils/frameFit';
 import { getFrameImage } from '../utils/helpers';
 import { cld } from '../utils/image';
-import CrystalizedBall from './streak/CrystalizedBall';
 
 interface UserAvatarProps {
   username: string;
@@ -47,15 +46,9 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
   const numericSize = typeof size === 'number' ? size : 64;
 
   const frameImageUrl = getFrameImage(equippedFrame);
-  const frameStr = String(equippedFrame || '');
-  const isCrystalized =
-    frameStr === '10' ||
-    frameStr === 'crystalized' ||
-    frameStr === 'crystalized-ball' ||
-    frameImageUrl === 'crystalized';
 
   // Measured once per frame image: how big the frame must be so its hole wraps the photo
-  const probeUrl = frameImageUrl && frameImageUrl !== 'crystalized' ? cld(frameImageUrl, { w: 60 }) : '';
+  const probeUrl = frameImageUrl ? cld(frameImageUrl, { w: 60 }) : '';
   const [fit, setFit] = useState<FrameFit>(() => (probeUrl && getCachedFit(probeUrl)) || DEFAULT_FIT);
   useEffect(() => {
     if (!probeUrl) return undefined;
@@ -112,45 +105,8 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
         )}
       </span>
 
-      {/* Crystalized Ball animated WebGL frame (highest XP frame) - tuned to hug the avatar snugly */}
-      {isCrystalized && (
-        <div
-          aria-hidden
-          className="absolute pointer-events-none z-10 select-none flex items-center justify-center"
-          style={{
-            width: `${Math.round(numericSize * 1.35)}px`,
-            height: `${Math.round(numericSize * 1.35)}px`,
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-          }}
-        >
-          <CrystalizedBall
-            preset="ember"
-            color="#FF8A2A"
-            size={0.78}
-            crackle={0.9}
-            fill={0.35}
-            interactive={numericSize >= 80}
-            hoverStrength={0.7}
-            strands={5}
-            flares={0.8}
-            glow={1}
-            sparks={0.8}
-            particleCount={Math.min(10000, Math.max(1000, numericSize * 35))}
-            particleShape="round"
-            depth={0.7}
-            sway={0.3}
-            twinkle={0.7}
-            haze={0.9}
-            dustSpeed={1.6}
-            className="w-full h-full pointer-events-none"
-          />
-        </div>
-      )}
-
       {/* PNG frame overlay, auto-sized so its inner hole matches the photo (ring wraps it from outside) */}
-      {frameImageUrl && frameImageUrl !== 'crystalized' && !isCrystalized && !frameFailed && (
+      {frameImageUrl && !frameFailed && (
         <img
           onError={(e) => {
             setFrameFailed(true);
