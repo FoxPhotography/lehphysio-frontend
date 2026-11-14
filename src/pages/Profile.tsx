@@ -358,14 +358,17 @@ export const Profile: React.FC<ProfileProps> = ({
     >
       {/* ── Profile Card ──────────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-zinc-900/60 p-6" style={{ borderColor: (cosmeticVisual(user.cosmetics?.profile) || (streakTheme.key !== 'none' ? streakTheme : null)) ? `rgb(${(cosmeticVisual(user.cosmetics?.profile) || streakTheme).glow} / 0.3)` : undefined }}>
-        {/* Animated background in the current streak colour */}
-        <StreakAura days={streak} className="streak-aura--header" override={cosmeticVisual(user.cosmetics?.profile)} />
-        <div className="relative z-10">
-
-        {/* Avatar Section */}
-        <div className="flex flex-col items-center mb-6">
-          {/* Circular Progress Ring */}
-          <div className="relative mb-4">
+        
+        {/* ── Stadium Arena Hero Header (Streak Aura + Avatar) ── */}
+        <div className="relative -mx-6 -mt-6 p-6 pb-6 overflow-hidden border-b border-white/10 mb-6 min-h-[270px] flex flex-col justify-center">
+          {/* Animated background in the current streak colour */}
+          <StreakAura days={streak} className="streak-aura--header" override={cosmeticVisual(user.cosmetics?.profile)} />
+          
+          <div className="relative z-10">
+            {/* Avatar Section */}
+            <div className="flex flex-col items-center">
+              {/* Circular Progress Ring */}
+              <div className="relative mb-4">
             <svg width="140" height="140" className="-rotate-90">
               <defs>
                 <linearGradient id="xp-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -485,9 +488,13 @@ export const Profile: React.FC<ProfileProps> = ({
             )}
           </div>
         </div>
+      </div>
+    </div>
 
-        {/* ── Rank Card ───────────────────────────────────────────────── */}
-        <div className="relative rounded-xl overflow-hidden border border-orange-500/20 bg-gradient-to-br from-orange-500/8 via-transparent to-amber-500/5 p-4 mb-5">
+    {/* ── Lower Profile Content (Rank Card, Stats, Actions) ── */}
+    <div className="relative z-10">
+      {/* ── Rank Card ───────────────────────────────────────────────── */}
+      <div className="relative rounded-xl overflow-hidden border border-orange-500/20 bg-gradient-to-br from-orange-500/8 via-transparent to-amber-500/5 p-4 mb-5">
           {/* Particles */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             {PARTICLES.map((p, i) => (
