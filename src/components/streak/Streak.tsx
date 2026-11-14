@@ -658,7 +658,7 @@ export const StreakAura: React.FC<{ days: number; density?: 'full' | 'lite'; cla
         </div>
       )}
       {(t.key === 'curvanord' || t.key === ('cos-curvanord' as any) || override?.fx === 'curva') && (
-        <FireGoalBackground standalone={false} compact={density !== 'full'} />
+        <FireGoalBackground compact={density !== 'full'} className="h-full !rounded-[inherit]" />
       )}
       <div className="streak-aura__embers">
         {EMBERS.slice(0, emberCount).map((e, i) => (
