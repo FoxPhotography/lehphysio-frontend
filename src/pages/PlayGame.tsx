@@ -22,6 +22,8 @@ import {
   UserMinus
 } from 'lucide-react';
 import { playChatSound, copyToClipboard } from '../utils/helpers';
+import { buildGameInvite } from '../utils/gameInvite';
+import { chatService } from '../services/chatService';
 import { UserAvatar } from '../components/UserAvatar';
 
 // ─── Confetti Particle System ──────────────────────────────────────────────────
@@ -222,6 +224,30 @@ export const PlayGame: React.FC<PlayGameProps> = ({
       }
     } catch (err) {
       showToast('فشل النسخ تلقائياً.');
+    }
+  };
+
+  // Post the room as a join card in the public chat (once a minute at most)
+  const [sharingToChat, setSharingToChat] = useState(false);
+  const [sharedAt, setSharedAt] = useState(0);
+  const handleShareToChat = async () => {
+    if (sharingToChat) return;
+    if (Date.now() - sharedAt < 60000) { showToast('لسه باعت الدعوة في الشات — استنى دقيقة ⏳'); return; }
+    setSharingToChat(true);
+    try {
+      const res = await chatService.sendMessage(buildGameInvite(room.code), null, token);
+      if (res.ok) {
+        setSharedAt(Date.now());
+        showToast('الدعوة اتبعتت في الشات العام 🎮');
+        playChatSound('success');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || 'الدعوة ماتبعتتش');
+      }
+    } catch {
+      showToast('مش قادرين نوصل للسيرفر.');
+    } finally {
+      setSharingToChat(false);
     }
   };
 
@@ -453,6 +479,17 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             نسخ
           </m.button>
         </div>
+
+        {/* Share as a join card in the public chat */}
+        <m.button
+          whileTap={{ scale: 0.98 }}
+          onClick={handleShareToChat}
+          disabled={sharingToChat}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-orange text-black text-sm font-black cursor-pointer disabled:opacity-60"
+        >
+          <span aria-hidden>💬</span>
+          <span>{sharingToChat ? 'بنبعت…' : Date.now() - sharedAt < 60000 ? 'اتبعتت في الشات ✓' : 'شارك الروم في الشات العام'}</span>
+        </m.button>
 
         {/* Connected Players Section */}
         <div>

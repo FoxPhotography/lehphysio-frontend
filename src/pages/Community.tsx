@@ -38,6 +38,7 @@ import { ReactionSummary, ReactionBurst, MessageActionOverlay, ReactionDetailsSh
 import { StreakBubbleLayers, StreakName, StreakFlame } from '../components/streak/Streak';
 import { getStreakTheme, streakVars } from '../utils/streakTheme';
 import { cosmeticVisual } from '../utils/cosmetics';
+import { parseGameInvite, joinGameRoomFromInvite } from '../utils/gameInvite';
 import { QUICK_REACTIONS, normalizeEmoji } from '../utils/chatReactions';
 import { copyToClipboard } from '../utils/helpers';
 import { useAuth } from '../context/AuthContext';
@@ -147,7 +148,24 @@ export const Community: React.FC<CommunityProps> = ({
   };
   
   const [showScrollDownBtn, setShowScrollDownBtn] = useState(false);
-  const [unreadBelow, setUnreadBelow] = useState(0);
+  // Last message this person actually saw (kept per account on this device)
+  const lastReadKey = `chat_last_read_${user?.id ?? 'guest'}`;
+  const lastReadRef = useRef<number>(Number(localStorage.getItem(lastReadKey)) || 0);
+  const [lastRead, setLastRead] = useState<number>(lastReadRef.current);
+  const [firstUnreadId, setFirstUnreadId] = useState<number | null>(null);
+  const pendingJumpRef = useRef(false);
+  useEffect(() => {
+    // Account became known / changed → load that account's marker
+    const v = Number(localStorage.getItem(lastReadKey)) || 0;
+    lastReadRef.current = v;
+    setLastRead(v);
+  }, [lastReadKey]);
+  const markRead = (id: number) => {
+    if (!(id > lastReadRef.current)) return;
+    lastReadRef.current = id;
+    setLastRead(id);
+    try { localStorage.setItem(lastReadKey, String(id)); } catch { /* ignore */ }
+  };
   const [activeSubTab, setActiveSubTab] = useState<'chat' | 'suggestions'>('chat');
   const [suggTitle, setSuggTitle] = useState('');
   const [suggContent, setSuggContent] = useState('');
@@ -262,9 +280,55 @@ export const Community: React.FC<CommunityProps> = ({
   // used to run before this list existed, so the chat opened at the top.
   const nearBottomRef = useRef(true);
   const lastMsgIdRef = useRef<any>(null);
+  const visibleRef = useRef<any[]>([]);
+  visibleRef.current = visibleMessages;
+  const isUnread = (m: any) => Number(m.id) > lastReadRef.current && m.username !== user?.username;
+  const unreadBelow = React.useMemo(
+    () => chatMessages.reduce((n: number, m: any) => n + (Number(m.id) > lastRead && m.username !== user?.username ? 1 : 0), 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [chatMessages, lastRead, user?.username]
+  );
+  // Everything whose bottom edge has scrolled into view counts as read → the counter drops as you go down
+  const updateRead = () => {
+    const el = document.getElementById('pl-chat-feed');
+    if (!el) return;
+    const bottom = el.getBoundingClientRect().bottom + 2;
+    let seen = lastReadRef.current;
+    for (const m of visibleRef.current) {
+      const id = Number(m.id);
+      if (!(id > lastReadRef.current)) continue;
+      const node = document.getElementById(`chat-msg-${m.id}`);
+      if (!node) continue;
+      if (node.getBoundingClientRect().bottom <= bottom) seen = Math.max(seen, id);
+      else break;
+    }
+    markRead(seen);
+  };
+  const markAllRead = () => {
+    const ids = visibleRef.current.map((m: any) => Number(m.id)).filter((n: number) => n > 0);
+    if (ids.length) markRead(Math.max(...ids));
+  };
+  // Park the feed on the "رسايل جديدة" line instead of the newest message
+  const jumpToFirstUnread = () => {
+    const el = document.getElementById('pl-chat-feed');
+    const line = document.getElementById('chat-new-divider');
+    if (!el || !line) return false;
+    const place = () => {
+      const l = document.getElementById('chat-new-divider');
+      if (l) el.scrollTop += l.getBoundingClientRect().top - el.getBoundingClientRect().top - 10;
+    };
+    place();
+    requestAnimationFrame(place);
+    setTimeout(place, 250);
+    return true;
+  };
+  useLayoutEffect(() => {
+    if (pendingJumpRef.current && jumpToFirstUnread()) pendingJumpRef.current = false;
+  });
   const scrollFeedToBottom = () => {
     const el = document.getElementById('pl-chat-feed');
     if (!el) return;
+    markAllRead();
     el.scrollTop = el.scrollHeight;
     // Once more after fonts/avatars settle the final heights
     requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
@@ -272,6 +336,15 @@ export const Community: React.FC<CommunityProps> = ({
   };
   useLayoutEffect(() => {
     if (activeSubTab !== 'chat' || deepLinkTarget?.type === 'chat_message') return;
+    // Switching into the chat tab: stay at the first unread message if any
+    const unread = visibleRef.current.filter(isUnread);
+    if (unread.length > 0) {
+      setFirstUnreadId(Number(unread[0].id));
+      nearBottomRef.current = false;
+      pendingJumpRef.current = true;
+      setShowScrollDownBtn(true);
+      return;
+    }
     nearBottomRef.current = true;
     scrollFeedToBottom();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -285,8 +358,23 @@ export const Community: React.FC<CommunityProps> = ({
     lastMsgIdRef.current = lastId;
     const mine = !!(last && user && last.username === user.username);
     if (deepLinkTarget?.type === 'chat_message' && !mine) return;
-    if (isFirstLoad || mine || nearBottomRef.current) scrollFeedToBottom();
-    else setUnreadBelow((n) => n + 1);
+    if (mine) { setFirstUnreadId(null); nearBottomRef.current = true; scrollFeedToBottom(); return; }
+    if (!(isFirstLoad || nearBottomRef.current)) return; // reading older messages: only the counter grows
+    // First visit on this device → nothing to catch up on, start at the newest message
+    if (lastReadRef.current === 0) { scrollFeedToBottom(); return; }
+    const unread = chatMessages.filter(isUnread);
+    // Any unread messages → park at the first unread one so user can read them in order
+    if (unread.length > 0) {
+      const firstId = Number(unread[0].id);
+      const idxFromEnd = chatMessages.length - chatMessages.indexOf(unread[0]);
+      if (idxFromEnd > renderLimit) setRenderLimit(idxFromEnd + 5);
+      setFirstUnreadId(firstId);
+      nearBottomRef.current = false;
+      pendingJumpRef.current = true;
+      setShowScrollDownBtn(true);
+    } else {
+      scrollFeedToBottom();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibleMessages, activeSubTab]);
   useEffect(() => {
@@ -497,7 +585,7 @@ export const Community: React.FC<CommunityProps> = ({
     if (!el) return;
     cancelAnimationFrame(scrollAnimRef.current);
     nearBottomRef.current = true;
-    setUnreadBelow(0);
+    markAllRead();
     const target = () => el.scrollHeight - el.clientHeight;
     if (target() - el.scrollTop > el.clientHeight * 1.5) el.scrollTop = target() - el.clientHeight * 1.5;
     const from = el.scrollTop;
@@ -655,7 +743,7 @@ export const Community: React.FC<CommunityProps> = ({
                 nearBottomRef.current = distance < 120;
                 const isUp = distance > 150;
                 if (isUp !== showScrollDownBtn) setShowScrollDownBtn(isUp);
-                if (distance < 120 && unreadBelow) setUnreadBelow(0);
+                updateRead();
 
                 // Infinite scroll up: reveal cached messages first, then fetch older ones
                 if (el.scrollTop === 0 && chatMessages.length > renderLimit) {
@@ -719,6 +807,13 @@ export const Community: React.FC<CommunityProps> = ({
 
                 return (
                   <React.Fragment key={msg.id}>
+                  {firstUnreadId !== null && Number(msg.id) === firstUnreadId && (
+                    <div id="chat-new-divider" className="flex items-center gap-3 py-2 select-none" aria-label="رسايل جديدة">
+                      <span className="flex-1 h-px bg-brand-orange/40" />
+                      <span className="text-[11px] font-black text-brand-orange bg-brand-orange/10 border border-brand-orange/30 rounded-full px-3 py-1">رسايل جديدة</span>
+                      <span className="flex-1 h-px bg-brand-orange/40" />
+                    </div>
+                  )}
                   {showDay && (
                     <div className="flex justify-center py-1 select-none" style={{ marginTop: idx === 0 ? 0 : 4 }}>
                       <span className="text-[11px] font-black text-zinc-300 bg-zinc-900/90 border border-zinc-800 rounded-full px-3 py-1 shadow-md backdrop-blur">
@@ -886,22 +981,24 @@ export const Community: React.FC<CommunityProps> = ({
                           {/* Quote reply */}
                           {msg.reply_to?.username && (
                             <div
-                              className={`border-s-2 px-2.5 py-1.5 rounded-lg mb-2 text-2xs text-start w-full min-w-0 max-w-full overflow-hidden ${
+                              className={`border-s-2 px-2.5 py-1.5 rounded-lg mb-2 text-2xs text-start w-full min-w-0 max-w-[min(280px,70vw)] overflow-hidden ${
                                 fancyBubble ? 'bg-black/35 text-zinc-300' : isMyMsg ? 'bg-black/10 text-zinc-800 border-brand-orange' : 'bg-black/30 text-zinc-400 border-brand-orange'
                               }`}
                               style={fancyBubble ? { borderColor: bubbleTheme.c3 } : undefined}
                             >
-                              <div className={`font-black truncate ${fancyBubble ? '' : isMyMsg ? 'text-black' : 'text-brand-orange'}`} style={fancyBubble ? { color: bubbleTheme.text } : undefined}>
+                              <div className={`font-black truncate min-w-0 ${fancyBubble ? '' : isMyMsg ? 'text-black' : 'text-brand-orange'}`} style={fancyBubble ? { color: bubbleTheme.text } : undefined}>
                                 <bdi dir="ltr">@{msg.reply_to.username}</bdi>
                               </div>
                               <div 
                                 dir="auto" 
-                                className="line-clamp-2 break-words [word-break:break-word] [overflow-wrap:anywhere] mt-0.5 leading-snug opacity-90"
+                                className="line-clamp-2 break-words [word-break:break-word] [overflow-wrap:anywhere] mt-0.5 leading-snug opacity-90 max-h-[2.8em] overflow-hidden text-ellipsis"
                                 style={{
                                   display: '-webkit-box',
                                   WebkitLineClamp: 2,
                                   WebkitBoxOrient: 'vertical',
-                                  overflow: 'hidden'
+                                  overflow: 'hidden',
+                                  wordBreak: 'break-word',
+                                  overflowWrap: 'anywhere'
                                 }}
                               >
                                 {msg.reply_to.message}
@@ -910,9 +1007,46 @@ export const Community: React.FC<CommunityProps> = ({
                           )}
 
                           <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1 w-full min-w-0">
-                            <p dir={textDir(msg.message)} className="whitespace-pre-wrap break-words [word-break:break-word] [overflow-wrap:anywhere] leading-relaxed min-w-0 max-w-full">
-                              {renderTextWithMentions(msg.message)}
-                            </p>
+                            {(() => {
+                              const inviteCode = parseGameInvite(msg.message);
+                              if (!inviteCode) return (
+                                <p dir={textDir(msg.message)} className="whitespace-pre-wrap break-words [word-break:break-word] [overflow-wrap:anywhere] leading-relaxed min-w-0 max-w-full">
+                                  {renderTextWithMentions(msg.message)}
+                                </p>
+                              );
+                              // Online challenge invite → a card you can join from directly
+                              return (
+                                <div className="w-[min(260px,68vw)] rounded-xl overflow-hidden border border-white/10 bg-zinc-950 text-white">
+                                  <div className="px-3 py-3 bg-gradient-to-br from-brand-orange/25 via-zinc-950 to-zinc-950 flex items-center gap-2.5">
+                                    <span className="w-10 h-10 rounded-xl bg-brand-orange text-black flex items-center justify-center text-xl shrink-0" aria-hidden>🧠</span>
+                                    <div className="min-w-0">
+                                      <p className="text-[13px] font-black leading-tight">تحدي التشريح أونلاين</p>
+                                      <p className="text-2xs font-bold text-zinc-400 truncate">{isMyMsg ? 'انت فاتح روم' : `${msg.username} فاتح روم ومستنيك`}</p>
+                                    </div>
+                                  </div>
+                                  <div className="px-3 pb-3 pt-2 space-y-2">
+                                    <div className="flex items-center justify-between text-2xs font-bold text-zinc-500">
+                                      <span>كود الروم</span>
+                                      <span className="font-mono font-black tracking-[3px] text-brand-orange text-xs" dir="ltr">{inviteCode}</span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (isMultiSelectMode) return;
+                                        if (!user) { showToast('سجّل دخول عشان تلعب 🔐'); return; }
+                                        joinGameRoomFromInvite(inviteCode);
+                                      }}
+                                      onTouchStart={(e) => e.stopPropagation()}
+                                      onMouseDown={(e) => e.stopPropagation()}
+                                      className="w-full h-9 rounded-lg bg-brand-orange text-black text-xs font-black cursor-pointer active:scale-[0.97] transition-transform"
+                                    >
+                                      {isMyMsg ? 'ارجع للروم' : 'ادخل الروم ⚡'}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                             
                             <div className="flex items-center gap-1 shrink-0 text-2xs opacity-75 select-none pb-0.5 ms-auto self-end">
                               {!!msg.is_edited && <span>(متعدّلة)</span>}

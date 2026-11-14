@@ -113,9 +113,23 @@ const pageFromPath = (path: string): string => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Start on the page the URL points to, so deep links don't flash the home page first.
   const [currentPage, _setCurrentPage] = useState(() => pageFromPath(window.location.pathname));
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    if (window.location.pathname.startsWith('/auth/callback')) {
+      const userParam = new URLSearchParams(window.location.search).get('user');
+      if (userParam) {
+        try {
+          return JSON.parse(userParam);
+        } catch {
+          try {
+            return JSON.parse(decodeURIComponent(userParam));
+          } catch {}
+        }
+      }
+    }
+    return null;
+  });
   const [token, setToken] = useState(() => {
-    if (window.location.pathname === '/auth/callback') {
+    if (window.location.pathname.startsWith('/auth/callback')) {
       const fromCallback = new URLSearchParams(window.location.search).get('token');
       if (fromCallback) {
         localStorage.setItem('token', fromCallback);

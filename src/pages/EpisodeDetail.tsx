@@ -25,6 +25,7 @@ import {
   AlertCircle,
   AlertTriangle
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { commentLook, bubbleProps, CommentBubbleLayers, CommentName } from '../components/streak/CommentLook';
 import { episodeNumber, seasonName } from '../utils/episode';
 import { formatMentions } from '../utils/mentions';
@@ -97,6 +98,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
   handleOpenReportModal,
   onOpenComments
 }) => {
+  const { changePage } = useAuth();
   const [mentionSearchText, setMentionSearchText] = useState<string | null>(null);
   const [commentsExpanded, setCommentsExpanded] = useState(true);
   const [seekTo, setSeekTo] = useState<number | null>(null);
@@ -336,7 +338,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
             <div className="space-y-2 pt-1">
               {previewComments.map((c: any) => { const look = commentLook(c, user); const bp = bubbleProps(look); return (
                 <div key={c.id} className="flex items-start gap-2.5">
-                  <UserAvatar username={c.username} avatarUrl={c.avatar_url} equippedFrame={c.equipped_frame} size={26} />
+                  <UserAvatar username={c.username} avatarUrl={c.avatar_url} equippedFrame={c.equipped_frame} size={26} onClick={() => changePage('public-profile', { username: c.username })} />
                   <div className={`flex-1 min-w-0 rounded-2xl px-3 py-2 relative ${look.fancy ? bp.className : 'bg-zinc-900/60 border border-zinc-800/60'}`} style={bp.style}>
                     <CommentBubbleLayers look={look} />
                     <CommentName look={look} className="text-2xs font-black text-white">{c.username}</CommentName>

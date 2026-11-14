@@ -380,6 +380,18 @@ export const useGames = () => {
     }
   };
 
+  // Join straight from an invite card in the public chat
+  const joinRef = useRef(handleJoinGameRoom);
+  joinRef.current = handleJoinGameRoom;
+  useEffect(() => {
+    const onInvite = (e: Event) => {
+      const code = (e as CustomEvent).detail?.code;
+      if (code) joinRef.current(String(code).toUpperCase());
+    };
+    window.addEventListener('join-game-room', onInvite);
+    return () => window.removeEventListener('join-game-room', onInvite);
+  }, []);
+
   return {
     activeGameRoom, setActiveGameRoom,
     gameRoomCodeInput, setGameRoomCodeInput,

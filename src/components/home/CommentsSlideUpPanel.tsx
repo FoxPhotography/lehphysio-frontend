@@ -20,6 +20,7 @@ import {
 import { communityService } from '../../services/communityService';
 import { episodeService } from '../../services/episodeService';
 import { formatMentions } from '../../utils/mentions';
+import { useAuth } from '../../context/AuthContext';
 import { commentLook, bubbleProps, CommentBubbleLayers, CommentName } from '../streak/CommentLook';
 
 interface CommentItem {
@@ -142,6 +143,15 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
       window.removeEventListener('popstate', handlePopState);
     };
   }, [isOpen, postId]);
+
+  // Tap a commenter's photo / name → close the sheet and open their profile
+  const { changePage } = useAuth();
+  const openProfile = (username: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!username || username === 'Unknown') return;
+    handlePanelClose();
+    changePage('public-profile', { username });
+  };
 
   // Clean URL when closing if not already popped by browser
   const handlePanelClose = () => {
@@ -521,6 +531,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
             avatarUrl={c.avatar_url} 
             equippedFrame={c.equipped_frame} 
             size={isReply ? 28 : 34} 
+            onClick={(e?: any) => openProfile(c.username, e)}
           />
 
           <div className="flex-1 min-w-0">
@@ -533,9 +544,11 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
               {!isHighlighted && <CommentBubbleLayers look={look} />}
               <div className="flex items-center justify-between gap-2 mb-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <CommentName look={look} className="text-xs font-black text-white cursor-pointer">
-                    {c.username}
-                  </CommentName>
+                  <button type="button" onClick={(e) => openProfile(c.username, e)} className="cursor-pointer text-start">
+                    <CommentName look={look} className="text-xs font-black text-white">
+                      {c.username}
+                    </CommentName>
+                  </button>
                   {c.batch && (
                     <span className="text-2xs font-bold bg-zinc-800/80 text-zinc-400 px-1.5 py-0.5 rounded-md border border-zinc-700/40">
                       {c.batch}

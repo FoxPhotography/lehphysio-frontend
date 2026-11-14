@@ -22,6 +22,36 @@ const SPARKLES = Array.from({ length: 10 }, (_, i) => ({
   size: 6 + ((i * 5) % 7),
 }));
 
+export const ButterflySvg = () => (
+  <svg viewBox="0 0 24 20" width="100%" height="100%" fill="none" className="butterfly-svg">
+    <path
+      d="M12 9C10 4 3 2 2 7C1 11 6 15 12 11M12 9C14 4 21 2 22 7C23 11 18 15 12 11M12 11C10 13 6 18 8 19C10 20 12 16 12 13M12 11C14 13 18 18 16 19C14 20 12 16 12 13"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+export const LightningSvg = () => (
+  <svg viewBox="0 0 16 24" width="100%" height="100%" fill="none" className="lightning-svg">
+    <path
+      d="M9 1L1 13H8L7 23L15 11H8L9 1Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+const BUTTERFLIES = [
+  { x: '16%', bottom: '4px', size: 15, dur: 3.6, delay: 0.2, flyX: '14px', rot: -8 },
+  { x: '72%', bottom: '2px', size: 12, dur: 4.4, delay: 1.6, flyX: '-12px', rot: 12 },
+  { x: '44%', bottom: '6px', size: 13, dur: 3.8, delay: 0.9, flyX: '16px', rot: 6 },
+];
+
+const LIGHTNING_BOLTS = [
+  { left: '10%', top: '12%', size: 14, dur: 2.8, delay: 0.3, rot: -12 },
+  { left: '84%', top: '18%', size: 13, dur: 3.2, delay: 1.5, rot: 18 },
+  { left: '46%', top: '50%', size: 11, dur: 2.5, delay: 0.8, rot: 8 },
+];
+
 const themeFor = (days: number) => getStreakTheme(days);
 
 // ─── Animated flame ──────────────────────────────────────────────────────────
@@ -143,6 +173,49 @@ export const StreakAura: React.FC<{ days: number; density?: 'full' | 'lite'; cla
           ))}
         </div>
       )}
+      {t.key === 'plasma' && density === 'full' && (
+        <div className="streak-aura__butterflies pointer-events-none">
+          {BUTTERFLIES.map((b, i) => (
+            <span
+              key={i}
+              className="streak-butterfly-particle"
+              style={{
+                left: b.x,
+                bottom: b.bottom,
+                width: `${b.size}px`,
+                height: `${b.size}px`,
+                ['--dur' as any]: `${b.dur}s`,
+                ['--delay' as any]: `${b.delay}s`,
+                ['--fly-x' as any]: b.flyX,
+                ['--rot' as any]: `${b.rot}deg`,
+              }}
+            >
+              <ButterflySvg />
+            </span>
+          ))}
+        </div>
+      )}
+      {t.key === 'supernova' && density === 'full' && (
+        <div className="streak-aura__lightning pointer-events-none">
+          {LIGHTNING_BOLTS.map((l, i) => (
+            <span
+              key={i}
+              className="streak-lightning-particle"
+              style={{
+                left: l.left,
+                top: l.top,
+                width: `${l.size}px`,
+                height: `${l.size * 1.5}px`,
+                ['--dur' as any]: `${l.dur}s`,
+                ['--delay' as any]: `${l.delay}s`,
+                ['--rot' as any]: `${l.rot}deg`,
+              }}
+            >
+              <LightningSvg />
+            </span>
+          ))}
+        </div>
+      )}
       <div className="streak-aura__vignette" />
     </div>
   );
@@ -189,6 +262,49 @@ export const StreakNameplate: React.FC<{
           ))}
         </span>
       )}
+      {t.key === 'plasma' && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+          {BUTTERFLIES.slice(0, 2).map((b, i) => (
+            <span
+              key={i}
+              className="streak-butterfly-particle"
+              style={{
+                left: i === 0 ? '12%' : '82%',
+                bottom: '10%',
+                width: '14px',
+                height: '14px',
+                ['--dur' as any]: `${b.dur}s`,
+                ['--delay' as any]: `${b.delay * 0.5}s`,
+                ['--fly-x' as any]: i === 0 ? '12px' : '-12px',
+                ['--rot' as any]: `${b.rot}deg`,
+              }}
+            >
+              <ButterflySvg />
+            </span>
+          ))}
+        </span>
+      )}
+      {t.key === 'supernova' && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+          {LIGHTNING_BOLTS.slice(0, 2).map((l, i) => (
+            <span
+              key={i}
+              className="streak-lightning-particle"
+              style={{
+                left: i === 0 ? '8%' : '78%',
+                top: '15%',
+                width: '14px',
+                height: '21px',
+                ['--dur' as any]: `${l.dur}s`,
+                ['--delay' as any]: `${l.delay}s`,
+                ['--rot' as any]: `${l.rot}deg`,
+              }}
+            >
+              <LightningSvg />
+            </span>
+          ))}
+        </span>
+      )}
       {children}
     </div>
   );
@@ -232,6 +348,43 @@ export const StreakBubbleLayers: React.FC<{ days: number; override?: Override }>
               }}
             />
           ))}
+        </span>
+      )}
+      {t.key === 'plasma' && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+          <span
+            className="streak-butterfly-particle"
+            style={{
+              left: '8%',
+              bottom: '12%',
+              width: '12px',
+              height: '12px',
+              ['--dur' as any]: '3.8s',
+              ['--delay' as any]: '0.3s',
+              ['--fly-x' as any]: '10px',
+              ['--rot' as any]: '-12deg',
+            }}
+          >
+            <ButterflySvg />
+          </span>
+        </span>
+      )}
+      {t.key === 'supernova' && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+          <span
+            className="streak-lightning-particle"
+            style={{
+              right: '8%',
+              top: '12%',
+              width: '12px',
+              height: '18px',
+              ['--dur' as any]: '2.4s',
+              ['--delay' as any]: '0.2s',
+              ['--rot' as any]: '15deg',
+            }}
+          >
+            <LightningSvg />
+          </span>
         </span>
       )}
     </>

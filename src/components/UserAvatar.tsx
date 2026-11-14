@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { DEFAULT_FIT, getCachedFit, measureFrame, type FrameFit } from '../utils/frameFit';
 import { getFrameImage } from '../utils/helpers';
 import { cld } from '../utils/image';
 
@@ -45,6 +46,18 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
   const numericSize = typeof size === 'number' ? size : 64;
 
   const frameImageUrl = getFrameImage(equippedFrame);
+  // Measured once per frame image: how big the frame must be so its hole wraps the photo
+  const probeUrl = frameImageUrl ? cld(frameImageUrl, { w: 60 }) : '';
+  const [fit, setFit] = useState<FrameFit>(() => (probeUrl && getCachedFit(probeUrl)) || DEFAULT_FIT);
+  useEffect(() => {
+    if (!probeUrl) return undefined;
+    const cached = getCachedFit(probeUrl);
+    if (cached) { setFit(cached); return undefined; }
+    let alive = true;
+    measureFrame(probeUrl).then(f => { if (alive) setFit(f); });
+    return () => { alive = false; };
+  }, [probeUrl]);
+  const framePct = fit.scale * 100;
   const showImage = isValidUrl(avatarUrl) && !imgFailed;
 
   return (
@@ -69,7 +82,9 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
       }}
     >
       <span
-        className="w-full h-full rounded-full flex items-center justify-center overflow-hidden font-extrabold text-brand-orange bg-brand-orange/10"
+        className={`w-full h-full rounded-full flex items-center justify-center overflow-hidden font-extrabold text-brand-orange bg-brand-orange/10 transition-transform duration-200 ${
+          frameImageUrl && !frameFailed ? 'scale-[0.88]' : ''
+        }`}
         style={{ fontSize: `${Math.max(11, Math.floor(numericSize * 0.38))}px` }}
       >
         {showImage ? (
@@ -88,17 +103,23 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
         )}
       </span>
 
-      {/* PNG frame overlay, slightly larger than the avatar so the ring extends beyond the edge */}
+      {/* PNG frame overlay, auto-sized so its inner hole matches the photo (ring wraps it from outside) */}
       {frameImageUrl && !frameFailed && (
         <img
           onError={() => setFrameFailed(true)}
-          src={cld(frameImageUrl, { w: Math.round(numericSize * 1.15) })}
+          src={cld(frameImageUrl, { w: Math.round(numericSize * Math.max(1.15, fit.scale)) })}
           alt=""
           aria-hidden
           loading={eager ? 'eager' : 'lazy'}
           decoding="async"
           className="absolute pointer-events-none z-10 select-none"
-          style={{ top: '-7.5%', left: '-7.5%', width: '115%', height: '115%', maxWidth: 'none' }}
+          style={{
+            width: `${framePct}%`,
+            height: `${framePct}%`,
+            left: `${50 - (0.5 + fit.ox) * framePct}%`,
+            top: `${50 - (0.5 + fit.oy) * framePct}%`,
+            maxWidth: 'none',
+          }}
         />
       )}
     </div>

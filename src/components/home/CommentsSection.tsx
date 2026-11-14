@@ -6,6 +6,7 @@ import { UserAvatar } from '../UserAvatar';
 import { Loader2, CornerUpLeft, X, Heart, MoreVertical, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { API_BASE } from '../../services/api';
 import { formatMentions } from '../../utils/mentions';
+import { useAuth } from '../../context/AuthContext';
 import { commentLook, CommentName } from '../streak/CommentLook';
 
 interface CommentsSectionProps {
@@ -31,6 +32,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
   handleOpenReportModal,
   isExpanded,
 }) => {
+  const { changePage } = useAuth();
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -295,11 +297,17 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                     }}
                   >
                     <div className="flex gap-3 items-start">
-                      <UserAvatar username={c.username} avatarUrl={c.avatar_url} equippedFrame={c.equipped_frame} size={28} />
+                      <UserAvatar username={c.username} avatarUrl={c.avatar_url} equippedFrame={c.equipped_frame} size={28} onClick={() => changePage('public-profile', { username: c.username })} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center mb-1">
                           <div className="flex items-center gap-1.5">
-                            <CommentName look={commentLook(c, user)} className="text-xs font-extrabold text-brand-orange"><bdi dir="ltr">@{c.username}</bdi></CommentName>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); changePage('public-profile', { username: c.username }); }}
+                              className="cursor-pointer text-start hover:underline"
+                            >
+                              <CommentName look={commentLook(c, user)} className="text-xs font-extrabold text-brand-orange"><bdi dir="ltr">@{c.username}</bdi></CommentName>
+                            </button>
                             <span className="text-2xs font-bold bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-md">{c.batch}</span>
                           </div>
                           
@@ -370,10 +378,16 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                           return (
                             <HighlightWrapper key={r.id} isHighlighted={isReplyHighlighted} className="w-full rounded-xl">
                               <div id={`comment-${r.id}`} className="flex gap-2.5 items-start group/reply relative">
-                                <UserAvatar username={r.username} avatarUrl={r.avatar_url} equippedFrame={r.equipped_frame} size={22} />
+                                <UserAvatar username={r.username} avatarUrl={r.avatar_url} equippedFrame={r.equipped_frame} size={22} onClick={() => changePage('public-profile', { username: r.username })} />
                                 <div className="flex-1 min-w-0">
                                   <div className="flex justify-between items-center mb-0.5">
-                                    <CommentName look={commentLook(r, user)} className="text-xs font-bold text-zinc-400"><bdi dir="ltr">@{r.username}</bdi></CommentName>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); changePage('public-profile', { username: r.username }); }}
+                                      className="cursor-pointer text-start hover:underline"
+                                    >
+                                      <CommentName look={commentLook(r, user)} className="text-xs font-bold text-zinc-400"><bdi dir="ltr">@{r.username}</bdi></CommentName>
+                                    </button>
                                     <div className="flex items-center gap-2">
                                       <span className="text-2xs text-zinc-600 font-semibold">
                                         {new Date(r.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}

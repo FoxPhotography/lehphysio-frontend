@@ -158,7 +158,7 @@ export const useUrlRouting = ({
         window.history.replaceState({}, document.title, '/profile');
       }
       setPageFromUrl('profile');
-    } else if (path === '/auth/callback') {
+    } else if (path === '/auth/callback' || path.startsWith('/auth/callback/')) {
       const callbackToken = params.get('token');
       const callbackError = params.get('error');
       const callbackUserRaw = params.get('user');
@@ -167,7 +167,13 @@ export const useUrlRouting = ({
         if (setToken) setToken(callbackToken);
         if (callbackUserRaw && setUser) {
           try {
-            setUser(JSON.parse(decodeURIComponent(callbackUserRaw)));
+            let parsedUser = null;
+            try {
+              parsedUser = JSON.parse(callbackUserRaw);
+            } catch {
+              parsedUser = JSON.parse(decodeURIComponent(callbackUserRaw));
+            }
+            if (parsedUser) setUser(parsedUser);
           } catch (e) {
             console.error('Error parsing callback user:', e);
           }
@@ -180,6 +186,10 @@ export const useUrlRouting = ({
         showToast(decodeURIComponent(callbackError));
         window.history.replaceState({}, document.title, '/login');
         setPageFromUrl('login');
+      } else if (params.get('code')) {
+        // Fallback: If Google redirected to frontend with ?code=..., forward to backend callback
+        window.location.href = `https://lehphysio.up.railway.app/api/auth/google/callback${window.location.search}`;
+        return;
       } else {
         window.history.replaceState({}, document.title, '/');
         setPageFromUrl('home');

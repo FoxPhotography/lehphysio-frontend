@@ -207,3 +207,65 @@
 /* Comment bubbles: layers clipped in their own box so dropdown menus can overflow */
 .streak-bubble.streak-bubble--open { overflow: visible; }
 .streak-bubble__layers { position: absolute; inset: 0; z-index: -1; overflow: hidden; border-radius: inherit; pointer-events: none; }
+
+/* ── Electric Lightning Effects (Supernova / Blue) ── */
+.streak-bubble--supernova {
+  border-color: rgba(0, 212, 255, 0.5) !important;
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.25), inset 0 0 10px rgba(0, 212, 255, 0.12);
+}
+.streak-plate--supernova .streak-plate__edge {
+  box-shadow: 0 0 14px #00d4ff, 0 0 24px rgba(0, 212, 255, 0.6);
+}
+.streak-lightning-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  color: #00d4ff;
+  filter: drop-shadow(0 0 4px #00d4ff) drop-shadow(0 0 8px #e6ffff);
+  animation: lightning-flash var(--dur, 2.8s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes lightning-flash {
+  0%, 88%, 100% { opacity: 0; transform: scale(0.6) rotate(var(--rot, 0deg)); }
+  90% { opacity: 1; transform: scale(1.15) rotate(var(--rot, 0deg)); }
+  92% { opacity: 0.15; transform: scale(0.9) rotate(var(--rot, 0deg)); }
+  94% { opacity: 0.95; transform: scale(1.05) rotate(var(--rot, 0deg)); }
+  96% { opacity: 0; transform: scale(0.7) rotate(var(--rot, 0deg)); }
+}
+
+/* ── Fluttering Butterfly Effects (Plasma / Pink) ── */
+.streak-bubble--plasma {
+  border-color: rgba(255, 43, 214, 0.5) !important;
+  box-shadow: 0 0 15px rgba(255, 43, 214, 0.25), inset 0 0 10px rgba(255, 43, 214, 0.12);
+}
+.streak-plate--plasma .streak-plate__edge {
+  box-shadow: 0 0 14px #ff2bd6, 0 0 24px rgba(255, 43, 214, 0.6);
+}
+.streak-butterfly-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  color: #ff2bd6;
+  filter: drop-shadow(0 0 4px #ff2bd6) drop-shadow(0 0 8px #ffd1fb);
+  animation: butterfly-drift var(--dur, 4.5s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+.streak-butterfly-particle .butterfly-svg {
+  animation: butterfly-wings 0.32s ease-in-out infinite alternate;
+}
+@keyframes butterfly-wings {
+  0% { transform: scaleX(1); }
+  100% { transform: scaleX(0.22) skewY(6deg); }
+}
+@keyframes butterfly-drift {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(var(--rot, -10deg));
+    opacity: 0;
+  }
+  15% { opacity: 0.95; }
+  85% { opacity: 0.9; }
+  100% {
+    transform: translate3d(var(--fly-x, 18px), -65px, 0) rotate(calc(var(--rot, -10deg) + 20deg));
+    opacity: 0;
+  }
+}
