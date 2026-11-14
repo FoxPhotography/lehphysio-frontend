@@ -50,6 +50,9 @@ export interface DescribedNotification extends Copy {
 /** The backend sends English titles; the app composes its own Arabic sentence from type + actor + metadata. */
 export function describe(n: AppNotification): DescribedNotification {
   let copy = COPY[n.type] ?? { action: n.title || 'إشعار جديد', tone: 'content' as Tone };
+  if ((n.type === 'mention_chat' || n.type === 'mention_comment') && n.metadata?.all) {
+    copy = { ...copy, action: n.type === 'mention_chat' ? 'عمل منشن للكل في الشات 📢' : 'عمل منشن للكل في تعليق 📢' };
+  }
   if (n.type === 'chat_reaction' && n.metadata?.emoji) {
     copy = { ...copy, action: `تفاعل بـ ${n.metadata.emoji} على رسالتك` };
   }

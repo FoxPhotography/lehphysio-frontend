@@ -171,6 +171,14 @@ export const Community: React.FC<CommunityProps> = ({
   // Reactions UX: double-tap ❤️, floating burst, "who reacted" sheet
   const { showToast, changePage } = useAuth();
 
+  // Mention suggestions; owners / admins also get "@all" (notifies everyone)
+  const canMentionAll = user?.role === 'owner' || user?.role === 'admin';
+  const getMentionSuggestions = (): any[] => {
+    const q = (mentionSearch || '').toLowerCase();
+    const list = (usernames || []).filter((u: any) => u.username.toLowerCase().includes(q) && u.username !== user?.username);
+    return canMentionAll && 'all'.startsWith(q) ? [{ username: 'all', isAll: true }, ...list] : list;
+  };
+
   // Tap an avatar / name → that person's public profile
   const openProfile = (username: string) => {
     if (!username || isMultiSelectMode) return;
@@ -964,8 +972,8 @@ export const Community: React.FC<CommunityProps> = ({
               )}
 
               {/* Mention drop container */}
-              {showMentionSuggestions && usernames && usernames.length > 0 && (() => {
-                const filteredSuggestions = usernames.filter((u: any) => u.username.toLowerCase().includes(mentionSearch.toLowerCase()) && u.username !== user?.username);
+              {showMentionSuggestions && ((usernames && usernames.length > 0) || canMentionAll) && (() => {
+                const filteredSuggestions = getMentionSuggestions();
                 if (filteredSuggestions.length === 0) {
                   return (
                     <div className="absolute bottom-[calc(100%+8px)] start-3 end-3 md:start-0 md:end-0 max-h-[160px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-xl p-3 shadow-2xl text-xs text-zinc-500 text-center font-bold">
@@ -985,10 +993,14 @@ export const Community: React.FC<CommunityProps> = ({
                           idx === activeSuggestionIdx ? 'bg-brand-orange/20 border border-brand-orange/30 shadow-orange-glow' : 'hover:bg-brand-orange/10'
                         }`}
                       >
-                        <UserAvatar username={u.username} avatarUrl={u.avatar_url} equippedFrame={u.equipped_frame} size={24} />
+                        {u.isAll ? (
+                          <span className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-orange to-brand-amber text-black flex items-center justify-center text-xs">📢</span>
+                        ) : (
+                          <UserAvatar username={u.username} avatarUrl={u.avatar_url} equippedFrame={u.equipped_frame} size={24} />
+                        )}
                         <div className="flex flex-col text-start">
                            <span className="text-brand-orange font-black"><bdi dir="ltr">@{u.username}</bdi></span>
-                           <span className="text-2xs text-zinc-500">{u.role === 'owner' ? 'المالك' : u.role === 'admin' ? 'أدمن' : 'طالب'}</span>
+                           <span className="text-2xs text-zinc-500">{u.isAll ? 'إشعار لكل الناس' : u.role === 'owner' ? 'المالك' : u.role === 'admin' ? 'أدمن' : 'طالب'}</span>
                         </div>
                       </button>
                     ))}
@@ -1051,7 +1063,7 @@ export const Community: React.FC<CommunityProps> = ({
                       }}
                       onBlur={() => setIsInputFocused(false)}
                       onKeyDown={(e) => {
-                        const filtered = usernames ? usernames.filter((u: any) => u.username.toLowerCase().includes(mentionSearch.toLowerCase()) && u.username !== user?.username) : [];
+                        const filtered = getMentionSuggestions();
                         if (showMentionSuggestions && filtered.length > 0) {
                           if (e.key === 'ArrowDown') {
                             e.preventDefault();

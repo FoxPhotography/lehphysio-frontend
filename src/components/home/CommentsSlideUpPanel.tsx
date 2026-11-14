@@ -268,10 +268,13 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
 
   const getFilteredUsernames = () => {
     if (mentionSearch === null || !usernames) return [];
-    return usernames.filter((u: any) =>
+    const list = usernames.filter((u: any) =>
       u.username.toLowerCase().includes(mentionSearch.toLowerCase()) &&
       u.username !== user?.username
     ).slice(0, 5);
+    // Owners / admins can "@all" (notifies everyone)
+    const canAll = user?.role === 'owner' || user?.role === 'admin';
+    return canAll && 'all'.startsWith(mentionSearch.toLowerCase()) ? [{ username: 'all', avatar_url: null }, ...list] : list;
   };
 
   // Submit new comment or reply

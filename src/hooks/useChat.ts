@@ -313,8 +313,14 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
       setChatMessages(prev => prev.map(m => (m.username === data.username ? { ...m, cosmetics: data.cosmetics } as any : m)));
     };
     socket.on('chat_update', handleChatUpdate);
+    const handleStreaksReset = (data: { usernames: string[] }) => {
+      const names = new Set(data?.usernames || []);
+      if (names.size) setChatMessages(prev => prev.map(m => (names.has(m.username) ? { ...m, streak_count: 0 } as any : m)));
+    };
+    socket.on('streaks_reset', handleStreaksReset);
     socket.on('cosmetics_updated', handleCosmeticsUpdated);
     return () => {
+      socket.off('streaks_reset', handleStreaksReset);
       socket.off('cosmetics_updated', handleCosmeticsUpdated);
       socket.off('chat_update', handleChatUpdate);
     };

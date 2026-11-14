@@ -376,6 +376,14 @@ export const useAppSockets = ({
       if (!Array.isArray(data?.unlocked_cosmetics)) return;
       setUser((prev: any) => (prev ? { ...prev, unlocked_cosmetics: data.unlocked_cosmetics } : prev));
     };
+    // Broken streaks were reset on the server → drop the old number everywhere right now
+    const handleStreaksReset = (data: { usernames: string[] }) => {
+      const names = new Set(data?.usernames || []);
+      if (!names.size) return;
+      setLeaderboard((prev: any[]) => prev.map(r => (names.has(r.username) ? { ...r, streak_count: 0 } : r)));
+      setUser((prev: any) => (prev && names.has(prev.username) ? { ...prev, streak_count: 0 } : prev));
+    };
+    socket.on('streaks_reset', handleStreaksReset);
     socket.on('cosmetics_updated', handleCosmeticsUpdated);
     socket.on('cosmetics_unlocked', handleCosmeticsUnlocked);
     socket.on('xp_updated', handleXpUpdated);
@@ -387,6 +395,7 @@ export const useAppSockets = ({
     socket.on('question:answered', handleQuestionAnswered);
 
     return () => {
+      socket.off('streaks_reset', handleStreaksReset);
       socket.off('cosmetics_updated', handleCosmeticsUpdated);
       socket.off('cosmetics_unlocked', handleCosmeticsUnlocked);
       socket.off('xp_updated', handleXpUpdated);
