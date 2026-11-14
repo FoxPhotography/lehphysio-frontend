@@ -1085,62 +1085,12 @@ export function FireGoalNameplate({
         className="absolute inset-0 w-full h-full block z-10"
       />
 
-      {/* Profile Nameplate Overlay (Left Side) */}
-      <div className={`relative z-20 h-full flex flex-col justify-between ${compact ? 'p-3' : 'p-6 sm:p-8'} pointer-events-none max-w-md`}>
-        {/* Top Interactive Status Badge */}
-        <div className="flex items-center gap-2.5">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-500/20 text-orange-300 border border-orange-500/40 backdrop-blur-md shadow-sm">
-            <Flame className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
-            {isAiming ? "Release to Fire!" : "Interactive Cloth Physics"}
-          </span>
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 backdrop-blur-md">
-            ⚽ {goalCount}
-          </span>
+      {/* Optional Custom Content Overlay */}
+      {children && (
+        <div className="relative z-20 h-full w-full pointer-events-none p-4 flex items-center">
+          <div className="pointer-events-auto w-full">{children}</div>
         </div>
-
-        {/* Main User Identity / Nameplate */}
-        {children ? (
-          <div className="pointer-events-auto flex items-center h-full my-auto">{children}</div>
-        ) : (
-          <div className="flex items-center gap-4 bg-slate-950/55 backdrop-blur-md border border-white/10 p-4 rounded-2xl shadow-xl w-fit">
-            <div className="relative shrink-0">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-orange-500 via-amber-400 to-emerald-400 p-0.5 shadow-[0_0_25px_rgba(249,115,22,0.45)]">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt={name}
-                    className="w-full h-full rounded-[14px] object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full rounded-[14px] bg-slate-900 flex items-center justify-center text-white font-black text-xl tracking-tighter">
-                    {avatarText}
-                  </div>
-                )}
-              </div>
-              <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 text-[10px] font-black bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-md shadow">
-                {badge}
-              </span>
-            </div>
-
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-md flex items-center gap-2">
-                {name}
-              </h2>
-              <p className="text-xs sm:text-sm text-emerald-300/90 font-medium mt-0.5">
-                {title}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Subtle Interactive Hint */}
-        <div className="text-[11px] text-slate-300/80 font-medium flex items-center gap-1.5">
-          <MousePointerClick className="w-3.5 h-3.5 text-orange-400" />
-          <span>
-            اضغط في أي مكان للشوط • أو مرر الماوس على الشبكة والكورة
-          </span>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
