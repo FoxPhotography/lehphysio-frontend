@@ -67,8 +67,9 @@ export function FireGoalBackground({
   // Reset ball to its ready position on the pitch
   const resetBallToSpawn = useCallback((now = performance.now()) => {
     const sim = simRef.current;
-    const spawnX = Math.min(160, Math.max(80, sim.width * 0.18));
-    const spawnY = sim.height * 0.58;
+    const spawnX = Math.min(150, Math.max(75, sim.width * 0.16));
+    // Raised vertically into the upper clear pitch area (above the profile badges & cards)
+    const spawnY = Math.max(65, Math.min(155, sim.height * 0.28));
 
     sim.ball.spawnX = spawnX;
     sim.ball.spawnY = spawnY;
@@ -165,13 +166,15 @@ export function FireGoalBackground({
     sim.constraints = constraints;
     sim.netTornTime = 0;
 
-    const spawnX = Math.min(160, Math.max(80, width * 0.18));
-    const spawnY = height * 0.58;
+    const spawnX = Math.min(150, Math.max(75, width * 0.16));
+    const spawnY = Math.max(65, Math.min(155, height * 0.28));
     sim.ball.spawnX = spawnX;
     sim.ball.spawnY = spawnY;
-    if (Math.hypot(sim.ball.vx, sim.ball.vy) < 0.5 && !sim.pointer.isDraggingBall) {
+    if (sim.shotActiveTime === 0 && !sim.pointer.isDraggingBall) {
       sim.ball.x = spawnX;
       sim.ball.y = spawnY;
+      sim.ball.vx = 0;
+      sim.ball.vy = 0;
     }
   }, []);
 
@@ -188,7 +191,7 @@ export function FireGoalBackground({
     const startY =
       options.startY !== undefined
         ? options.startY
-        : sim.ball.y || height * 0.58;
+        : sim.ball.y || Math.max(65, Math.min(155, height * 0.28));
 
     const targetX =
       options.targetX !== undefined
@@ -494,42 +497,52 @@ export function FireGoalBackground({
 
       // Update Ball Physics
       if (!pointer.isDraggingBall) {
-        ball.vy += 0.26;
-        ball.vx *= 0.992;
-        ball.vy *= 0.992;
+        if (sim.shotActiveTime === 0) {
+          // Ball is waiting at its elevated ready spot for kick-off!
+          ball.vx = 0;
+          ball.vy = 0;
+          ball.x = ball.spawnX;
+          ball.y = ball.spawnY + Math.sin(now * 0.0035) * 3;
+          ball.scaleX += (1 - ball.scaleX) * 0.2;
+          ball.scaleY += (1 - ball.scaleY) * 0.2;
+        } else {
+          ball.vy += 0.26;
+          ball.vx *= 0.992;
+          ball.vy *= 0.992;
 
-        ball.x += ball.vx;
-        ball.y += ball.vy;
-        ball.angle += ball.vx * 0.032;
+          ball.x += ball.vx;
+          ball.y += ball.vy;
+          ball.angle += ball.vx * 0.032;
 
-        const speed = Math.hypot(ball.vx, ball.vy);
+          const speed = Math.hypot(ball.vx, ball.vy);
 
-        const stretch = Math.min(1.36, 1 + speed * 0.011);
-        ball.scaleX += (stretch - ball.scaleX) * 0.35;
-        ball.scaleY += (1 / stretch - ball.scaleY) * 0.35;
+          const stretch = Math.min(1.36, 1 + speed * 0.011);
+          ball.scaleX += (stretch - ball.scaleX) * 0.35;
+          ball.scaleY += (1 / stretch - ball.scaleY) * 0.35;
 
-        const floorY = height - 16;
-        if (ball.y + ball.radius > floorY) {
-          ball.y = floorY - ball.radius;
-          ball.vy = -ball.vy * 0.68;
-          ball.vx *= 0.88;
-          if (Math.abs(ball.vy) > 2) {
-            ball.scaleX = 1.26;
-            ball.scaleY = 0.76;
+          const floorY = height > 280 ? Math.min(height - 16, Math.max(200, height * 0.58)) : height - 16;
+          if (ball.y + ball.radius > floorY) {
+            ball.y = floorY - ball.radius;
+            ball.vy = -ball.vy * 0.68;
+            ball.vx *= 0.88;
+            if (Math.abs(ball.vy) > 2) {
+              ball.scaleX = 1.26;
+              ball.scaleY = 0.76;
+            }
           }
-        }
-        if (ball.y - ball.radius < 12) {
-          ball.y = 12 + ball.radius;
-          ball.vy = -ball.vy * 0.65;
-        }
-        if (ball.x - ball.radius < 12) {
-          ball.x = 12 + ball.radius;
-          ball.vx = Math.abs(ball.vx) * 0.75;
-        }
+          if (ball.y - ball.radius < 12) {
+            ball.y = 12 + ball.radius;
+            ball.vy = -ball.vy * 0.65;
+          }
+          if (ball.x - ball.radius < 12) {
+            ball.x = 12 + ball.radius;
+            ball.vx = Math.abs(ball.vx) * 0.75;
+          }
 
-        // Respawn ball smoothly on the left if it flies far off the right edge
-        if (ball.x - ball.radius > width + 90) {
-          resetBallToSpawn(now);
+          // Respawn ball smoothly on the left if it flies far off the right edge
+          if (ball.x - ball.radius > width + 90) {
+            resetBallToSpawn(now);
+          }
         }
 
         // Goalpost Corner Collisions
@@ -981,7 +994,7 @@ export function FireGoalBackground({
 
     // Grab the ball when clicking/touching on or near the ball
     const distToBall = Math.hypot(x - sim.ball.x, y - sim.ball.y);
-    if (distToBall <= sim.ball.radius + 38) {
+    if (distToBall <= sim.ball.radius + 45) {
       sim.pointer.isDraggingBall = true;
       sim.ball.spawnX = sim.ball.x;
       sim.ball.spawnY = sim.ball.y;
@@ -990,6 +1003,20 @@ export function FireGoalBackground({
       sim.ball.onFire = true;
       sim.shotActiveTime = 0;
       sim.idleStartTime = now;
+    } else if (x < sim.goalBox.x - 30) {
+      // Clicked on pitch: kick ball towards clicked height!
+      shootBall({
+        targetY: y,
+        power: 31,
+        onFire: true,
+      });
+    } else {
+      // Clicked inside the goal: direct net shot!
+      shootBall({
+        targetY: y,
+        power: 32,
+        onFire: true,
+      });
     }
   };
 
