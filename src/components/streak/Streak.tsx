@@ -1,5 +1,4 @@
 import React, { useId } from 'react';
-import { m } from 'framer-motion';
 import { getStreakTheme, streakVars, type StreakTheme } from '../../utils/streakTheme';
 import { daysLabel } from '../../utils/format';
 import type { CosmeticVisual } from '../../utils/cosmetics';
@@ -31,16 +30,23 @@ export const StreakFlame: React.FC<{ days: number; size?: number; className?: st
   const t = themeFor(days);
   const id = useId().replace(/:/g, '');
   const off = t.key === 'none';
+  // Small flames (chips, chat names, lists) stay still — dozens of them animating is what makes weak phones lag.
+  // Bigger ones flicker with a cheap CSS transform; the glow is a static gradient, not a filter.
+  const animate = !off && size >= 22;
   return (
     <svg
       viewBox="0 0 100 100"
       width={size}
       height={size}
       aria-hidden
-      className={`select-none overflow-visible ${className}`}
-      style={{ filter: off ? 'grayscale(1) opacity(0.55)' : `drop-shadow(0 0 ${Math.round(size / 4)}px rgb(${t.glow} / 0.75))` }}
+      className={`select-none overflow-visible ${animate ? 'streak-flame--anim' : ''} ${className}`}
+      style={off ? { filter: 'grayscale(1)', opacity: 0.55 } : undefined}
     >
       <defs>
+        <radialGradient id={`g${id}`} cx="50%" cy="62%" r="50%">
+          <stop offset="0%" stopColor={`rgb(${t.glow})`} stopOpacity={off ? 0 : 0.55} />
+          <stop offset="100%" stopColor={`rgb(${t.glow})`} stopOpacity="0" />
+        </radialGradient>
         <linearGradient id={`o${id}`} x1="0%" y1="100%" x2="0%" y2="0%">
           <stop offset="0%" stopColor={t.c1} stopOpacity="0.95" />
           <stop offset="60%" stopColor={t.c2} stopOpacity="0.85" />
@@ -57,27 +63,10 @@ export const StreakFlame: React.FC<{ days: number; size?: number; className?: st
           <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <m.path
-        d="M50,95 C70,95 85,80 82,58 C80,38 65,30 50,2 C35,30 20,38 18,58 C15,80 30,95 50,95 Z"
-        fill={`url(#o${id})`}
-        animate={off ? undefined : { scaleY: [1, 1.08, 0.96, 1.05, 1], scaleX: [1, 0.95, 1.05, 0.98, 1], skewX: [0, -3, 3, -2, 0] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ transformOrigin: '50px 95px' }}
-      />
-      <m.path
-        d="M50,90 C65,90 75,78 72,58 C70,40 60,32 50,15 C40,32 30,40 28,58 C25,78 35,90 50,90 Z"
-        fill={`url(#m${id})`}
-        animate={off ? undefined : { scaleY: [1, 0.93, 1.1, 0.97, 1], scaleX: [1, 1.08, 0.92, 1.03, 1], skewX: [0, 4, -4, 2, 0] }}
-        transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ transformOrigin: '50px 90px' }}
-      />
-      <m.path
-        d="M50,85 C60,85 68,75 66,58 C64,42 58,35 50,28 C42,35 36,42 34,58 C32,75 40,85 50,85 Z"
-        fill={`url(#i${id})`}
-        animate={off ? undefined : { scaleY: [1, 1.12, 0.9, 1.08, 1], scaleX: [1, 0.9, 1.1, 0.95, 1] }}
-        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ transformOrigin: '50px 85px' }}
-      />
+      <circle cx="50" cy="62" r="50" fill={`url(#g${id})`} />
+      <path className="sf-o" d="M50,95 C70,95 85,80 82,58 C80,38 65,30 50,2 C35,30 20,38 18,58 C15,80 30,95 50,95 Z" fill={`url(#o${id})`} />
+      <path className="sf-m" d="M50,90 C65,90 75,78 72,58 C70,40 60,32 50,15 C40,32 30,40 28,58 C25,78 35,90 50,90 Z" fill={`url(#m${id})`} />
+      <path className="sf-i" d="M50,85 C60,85 68,75 66,58 C64,42 58,35 50,28 C42,35 36,42 34,58 C32,75 40,85 50,85 Z" fill={`url(#i${id})`} />
     </svg>
   );
 };

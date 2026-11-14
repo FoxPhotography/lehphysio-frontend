@@ -1,0 +1,205 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   STREAK THEME — colours come from --s1/--s2/--s3 (deep→bright→core), --sg
+   (glow "r g b") and --si (intensity 0..1), set per tier in utils/streakTheme.
+
+   PERFORMANCE RULES (weak phones):
+   - animate only transform / opacity (compositor-only, no repaint)
+   - no animated blur / drop-shadow / hue-rotate / background-position
+   - no permanent will-change (it pins a GPU layer per element)
+   - .fx-lite (low-end devices, set in main.tsx) keeps colours but drops loops
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes streak-drift {
+  0%, 100% { transform: translate3d(-4%, -3%, 0); }
+  50% { transform: translate3d(4%, 3%, 0); }
+}
+@keyframes streak-ember {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate3d(var(--dx, 0), -150px, 0) scale(0.2); opacity: 0; }
+}
+@keyframes streak-ember-short {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translate3d(var(--dx, 0), -48px, 0) scale(0.25); opacity: 0; }
+}
+@keyframes streak-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1); }
+}
+@keyframes streak-sheen {
+  0% { transform: translate3d(-160%, 0, 0) skewX(-22deg); }
+  60%, 100% { transform: translate3d(420%, 0, 0) skewX(-22deg); }
+}
+@keyframes streak-slide { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
+@keyframes streak-breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+/* kept for compatibility (no longer used by the streak classes) */
+@keyframes streak-text-pan { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
+
+/* ── Chip (static glow — no box-shadow animation) ── */
+.streak-chip {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--s1) 32%, #0a0a0b), color-mix(in srgb, var(--s2) 14%, #0a0a0b));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--s2) 50%, transparent), 0 0 12px rgb(var(--sg) / 0.3);
+}
+.streak-chip--off { background: rgba(39, 39, 42, 0.6); box-shadow: 0 0 0 1px rgba(63, 63, 70, 0.8); }
+
+/* ── Aura (animated background) ── */
+.streak-aura {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+  contain: strict;
+  background:
+    radial-gradient(70% 55% at 50% 0%, color-mix(in srgb, var(--s1) 55%, #09090b) 0%, transparent 70%),
+    radial-gradient(45% 35% at 85% 20%, color-mix(in srgb, var(--s3) 18%, transparent), transparent 70%),
+    #09090b;
+}
+.streak-aura--off { background: none; contain: none; }
+/* Soft colour light: big gradients drawn once, only moved (no blur filter) */
+.streak-aura__glow {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(34% 30% at 30% 24%, rgb(var(--sg) / 0.42), transparent 72%),
+    radial-gradient(32% 28% at 72% 32%, color-mix(in srgb, var(--s1) 60%, transparent), transparent 72%),
+    radial-gradient(28% 26% at 55% 62%, color-mix(in srgb, var(--s3) 22%, transparent), transparent 72%);
+  animation: streak-drift 12s ease-in-out infinite;
+}
+.streak-aura__ring { display: none; } /* conic + blur ring removed: too heavy on weak GPUs */
+.streak-aura__embers span {
+  position: absolute;
+  bottom: -6px;
+  left: var(--x);
+  width: var(--sz);
+  height: var(--sz);
+  border-radius: 9999px;
+  background: radial-gradient(circle, #fff 0%, var(--s3) 40%, rgb(var(--sg) / 0.6) 60%, transparent 72%);
+  animation: streak-ember var(--dur) linear infinite;
+  animation-delay: var(--delay);
+}
+.streak-aura__sparkles span {
+  position: absolute;
+  background: radial-gradient(circle, #fff 0 18%, transparent 20%),
+    linear-gradient(90deg, transparent 45%, var(--s3) 50%, transparent 55%),
+    linear-gradient(0deg, transparent 45%, var(--s3) 50%, transparent 55%);
+  animation: streak-twinkle 3.2s ease-in-out infinite;
+}
+.streak-aura__vignette {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 45%, rgba(9, 9, 11, 0.35) 80%, rgba(9, 9, 11, 0.6));
+}
+
+/* ── Nameplate (leaderboard rows) ── */
+.streak-plate { position: relative; isolation: isolate; overflow: hidden; }
+.streak-plate__bg {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 200%;
+  z-index: -2;
+  background: linear-gradient(100deg,
+    color-mix(in srgb, var(--s1) 34%, transparent) 0%,
+    color-mix(in srgb, var(--s2) 12%, transparent) 25%,
+    color-mix(in srgb, var(--s1) 34%, transparent) 50%,
+    color-mix(in srgb, var(--s2) 12%, transparent) 75%,
+    color-mix(in srgb, var(--s1) 34%, transparent) 100%);
+  animation: streak-slide 14s linear infinite;
+}
+.streak-plate__sheen { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.streak-plate__sheen::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 26%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / calc(0.05 + var(--si) * 0.1)), transparent);
+  animation: streak-sheen 7s ease-in-out infinite;
+}
+.streak-plate__edge {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 3px;
+  z-index: 1;
+  background: linear-gradient(to bottom, var(--s3), var(--s2), var(--s1));
+  box-shadow: 0 0 10px rgb(var(--sg) / 0.8);
+}
+.streak-plate::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--s2), transparent);
+  opacity: calc(0.25 + var(--si) * 0.5);
+  pointer-events: none;
+}
+.streak-plate__embers { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.streak-plate__embers span {
+  position: absolute;
+  bottom: -4px;
+  left: var(--x);
+  width: var(--sz);
+  height: var(--sz);
+  border-radius: 9999px;
+  background: radial-gradient(circle, #fff 0%, var(--s3) 40%, transparent 72%);
+  animation: streak-ember-short var(--dur) linear infinite;
+  animation-delay: var(--delay);
+}
+
+/* ── Gradient username (static — animated text gradients repaint every frame) ── */
+.streak-text {
+  background: linear-gradient(90deg, var(--s3), #ffffff 45%, var(--s2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── Low-end devices: same colours, almost no motion ── */
+.fx-lite .streak-aura__embers span:nth-child(n+5),
+.fx-lite .streak-plate__embers,
+.fx-lite .streak-aura__sparkles span:nth-child(n+4) { display: none; }
+.fx-lite .streak-aura__glow,
+.fx-lite .streak-plate__bg { animation: none; }
+.fx-lite .streak-plate__sheen::after { animation-duration: 10s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .streak-aura *, .streak-plate *, .streak-plate__sheen::after, .streak-text { animation: none !important; }
+}
+
+/* Aura limited to the top of a long card (profile header) */
+.streak-aura.streak-aura--header { bottom: auto; height: min(480px, 100%); }
+.streak-aura.streak-aura--header .streak-aura__vignette {
+  background: linear-gradient(to bottom, transparent 30%, rgba(24, 24, 27, 0.6) 70%, rgba(24, 24, 27, 0.98));
+}
+
+/* ── Chat bubble in the sender's streak colours (3+ days) ──
+   Only one moving part per bubble (the light sweep); the colour itself is static. */
+.streak-bubble {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--s1) 58%, #0b0b0d), color-mix(in srgb, var(--s2) 22%, #0b0b0d));
+  border: 1px solid color-mix(in srgb, var(--s2) 55%, transparent);
+  box-shadow: 0 6px 18px -12px rgb(var(--sg) / 0.7);
+}
+.streak-bubble .streak-plate__bg { animation: none; opacity: 0.8; }
+.streak-bubble .streak-plate__sheen::after { animation-duration: 9s; }
+.streak-bubble .streak-plate__embers { display: none; }
+
+/* ── Flame flicker (CSS, transform only) ── */
+@keyframes sf-flick-a { 0%, 100% { transform: scale(1, 1); } 35% { transform: scale(0.95, 1.07); } 70% { transform: scale(1.04, 0.97); } }
+@keyframes sf-flick-b { 0%, 100% { transform: scale(1, 1); } 40% { transform: scale(1.07, 0.93); } 75% { transform: scale(0.94, 1.08); } }
+.streak-flame--anim .sf-o, .streak-flame--anim .sf-m, .streak-flame--anim .sf-i { transform-box: view-box; }
+.streak-flame--anim .sf-o { transform-origin: 50px 95px; animation: sf-flick-a 3s ease-in-out infinite; }
+.streak-flame--anim .sf-m { transform-origin: 50px 90px; animation: sf-flick-b 2.2s ease-in-out infinite; }
+.streak-flame--anim .sf-i { transform-origin: 50px 85px; animation: sf-flick-a 1.6s ease-in-out infinite; }
+.fx-lite .streak-flame--anim path { animation: none; }
+@media (prefers-reduced-motion: reduce) { .streak-flame--anim path { animation: none; } }

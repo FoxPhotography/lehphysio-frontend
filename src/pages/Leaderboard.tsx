@@ -196,6 +196,8 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(idx, 10) * 0.03 }}
+                  // Off-screen rows aren't rendered (or animated) at all
+                  style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 64px' } as React.CSSProperties}
                   className={`cursor-pointer border-b border-white/5 last:border-b-0 transition-colors ${
                     isMe ? 'bg-orange-500/6' : 'hover:bg-white/2'
                   }`}
