@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StreakAura, StreakFlame, StreakName, StreakChip } from '../components/streak/Streak';
 import { getStreakTheme, nextTierLine } from '../utils/streakTheme';
 import { cosmeticVisual } from '../utils/cosmetics';
+import { CosmeticsStudio } from '../components/shop/CosmeticsStudio';
 import { rankName, rankEmoji } from '../utils/ranks';
 import { m, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -160,6 +161,7 @@ export const Profile: React.FC<ProfileProps> = ({
   const [selectedBatch, setSelectedBatch] = useState(user.batch);
   const [isUploading, setIsUploading] = useState(false);
   const [showDecorationPicker, setShowDecorationPicker] = useState(false);
+  const [decoTab, setDecoTab] = useState<'themes' | 'frames'>('themes');
   const [framesList, setFramesList] = useState<any[]>([]);
   const [animatedProgress, setAnimatedProgress] = useState(0);
 
@@ -576,15 +578,6 @@ export const Profile: React.FC<ProfileProps> = ({
           غيّر شكل البروفايل
         </m.button>
 
-        {/* ── Cosmetics studio shortcut ─────────────────────────────── */}
-        <m.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => { sessionStorage.setItem('shop_focus', 'cosmetics'); changePage('rewards'); }}
-          className="relative overflow-hidden w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-fuchsia-400/30 bg-gradient-to-r from-fuchsia-600/25 via-violet-600/20 to-cyan-500/20 text-white font-black text-sm mb-3 cursor-pointer"
-        >
-          🎨 استوديو الستايل — نيم بليت، رسايل، ثيم وألوان
-        </m.button>
 
         {/* ── Actions ──────────────────────────────────────────────── */}
         <div className="flex flex-col gap-2.5">
@@ -667,7 +660,7 @@ export const Profile: React.FC<ProfileProps> = ({
               exit={{ y: 60, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 280, damping: 28 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-2xl border border-white/8 bg-zinc-900/95 p-5 max-h-[85vh] overflow-y-auto"
+              className="w-full max-w-2xl rounded-2xl border border-white/8 bg-zinc-900/95 p-5 max-h-[88vh] overflow-y-auto overscroll-contain"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between mb-4">
@@ -682,10 +675,27 @@ export const Profile: React.FC<ProfileProps> = ({
                   <X className="w-4.5 h-4.5" />
                 </button>
               </div>
-              <p className="text-xs text-zinc-500 mb-5">
-                اختار فريم أو لقب يظهر جنب اسمك في كل التطبيق.
+              <p className="text-xs text-zinc-500 mb-4">
+                غيّر الثيمات (نيم بليت، رسايل، بروفايل، لون اسمك) أو الفريم — والكل يشوف التغيير في ساعتها.
               </p>
 
+              {/* Tabs: themes / frames */}
+              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-black/40 border border-white/8 mb-5">
+                {([['themes', '🎨 الثيمات'], ['frames', '🖼️ الفريمات']] as const).map(([k, label]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setDecoTab(k)}
+                    className={`h-10 rounded-xl text-xs font-black transition-colors cursor-pointer ${decoTab === k ? 'bg-white text-black' : 'text-zinc-400 hover:text-white'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {decoTab === 'themes' && <CosmeticsStudio user={user} showToast={showToastCtx} embedded />}
+
+              {decoTab === 'frames' && (<>
               {/* Frames Section */}
               <div className="mb-5">
                 <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">الفريمات</p>
@@ -756,6 +766,7 @@ export const Profile: React.FC<ProfileProps> = ({
 
                 </div>
               </div>
+              </>)}
             </m.div>
           </m.div>
         )}

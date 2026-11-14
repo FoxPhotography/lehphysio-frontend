@@ -20,7 +20,12 @@ import { useAuth } from '../../context/AuthContext';
 interface Props {
   user: any;
   showToast: (msg: string) => void;
+  /** Inside the profile's "شكل البروفايل" sheet: no big title */
+  embedded?: boolean;
 }
+
+type Tab = CosmeticCategory | 'package';
+const CATEGORY_KEYS: CosmeticCategory[] = ['nameplate', 'bubble', 'profile', 'name'];
 
 type Look = { nameplate: string; bubble: string; profile: string; name: string };
 const EMPTY: Look = { nameplate: 'none', bubble: 'none', profile: 'none', name: 'none' };
@@ -102,9 +107,9 @@ const NamePreview: React.FC<{ user: any; look: Look }> = ({ user, look }) => (
 
 // ─── Studio ──────────────────────────────────────────────────────────────────
 
-export const CosmeticsStudio: React.FC<Props> = ({ user, showToast }) => {
+export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = false }) => {
   const { setUser } = useAuth() as any;
-  const [category, setCategory] = useState<CosmeticCategory>('nameplate');
+  const [category, setCategory] = useState<Tab>('package');
   const [tryOn, setTryOn] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState<string | null>(null);
@@ -112,19 +117,24 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast }) => {
   const xp = user?.total_xp || 0;
   const owned: string[] = user?.unlocked_cosmetics || [];
   const equipped: Look = { ...EMPTY, ...(user?.cosmetics || {}) };
-  const cat = COSMETIC_CATEGORIES.find(c => c.key === category)!;
+  const cat = COSMETIC_CATEGORIES.find(c => c.key === category);
 
   // What the mirror shows: your current look, plus the item you're trying on
   const mirror: Look = useMemo(() => {
     if (!tryOn) return equipped;
-    const [c] = tryOn.split(':') as [CosmeticCategory];
+    const [c, theme] = tryOn.split(':');
+    if (tryOn === 'package:streak') return EMPTY;
+    if (c === 'package') {
+      return { nameplate: `nameplate:${theme}`, bubble: `bubble:${theme}`, profile: `profile:${theme}`, name: `name:${theme}` };
+    }
     return { ...equipped, [c]: tryOn };
   }, [tryOn, JSON.stringify(equipped)]);
 
   const token = () => localStorage.getItem('token') || '';
 
-  const unlock = async (id: string) => {
-    setBusy(id);
+  const unlock = async (id: string, quiet = false): Promise<boolean> => {
+    if (!quiet) setBusy(id);
+    let ok = false;
     try {
       const res = await fetch(`${API_BASE}/api/rewards/buy-cosmetic`, {
         method: 'POST',
@@ -133,18 +143,79 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast }) => {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
+        ok = true;
         setUser((prev: any) => (prev ? { ...prev, unlocked_cosmetics: data.unlocked_cosmetics || [...(prev.unlocked_cosmetics || []), id] } : prev));
-        setCelebrate(id);
-        setTimeout(() => setCelebrate(null), 1600);
-        showToast('اتفتح! البسه وورّي الناس 🔥');
-        if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
-      } else {
+        if (!quiet) {
+          setCelebrate(id);
+          setTimeout(() => setCelebrate(null), 1600);
+          showToast('اتفتح! استخدمه وورّي الناس 🔥');
+          if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+        }
+      } else if (!quiet) {
         showToast(data.error || 'معرفناش نفتحه');
       }
     } catch {
+      if (!quiet) showToast('مشكلة في النت');
+    }
+    if (!quiet) setBusy(null);
+    return ok;
+  };
+
+  /** Apply several categories in one request (used by packages). */
+  const applyLook = async (changes: Partial<Look>, busyKey: string, okMsg: string) => {
+    setBusy(busyKey);
+    const prevLook = equipped;
+    setUser((prev: any) => (prev ? { ...prev, cosmetics: { ...EMPTY, ...(prev.cosmetics || {}), ...changes } } : prev));
+    const body: Record<string, string> = {};
+    for (const [k, v] of Object.entries(changes)) {
+      const field = COSMETIC_CATEGORIES.find(c => c.key === k)!.field;
+      body[field] = v as string;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/api/users/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        if (data.cosmetics) setUser((prev: any) => (prev ? { ...prev, cosmetics: data.cosmetics } : prev));
+        showToast(okMsg);
+        setTryOn(null);
+      } else {
+        setUser((prev: any) => (prev ? { ...prev, cosmetics: prevLook } : prev));
+        showToast(data.error || 'معرفناش نطبّقه');
+      }
+    } catch {
+      setUser((prev: any) => (prev ? { ...prev, cosmetics: prevLook } : prev));
       showToast('مشكلة في النت');
     }
     setBusy(null);
+  };
+
+  // Package = the same theme across all four categories
+  const applyPackage = async (themeKey: string) => {
+    const ids = CATEGORY_KEYS.map(c => cosmeticId(c, themeKey));
+    const toUnlock = ids.filter(id => !owned.includes(id) && xp >= cosmeticPrice(id.split(':')[0] as CosmeticCategory, themeKey));
+    setBusy(`package:${themeKey}`);
+    const unlocked: string[] = [];
+    for (const id of toUnlock) if (await unlock(id, true)) unlocked.push(id);
+    const usable = ids.filter(id => owned.includes(id) || unlocked.includes(id));
+    if (usable.length === 0) { setBusy(null); showToast('لسه مفيش حاجة مفتوحة من الباكدج ده'); return; }
+    const changes: Partial<Look> = {};
+    for (const id of usable) changes[id.split(':')[0] as CosmeticCategory] = id;
+    if (unlocked.length) {
+      setCelebrate(`package:${themeKey}`);
+      setTimeout(() => setCelebrate(null), 1600);
+      if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+    }
+    await applyLook(changes, `package:${themeKey}`, usable.length === 4 ? 'الباكدج كله اتفعّل — الكل شايفه ✨' : `اتفعّل ${usable.length} من 4 — كمّل وافتح الباقي 💪`);
+  };
+
+  const removePackage = (themeKey: string) => {
+    const changes: Partial<Look> = {};
+    for (const c of CATEGORY_KEYS) if (equipped[c] === cosmeticId(c, themeKey)) changes[c] = 'none';
+    applyLook(changes, `package:${themeKey}`, 'رجعت لستايل الستريك 🔥');
   };
 
   const equip = async (id: string | 'none', categoryKey: CosmeticCategory) => {
@@ -162,11 +233,11 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast }) => {
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         if (data.cosmetics) setUser((prev: any) => (prev ? { ...prev, cosmetics: data.cosmetics } : prev));
-        showToast(id === 'none' ? 'قلعته 👌' : 'لابسه دلوقتي — الكل شايفه ✨');
+        showToast(id === 'none' ? 'رجعت لستايل الستريك 🔥' : 'اتفعّل — الكل شايفه دلوقتي ✨');
         setTryOn(null);
       } else {
         setUser((prev: any) => (prev ? { ...prev, cosmetics: prevLook } : prev));
-        showToast(data.error || 'معرفناش نلبّسهولك');
+        showToast(data.error || 'معرفناش نفعّله');
       }
     } catch {
       setUser((prev: any) => (prev ? { ...prev, cosmetics: prevLook } : prev));
@@ -180,15 +251,17 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast }) => {
   return (
     <section id="cosmetics-studio" className="space-y-4 scroll-mt-24">
       {/* Title */}
+      {!embedded && (
       <div className="flex items-center gap-2.5">
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-fuchsia-500/25 to-cyan-400/15 border border-fuchsia-400/30 flex items-center justify-center">
           <Palette className="w-[18px] h-[18px] text-fuchsia-300" />
         </div>
         <div className="min-w-0">
           <h2 className="text-[15px] font-black text-white leading-tight">استوديو الستايل 🎨</h2>
-          <p className="text-[11px] text-zinc-500 font-bold">افتح بالـ XP، جرّب على نفسك، والبس — والكل يشوفه في ساعتها</p>
+          <p className="text-[11px] text-zinc-500 font-bold">افتح بالـ XP، جرّب على نفسك، واستخدمه — والكل يشوفه في ساعتها</p>
         </div>
       </div>
+      )}
 
       {/* Mirror */}
       <div className="relative rounded-3xl border border-white/10 bg-zinc-950/80 p-3.5 space-y-3 overflow-hidden">
@@ -215,6 +288,18 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast }) => {
 
       {/* Category tabs */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1 pb-1">
+        <button
+          type="button"
+          onClick={() => { setCategory('package'); setTryOn(null); }}
+          className={`shrink-0 flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-xs font-black border transition-all cursor-pointer ${
+            category === 'package'
+              ? 'text-black border-transparent shadow-lg'
+              : 'bg-zinc-900/80 text-zinc-300 border-zinc-800 hover:text-white'
+          }`}
+          style={category === 'package' ? { background: 'linear-gradient(90deg,#f0abfc,#67e8f9,#fde047)' } : undefined}
+        >
+          🎁 الباكدج كامل
+        </button>
         {COSMETIC_CATEGORIES.map(c => {
           const active = c.key === category;
           return (
@@ -234,20 +319,184 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast }) => {
           );
         })}
       </div>
-      <p className="text-[11px] text-zinc-500 font-bold -mt-2">{cat.hint}</p>
+      <p className="text-[11px] text-zinc-500 font-bold -mt-2">
+        {cat ? cat.hint : 'غيّر كل حاجة مرة واحدة بنفس الستايل: النيم بليت والرسايل والبروفايل واسمك'}
+      </p>
+
+      {/* Packages */}
+      {category === 'package' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Default: everything follows your streak */}
+          {(() => {
+            const active = CATEGORY_KEYS.every(c => equipped[c] === 'none');
+            const sTheme = getStreakTheme(user?.streak_count || 0);
+            return (
+              <div
+                className={`relative rounded-3xl border p-3 flex flex-col gap-2.5 bg-zinc-900/70 ${tryOn === 'package:streak' ? 'ring-2 ring-white/40' : ''}`}
+                style={{ borderColor: active ? `rgb(${sTheme.glow} / 0.75)` : 'rgba(255,255,255,0.1)', boxShadow: active ? `0 0 28px -6px rgb(${sTheme.glow} / 0.6)` : undefined }}
+              >
+                <button type="button" onClick={() => setTryOn(tryOn === 'package:streak' ? null : 'package:streak')} className="relative overflow-hidden rounded-2xl text-start cursor-pointer" aria-label="جرّب ستايل الستريك">
+                  <StreakAura days={user?.streak_count || 0} density="lite" />
+                  <div className="relative z-10 p-2.5 space-y-2">
+                    <NameplatePreview user={user} look={EMPTY} compact />
+                    <BubblePreview user={user} look={EMPTY} text="الستريك بيلوّن كل حاجة 🔥" compact />
+                  </div>
+                </button>
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-white leading-tight">ستايل الستريك 🔥</p>
+                  <p className="text-[10px] text-zinc-500 font-bold">الافتراضي — كل حاجة بلون الستريك بتاعك ({sTheme.name})</p>
+                </div>
+                {active ? (
+                  <div className="h-10 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 border" style={{ color: sTheme.text, borderColor: `rgb(${sTheme.glow} / 0.5)`, background: `rgb(${sTheme.glow} / 0.12)` }}>
+                    <Check className="w-3.5 h-3.5" /> مستخدَم
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={!!busy}
+                    onClick={() => applyLook({ nameplate: 'none', bubble: 'none', profile: 'none', name: 'none' }, 'package:streak', 'رجعت لستايل الستريك 🔥')}
+                    className="h-10 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer bg-white text-black hover:bg-zinc-200 disabled:opacity-60"
+                  >
+                    {busy === 'package:streak' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '🔥'} استخدم ستايل الستريك
+                  </button>
+                )}
+              </div>
+            );
+          })()}
+          {COSMETIC_THEMES.map((t, i) => {
+            const ids = CATEGORY_KEYS.map(c => cosmeticId(c, t.key));
+            const ownedN = ids.filter(id => owned.includes(id)).length;
+            const total = CATEGORY_KEYS.reduce((sum, c) => sum + cosmeticPrice(c, t.key), 0);
+            const maxPrice = Math.max(...CATEGORY_KEYS.map(c => cosmeticPrice(c, t.key)));
+            const affordableN = ids.filter(id => owned.includes(id) || xp >= cosmeticPrice(id.split(':')[0] as CosmeticCategory, t.key)).length;
+            const fullyActive = CATEGORY_KEYS.every(c => equipped[c] === cosmeticId(c, t.key));
+            const vis = cosmeticVisual(cosmeticId('profile', t.key)) as CosmeticVisual;
+            const rarity = RARITY[t.rarity];
+            const key = `package:${t.key}`;
+            const look: Look = { nameplate: ids[0], bubble: ids[1], profile: ids[2], name: ids[3] };
+            const pct = Math.min(100, Math.round((xp / maxPrice) * 100));
+            return (
+              <m.div
+                key={key}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03 }}
+                className={`relative rounded-3xl border p-3 flex flex-col gap-2.5 bg-zinc-900/70 ${tryOn === key ? 'ring-2 ring-white/40' : ''}`}
+                style={{ borderColor: fullyActive ? `rgb(${vis.glow} / 0.75)` : `rgb(${vis.glow} / 0.22)`, boxShadow: fullyActive ? `0 0 28px -6px rgb(${vis.glow} / 0.65)` : undefined }}
+              >
+                <button type="button" onClick={() => setTryOn(tryOn === key ? null : key)} className="relative overflow-hidden rounded-2xl text-start cursor-pointer" aria-label={`جرّب باكدج ${t.name}`}>
+                  <StreakAura days={0} override={vis} density="lite" />
+                  <div className="relative z-10 p-2.5 space-y-2">
+                    <NameplatePreview user={user} look={look} compact />
+                    <BubblePreview user={user} look={look} text="الباكدج ده عليا 🔥" compact />
+                  </div>
+                </button>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-black text-white leading-tight">باكدج {t.name}</p>
+                    <p className="text-[10px] text-zinc-500 font-bold">{t.vibe} · {ownedN}/4 مفتوحين</p>
+                  </div>
+                  <span className="shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5" style={{ color: rarity.color, background: rarity.bg }}>
+                    {t.rarity === 'mythic' && <Crown className="w-3 h-3" />}
+                    {rarity.label}
+                  </span>
+                </div>
+                {affordableN < 4 && (
+                  <div>
+                    <div className="flex justify-between text-[10px] font-bold mb-1">
+                      <span className="text-zinc-400" dir="ltr">{Math.min(xp, maxPrice).toLocaleString()} / {maxPrice.toLocaleString()} XP</span>
+                      <span className="text-zinc-500">الباكدج كامل</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${vis.c1}, ${vis.c2})` }} />
+                    </div>
+                  </div>
+                )}
+                {fullyActive ? (
+                  <button type="button" disabled={!!busy} onClick={() => removePackage(t.key)} className="h-10 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer border" style={{ color: vis.text, borderColor: `rgb(${vis.glow} / 0.5)`, background: `rgb(${vis.glow} / 0.12)` }}>
+                    {busy === key ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                    مستخدَم — دوس ترجع للستريك
+                  </button>
+                ) : affordableN > 0 ? (
+                  <m.button type="button" disabled={!!busy} whileTap={{ scale: 0.97 }} onClick={() => applyPackage(t.key)} className="h-10 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer text-black disabled:opacity-60" style={{ background: `linear-gradient(90deg, ${vis.c2}, ${vis.c3})`, boxShadow: `0 6px 18px -6px rgb(${vis.glow} / 0.8)` }}>
+                    {busy === key ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    {affordableN === 4
+                      ? (ownedN === 4 ? 'استخدم الباكدج كله' : 'افتح واستخدم الباكدج كله')
+                      : `استخدم المتاح (${affordableN}/4)`}
+                  </m.button>
+                ) : (
+                  <div className="h-10 rounded-xl text-[11px] font-black flex items-center justify-center gap-1.5 bg-white/[0.04] border border-white/8 text-zinc-500">
+                    <Lock className="w-3.5 h-3.5" /> أول قطعة بتتفتح عند {Math.min(...CATEGORY_KEYS.map(c => cosmeticPrice(c, t.key))).toLocaleString()} XP
+                  </div>
+                )}
+                <AnimatePresence>
+                  {celebrate === key && (
+                    <m.div initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.3 }} className="pointer-events-none absolute inset-0 rounded-3xl flex items-center justify-center" style={{ background: `radial-gradient(circle, rgb(${vis.glow} / 0.45), transparent 70%)` }}>
+                      <span className="text-5xl drop-shadow-lg">🎉</span>
+                    </m.div>
+                  )}
+                </AnimatePresence>
+              </m.div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Items */}
+      {category !== 'package' && (
       <div className="grid grid-cols-2 gap-3">
+        {/* Default for this category: follow the streak */}
+        {(() => {
+          const c = category as CosmeticCategory;
+          const active = equipped[c] === 'none';
+          const sTheme = getStreakTheme(user?.streak_count || 0);
+          return (
+            <div
+              className="relative rounded-2xl border p-2.5 flex flex-col gap-2.5 bg-zinc-900/60"
+              style={{ borderColor: active ? `rgb(${sTheme.glow} / 0.7)` : 'rgba(255,255,255,0.1)', boxShadow: active ? `0 0 24px -6px rgb(${sTheme.glow} / 0.55)` : undefined }}
+            >
+              <div>
+                {c === 'nameplate' && <NameplatePreview user={user} look={EMPTY} compact />}
+                {c === 'bubble' && (
+                  <div className="h-[72px] rounded-xl bg-black/30 border border-white/5 p-2 flex items-center">
+                    <BubblePreview user={user} look={EMPTY} text="بلون الستريك 🔥" compact />
+                  </div>
+                )}
+                {c === 'profile' && <ProfilePreview user={user} look={EMPTY} compact />}
+                {c === 'name' && <NamePreview user={user} look={EMPTY} />}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[13px] font-black text-white leading-tight">ستايل الستريك 🔥</p>
+                <p className="text-[10px] text-zinc-500 font-bold truncate">الافتراضي — بيتغير مع الستريك</p>
+              </div>
+              {active ? (
+                <div className="h-9 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 border" style={{ color: sTheme.text, borderColor: `rgb(${sTheme.glow} / 0.5)`, background: `rgb(${sTheme.glow} / 0.12)` }}>
+                  <Check className="w-3.5 h-3.5" /> مستخدَم
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={!!busy}
+                  onClick={() => equip('none', c)}
+                  className="h-9 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer bg-white text-black hover:bg-zinc-200 disabled:opacity-60"
+                >
+                  {busy === `${c}:none` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '🔥'} استخدمه
+                </button>
+              )}
+            </div>
+          );
+        })()}
         {COSMETIC_THEMES.map((t, i) => {
-          const id = cosmeticId(category, t.key);
-          const price = cosmeticPrice(category, t.key);
+          const itemCat = category as CosmeticCategory;
+          const id = cosmeticId(itemCat, t.key);
+          const price = cosmeticPrice(itemCat, t.key);
           const isOwned = owned.includes(id);
-          const isEquipped = equipped[category] === id;
+          const isEquipped = equipped[itemCat] === id;
           const canUnlock = !isOwned && xp >= price;
           const pct = Math.min(100, Math.round((xp / price) * 100));
           const rarity = RARITY[t.rarity];
           const vis = cosmeticVisual(id) as CosmeticVisual;
-          const look: Look = { ...EMPTY, [category]: id };
+          const look: Look = { ...EMPTY, [itemCat]: id };
           const isBusy = busy === id;
 
           return (
@@ -271,14 +520,14 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast }) => {
                 className="text-start cursor-pointer"
                 aria-label={`جرّب ${t.name}`}
               >
-                {category === 'nameplate' && <NameplatePreview user={user} look={look} compact />}
-                {category === 'bubble' && (
+                {itemCat === 'nameplate' && <NameplatePreview user={user} look={look} compact />}
+                {itemCat === 'bubble' && (
                   <div className="h-[72px] rounded-xl bg-black/30 border border-white/5 p-2 flex items-center">
                     <BubblePreview user={user} look={look} text="يا عم إنت جامد 🔥" compact />
                   </div>
                 )}
-                {category === 'profile' && <ProfilePreview user={user} look={look} compact />}
-                {category === 'name' && <NamePreview user={user} look={look} />}
+                {itemCat === 'profile' && <ProfilePreview user={user} look={look} compact />}
+                {itemCat === 'name' && <NamePreview user={user} look={look} />}
               </button>
 
               <div className="flex items-start justify-between gap-2">
@@ -315,22 +564,22 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast }) => {
                 <button
                   type="button"
                   disabled={!!busy}
-                  onClick={() => equip('none', category)}
+                  onClick={() => equip('none', itemCat)}
                   className="h-9 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer border transition-colors"
                   style={{ color: vis.text, borderColor: `rgb(${vis.glow} / 0.5)`, background: `rgb(${vis.glow} / 0.12)` }}
                 >
-                  {busy === `${category}:none` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                  لابسه — دوس تقلعه
+                  {busy === `${itemCat}:none` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  مستخدَم — دوس ترجع للستريك
                 </button>
               ) : isOwned ? (
                 <button
                   type="button"
                   disabled={!!busy}
-                  onClick={() => equip(id, category)}
+                  onClick={() => equip(id, itemCat)}
                   className="h-9 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-60"
                 >
                   {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                  البسه
+                  استخدمه
                 </button>
               ) : canUnlock ? (
                 <m.button
@@ -369,6 +618,7 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast }) => {
           );
         })}
       </div>
+      )}
 
       <p className="text-center text-[11px] text-zinc-500 font-bold">
         ✨ الفتح عمره ما بيخصم من الـ XP بتاعك — كل ما تكبر، حاجات أكتر بتتفتحلك

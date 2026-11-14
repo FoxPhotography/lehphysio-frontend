@@ -28,3 +28,6 @@
 @media (prefers-reduced-motion: reduce) {
   .cos-fx, .cos-fx * { animation: none !important; }
 }
+
+/* Gradient names inside truncated (overflow-hidden) parents: the glow filter paints a dark box there */
+.truncate .streak-text { filter: none; }

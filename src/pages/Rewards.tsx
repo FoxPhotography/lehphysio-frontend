@@ -15,6 +15,7 @@ import { playChatSound, setFramesCache } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
 import { API_BASE } from '../services/api';
 import { CosmeticsStudio } from '../components/shop/CosmeticsStudio';
+import { useAuth } from '../context/AuthContext';
 
 interface RewardsProps {
   user: any;
@@ -47,7 +48,10 @@ const ShopCard: React.FC<{
   userXp?: number;
   previewContent: React.ReactNode;
   onBuy: () => void;
-}> = ({ name, cost, color, owned, canAfford, buying, userXp = 0, previewContent, onBuy }) => {
+  /** Owned items can be switched to right from the shop */
+  equipped?: boolean;
+  onEquip?: () => void;
+}> = ({ name, cost, color, owned, canAfford, buying, userXp = 0, previewContent, onBuy, equipped, onEquip }) => {
   const progressPct = Math.min(100, Math.round((userXp / cost) * 100));
 
   return (
@@ -98,7 +102,20 @@ const ShopCard: React.FC<{
         )}
       </div>
 
-      {/* Unlock / Status Button */}
+      {/* Use / in-use (owned items) */}
+      {owned && onEquip ? (
+        <m.button
+          whileTap={{ scale: 0.96 }}
+          onClick={onEquip}
+          className={`w-full py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            equipped
+              ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-300'
+              : 'bg-white text-black hover:bg-zinc-200'
+          }`}
+        >
+          {equipped ? <><CheckCircle className="w-3.5 h-3.5" /> مستخدَم — دوس للإلغاء</> : <><Sparkles className="w-3.5 h-3.5" /> استخدمه</>}
+        </m.button>
+      ) : (
       <m.button
         whileHover={{ scale: owned || buying ? 1 : 1.04 }}
         whileTap={{ scale: owned || buying ? 1 : 0.96 }}
@@ -117,11 +134,12 @@ const ShopCard: React.FC<{
         ) : owned ? (
           <><CheckCircle className="w-3.5 h-3.5" /> مفتوح</>
         ) : !canAfford ? (
-          <><Lock className="w-3.5 h-3.5" /> Requires {cost.toLocaleString()} XP</>
+          <><Lock className="w-3.5 h-3.5" /> فاضلك {Math.max(0, cost - userXp).toLocaleString()} XP</>
         ) : (
           <><Sparkles className="w-3.5 h-3.5 fill-black" /> افتحه ببلاش</>
         )}
       </m.button>
+      )}
     </m.div>
   );
 };
@@ -144,6 +162,16 @@ export const Rewards: React.FC<RewardsProps> = ({
   handleBuyFrame,
 }) => {
   const [shopFrames, setShopFrames] = useState<any[]>([]);
+  const { equippedFrame, setEquippedFrame, handleUpdateProfile } = useAuth() as any;
+
+  // Switch frames right from the shop (tap again to remove)
+  const switchFrame = (frameId: string) => {
+    const next = String(equippedFrame) === String(frameId) ? 'none' : String(frameId);
+    setEquippedFrame(next);
+    localStorage.setItem('eq_frame', next);
+    handleUpdateProfile(undefined, undefined, next, undefined);
+    showToast(next === 'none' ? 'اتشال الفريم 👌' : 'الفريم اتفعّل ✨');
+  };
   const [buyingFrameId, setBuyingFrameId] = useState<string | null>(null);
 
   // Came from the profile's "استوديو الستايل" button → jump to the studio
@@ -212,9 +240,6 @@ export const Rewards: React.FC<RewardsProps> = ({
           </div>
         )}
       </div>
-
-      {/* ── Cosmetics studio (nameplates, chat bubbles, profile themes, name colours) ── */}
-      {user && <CosmeticsStudio user={user} showToast={showToast} />}
 
       {/* ── Secret Code Redemption ──────────────────────────────────── */}
       <section className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5">
@@ -353,12 +378,15 @@ export const Rewards: React.FC<RewardsProps> = ({
         </div>
       </section>
 
+      {/* ── Cosmetics studio (packages, nameplates, chat bubbles, profile themes, name colours) ── */}
+      {user && <CosmeticsStudio user={user} showToast={showToast} />}
+
       {/* ── Avatar Frame Milestones ─────────────────────────────────── */}
       <section className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-orange-400" />
-            <h2 className="text-[15px] font-black text-white whitespace-nowrap truncate min-w-0">فريمات حسب مستواك</h2>
+            <h2 className="text-[15px] font-black text-white whitespace-nowrap truncate min-w-0">الفريمات</h2>
           </div>
           <div className="text-xs font-bold text-zinc-400 bg-zinc-900/80 border border-zinc-800 px-3 py-1 rounded-xl flex items-center gap-1.5 self-start sm:self-auto">
             <span>✨ فتح الفريمات</span>
@@ -432,6 +460,8 @@ export const Rewards: React.FC<RewardsProps> = ({
                 userXp={user?.total_xp || 0}
                 previewContent={previewContent}
                 onBuy={() => !owned && !buyingFrameId && handleFrameBuy(String(f._id))}
+                equipped={String(equippedFrame) === String(f._id)}
+                onEquip={() => switchFrame(String(f._id))}
               />
             );
           })}
