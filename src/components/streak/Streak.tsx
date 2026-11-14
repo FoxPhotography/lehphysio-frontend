@@ -742,14 +742,14 @@ export const StreakNameplate: React.FC<{
         <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
           <PixelSnow
             variant="snowflake"
-            density={0.2}
+            density={0.25}
             speed={1.2}
             sway={0.3}
             flakeSize={0.015}
             depth={1}
             brightness={1.1}
             glow={0.5}
-            accumulate={false}
+            accumulate={true}
             color="#e0f2fe"
             className="w-full h-full pointer-events-none"
             dpr={0.4}
@@ -832,14 +832,14 @@ export const StreakBubbleLayers: React.FC<{ days: number; override?: Override }>
         <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
           <PixelSnow
             variant="snowflake"
-            density={0.2}
+            density={0.25}
             speed={1.2}
             sway={0.3}
             flakeSize={0.015}
             depth={1}
             brightness={1.1}
             glow={0.5}
-            accumulate={false}
+            accumulate={true}
             color="#e0f2fe"
             className="w-full h-full pointer-events-none"
             dpr={0.4}
