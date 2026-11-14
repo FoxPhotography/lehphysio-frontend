@@ -205,3 +205,34 @@ export const StreakName: React.FC<{ days: number; children: React.ReactNode; cla
     </span>
   );
 };
+
+/**
+ * Animated layers for a chat bubble in the sender's streak colours (3+ days).
+ * Put inside an element with className `streak-bubble` + streakVars(theme).
+ */
+export const StreakBubbleLayers: React.FC<{ days: number }> = ({ days }) => {
+  const t = themeFor(days);
+  const embers = t.key === 'supernova' ? 4 : t.key === 'plasma' ? 3 : 0;
+  return (
+    <>
+      <span aria-hidden className="streak-plate__bg" />
+      <span aria-hidden className="streak-plate__sheen" />
+      {embers > 0 && (
+        <span aria-hidden className="streak-plate__embers">
+          {EMBERS.slice(0, embers).map((e, i) => (
+            <span
+              key={i}
+              style={{
+                ['--x' as any]: e.x,
+                ['--sz' as any]: `${Math.max(2, e.size - 2)}px`,
+                ['--dur' as any]: `${e.dur * 0.6}s`,
+                ['--delay' as any]: `${e.delay}s`,
+                ['--dx' as any]: e.dx,
+              }}
+            />
+          ))}
+        </span>
+      )}
+    </>
+  );
+};

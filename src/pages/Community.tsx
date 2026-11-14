@@ -36,6 +36,8 @@ import {
 } from 'lucide-react';
 import { EmojiPickerPopover } from '../components/common/EmojiPickerPopover';
 import { ReactionSummary, ReactionBurst, MessageActionOverlay, ReactionDetailsSheet, type MessageAction } from '../components/chat/ChatReactions';
+import { StreakBubbleLayers, StreakName, StreakFlame } from '../components/streak/Streak';
+import { getStreakTheme, streakVars } from '../utils/streakTheme';
 import { QUICK_REACTIONS, normalizeEmoji } from '../utils/chatReactions';
 import { copyToClipboard } from '../utils/helpers';
 import { useAuth } from '../context/AuthContext';
@@ -641,9 +643,21 @@ export const Community: React.FC<CommunityProps> = ({
                 </div>
               )}
 
-              {visibleMessages.map((msg: any) => {
+              {visibleMessages.map((msg: any, idx: number) => {
                 const isMyMsg = user && msg.username === user.username;
                 const isSelected = selectedMessageIds.includes(msg.id);
+
+                // Telegram-style grouping: consecutive messages from one person within 5 minutes
+                const msgTime = (x: any) => new Date(x?.created_at || x?.timestamp || 0).getTime();
+                const sameGroup = (a: any, b: any) =>
+                  !!a && !!b && a.username === b.username && Math.abs(msgTime(b) - msgTime(a)) < 5 * 60 * 1000;
+                const isFirstInGroup = !sameGroup(visibleMessages[idx - 1], msg);
+                const isLastInGroup = !sameGroup(msg, visibleMessages[idx + 1]);
+
+                // Sender's streak drives the bubble: 3+ days → animated bubble in their tier colours
+                const streakDays = isMyMsg ? (user?.streak_count ?? msg.streak_count ?? 0) : (msg.streak_count || 0);
+                const sTheme = getStreakTheme(streakDays);
+                const fancyBubble = streakDays >= 3;
                 
                 const tx = swipeTranslateX[msg.id] || 0;
                 const isSwiping = swipeMessageIdRef.current === msg.id;
@@ -662,6 +676,7 @@ export const Community: React.FC<CommunityProps> = ({
                     } ${isSelected ? 'bg-brand-orange/[0.10]' : isMultiSelectMode ? 'hover:bg-white/[0.02]' : ''}`}
                     style={{
                       justifyContent: isMyMsg ? 'flex-end' : 'flex-start',
+                      marginTop: isFirstInGroup ? undefined : -16,
                     }}
                     onClick={() => {
                       if (isMultiSelectMode) {
@@ -717,7 +732,7 @@ export const Community: React.FC<CommunityProps> = ({
 
                     <div
                       id={`chat-msg-${msg.id}`}
-                      className="flex items-start gap-2.5 max-w-[85%] relative rounded-2xl"
+                      className="flex items-end gap-2.5 max-w-[85%] relative rounded-2xl"
                       style={{ 
                         transform: `translateX(${tx}px)`,
                         transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28)',
@@ -737,24 +752,28 @@ export const Community: React.FC<CommunityProps> = ({
                         </div>
                       )}
 
-                      {/* Outgoing Avatar (Other User) */}
+                      {/* Other user's avatar — only next to the last message of a group */}
                       {!isMyMsg && (
-                        <div className="relative mt-4 shrink-0">
-                          <UserAvatar 
-                            username={msg.username} 
-                            avatarUrl={msg.avatar_url} 
-                            equippedFrame={msg.equipped_frame} 
-                            size={32} 
-                          />
+                        <div className={`relative shrink-0 w-8 ${msg.reactions?.length ? 'mb-5' : ''}`}>
+                          {isLastInGroup && (
+                            <UserAvatar 
+                              username={msg.username} 
+                              avatarUrl={msg.avatar_url} 
+                              equippedFrame={msg.equipped_frame} 
+                              size={32} 
+                            />
+                          )}
                         </div>
                       )}
 
                       {/* Bubble */}
                       <div className={`flex flex-col ${isMyMsg ? 'items-end' : 'items-start'}`}>
-                        {/* Sender info */}
+                        {/* Sender info — once per group, name in the sender's streak colour */}
+                        {isFirstInGroup && (
                         <div className="flex items-center gap-1.5 mb-1 select-none">
-                          <span className="text-2xs font-black" style={{ color: isMyMsg ? 'var(--color-brand-orange)' : getNameColor(msg.username) }}>
-                            {msg.username}
+                          {streakDays > 0 && <StreakFlame days={streakDays} size={13} />}
+                          <span className="text-2xs font-black" style={fancyBubble ? undefined : { color: isMyMsg ? 'var(--color-brand-orange)' : getNameColor(msg.username) }}>
+                            {fancyBubble ? <StreakName days={streakDays}>{msg.username}</StreakName> : msg.username}
                           </span>
                           <span className="text-2xs font-bold bg-zinc-900 border border-zinc-800/80 text-zinc-400 px-1.5 py-0.5 rounded-md">
                             {msg.batch}
@@ -770,6 +789,7 @@ export const Community: React.FC<CommunityProps> = ({
                             </span>
                           )}
                         </div>
+                        )}
 
                         {/* Text card bubble */}
                         <HighlightWrapper
@@ -779,17 +799,28 @@ export const Community: React.FC<CommunityProps> = ({
                         >
                           <div 
                             className={`px-3 py-2 rounded-2xl text-xs md:text-sm font-semibold shadow-lg text-start relative min-w-0 ${
-                              isMyMsg 
-                                ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black rounded-se-none' 
-                                : 'bg-zinc-900/60 border border-zinc-800 text-white rounded-ss-none'
+                              isMyMsg
+                                ? (isFirstInGroup ? 'rounded-se-none' : 'rounded-se-md')
+                                : (isFirstInGroup ? 'rounded-ss-none' : 'rounded-ss-md')
+                            } ${
+                              fancyBubble
+                                ? `streak-bubble streak-bubble--${sTheme.key}`
+                                : isMyMsg 
+                                  ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black' 
+                                  : 'bg-zinc-900/60 border border-zinc-800 text-white'
                             }`}
+                            style={fancyBubble ? streakVars(sTheme) : undefined}
                           >
+                          {fancyBubble && <StreakBubbleLayers days={streakDays} />}
                           {/* Quote reply */}
                           {msg.reply_to?.username && (
-                            <div className={`border-s-2 border-brand-orange px-2.5 py-1.5 rounded-lg mb-2 text-2xs text-start ${
-                              isMyMsg ? 'bg-black/10 text-zinc-800' : 'bg-black/30 text-zinc-400'
-                            }`}>
-                              <div className={`font-black ${isMyMsg ? 'text-black' : 'text-brand-orange'}`}>
+                            <div
+                              className={`border-s-2 px-2.5 py-1.5 rounded-lg mb-2 text-2xs text-start ${
+                                fancyBubble ? 'bg-black/35 text-zinc-300' : isMyMsg ? 'bg-black/10 text-zinc-800 border-brand-orange' : 'bg-black/30 text-zinc-400 border-brand-orange'
+                              }`}
+                              style={fancyBubble ? { borderColor: sTheme.c3 } : undefined}
+                            >
+                              <div className={`font-black ${fancyBubble ? '' : isMyMsg ? 'text-black' : 'text-brand-orange'}`} style={fancyBubble ? { color: sTheme.text } : undefined}>
                                 <bdi dir="ltr">@{msg.reply_to.username}</bdi>
                               </div>
                               <div dir="auto" className="truncate mt-0.5">{msg.reply_to.message}</div>
@@ -841,15 +872,17 @@ export const Community: React.FC<CommunityProps> = ({
                         </button>
                       )}
 
-                      {/* Incoming Avatar (Me) */}
+                      {/* My avatar — only next to the last message of a group */}
                       {isMyMsg && (
-                        <div className="relative mt-4 shrink-0">
-                          <UserAvatar 
-                            username={msg.username} 
-                            avatarUrl={msg.avatar_url} 
-                            equippedFrame={msg.equipped_frame} 
-                            size={32} 
-                          />
+                        <div className={`relative shrink-0 w-8 ${msg.reactions?.length ? 'mb-5' : ''}`}>
+                          {isLastInGroup && (
+                            <UserAvatar 
+                              username={msg.username} 
+                              avatarUrl={msg.avatar_url} 
+                              equippedFrame={msg.equipped_frame} 
+                              size={32} 
+                            />
+                          )}
                         </div>
                       )}
                     </div>
