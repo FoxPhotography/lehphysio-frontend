@@ -9,7 +9,6 @@ import { useAuth } from '../context/AuthContext';
 import {
   Camera,
   Pencil,
-  Sparkles,
   ShieldCheck,
   Crown,
   Lock,
@@ -25,6 +24,7 @@ import {
   Share2,
   Eye,
   Download,
+  Palette,
 } from 'lucide-react';
 import { UserAvatar } from '../components/UserAvatar';
 import { setFramesCache } from '../utils/helpers';
@@ -665,7 +665,7 @@ export const Profile: React.FC<ProfileProps> = ({
               {/* Modal Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4.5 h-4.5 text-orange-400" />
+                  <Palette className="w-4.5 h-4.5 text-orange-400" />
                   <h3 className="text-base font-black text-white">شكل البروفايل</h3>
                 </div>
                 <button

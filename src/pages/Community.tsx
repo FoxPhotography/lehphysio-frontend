@@ -26,7 +26,6 @@ import {
   Flame,
   Smile,
   Keyboard,
-  Sparkles,
   Frown,
   Zap,
   AlertTriangle,
@@ -148,6 +147,7 @@ export const Community: React.FC<CommunityProps> = ({
   };
   
   const [showScrollDownBtn, setShowScrollDownBtn] = useState(false);
+  const [unreadBelow, setUnreadBelow] = useState(0);
   const [activeSubTab, setActiveSubTab] = useState<'chat' | 'suggestions'>('chat');
   const [suggTitle, setSuggTitle] = useState('');
   const [suggContent, setSuggContent] = useState('');
@@ -286,6 +286,7 @@ export const Community: React.FC<CommunityProps> = ({
     const mine = !!(last && user && last.username === user.username);
     if (deepLinkTarget?.type === 'chat_message' && !mine) return;
     if (isFirstLoad || mine || nearBottomRef.current) scrollFeedToBottom();
+    else setUnreadBelow((n) => n + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibleMessages, activeSubTab]);
   useEffect(() => {
@@ -488,11 +489,27 @@ export const Community: React.FC<CommunityProps> = ({
     setSuggContent('');
   };
 
+  // Fast + smooth jump to the newest message: far away → snap close first,
+  // then a short ease-out glide (native smooth scroll is slow over long chats)
+  const scrollAnimRef = useRef(0);
   const handleScrollToBottom = () => {
     const el = document.getElementById('pl-chat-feed');
-    if (el) {
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-    }
+    if (!el) return;
+    cancelAnimationFrame(scrollAnimRef.current);
+    nearBottomRef.current = true;
+    setUnreadBelow(0);
+    const target = () => el.scrollHeight - el.clientHeight;
+    if (target() - el.scrollTop > el.clientHeight * 1.5) el.scrollTop = target() - el.clientHeight * 1.5;
+    const from = el.scrollTop;
+    const start = performance.now();
+    const DURATION = 280;
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / DURATION);
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.scrollTop = from + (target() - from) * eased;
+      if (t < 1) scrollAnimRef.current = requestAnimationFrame(step);
+    };
+    scrollAnimRef.current = requestAnimationFrame(step);
   };
 
   return (
@@ -637,7 +654,8 @@ export const Community: React.FC<CommunityProps> = ({
                 const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
                 nearBottomRef.current = distance < 120;
                 const isUp = distance > 150;
-                setShowScrollDownBtn(isUp);
+                if (isUp !== showScrollDownBtn) setShowScrollDownBtn(isUp);
+                if (distance < 120 && unreadBelow) setUnreadBelow(0);
 
                 // Infinite scroll up: reveal cached messages first, then fetch older ones
                 if (el.scrollTop === 0 && chatMessages.length > renderLimit) {
@@ -1108,14 +1126,32 @@ export const Community: React.FC<CommunityProps> = ({
             <AnimatePresence>
               {showScrollDownBtn && (
                 <m.button
-                  initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                  type="button"
+                  initial={{ opacity: 0, y: 14, scale: 0.6 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.8 }}
+                  exit={{ opacity: 0, y: 14, scale: 0.6 }}
+                  transition={{ type: 'spring', stiffness: 520, damping: 30, mass: 0.6 }}
+                  whileTap={{ scale: 0.86 }}
                   onClick={handleScrollToBottom}
-                  className="absolute start-6 w-9 h-9 rounded-full bg-zinc-950/90 border border-brand-orange flex items-center justify-center text-white cursor-pointer z-[25] shadow-orange-glow transition-all active:scale-90 bottom-[75px]"
+                  className="scroll-latest-btn absolute end-4 bottom-[84px] z-[25] w-11 h-11 rounded-full flex items-center justify-center cursor-pointer select-none"
                   title="انزل لآخر رسالة"
+                  aria-label={unreadBelow ? `${unreadBelow} رسالة جديدة — انزل لآخر رسالة` : 'انزل لآخر رسالة'}
                 >
-                  <ChevronDown className="w-4 h-4 animate-bounce" />
+                  <ChevronDown className="w-5 h-5 stroke-[2.5] text-zinc-100" />
+                  <AnimatePresence>
+                    {unreadBelow > 0 && (
+                      <m.span
+                        key="badge"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        transition={{ type: 'spring', stiffness: 600, damping: 26 }}
+                        className="absolute -top-1.5 -start-1 min-w-[20px] h-5 px-1.5 rounded-full bg-brand-orange text-black text-[10px] font-black flex items-center justify-center tabular-nums ring-2 ring-zinc-950"
+                      >
+                        {unreadBelow > 99 ? '99+' : unreadBelow}
+                      </m.span>
+                    )}
+                  </AnimatePresence>
                 </m.button>
               )}
             </AnimatePresence>

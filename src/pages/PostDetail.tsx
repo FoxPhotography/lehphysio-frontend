@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Loader2, Sparkles, MessageCircle, Heart, Share2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, MessageCircle, Heart, Share2, AlertCircle } from 'lucide-react';
 import { PostCard } from '../components/home/PostCard';
 import { communityService } from '../services/communityService';
 import { useNotifications } from '../context/NotificationContext';

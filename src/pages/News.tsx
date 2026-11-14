@@ -18,7 +18,6 @@ import {
   CornerUpLeft,
   Check,
   Zap,
-  Sparkles,
   Volume2,
   Newspaper
 } from 'lucide-react';

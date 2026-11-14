@@ -9,7 +9,7 @@ import {
   Loader2,
   PackageOpen,
   Clock,
-  Sparkles,
+  Frame,
 } from 'lucide-react';
 import { playChatSound, setFramesCache } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
@@ -113,7 +113,7 @@ const ShopCard: React.FC<{
               : 'bg-white text-black hover:bg-zinc-200'
           }`}
         >
-          {equipped ? <><CheckCircle className="w-3.5 h-3.5" /> مستخدَم — دوس للإلغاء</> : <><Sparkles className="w-3.5 h-3.5" /> استخدمه</>}
+          {equipped ? <><CheckCircle className="w-3.5 h-3.5" /> مستخدَم — دوس للإلغاء</> : <>استخدمه</>}
         </m.button>
       ) : (
       <m.button
@@ -136,7 +136,7 @@ const ShopCard: React.FC<{
         ) : !canAfford ? (
           <><Lock className="w-3.5 h-3.5" /> فاضلك {Math.max(0, cost - userXp).toLocaleString()} XP</>
         ) : (
-          <><Sparkles className="w-3.5 h-3.5 fill-black" /> افتحه ببلاش</>
+          <>افتحه ببلاش</>
         )}
       </m.button>
       )}
@@ -385,7 +385,7 @@ export const Rewards: React.FC<RewardsProps> = ({
       <section className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-orange-400" />
+            <Frame className="w-4 h-4 text-orange-400" />
             <h2 className="text-[15px] font-black text-white whitespace-nowrap truncate min-w-0">الفريمات</h2>
           </div>
           <div className="text-xs font-bold text-zinc-400 bg-zinc-900/80 border border-zinc-800 px-3 py-1 rounded-xl flex items-center gap-1.5 self-start sm:self-auto">

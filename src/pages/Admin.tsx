@@ -28,7 +28,6 @@ import {
   Search,
   Calendar,
   Clock,
-  Sparkles,
 } from 'lucide-react';
 import { setFramesCache } from '../utils/helpers';
 import { API_BASE } from '../services/api';
@@ -805,7 +804,7 @@ export const Admin: React.FC<AdminProps> = ({
                     }}
                     className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-400 hover:bg-orange-500/25 text-xs font-bold cursor-pointer transition-colors"
                   >
-                    <Sparkles className="w-3 h-3" />
+                    <RefreshCw className="w-3 h-3" />
                     <span>اعمل كود</span>
                   </button>
                 </div>
@@ -915,7 +914,7 @@ export const Admin: React.FC<AdminProps> = ({
                       }}
                       className="flex items-center gap-1 text-xs font-bold text-orange-400 hover:text-orange-300 cursor-pointer"
                     >
-                      <Sparkles className="w-3 h-3" />
+                      <RefreshCw className="w-3 h-3" />
                       <span>توليد</span>
                     </button>
                   </div>
@@ -1019,7 +1018,6 @@ export const Admin: React.FC<AdminProps> = ({
                             <span>{c.code}</span>
                             {isHighlighted && (
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-orange-500 to-amber-500 text-white text-2xs font-black uppercase tracking-wider animate-pulse shadow-sm">
-                                <Sparkles className="w-2.5 h-2.5" />
                                 جديد
                               </span>
                             )}

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { Lock, Check, Sparkles, Loader2, Palette, Eye, Crown } from 'lucide-react';
+import { Lock, Check, Loader2, Palette, Eye, Crown } from 'lucide-react';
 import { UserAvatar } from '../UserAvatar';
 import { StreakNameplate, StreakName, StreakAura, StreakBubbleLayers, StreakChip } from '../streak/Streak';
 import { streakVars, getStreakTheme } from '../../utils/streakTheme';
@@ -419,7 +419,7 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = f
                   </button>
                 ) : affordableN > 0 ? (
                   <m.button type="button" disabled={!!busy} whileTap={{ scale: 0.97 }} onClick={() => applyPackage(t.key)} className="h-10 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer text-black disabled:opacity-60" style={{ background: `linear-gradient(90deg, ${vis.c2}, ${vis.c3})`, boxShadow: `0 6px 18px -6px rgb(${vis.glow} / 0.8)` }}>
-                    {busy === key ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    {busy === key && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     {affordableN === 4
                       ? (ownedN === 4 ? 'استخدم الباكدج كله' : 'افتح واستخدم الباكدج كله')
                       : `استخدم المتاح (${affordableN}/4)`}
@@ -578,7 +578,7 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = f
                   onClick={() => equip(id, itemCat)}
                   className="h-9 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-60"
                 >
-                  {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  {isBusy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   استخدمه
                 </button>
               ) : canUnlock ? (

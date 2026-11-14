@@ -12,8 +12,8 @@ import {
   ChevronLeft, 
   MessageSquare, 
   ListVideo, 
-  Sparkles,
-  Zap
+  Zap,
+  Megaphone,
 } from 'lucide-react';
 
 // Subcomponents
@@ -318,7 +318,7 @@ export const Home: React.FC<HomeProps> = ({
       <section className="space-y-4">
         <div className="flex flex-row items-center justify-between w-full gap-2">
           <span className="flex items-center gap-2 text-sm sm:text-lg font-black text-white shrink">
-            <Sparkles className="w-4 h-4 sm:w-5 h-5 text-brand-orange animate-pulse shrink-0" />
+            <Megaphone className="w-4 h-4 sm:w-5 sm:h-5 text-brand-orange shrink-0" />
             <span className="truncate">الأخبار والإعلانات الرسمية</span>
           </span>
           <button 
