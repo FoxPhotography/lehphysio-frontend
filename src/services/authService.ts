@@ -118,4 +118,30 @@ export const authService = {
     }, token);
     return res;
   },
+
+  // Google OAuth operations
+  getGoogleAuthUrl(origin?: string) {
+    const orig = origin || window.location.origin;
+    return `${API_BASE}/api/auth/google?origin=${encodeURIComponent(orig)}`;
+  },
+
+  getGoogleLinkUrl(token: string, origin?: string) {
+    const orig = origin || window.location.origin;
+    return `${API_BASE}/api/auth/google?action=link&token=${encodeURIComponent(token)}&origin=${encodeURIComponent(orig)}`;
+  },
+
+  async completeGoogleRegistration(data: { regToken: string; username: string; batch: string; password: string }) {
+    const res = await apiFetch('/api/auth/google/complete-registration', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return res;
+  },
+
+  async unlinkGoogle(token?: string) {
+    const res = await apiFetch('/api/auth/google/unlink', {
+      method: 'POST',
+    }, token);
+    return res;
+  },
 };

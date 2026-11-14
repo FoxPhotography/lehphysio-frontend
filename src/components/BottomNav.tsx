@@ -34,7 +34,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       page: 'profile',
       label: user ? 'حسابي' : 'دخول',
       icon: User,
-      active: ['profile', 'login', 'register', 'confirm', 'forgot-password', 'reset-password'],
+      active: ['profile', 'login', 'register', 'social-register', 'confirm', 'forgot-password', 'reset-password'],
       onClick: () => setCurrentPage(user ? 'profile' : 'login')
     },
   ];

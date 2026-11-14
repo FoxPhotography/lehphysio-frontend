@@ -31,6 +31,8 @@ import { daysLabel } from '../utils/format';
 import { UserAvatar } from '../components/UserAvatar';
 import { setFramesCache } from '../utils/helpers';
 import { API_BASE } from '../services/api';
+import { GoogleIcon } from '../components/AuthComponents';
+import { authService } from '../services/authService';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 const stripEmojis = (str: string) => {
@@ -129,8 +131,42 @@ export const Profile: React.FC<ProfileProps> = ({
 }) => {
   if (!user) return null;
 
-  const { getFlameTier, changePage, deferredPrompt, handleInstallPWA, isStandalone, setShowIOSInstall, showToast: showToastCtx } = useAuth();
+  const { getFlameTier, changePage, deferredPrompt, handleInstallPWA, isStandalone, setShowIOSInstall, showToast: showToastCtx, token, showConfirm, fetchUserProfile } = useAuth();
   const [sharingCard, setSharingCard] = useState(false);
+  const [unlinkingGoogle, setUnlinkingGoogle] = useState(false);
+
+  const handleLinkGoogle = () => {
+    if (!token) return;
+    window.location.href = authService.getGoogleLinkUrl(token);
+  };
+
+  const handleUnlinkGoogle = () => {
+    showConfirm(
+      'إلغاء ربط حساب Google',
+      'هل أنت متأكد من رغبتك في إلغاء ربط حساب Google؟ ستتمكن من تسجيل الدخول بكلمة المرور واسم المستخدم فقط.',
+      async () => {
+        setUnlinkingGoogle(true);
+        try {
+          const res = await authService.unlinkGoogle(token);
+          const data = await res.json();
+          if (res.ok) {
+            showToastCtx('تم إلغاء ربط حساب Google بنجاح.');
+            fetchUserProfile();
+          } else {
+            showToastCtx(data.error || 'فشل إلغاء الربط.');
+          }
+        } catch (e) {
+          showToastCtx('حدث خطأ أثناء إلغاء الربط.');
+        } finally {
+          setUnlinkingGoogle(false);
+        }
+      },
+      undefined,
+      'نعم، ألغِ الربط',
+      'تراجع',
+      'warning'
+    );
+  };
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const canInstall = !isStandalone && (!!deferredPrompt || isIOS);
   const onShareCard = async () => {
@@ -591,6 +627,53 @@ export const Profile: React.FC<ProfileProps> = ({
 
         {/* ── Actions ──────────────────────────────────────────────── */}
         <div className="flex flex-col gap-2.5">
+          {/* Google Account Connection */}
+          {user.has_google_linked ? (
+            <div className="w-full flex items-center justify-between p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-emerald-400">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <GoogleIcon className="w-4.5 h-4.5" />
+                </div>
+                <div className="text-start min-w-0">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+                    <span>حساب Google مربوط</span>
+                    <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                  </div>
+                  <p className="text-2xs text-zinc-400 mt-0.5 truncate">دخول مباشر بـ Google أو كلمة المرور</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={unlinkingGoogle}
+                onClick={handleUnlinkGoogle}
+                className="text-xs text-zinc-400 hover:text-red-400 transition-colors px-2.5 py-1 rounded-lg border border-white/10 hover:border-red-500/30 active:scale-95 cursor-pointer flex-shrink-0"
+              >
+                {unlinkingGoogle ? '...' : 'إلغاء الربط'}
+              </button>
+            </div>
+          ) : (
+            <m.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={handleLinkGoogle}
+              className="w-full flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <GoogleIcon className="w-4.5 h-4.5" />
+                </div>
+                <div className="text-start min-w-0">
+                  <p className="text-xs font-bold text-white">ربط حساب Google</p>
+                  <p className="text-2xs text-zinc-400 mt-0.5">لتسجيل الدخول بضغطة زر واحدة</p>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-brand-orange bg-brand-orange/10 border border-brand-orange/30 px-2.5 py-1 rounded-lg flex-shrink-0">
+                ربط الآن
+              </span>
+            </m.button>
+          )}
+
           {/* Web Push Notifications Settings */}
           <m.button
             whileHover={{ scale: 1.02 }}

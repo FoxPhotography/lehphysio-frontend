@@ -144,8 +144,34 @@ export const useUrlRouting = ({
     } else if (path === '/rewards') {
       setPageFromUrl('rewards');
     } else if (path === '/profile') {
+      if (params.get('googleLinked') === 'true') {
+        showToast('تم ربط حسابك بـ Google بنجاح! 🎉');
+        window.history.replaceState({}, document.title, '/profile');
+      } else if (params.get('googleError')) {
+        showToast(decodeURIComponent(params.get('googleError')!));
+        window.history.replaceState({}, document.title, '/profile');
+      }
       setPageFromUrl('profile');
+    } else if (path === '/auth/callback') {
+      const callbackToken = params.get('token');
+      const callbackError = params.get('error');
+      if (callbackToken) {
+        localStorage.setItem('token', callbackToken);
+        showToast('تم تسجيل الدخول بنجاح! مرحباً بك 🎉');
+        window.location.replace('/');
+      } else if (callbackError) {
+        showToast(decodeURIComponent(callbackError));
+        window.location.replace('/login');
+      } else {
+        window.location.replace('/');
+      }
+    } else if (path === '/auth/social-register' || path === '/social-register') {
+      setPageFromUrl('social-register');
     } else if (path === '/login') {
+      if (params.get('error')) {
+        showToast(decodeURIComponent(params.get('error')!));
+        window.history.replaceState({}, document.title, '/login');
+      }
       setPageFromUrl('login');
     } else if (path === '/register') {
       setPageFromUrl('register');

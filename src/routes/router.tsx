@@ -20,6 +20,7 @@ export const pageLoaders = {
   rewards: () => import('../pages/Rewards'),
   login: () => import('../pages/Login'),
   register: () => import('../pages/Register'),
+  socialRegister: () => import('../pages/SocialRegister'),
   confirm: () => import('../pages/Confirm'),
   forgotPassword: () => import('../pages/ForgotPassword'),
   resetPassword: () => import('../pages/ResetPassword'),
@@ -40,6 +41,7 @@ const Profile = named(pageLoaders.profile, 'Profile');
 const Rewards = named(pageLoaders.rewards, 'Rewards');
 const Login = named(pageLoaders.login, 'Login');
 const Register = named(pageLoaders.register, 'Register');
+const SocialRegister = named(pageLoaders.socialRegister, 'SocialRegister');
 const Confirm = named(pageLoaders.confirm, 'Confirm');
 const ForgotPassword = named(pageLoaders.forgotPassword, 'ForgotPassword');
 const ResetPassword = named(pageLoaders.resetPassword, 'ResetPassword');
@@ -569,6 +571,8 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           setCurrentPage={setCurrentPage}
         />
       );
+    case 'social-register':
+      return <SocialRegister />;
     case 'confirm':
       return (
         <Confirm

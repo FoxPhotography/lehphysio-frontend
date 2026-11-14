@@ -10,6 +10,8 @@ export interface User {
   weekly_xp: number;
   streak_count: number;
   role: 'user' | 'admin' | 'owner';
+  has_google_linked?: boolean;
+  google_id?: string | null;
   last_poll_vote_date?: string;
   last_spin_wheel_date?: string;
   last_surprise_box_date?: string;

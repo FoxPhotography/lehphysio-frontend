@@ -104,7 +104,8 @@ const pageFromPath = (path: string): string => {
   if (/^\/posts?\/\d+/.test(path)) return 'post-detail';
   if (/^\/u\/[^/]+/.test(path)) return 'public-profile';
   if (path === '/moderation') return 'moderator-dashboard';
-  const simple = ['games', 'leaderboard', 'rewards', 'profile', 'login', 'register', 'confirm', 'forgot-password', 'reset-password', 'admin', 'news'];
+  if (path === '/auth/social-register' || path === '/social-register') return 'social-register';
+  const simple = ['games', 'leaderboard', 'rewards', 'profile', 'login', 'register', 'social-register', 'confirm', 'forgot-password', 'reset-password', 'admin', 'news'];
   const seg = path.replace(/^\//, '');
   return simple.includes(seg) ? seg : 'home';
 };

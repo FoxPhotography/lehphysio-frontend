@@ -7,7 +7,10 @@ import {
   AuthInput,
   AuthSubmitButton,
   AuthLink,
+  GoogleAuthButton,
+  AuthDivider,
 } from '../components/AuthComponents';
+import { authService } from '../services/authService';
 
 interface LoginProps {
   loginForm: any;
@@ -23,47 +26,60 @@ export const Login: React.FC<LoginProps> = ({
   authError,
   handleLogin,
   setCurrentPage,
-}) => (
-  <AuthLayout title="أهلًا بيك تاني" subtitle="ادخل على حسابك في ليه فيزيو؟">
-    <form onSubmit={handleLogin} className="space-y-4">
-      <AuthError message={authError} />
+}) => {
+  const handleGoogleLogin = () => {
+    window.location.href = authService.getGoogleAuthUrl();
+  };
 
-      <FormField label="اسم المستخدم" icon={<User className="w-3 h-3" />}>
-        <AuthInput
-          type="text"
-          icon={<User className="w-4 h-4" />}
-          placeholder="اسم المستخدم بتاعك"
-          value={loginForm.username}
-          onChange={(e) => setLoginForm((prev: any) => ({ ...prev, username: e.target.value }))}
-          required
-          autoComplete="username"
-        />
-      </FormField>
+  return (
+    <AuthLayout title="أهلًا بيك تاني" subtitle="ادخل على حسابك في ليه فيزيو؟">
+      <form onSubmit={handleLogin} className="space-y-4">
+        <AuthError message={authError} />
 
-      <FormField label="كلمة السر" icon={<Lock className="w-3 h-3" />}>
-        <AuthInput
-          type="password"
-          icon={<Lock className="w-4 h-4" />}
-          placeholder="كلمة السر بتاعتك"
-          value={loginForm.password}
-          onChange={(e) => setLoginForm((prev: any) => ({ ...prev, password: e.target.value }))}
-          required
-          autoComplete="current-password"
-        />
-      </FormField>
+        <FormField label="اسم المستخدم" icon={<User className="w-3 h-3" />}>
+          <AuthInput
+            type="text"
+            icon={<User className="w-4 h-4" />}
+            placeholder="اسم المستخدم بتاعك"
+            value={loginForm.username}
+            onChange={(e) => setLoginForm((prev: any) => ({ ...prev, username: e.target.value }))}
+            required
+            autoComplete="username"
+          />
+        </FormField>
 
-      <div className="text-end -mt-1">
-        <AuthLink onClick={() => setCurrentPage('forgot-password')}>
-          نسيت كلمة السر؟
-        </AuthLink>
-      </div>
+        <FormField label="كلمة السر" icon={<Lock className="w-3 h-3" />}>
+          <AuthInput
+            type="password"
+            icon={<Lock className="w-4 h-4" />}
+            placeholder="كلمة السر بتاعتك"
+            value={loginForm.password}
+            onChange={(e) => setLoginForm((prev: any) => ({ ...prev, password: e.target.value }))}
+            required
+            autoComplete="current-password"
+          />
+        </FormField>
 
-      <AuthSubmitButton label="دخول" />
-    </form>
+        <div className="text-end -mt-1">
+          <AuthLink onClick={() => setCurrentPage('forgot-password')}>
+            نسيت كلمة السر؟
+          </AuthLink>
+        </div>
 
-    <p className="text-center text-[13px] text-zinc-500 mt-5">
-      معندكش حساب؟{' '}
-      <AuthLink onClick={() => setCurrentPage('register')}>اعمل حساب</AuthLink>
-    </p>
-  </AuthLayout>
-);
+        <AuthSubmitButton label="دخول" />
+      </form>
+
+      <AuthDivider text="أو المتابعة عبر" />
+
+      <GoogleAuthButton
+        label="تسجيل الدخول باستخدام Google"
+        onClick={handleGoogleLogin}
+      />
+
+      <p className="text-center text-[13px] text-zinc-500 mt-5">
+        معندكش حساب؟{' '}
+        <AuthLink onClick={() => setCurrentPage('register')}>اعمل حساب</AuthLink>
+      </p>
+    </AuthLayout>
+  );
+};
