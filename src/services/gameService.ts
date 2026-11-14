@@ -26,6 +26,11 @@ export const gameService = {
     return res;
   },
 
+  async checkRoom(code: string) {
+    const res = await apiFetch(`/api/games/check-room/${encodeURIComponent(code.toUpperCase())}`);
+    return res;
+  },
+
   async startGame(code: string, token?: string) {
     const res = await apiFetch('/api/games/start', {
       method: 'POST',

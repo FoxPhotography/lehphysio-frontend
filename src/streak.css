@@ -35,8 +35,11 @@
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
 }
-/* kept for compatibility (no longer used by the streak classes) */
-@keyframes streak-text-pan { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
+@keyframes streak-text-pan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
 /* ── Chip (static glow — no box-shadow animation) ── */
 .streak-chip {
@@ -153,12 +156,24 @@
   animation-delay: var(--delay);
 }
 
-/* ── Gradient username (static — animated text gradients repaint every frame) ── */
+/* ── Dynamic Animated Gradient Username ── */
 .streak-text {
-  background: linear-gradient(90deg, var(--s3), #ffffff 45%, var(--s2));
+  background: linear-gradient(
+    110deg,
+    var(--s2) 0%,
+    var(--s3) 25%,
+    #ffffff 50%,
+    var(--s1) 75%,
+    var(--s2) 100%
+  );
+  background-size: 250% auto;
   -webkit-background-clip: text;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
+  display: inline-block;
+  animation: streak-text-pan 4s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgb(var(--sg) / 0.45));
 }
 
 /* ── Low-end devices: same colours, almost no motion ── */
@@ -268,6 +283,175 @@
     transform: translate3d(var(--fly-x, 18px), -65px, 0) rotate(calc(var(--rot, -10deg) + 20deg));
     opacity: 0;
   }
+}
+
+/* ═══ Multi-Package Theming & Animations (All 7 Packages) ═══ */
+
+/* 1. Pinky / Rose / Plasma */
+.streak-bubble--cos-rose, .streak-bubble--plasma {
+  border-color: rgba(255, 79, 163, 0.55) !important;
+  box-shadow: 0 0 16px rgba(255, 79, 163, 0.3), inset 0 0 10px rgba(255, 79, 163, 0.15);
+}
+.streak-plate--cos-rose .streak-plate__edge, .streak-plate--plasma .streak-plate__edge {
+  box-shadow: 0 0 14px #ff4fa3, 0 0 24px rgba(255, 79, 163, 0.6);
+}
+.streak-heart-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  color: #ff60ad;
+  filter: drop-shadow(0 0 4px #ff4fa3) drop-shadow(0 0 7px #ffe0ef);
+  animation: heart-float var(--dur, 3.8s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes heart-float {
+  0% { transform: translateY(0) scale(0.7); opacity: 0; }
+  20% { opacity: 0.9; transform: translateY(-10px) scale(1); }
+  50% { transform: translateY(-25px) scale(0.92); }
+  80% { opacity: 0.85; transform: translateY(-40px) scale(1.05); }
+  100% { transform: translateY(-55px) scale(0.6); opacity: 0; }
+}
+
+/* 2. Mint (نعناع) */
+.streak-bubble--cos-mint {
+  border-color: rgba(16, 242, 176, 0.55) !important;
+  box-shadow: 0 0 16px rgba(16, 242, 176, 0.28), inset 0 0 10px rgba(16, 242, 176, 0.14);
+}
+.streak-plate--cos-mint .streak-plate__edge {
+  box-shadow: 0 0 14px #10f2b0, 0 0 24px rgba(16, 242, 176, 0.6);
+}
+.streak-leaf-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  color: #10f2b0;
+  filter: drop-shadow(0 0 4px #10f2b0) drop-shadow(0 0 6px #d1fff0);
+  animation: leaf-sway var(--dur, 4.2s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes leaf-sway {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(0.7); opacity: 0; }
+  15% { opacity: 0.95; }
+  50% { transform: translate3d(var(--fly-x, 14px), -25px, 0) rotate(25deg) scale(1); }
+  85% { opacity: 0.85; }
+  100% { transform: translate3d(calc(var(--fly-x, 14px) * -1), -55px, 0) rotate(50deg) scale(0.65); opacity: 0; }
+}
+
+/* 3. Sunset / Solar (غروب) */
+.streak-bubble--cos-sunset, .streak-bubble--solar {
+  border-color: rgba(255, 120, 73, 0.55) !important;
+  box-shadow: 0 0 16px rgba(255, 120, 73, 0.3), inset 0 0 10px rgba(255, 120, 73, 0.15);
+}
+.streak-plate--cos-sunset .streak-plate__edge, .streak-plate--solar .streak-plate__edge {
+  box-shadow: 0 0 14px #ff7849, 0 0 24px rgba(255, 120, 73, 0.6);
+}
+.streak-fire-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  color: #ff914d;
+  filter: drop-shadow(0 0 4px #ff7849) drop-shadow(0 0 8px #ffd38a);
+  animation: fire-spark var(--dur, 2.6s) ease-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes fire-spark {
+  0% { transform: translate3d(0, 0, 0) scale(0.5); opacity: 0; }
+  15% { opacity: 1; transform: translate3d(var(--fly-x, 6px), -12px, 0) scale(1.15); }
+  75% { opacity: 0.8; transform: translate3d(calc(var(--fly-x, 6px) * 1.5), -38px, 0) scale(0.85); }
+  100% { transform: translate3d(calc(var(--fly-x, 6px) * 2), -52px, 0) scale(0.4); opacity: 0; }
+}
+
+/* 4. Ocean (بحر) */
+.streak-bubble--cos-ocean {
+  border-color: rgba(6, 182, 212, 0.55) !important;
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.3), inset 0 0 10px rgba(6, 182, 212, 0.15);
+}
+.streak-plate--cos-ocean .streak-plate__edge {
+  box-shadow: 0 0 14px #06b6d4, 0 0 24px rgba(6, 182, 212, 0.6);
+}
+.streak-bubble-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  color: #67e8f9;
+  filter: drop-shadow(0 0 4px #06b6d4) drop-shadow(0 0 6px #cffafe);
+  animation: bubble-float var(--dur, 3.6s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes bubble-float {
+  0% { transform: translate3d(0, 0, 0) scale(0.6); opacity: 0; }
+  20% { opacity: 0.95; transform: translate3d(var(--fly-x, 5px), -10px, 0) scale(1); }
+  60% { transform: translate3d(calc(var(--fly-x, 5px) * -1), -30px, 0) scale(1.08); }
+  100% { transform: translate3d(var(--fly-x, 5px), -50px, 0) scale(0.6); opacity: 0; }
+}
+
+/* 5. Royal (ملكي) */
+.streak-bubble--cos-royal {
+  border-color: rgba(250, 204, 21, 0.6) !important;
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.35), inset 0 0 12px rgba(250, 204, 21, 0.18);
+}
+.streak-plate--cos-royal .streak-plate__edge {
+  box-shadow: 0 0 15px #facc15, 0 0 26px rgba(250, 204, 21, 0.65);
+}
+.streak-diamond-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  color: #fde047;
+  filter: drop-shadow(0 0 5px #facc15) drop-shadow(0 0 8px #fff7cc);
+  animation: diamond-twinkle var(--dur, 2.8s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes diamond-twinkle {
+  0%, 100% { transform: scale(0.3) rotate(0deg); opacity: 0; }
+  35% { transform: scale(1.2) rotate(45deg); opacity: 1; }
+  65% { transform: scale(0.8) rotate(90deg); opacity: 0.7; }
+}
+
+/* 6. Galaxy (مجرّة) */
+.streak-bubble--cos-galaxy, .streak-bubble--nebula {
+  border-color: rgba(139, 92, 246, 0.6) !important;
+  box-shadow: 0 0 18px rgba(139, 92, 246, 0.35), inset 0 0 12px rgba(139, 92, 246, 0.18);
+}
+.streak-plate--cos-galaxy .streak-plate__edge, .streak-plate--nebula .streak-plate__edge {
+  box-shadow: 0 0 14px #8b5cf6, 0 0 24px rgba(139, 92, 246, 0.6);
+}
+.streak-star-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  color: #c4b5fd;
+  filter: drop-shadow(0 0 4px #8b5cf6) drop-shadow(0 0 8px #f0abfc);
+  animation: star-pulse var(--dur, 3.2s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes star-pulse {
+  0%, 100% { transform: scale(0.4) rotate(-15deg); opacity: 0.1; }
+  50% { transform: scale(1.25) rotate(25deg); opacity: 1; filter: drop-shadow(0 0 7px #f0abfc); }
+}
+
+/* 7. Holo (هولوجرام) */
+.streak-bubble--cos-holo {
+  border-color: rgba(0, 229, 255, 0.55) !important;
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.3), 0 0 12px rgba(244, 114, 182, 0.25), inset 0 0 10px rgba(0, 229, 255, 0.15);
+}
+.streak-plate--cos-holo .streak-plate__edge {
+  box-shadow: 0 0 14px #00e5ff, 0 0 22px rgba(244, 114, 182, 0.6);
+}
+.streak-holo-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  color: #fff3a3;
+  filter: drop-shadow(0 0 4px #00e5ff) drop-shadow(0 0 7px #f472b6);
+  animation: holo-refract var(--dur, 3.5s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes holo-refract {
+  0% { transform: scale(0.5) rotate(0deg); opacity: 0; filter: drop-shadow(0 0 4px #00e5ff); }
+  35% { transform: scale(1.15) rotate(60deg); opacity: 1; filter: drop-shadow(0 0 8px #f472b6); }
+  70% { transform: scale(0.9) rotate(120deg); opacity: 0.8; filter: drop-shadow(0 0 6px #facc15); }
+  100% { transform: scale(0.4) rotate(180deg); opacity: 0; }
 }
 
 /* ═══ Multi-Package Theming & Animations (All 7 Packages) ═══ */

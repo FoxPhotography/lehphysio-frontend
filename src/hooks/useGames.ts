@@ -115,6 +115,10 @@ export const useGames = () => {
         changePage('play-game', { roomCode: data.code });
       } else {
         setGameError(data.error);
+        showToast(data.error || 'الروم دي اتقفلت خلاص 🔒');
+        if (res.status === 404 || (data.error && data.error.includes('started'))) {
+          window.dispatchEvent(new CustomEvent('game-room-closed-event', { detail: { code: code.toUpperCase() } }));
+        }
       }
     } catch (e) {
       setGameError('مش قادرين نوصل للسيرفر.');
@@ -137,6 +141,10 @@ export const useGames = () => {
         setGameRoomCodeInput('');
       } else {
         setGameError(data.error);
+        showToast(data.error || 'الروم دي اتقفلت خلاص 🔒');
+        if (res.status === 404 || (data.error && data.error.includes('started'))) {
+          window.dispatchEvent(new CustomEvent('game-room-closed-event', { detail: { code: code.toUpperCase() } }));
+        }
       }
     } catch (e) {
       setGameError('كود الغرفة غلط.');

@@ -16,9 +16,15 @@
   border-color: rgb(255 255 255 / 0.25);
 }
 .streak-text.cos-fx--holo {
-  background: linear-gradient(90deg, #ff3d9a, #ffe600, #00e5ff, #a855f7);
+  background: linear-gradient(110deg, #ff3d9a 0%, #ffe600 25%, #00e5ff 50%, #a855f7 75%, #ff3d9a 100%);
+  background-size: 250% auto;
   -webkit-background-clip: text;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  display: inline-block;
+  animation: streak-text-pan 3.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 7px rgba(0, 229, 255, 0.45));
 }
 .cos-fx--shine .streak-plate__sheen::after { animation-duration: 4.5s; width: 32%; background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.24), transparent); }
 .cos-fx--stars .streak-plate__embers span,

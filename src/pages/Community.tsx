@@ -31,7 +31,8 @@ import {
   AlertTriangle,
   Plus,
   Copy,
-  SmilePlus
+  SmilePlus,
+  Lock
 } from 'lucide-react';
 import { EmojiPickerPopover } from '../components/common/EmojiPickerPopover';
 import { ReactionSummary, ReactionBurst, MessageActionOverlay, ReactionDetailsSheet, type MessageAction } from '../components/chat/ChatReactions';
@@ -42,6 +43,8 @@ import { parseGameInvite, joinGameRoomFromInvite } from '../utils/gameInvite';
 import { QUICK_REACTIONS, normalizeEmoji } from '../utils/chatReactions';
 import { copyToClipboard } from '../utils/helpers';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
+import { gameService } from '../services/gameService';
 
 interface CommunityProps {
   user: any;
@@ -171,6 +174,62 @@ export const Community: React.FC<CommunityProps> = ({
   const [suggContent, setSuggContent] = useState('');
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
   const [isInputFocused, setIsInputFocused] = useState(false);
+
+  // Online Game Challenge Invites in Chat: Closed / Finished tracking
+  const socket = useSocket();
+  const [closedRooms, setClosedRooms] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleRoomClosed = (data: { roomCode: string }) => {
+      if (data?.roomCode) {
+        setClosedRooms(prev => ({ ...prev, [data.roomCode.toUpperCase()]: true }));
+      }
+    };
+    socket.on('game_room_closed', handleRoomClosed);
+    socket.on('game_deleted', handleRoomClosed);
+    return () => {
+      socket.off('game_room_closed', handleRoomClosed);
+      socket.off('game_deleted', handleRoomClosed);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    const onRoomClosedEvent = (e: Event) => {
+      const code = (e as CustomEvent).detail?.code;
+      if (code) {
+        setClosedRooms(prev => ({ ...prev, [String(code).toUpperCase()]: true }));
+      }
+    };
+    window.addEventListener('game-room-closed-event', onRoomClosedEvent);
+    return () => window.removeEventListener('game-room-closed-event', onRoomClosedEvent);
+  }, []);
+
+  useEffect(() => {
+    const codesToCheck = new Set<string>();
+    chatMessages.forEach(m => {
+      const code = parseGameInvite(m.message);
+      if (code && closedRooms[code] === undefined) {
+        codesToCheck.add(code);
+      }
+    });
+
+    if (codesToCheck.size === 0) return;
+
+    codesToCheck.forEach(async (code) => {
+      try {
+        const res = await gameService.checkRoom(code);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.isClosed) {
+          setClosedRooms(prev => ({ ...prev, [code]: true }));
+        } else {
+          setClosedRooms(prev => ({ ...prev, [code]: false }));
+        }
+      } catch {
+        // ignore network error
+      }
+    });
+  }, [chatMessages]);
   
   // Suggestion editing states
   const [editingSuggId, setEditingSuggId] = useState<number | null>(null);
@@ -1014,35 +1073,47 @@ export const Community: React.FC<CommunityProps> = ({
                                   {renderTextWithMentions(msg.message)}
                                 </p>
                               );
+                              const isClosed = !!closedRooms[inviteCode];
                               // Online challenge invite → a card you can join from directly
                               return (
-                                <div className="w-[min(260px,68vw)] rounded-xl overflow-hidden border border-white/10 bg-zinc-950 text-white">
-                                  <div className="px-3 py-3 bg-gradient-to-br from-brand-orange/25 via-zinc-950 to-zinc-950 flex items-center gap-2.5">
-                                    <span className="w-10 h-10 rounded-xl bg-brand-orange text-black flex items-center justify-center text-xl shrink-0" aria-hidden>🧠</span>
+                                <div className={`w-[min(260px,68vw)] rounded-xl overflow-hidden border ${isClosed ? 'border-zinc-800/80 bg-zinc-950/80 opacity-90' : 'border-white/10 bg-zinc-950'} text-white`}>
+                                  <div className={`px-3 py-3 ${isClosed ? 'bg-gradient-to-br from-zinc-800/40 via-zinc-950 to-zinc-950' : 'bg-gradient-to-br from-brand-orange/25 via-zinc-950 to-zinc-950'} flex items-center gap-2.5`}>
+                                    <span className={`w-10 h-10 rounded-xl ${isClosed ? 'bg-zinc-800 text-zinc-400' : 'bg-brand-orange text-black'} flex items-center justify-center text-xl shrink-0`} aria-hidden>
+                                      {isClosed ? '🔒' : '🧠'}
+                                    </span>
                                     <div className="min-w-0">
-                                      <p className="text-[13px] font-black leading-tight">تحدي التشريح أونلاين</p>
-                                      <p className="text-2xs font-bold text-zinc-400 truncate">{isMyMsg ? 'انت فاتح روم' : `${msg.username} فاتح روم ومستنيك`}</p>
+                                      <p className={`text-[13px] font-black leading-tight ${isClosed ? 'text-zinc-400' : 'text-white'}`}>تحدي التشريح أونلاين</p>
+                                      <p className="text-2xs font-bold text-zinc-400 truncate">
+                                        {isClosed ? 'الروم اتقفلت' : (isMyMsg ? 'انت فاتح روم' : `${msg.username} فاتح روم ومستنيك`)}
+                                      </p>
                                     </div>
                                   </div>
                                   <div className="px-3 pb-3 pt-2 space-y-2">
                                     <div className="flex items-center justify-between text-2xs font-bold text-zinc-500">
                                       <span>كود الروم</span>
-                                      <span className="font-mono font-black tracking-[3px] text-brand-orange text-xs" dir="ltr">{inviteCode}</span>
+                                      <span className={`font-mono font-black tracking-[3px] text-xs ${isClosed ? 'text-zinc-500 line-through' : 'text-brand-orange'}`} dir="ltr">{inviteCode}</span>
                                     </div>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (isMultiSelectMode) return;
-                                        if (!user) { showToast('سجّل دخول عشان تلعب 🔐'); return; }
-                                        joinGameRoomFromInvite(inviteCode);
-                                      }}
-                                      onTouchStart={(e) => e.stopPropagation()}
-                                      onMouseDown={(e) => e.stopPropagation()}
-                                      className="w-full h-9 rounded-lg bg-brand-orange text-black text-xs font-black cursor-pointer active:scale-[0.97] transition-transform"
-                                    >
-                                      {isMyMsg ? 'ارجع للروم' : 'ادخل الروم ⚡'}
-                                    </button>
+                                    {isClosed ? (
+                                      <div className="w-full h-9 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-black flex items-center justify-center gap-1.5 select-none">
+                                        <Lock className="w-3.5 h-3.5 text-zinc-500" />
+                                        <span>الروم اتقفلت</span>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (isMultiSelectMode) return;
+                                          if (!user) { showToast('سجّل دخول عشان تلعب 🔐'); return; }
+                                          joinGameRoomFromInvite(inviteCode);
+                                        }}
+                                        onTouchStart={(e) => e.stopPropagation()}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        className="w-full h-9 rounded-lg bg-brand-orange text-black text-xs font-black cursor-pointer active:scale-[0.97] transition-transform"
+                                      >
+                                        {isMyMsg ? 'ارجع للروم' : 'ادخل الروم ⚡'}
+                                      </button>
+                                    )}
                                   </div>
                                 </div>
                               );
