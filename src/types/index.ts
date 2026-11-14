@@ -67,6 +67,20 @@ export interface Post {
   is_news?: boolean;
 }
 
+export interface PostLikeUser {
+  id: number;
+  user_id: number;
+  username: string;
+  batch?: string;
+  avatar_url?: string | null;
+  equipped_frame?: string;
+  streak_count?: number;
+  cosmetics?: any;
+  total_xp?: number;
+  rank?: string;
+  is_me?: boolean;
+}
+
 export interface ChatReaction {
   emoji: string;
   count: number;

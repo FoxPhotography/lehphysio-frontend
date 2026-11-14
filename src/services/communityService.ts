@@ -55,6 +55,11 @@ export const communityService = {
     return res;
   },
 
+  async fetchPostLikes(postId: number, token?: string) {
+    const res = await apiFetch(`/api/community/posts/${postId}/likes`, {}, token);
+    return res;
+  },
+
   // Comments for Posts
   async fetchComments(postId: number) {
     const res = await apiFetch(`/api/community/posts/${postId}/comments`);

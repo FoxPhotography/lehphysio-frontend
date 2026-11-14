@@ -5,6 +5,7 @@ import { m, AnimatePresence } from 'framer-motion';
 import { HighlightWrapper } from '../notifications/HighlightWrapper';
 import { UserAvatar } from '../UserAvatar';
 import { CommentsSection } from './CommentsSection';
+import { PostLikesSheet } from './PostLikesSheet';
 import { 
   Heart, 
   MessageCircle, 
@@ -72,6 +73,70 @@ const PostCardImpl: React.FC<PostCardProps> = ({
 
   // Lightbox
   const [activeLightboxImg, setActiveLightboxImg] = useState<string | null>(null);
+
+  // Post Likes sheet & long press state
+  const [showLikesSheet, setShowLikesSheet] = useState(false);
+  const likePressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLongPressTriggeredRef = useRef(false);
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (likePressTimerRef.current) clearTimeout(likePressTimerRef.current);
+    };
+  }, []);
+
+  const startLikePress = () => {
+    isLongPressTriggeredRef.current = false;
+    if (likePressTimerRef.current) clearTimeout(likePressTimerRef.current);
+    likePressTimerRef.current = setTimeout(() => {
+      isLongPressTriggeredRef.current = true;
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(40);
+      }
+      setShowLikesSheet(true);
+    }, 450);
+  };
+
+  const cancelLikePress = () => {
+    if (likePressTimerRef.current) {
+      clearTimeout(likePressTimerRef.current);
+      likePressTimerRef.current = null;
+    }
+  };
+
+  const handleLikeTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStartPosRef.current = { x: t.clientX, y: t.clientY };
+    startLikePress();
+  };
+
+  const handleLikeTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartPosRef.current) return;
+    const t = e.touches[0];
+    const dx = Math.abs(t.clientX - touchStartPosRef.current.x);
+    const dy = Math.abs(t.clientY - touchStartPosRef.current.y);
+    if (dx > 10 || dy > 10) {
+      cancelLikePress();
+    }
+  };
+
+  const handleLikeTouchEnd = () => {
+    cancelLikePress();
+    touchStartPosRef.current = null;
+  };
+
+  const handleLikeClick = (e: React.MouseEvent) => {
+    if (isLongPressTriggeredRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      isLongPressTriggeredRef.current = false;
+      return;
+    }
+    if (!post.pending) {
+      handleLikePost(post.id);
+    }
+  };
 
   // Double tap like animations
   const [floatingHearts, setFloatingHearts] = useState<{ id: number }[]>([]);
@@ -419,14 +484,35 @@ const PostCardImpl: React.FC<PostCardProps> = ({
             dir="ltr"
             aria-label={post.isLiked ? 'إلغاء اللايك' : 'لايك'}
             aria-pressed={!!post.isLiked}
-            className={`h-10 -my-1 flex items-center gap-1.5 transition-colors ${post.isLiked ? 'text-[#ff3b5c]' : 'text-zinc-200 hover:text-white'} ${post.pending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-            onClick={() => { if (!post.pending) handleLikePost(post.id); }}
+            className={`h-10 -my-1 flex items-center gap-1.5 transition-colors select-none [-webkit-touch-callout:none] ${post.isLiked ? 'text-[#ff3b5c]' : 'text-zinc-200 hover:text-white'} ${post.pending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            onClick={handleLikeClick}
+            onTouchStart={handleLikeTouchStart}
+            onTouchMove={handleLikeTouchMove}
+            onTouchEnd={handleLikeTouchEnd}
+            onTouchCancel={handleLikeTouchEnd}
+            onMouseDown={startLikePress}
+            onMouseUp={cancelLikePress}
+            onMouseLeave={cancelLikePress}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              cancelLikePress();
+              setShowLikesSheet(true);
+            }}
             disabled={post.pending}
           >
             <m.span key={post.isLiked ? 'on' : 'off'} initial={{ scale: post.isLiked ? 0.6 : 1 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 600, damping: 14 }} className="flex">
               <Heart className={`w-[24px] h-[24px] ${post.isLiked ? 'fill-current' : ''}`} strokeWidth={1.9} />
             </m.span>
-            <span className="text-sm font-bold tabular-nums leading-none">{post.likes_count || 0}</span>
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowLikesSheet(true);
+              }}
+              title="عرض المعجبين"
+              className="text-sm font-bold tabular-nums leading-none hover:underline hover:text-white cursor-pointer"
+            >
+              {post.likes_count || 0}
+            </span>
           </button>
           <button
             type="button"
@@ -503,6 +589,13 @@ const PostCardImpl: React.FC<PostCardProps> = ({
           </m.div>
         )}
       </AnimatePresence>
+
+      <PostLikesSheet
+        open={showLikesSheet}
+        postId={post.id}
+        initialCount={post.likes_count}
+        onClose={() => setShowLikesSheet(false)}
+      />
     </HighlightWrapper>
   );
 };
