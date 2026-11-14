@@ -4,3 +4,13 @@
   height: 100%;
   overflow: hidden;
 }
+
+@keyframes crystalized-pulse {
+  0% { transform: scale(0.96); opacity: 0.75; }
+  100% { transform: scale(1.04); opacity: 1; }
+}
+
+@keyframes crystalized-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

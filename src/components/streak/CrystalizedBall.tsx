@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Renderer, Program, Mesh, Triangle, Geometry, RenderTarget, Texture } from 'ogl';
 
@@ -676,8 +676,8 @@ void main() {
     float dmin = 1e5;
     float along = 0.0;
     vec2 prev = a0;
-    for (int s = 1; s <= 10; s++) {
-      float u = float(s) / 10.0;
+    for (int s = 1; s <= 6; s++) {
+      float u = float(s) / 6.0;
       vec2 b = mix(mix(a0, a1, u), mix(a1, a2, u), u);
       vec2 pa = p - prev;
       vec2 ba = b - prev;
@@ -685,7 +685,7 @@ void main() {
       float dist = length(pa - ba * h);
       if (dist < dmin) {
         dmin = dist;
-        along = (float(s) - 1.0 + h) / 10.0;
+        along = (float(s) - 1.0 + h) / 6.0;
       }
       prev = b;
     }
@@ -927,6 +927,7 @@ const CrystalizedBall = ({
   className = '',
   style
 }: CrystalizedBallProps) => {
+  const [isContextLost, setIsContextLost] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<Settings | null>(null);
   const wakeRef = useRef<(() => void) | null>(null);
@@ -977,6 +978,7 @@ const CrystalizedBall = ({
     const gl2 = gl as unknown as WebGL2RenderingContext;
     if (!renderer.isWebgl2) {
       gl.getExtension('WEBGL_lose_context')?.loseContext();
+      setIsContextLost(true);
       return undefined;
     }
     const canvas = gl.canvas;
@@ -985,6 +987,16 @@ const CrystalizedBall = ({
     canvas.style.height = '100%';
     canvas.setAttribute('aria-hidden', 'true');
     container.appendChild(canvas);
+
+    const handleContextLost = (e: Event) => {
+      e.preventDefault();
+      setIsContextLost(true);
+      if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
+    canvas.addEventListener('webglcontextlost', handleContextLost, false);
 
     const fullFloat = !!gl.getExtension('EXT_color_buffer_float');
     const halfFloat = fullFloat || !!gl.getExtension('EXT_color_buffer_half_float');
@@ -1193,7 +1205,8 @@ const CrystalizedBall = ({
     };
 
     const rebuildDust = (requested: number) => {
-      const total = clamp(Math.round(requested / 100) * 100, 0, MAX_PARTICLES);
+      const reduced = Math.round(requested * 0.6);
+      const total = clamp(Math.round(reduced / 100) * 100, 0, Math.round(MAX_PARTICLES * 0.6));
       if (dust && dust.requested === total) return;
       disposeDust();
       if (!total) {
@@ -1247,7 +1260,11 @@ const CrystalizedBall = ({
     const applyResize = () => {
       width = Math.max(1, container.clientWidth);
       height = Math.max(1, container.clientHeight);
-      renderer.dpr = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(PIXEL_BUDGET / (width * height)));
+      const isMobile =
+        typeof window !== 'undefined' &&
+        (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768);
+      const maxDpr = isMobile ? 1.0 : 1.2;
+      renderer.dpr = Math.min(window.devicePixelRatio || 1, maxDpr, Math.sqrt(PIXEL_BUDGET / (width * height)));
       renderer.setSize(width, height);
       sceneTarget.setSize(gl.canvas.width, gl.canvas.height);
     };
@@ -1374,7 +1391,7 @@ const CrystalizedBall = ({
       fieldUniforms.uLine.value = Math.max(0.6, radius * 0.0035);
       fieldUniforms.uTime.value = rimTime;
       fieldUniforms.uFrame.value = Math.floor(rimTime * 24) % 100000;
-      fieldUniforms.uBins.value = clamp(Math.round((Math.PI * 2 * radius) / 2.6), 240, 900);
+      fieldUniforms.uBins.value = clamp(Math.round((Math.PI * 2 * radius) / 4.3), 140, 540);
       fieldUniforms.uStrands.value = Math.round(clamp(s.strands, 1, MAX_STRANDS));
       fieldUniforms.uCrackle.value = clamp(s.crackle, 0, 1) + surge * 0.5 + charge;
       fieldUniforms.uFlares.value = clamp(s.flares, 0, 1);
@@ -1531,8 +1548,13 @@ const CrystalizedBall = ({
     resizeObserver.observe(container);
     const intersectionObserver = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
-      start();
-    });
+      if (visible) {
+        start();
+      } else if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    }, { threshold: 0.05 });
     intersectionObserver.observe(container);
 
     wakeRef.current = start;
@@ -1541,7 +1563,10 @@ const CrystalizedBall = ({
     return () => {
       alive = false;
       visible = false;
-      cancelAnimationFrame(raf);
+      if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
       window.removeEventListener('pointermove', onPointerMove);
@@ -1550,13 +1575,78 @@ const CrystalizedBall = ({
       window.removeEventListener('pointerup', onPointerUp);
       window.removeEventListener('blur', onPointerLeave);
       document.removeEventListener('visibilitychange', onVisibility);
+      canvas.removeEventListener('webglcontextlost', handleContextLost);
       wakeRef.current = null;
       disposeDust();
       disposeTarget(sceneTarget);
+      try {
+        geometry.remove();
+        blank.destroy();
+        if (fieldMesh.program) gl.deleteProgram(fieldMesh.program.program);
+        if (dustProgram) gl.deleteProgram(dustProgram.program);
+        if (stirMesh && stirMesh.program) gl.deleteProgram(stirMesh.program.program);
+        if (compositeMesh.program) gl.deleteProgram(compositeMesh.program.program);
+      } catch (_) {}
       gl.getExtension('WEBGL_lose_context')?.loseContext();
       if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
     };
   }, []);
+
+  if (isContextLost) {
+    const ballColor = tint || '#FF8A2A';
+    return (
+      <div
+        className={`crystalized-ball crystalized-ball-fallback ${className}`.trim()}
+        style={{
+          ...style,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+        }}
+      >
+        {/* Outer glowing aura */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: '6%',
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${ballColor}33 0%, ${ballColor}15 45%, transparent 72%)`,
+            filter: 'blur(6px)',
+            animation: 'crystalized-pulse 3s ease-in-out infinite alternate',
+          }}
+        />
+        {/* Fiery electric rim */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: '10%',
+            borderRadius: '50%',
+            border: `2px solid ${ballColor}`,
+            boxShadow: `
+              0 0 10px ${ballColor},
+              0 0 22px ${ballColor}aa,
+              0 0 35px ${ballColor}55,
+              inset 0 0 12px ${ballColor}88
+            `,
+            animation: 'crystalized-spin 10s linear infinite',
+            background: 'radial-gradient(circle, transparent 62%, rgba(255,255,255,0.18) 100%)',
+          }}
+        />
+        {/* Inner white-hot rim highlight */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: '14%',
+            borderRadius: '50%',
+            border: '1px solid rgba(255,255,255,0.7)',
+            boxShadow: `0 0 8px rgba(255,255,255,0.85), inset 0 0 6px ${ballColor}`,
+            opacity: 0.9,
+          }}
+        />
+      </div>
+    );
+  }
 
   return <div ref={containerRef} className={`crystalized-ball ${className}`.trim()} style={style} />;
 };

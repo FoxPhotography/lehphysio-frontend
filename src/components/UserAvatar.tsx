@@ -47,9 +47,11 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
   const numericSize = typeof size === 'number' ? size : 64;
 
   const frameImageUrl = getFrameImage(equippedFrame);
+  const frameStr = String(equippedFrame || '');
   const isCrystalized =
-    equippedFrame === 'crystalized' ||
-    equippedFrame === 'crystalized-ball' ||
+    frameStr === '10' ||
+    frameStr === 'crystalized' ||
+    frameStr === 'crystalized-ball' ||
     frameImageUrl === 'crystalized';
 
   // Measured once per frame image: how big the frame must be so its hole wraps the photo
@@ -148,7 +150,7 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
       )}
 
       {/* PNG frame overlay, auto-sized so its inner hole matches the photo (ring wraps it from outside) */}
-      {frameImageUrl && frameImageUrl !== 'crystalized' && !frameFailed && (
+      {frameImageUrl && frameImageUrl !== 'crystalized' && !isCrystalized && !frameFailed && (
         <img
           onError={(e) => {
             setFrameFailed(true);
@@ -161,6 +163,7 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
           decoding="async"
           className="absolute pointer-events-none z-10 select-none object-contain"
           style={{
+            display: frameFailed ? 'none' : 'block',
             width: `${framePct}%`,
             height: `${framePct}%`,
             left: `${50 - (0.5 + fit.ox) * framePct}%`,
