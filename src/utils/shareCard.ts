@@ -103,7 +103,7 @@ export async function renderShareCard(d: ShareCardData): Promise<Blob | null> {
   ctx.save();
   ctx.translate(cx, cy);
   ctx.globalCompositeOperation = 'lighter';
-ti  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 12; i++) {
     const a = (Math.PI * 2 * i) / 12 + rand(i) * 0.2;
     const len = 900 + rand(i + 50) * 400;
     const g = ctx.createLinearGradient(0, 0, Math.cos(a) * len, Math.sin(a) * len);
