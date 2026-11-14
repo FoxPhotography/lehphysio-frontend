@@ -789,7 +789,7 @@ export const Community: React.FC<CommunityProps> = ({
 
                     <div
                       id={`chat-msg-${msg.id}`}
-                      className="flex items-end gap-2.5 max-w-[85%] relative rounded-2xl"
+                      className="flex items-end gap-2.5 max-w-[85%] sm:max-w-[75%] min-w-0 relative rounded-2xl"
                       style={{ 
                         transform: `translateX(${tx}px)`,
                         transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28)',
@@ -832,7 +832,7 @@ export const Community: React.FC<CommunityProps> = ({
                       )}
 
                       {/* Bubble */}
-                      <div className={`flex flex-col ${isMyMsg ? 'items-end' : 'items-start'}`}>
+                      <div className={`flex flex-col min-w-0 max-w-full ${isMyMsg ? 'items-end' : 'items-start'}`}>
                         {/* Sender info — once per group, name in the sender's streak colour */}
                         {isFirstInGroup && (
                         <div className="flex items-center gap-1.5 mb-1 select-none">
@@ -866,10 +866,10 @@ export const Community: React.FC<CommunityProps> = ({
                         <HighlightWrapper
                           isHighlighted={deepLinkTarget?.type === 'chat_message' && deepLinkTarget?.messageId === msg.id}
                           highlightColor="#FFB000"
-                          className="rounded-2xl"
+                          className="rounded-2xl max-w-full min-w-0"
                         >
                           <div 
-                            className={`px-3 py-2 rounded-2xl text-xs md:text-sm font-semibold shadow-lg text-start relative min-w-0 ${
+                            className={`px-3 py-2 rounded-2xl text-xs md:text-sm font-semibold shadow-lg text-start relative min-w-0 max-w-full overflow-hidden ${
                               isMyMsg
                                 ? (isFirstInGroup ? 'rounded-se-none' : 'rounded-se-md')
                                 : (isFirstInGroup ? 'rounded-ss-none' : 'rounded-ss-md')
@@ -886,20 +886,31 @@ export const Community: React.FC<CommunityProps> = ({
                           {/* Quote reply */}
                           {msg.reply_to?.username && (
                             <div
-                              className={`border-s-2 px-2.5 py-1.5 rounded-lg mb-2 text-2xs text-start ${
+                              className={`border-s-2 px-2.5 py-1.5 rounded-lg mb-2 text-2xs text-start w-full min-w-0 max-w-full overflow-hidden ${
                                 fancyBubble ? 'bg-black/35 text-zinc-300' : isMyMsg ? 'bg-black/10 text-zinc-800 border-brand-orange' : 'bg-black/30 text-zinc-400 border-brand-orange'
                               }`}
                               style={fancyBubble ? { borderColor: bubbleTheme.c3 } : undefined}
                             >
-                              <div className={`font-black ${fancyBubble ? '' : isMyMsg ? 'text-black' : 'text-brand-orange'}`} style={fancyBubble ? { color: bubbleTheme.text } : undefined}>
+                              <div className={`font-black truncate ${fancyBubble ? '' : isMyMsg ? 'text-black' : 'text-brand-orange'}`} style={fancyBubble ? { color: bubbleTheme.text } : undefined}>
                                 <bdi dir="ltr">@{msg.reply_to.username}</bdi>
                               </div>
-                              <div dir="auto" className="truncate mt-0.5">{msg.reply_to.message}</div>
+                              <div 
+                                dir="auto" 
+                                className="line-clamp-2 break-words [word-break:break-word] [overflow-wrap:anywhere] mt-0.5 leading-snug opacity-90"
+                                style={{
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden'
+                                }}
+                              >
+                                {msg.reply_to.message}
+                              </div>
                             </div>
                           )}
 
                           <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1 w-full min-w-0">
-                            <p dir={textDir(msg.message)} className="whitespace-pre-wrap break-words [word-break:break-word] leading-relaxed min-w-0">
+                            <p dir={textDir(msg.message)} className="whitespace-pre-wrap break-words [word-break:break-word] [overflow-wrap:anywhere] leading-relaxed min-w-0 max-w-full">
                               {renderTextWithMentions(msg.message)}
                             </p>
                             
@@ -978,8 +989,8 @@ export const Community: React.FC<CommunityProps> = ({
               
               {/* Reply tag indicator */}
               {replyingTo && (
-                <div className="flex justify-between items-center bg-brand-orange/5 border-s-2 border-brand-orange rounded-xl px-3 py-2.5 mb-2 text-xs font-bold text-brand-orange">
-                  <div className="truncate pe-4">
+                <div className="flex justify-between items-center bg-brand-orange/5 border-s-2 border-brand-orange rounded-xl px-3 py-2 mb-2 text-xs font-bold text-brand-orange min-w-0 max-w-full">
+                  <div className="truncate pe-4 min-w-0 flex-1">
                     <span>بترد على <strong><bdi dir="ltr">@{replyingTo.username}</bdi></strong>: </span>
                     <span dir="auto" className="text-zinc-500 font-medium">{replyingTo.message}</span>
                   </div>
