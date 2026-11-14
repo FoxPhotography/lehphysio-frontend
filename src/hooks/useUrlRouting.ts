@@ -179,7 +179,8 @@ export const useUrlRouting = ({
           }
         }
         if (fetchUserProfile) fetchUserProfile();
-        showToast('تم تسجيل الدخول بنجاح! مرحباً بك 🎉');
+        const welcomeName = parsedUser?.username ? ` يا @${parsedUser.username}` : '';
+        showToast(`تم تسجيل الدخول بنجاح${welcomeName}! مرحباً بك 🎉`);
         window.history.replaceState({}, document.title, '/');
         setPageFromUrl('home');
       } else if (callbackError) {

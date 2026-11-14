@@ -6,8 +6,8 @@
  */
 export interface FrameFit { scale: number; ox: number; oy: number }
 
-export const DEFAULT_FIT: FrameFit = { scale: 1.34, ox: 0, oy: 0 };
-const KEY = 'frame_fit_v3';
+export const DEFAULT_FIT: FrameFit = { scale: 1.15, ox: 0, oy: 0 };
+const KEY = 'frame_fit_v4';
 const cache = new Map<string, FrameFit>();
 const pending = new Map<string, Promise<FrameFit>>();
 
@@ -42,7 +42,7 @@ function analyse(img: HTMLImageElement): FrameFit {
     return S;
   };
   let cx = S / 2, cy = S / 2;
-  if (solid(cx, cy)) return { scale: 1.25, ox: 0, oy: 0 }; // no hole in the middle → keep the classic size
+  if (solid(cx, cy)) return { scale: 1.12, ox: 0, oy: 0 }; // no hole in the middle → keep the classic size
   // Find the hole's real centre (some frames are drawn off-centre, e.g. ears on top)
   for (let i = 0; i < 3; i++) {
     const l = ray(cx, cy, Math.PI), r = ray(cx, cy, 0), u = ray(cx, cy, -Math.PI / 2), d = ray(cx, cy, Math.PI / 2);
@@ -51,11 +51,11 @@ function analyse(img: HTMLImageElement): FrameFit {
   const dists: number[] = [];
   for (let i = 0; i < 24; i++) dists.push(ray(cx, cy, (i / 24) * Math.PI * 2));
   dists.sort((a, b) => a - b);
-  // Pick 60th percentile: frame cleanly encases the photo from the outside
-  const radius = dists[Math.floor(dists.length * 0.6)];
+  // 40th percentile: frame snugly wraps the circular rim of the photo without leaving an empty void
+  const radius = dists[Math.floor(dists.length * 0.4)];
   const ratio = (radius * 2) / S; // hole diameter as a fraction of the frame width
   if (!(ratio > 0.2)) return DEFAULT_FIT;
-  const scale = Math.min(2.4, Math.max(1.25, 1.12 / ratio));
+  const scale = Math.min(1.5, Math.max(1.06, 0.98 / ratio));
   return { scale, ox: (cx - S / 2) / S, oy: (cy - S / 2) / S };
 }
 

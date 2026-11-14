@@ -82,9 +82,7 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
       }}
     >
       <span
-        className={`w-full h-full rounded-full flex items-center justify-center overflow-hidden font-extrabold text-brand-orange bg-brand-orange/10 transition-transform duration-200 ${
-          frameImageUrl && !frameFailed ? 'scale-[0.88]' : ''
-        }`}
+        className="w-full h-full rounded-full flex items-center justify-center overflow-hidden font-extrabold text-brand-orange bg-brand-orange/10"
         style={{ fontSize: `${Math.max(11, Math.floor(numericSize * 0.38))}px` }}
       >
         {showImage ? (
