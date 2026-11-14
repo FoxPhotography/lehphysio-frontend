@@ -58,8 +58,12 @@ export const PostLikesSheet: React.FC<PostLikesSheetProps> = ({
       try {
         const token = localStorage.getItem('token') || undefined;
         const res = await communityService.fetchPostLikes(postId, token);
+        if (res && typeof res.ok === 'boolean' && !res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data = res && typeof res.json === 'function' ? await res.json() : res;
         if (!isCancelled) {
-          setLikes(res.likes || []);
+          setLikes(Array.isArray(data?.likes) ? data.likes : []);
         }
       } catch (err: any) {
         if (!isCancelled) {
@@ -185,13 +189,20 @@ export const PostLikesSheet: React.FC<PostLikesSheetProps> = ({
                   <p className="text-xs text-red-400 font-bold mb-3">{error}</p>
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
                       setLoading(true);
-                      communityService
-                        .fetchPostLikes(postId, localStorage.getItem('token') || undefined)
-                        .then((res) => setLikes(res.likes || []))
-                        .catch(() => setError('تعذر تحميل المعجبين'))
-                        .finally(() => setLoading(false));
+                      setError(null);
+                      try {
+                        const token = localStorage.getItem('token') || undefined;
+                        const res = await communityService.fetchPostLikes(postId, token);
+                        if (res && typeof res.ok === 'boolean' && !res.ok) throw new Error(`HTTP ${res.status}`);
+                        const data = res && typeof res.json === 'function' ? await res.json() : res;
+                        setLikes(Array.isArray(data?.likes) ? data.likes : []);
+                      } catch {
+                        setError('تعذر تحميل المعجبين');
+                      } finally {
+                        setLoading(false);
+                      }
                     }}
                     className="px-4 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-xs text-white font-bold transition-colors cursor-pointer"
                   >
