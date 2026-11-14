@@ -72,7 +72,7 @@ float fbm(vec2 p, int octaves) {
   float value = 0.0;
   float amplitude = 0.5;
   float period = PERIOD;
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 5; i++) {
     if (i >= octaves) break;
     value += amplitude * gnoise(p, period);
     p = p * 2.0 + vec2(17.0, 31.0);
@@ -86,7 +86,7 @@ float warpField(vec2 q, float base, float reach, int octaves) {
   float value = 0.0;
   float amplitude = 0.5;
   float period = PERIOD;
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 5; i++) {
     if (i >= octaves) break;
     float weight = 1.0;
     if (i >= 2) {
@@ -148,7 +148,7 @@ vec3 bolt(
   float core = (1.0 - smoothstep(gCore - gPixel, gCore + gPixel, d)) * min(strength, 1.6);
   float line = glow(d, gWidth * 0.55) * strength;
 
-  for (int k = 0; k < 2; k++) {
+  for (int k = 0; k < 4; k++) {
     float order = float(k) + 0.5;
     if (order > branches + heat * 2.0) break;
     float h = seed * 31.0 + float(k) * 13.7;
@@ -194,7 +194,7 @@ void main() {
   vec2 pointer = turn * uPointer.xy;
   vec2 toPointer = uv - uPointer.xy;
   float heat = uPointer.z * exp(-dot(toPointer, toPointer) / 0.09);
-  int octaves = 2;
+  int octaves = 4;
 
   float energy = 0.0;
   float core = 0.0;

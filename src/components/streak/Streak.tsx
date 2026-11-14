@@ -421,7 +421,27 @@ export const PackageParticles: React.FC<{ themeKey: string; compact?: boolean }>
 
   // 8. Supernova / برق أزرق كهربائي
   if (themeKey === 'supernova') {
-    return null;
+    return (
+      <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+        {LIGHTNING_BOLTS.map((b, i) => (
+          <span
+            key={i}
+            className="streak-lightning-particle"
+            style={{
+              left: b.left,
+              top: b.top,
+              width: compact ? `${b.size - 2}px` : `${b.size}px`,
+              height: compact ? `${b.size - 2}px` : `${b.size}px`,
+              ['--dur' as any]: `${b.dur}s`,
+              ['--delay' as any]: `${b.delay}s`,
+              ['--rot' as any]: `${b.rot}deg`,
+            }}
+          >
+            <LightningSvg />
+          </span>
+        ))}
+      </span>
+    );
   }
 
   return null;
@@ -543,17 +563,17 @@ export const StreakAura: React.FC<{ days: number; density?: 'full' | 'lite'; cla
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
           <Lightning
             color="#4d6bff"
-            bolts={2}
+            bolts={3}
             spread={0.8}
-            branches={0.4}
+            branches={0.8}
             xOffset={0}
             angle={0}
-            size={1}
+            size={1.3}
             thickness={1}
-            glow={0.85}
+            glow={0.9}
             intensity={1}
             speed={1}
-            flicker={0.75}
+            flicker={0.85}
             mouseInteraction={true}
             mouseStrength={1}
             clickStrike={true}
@@ -640,15 +660,15 @@ export const StreakNameplate: React.FC<{
             color="#4d6bff"
             bolts={1}
             spread={0.6}
-            branches={0.15}
+            branches={0.25}
             xOffset={0}
             angle={90}
-            size={1.2}
+            size={1.3}
             thickness={1}
-            glow={0.7}
+            glow={0.8}
             intensity={1}
-            speed={1.6}
-            flicker={0.7}
+            speed={2}
+            flicker={0.8}
             mouseInteraction={false}
             mouseStrength={0}
             clickStrike={false}
@@ -730,15 +750,15 @@ export const StreakBubbleLayers: React.FC<{ days: number; override?: Override }>
             color="#4d6bff"
             bolts={1}
             spread={0.6}
-            branches={0.15}
+            branches={0.25}
             xOffset={0}
             angle={90}
-            size={1.2}
+            size={1.3}
             thickness={1}
-            glow={0.7}
+            glow={0.8}
             intensity={1}
-            speed={1.6}
-            flicker={0.7}
+            speed={2}
+            flicker={0.8}
             mouseInteraction={false}
             mouseStrength={0}
             clickStrike={false}
