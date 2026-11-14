@@ -525,16 +525,18 @@ export const Profile: React.FC<ProfileProps> = ({
               <p className="text-lg font-black text-white leading-tight">{user.total_xp?.toLocaleString()}</p>
             </div>
           </div>
-          <div className="relative overflow-hidden rounded-xl border bg-black/30 p-3.5 flex items-center gap-3" style={{ borderColor: `rgb(${streakTheme.glow} / ${streakTheme.key === 'none' ? 0.15 : 0.35})` }}>
+          <div className="relative overflow-hidden rounded-xl border bg-black/30 p-3.5 flex items-center gap-2.5" style={{ borderColor: `rgb(${streakTheme.glow} / ${streakTheme.key === 'none' ? 0.15 : 0.35})` }}>
             <StreakAura days={streak} density="lite" />
             <div className="relative z-10 w-9 h-9 flex items-center justify-center flex-shrink-0">
-              <StreakFlame days={streak} size={34} />
+              <StreakFlame days={streak} size={30} />
             </div>
-            <div className="relative z-10 min-w-0">
-              <p className="text-2xs text-zinc-400 uppercase tracking-wider">الستريك</p>
-              <p className="text-lg font-black text-white leading-tight">{user.streak_count === 1 ? 'يوم واحد' : user.streak_count === 2 ? 'يومين' : `${user.streak_count || 0} أيام`}</p>
-              <p className="text-2xs font-black leading-snug mt-0.5" style={{ color: streakTheme.text }}>{streakTheme.name}</p>
-              <p className="text-[10px] font-bold leading-snug text-zinc-400">{nextTierLine(streakTheme, streak)}</p>
+            {/* One line per row — never wraps word-by-word on narrow phones */}
+            <div className="relative z-10 min-w-0 flex-1 whitespace-nowrap">
+              <p className="text-2xs text-zinc-400 truncate">
+                الستريك{streakTheme.key !== 'none' && <> · <span className="font-black" style={{ color: streakTheme.text }}>{streakTheme.name}</span></>}
+              </p>
+              <p className="text-lg font-black text-white leading-tight truncate">{user.streak_count === 1 ? 'يوم واحد' : user.streak_count === 2 ? 'يومين' : `${user.streak_count || 0} أيام`}</p>
+              <p className="text-[10px] font-bold leading-snug text-zinc-500 truncate" title={nextTierLine(streakTheme, streak)}>{nextTierLine(streakTheme, streak).replace(/^فاضلك /, '')}</p>
             </div>
           </div>
         </div>
