@@ -26,6 +26,32 @@
   animation: streak-text-pan 3.5s ease-in-out infinite;
   filter: drop-shadow(0 0 7px rgba(0, 229, 255, 0.45));
 }
+
+/* Snow / Frost: icy blizzard glow and frosted text */
+.cos-fx--snow .streak-plate__bg {
+  background: linear-gradient(100deg, rgb(8 23 38 / 0.85), rgb(56 189 248 / 0.3), rgb(224 242 254 / 0.4), rgb(8 23 38 / 0.85));
+}
+.cos-fx--snow .streak-aura__glow {
+  background:
+    radial-gradient(35% 30% at 30% 25%, rgb(56 189 248 / 0.45), transparent 72%),
+    radial-gradient(35% 30% at 70% 30%, rgb(224 242 254 / 0.5), transparent 72%),
+    radial-gradient(40% 30% at 50% 65%, rgb(14 165 233 / 0.35), transparent 72%);
+}
+.streak-bubble.cos-fx--snow {
+  background: linear-gradient(120deg, #081726, #0c2d48, #144266);
+  border-color: rgb(186 230 253 / 0.4);
+}
+.streak-text.cos-fx--snow {
+  background: linear-gradient(110deg, #e0f2fe 0%, #38bdf8 35%, #ffffff 50%, #7dd3fc 70%, #e0f2fe 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  display: inline-block;
+  animation: streak-text-pan 3.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.5));
+}
 .cos-fx--shine .streak-plate__sheen::after { animation-duration: 4.5s; width: 32%; background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.24), transparent); }
 .cos-fx--stars .streak-plate__embers span,
 .cos-fx--stars .streak-aura__embers span { background: radial-gradient(circle, #fff 0 25%, var(--s3) 45%, transparent 70%); }

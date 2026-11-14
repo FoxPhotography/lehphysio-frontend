@@ -2,6 +2,8 @@ import React, { useId } from 'react';
 import { getStreakTheme, streakVars, type StreakTheme } from '../../utils/streakTheme';
 import { daysLabel } from '../../utils/format';
 import type { CosmeticVisual } from '../../utils/cosmetics';
+import Lightning from './Lightning';
+import PixelSnow from './PixelSnow';
 
 /** Equipped shop cosmetic (if any) wins over the automatic streak colours. */
 type Override = CosmeticVisual | null | undefined;
@@ -419,40 +421,7 @@ export const PackageParticles: React.FC<{ themeKey: string; compact?: boolean }>
 
   // 8. Supernova / برق أزرق كهربائي
   if (themeKey === 'supernova') {
-    return (
-      <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
-        <span
-          className="streak-lightning-particle"
-          style={{
-            right: '10%',
-            top: '15%',
-            width: compact ? '11px' : '14px',
-            height: compact ? '16px' : '20px',
-            ['--dur' as any]: '2.5s',
-            ['--delay' as any]: '0.2s',
-            ['--rot' as any]: '12deg',
-          }}
-        >
-          <LightningSvg />
-        </span>
-        {!compact && (
-          <span
-            className="streak-lightning-particle"
-            style={{
-              left: '12%',
-              bottom: '15%',
-              width: '12px',
-              height: '18px',
-              ['--dur' as any]: '3.0s',
-              ['--delay' as any]: '1.4s',
-              ['--rot' as any]: '-15deg',
-            }}
-          >
-            <LightningSvg />
-          </span>
-        )}
-      </span>
-    );
+    return null;
   }
 
   return null;
@@ -570,6 +539,48 @@ export const StreakAura: React.FC<{ days: number; density?: 'full' | 'lite'; cla
       <div className="streak-aura__glow" />
       <div className="streak-aura__ring" />
       {density === 'full' && <div className="streak-aura__ring streak-aura__ring--rev" />}
+      {t.key === 'supernova' && density === 'full' && (
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
+          <Lightning
+            color="#4d6bff"
+            bolts={3}
+            spread={0.8}
+            branches={0.8}
+            xOffset={0}
+            angle={0}
+            size={1}
+            thickness={1}
+            glow={0.9}
+            intensity={1}
+            speed={1}
+            flicker={0.85}
+            mouseInteraction={true}
+            mouseStrength={1}
+            clickStrike={true}
+            intro={true}
+            fade={0}
+            opacity={1}
+            lightMode={false}
+          />
+        </div>
+      )}
+      {(t.key === 'snow' || t.key === ('cos-snow' as any) || override?.fx === 'snow') && (
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
+          <PixelSnow
+            variant="snowflake"
+            density={density === 'full' ? 0.6 : 0.35}
+            speed={1.2}
+            sway={0.5}
+            flakeSize={0.015}
+            depth={1.5}
+            brightness={1.3}
+            glow={0.8}
+            accumulate={true}
+            color="#e0f2fe"
+            className="w-full h-full pointer-events-none"
+          />
+        </div>
+      )}
       <div className="streak-aura__embers">
         {EMBERS.slice(0, emberCount).map((e, i) => (
           <span
@@ -622,6 +633,48 @@ export const StreakNameplate: React.FC<{
       <span aria-hidden className="streak-plate__bg" />
       <span aria-hidden className="streak-plate__sheen" />
       <span aria-hidden className="streak-plate__edge" />
+      {t.key === 'supernova' && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
+          <Lightning
+            color="#4d6bff"
+            bolts={1}
+            spread={0.6}
+            branches={0.2}
+            xOffset={0}
+            angle={90}
+            size={1.3}
+            thickness={1}
+            glow={0.75}
+            intensity={1}
+            speed={2.2}
+            flicker={0.9}
+            mouseInteraction={true}
+            mouseStrength={1}
+            clickStrike={true}
+            intro={true}
+            fade={0}
+            opacity={1}
+            lightMode={false}
+          />
+        </span>
+      )}
+      {(t.key === 'snow' || t.key === ('cos-snow' as any) || override?.fx === 'snow') && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
+          <PixelSnow
+            variant="snowflake"
+            density={0.4}
+            speed={1.5}
+            sway={0.4}
+            flakeSize={0.018}
+            depth={1.2}
+            brightness={1.2}
+            glow={0.6}
+            accumulate={true}
+            color="#e0f2fe"
+            className="w-full h-full pointer-events-none"
+          />
+        </span>
+      )}
       {embers > 0 && (
         <span aria-hidden className="streak-plate__embers">
           {EMBERS.slice(0, embers).map((e, i) => (
@@ -668,6 +721,48 @@ export const StreakBubbleLayers: React.FC<{ days: number; override?: Override }>
     <>
       <span aria-hidden className="streak-plate__bg" />
       <span aria-hidden className="streak-plate__sheen" />
+      {t.key === 'supernova' && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
+          <Lightning
+            color="#4d6bff"
+            bolts={1}
+            spread={0.6}
+            branches={0.2}
+            xOffset={0}
+            angle={90}
+            size={1.3}
+            thickness={1}
+            glow={0.75}
+            intensity={1}
+            speed={2.2}
+            flicker={0.9}
+            mouseInteraction={true}
+            mouseStrength={1}
+            clickStrike={true}
+            intro={true}
+            fade={0}
+            opacity={1}
+            lightMode={false}
+          />
+        </span>
+      )}
+      {(t.key === 'snow' || t.key === ('cos-snow' as any) || override?.fx === 'snow') && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
+          <PixelSnow
+            variant="snowflake"
+            density={0.4}
+            speed={1.5}
+            sway={0.4}
+            flakeSize={0.018}
+            depth={1.2}
+            brightness={1.2}
+            glow={0.6}
+            accumulate={true}
+            color="#e0f2fe"
+            className="w-full h-full pointer-events-none"
+          />
+        </span>
+      )}
       {embers > 0 && (
         <span aria-hidden className="streak-plate__embers">
           {EMBERS.slice(0, embers).map((e, i) => (

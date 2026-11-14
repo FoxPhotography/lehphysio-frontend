@@ -210,6 +210,7 @@ export const getFrameImage = (frameId: string | null | undefined): string | null
   if (!frameId || frameId === 'none') return null;
   // CSS frame names are not PNG overlays
   if (frameId === 'gold-glow' || frameId === 'neon-ring') return null;
+  if (frameId === 'crystalized' || frameId === 'crystalized-ball') return 'crystalized';
   const numericId = parseInt(frameId, 10);
   if (isNaN(numericId)) return null;
   const frame = framesCache.find((f: any) => f._id === numericId || f.id === numericId);
