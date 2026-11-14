@@ -59,8 +59,16 @@
 .streak-aura--cos-curvanord {
   pointer-events: auto !important;
 }
+.streak-aura.cos-fx--curva .streak-aura__glow,
+.streak-aura.cos-fx--curva .streak-aura__ring,
+.streak-aura.cos-fx--curva .streak-aura__embers,
+.streak-aura.cos-fx--curva .streak-aura__sparkles,
+.streak-aura.cos-fx--curva .streak-aura__vignette {
+  pointer-events: none !important;
+}
 .fire-goal-physics-container,
-.streak-aura.cos-fx--curva canvas {
+.streak-aura.cos-fx--curva canvas,
+.streak-aura.cos-fx--curva > div {
   pointer-events: auto !important;
   touch-action: none;
 }
