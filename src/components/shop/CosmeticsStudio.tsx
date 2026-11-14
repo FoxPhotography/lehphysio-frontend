@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { Lock, Check, Loader2, Palette, Eye, Crown } from 'lucide-react';
 import { UserAvatar } from '../UserAvatar';
+import FireGoalBackground from '../streak/FireGoalBackground';
 import { StreakNameplate, StreakName, StreakAura, StreakBubbleLayers, StreakChip } from '../streak/Streak';
 import { streakVars, getStreakTheme } from '../../utils/streakTheme';
 import {
@@ -83,6 +84,39 @@ const BubblePreview: React.FC<{ user: any; look: Look; text?: string; compact?: 
 
 const ProfilePreview: React.FC<{ user: any; look: Look; compact?: boolean }> = ({ user, look, compact }) => {
   const streak = user?.streak_count || 0;
+  const isCurva = look.profile === 'profile:curvanord' || look.profile === 'curvanord';
+
+  if (isCurva) {
+    return (
+      <FireGoalBackground
+        className={`w-full max-w-xl ${compact ? 'h-[104px] p-2.5' : 'h-40 px-5'} flex items-center justify-start`}
+        compact={compact}
+      >
+        <div className="flex items-center gap-3.5 text-start">
+          <div className="relative shrink-0">
+            <UserAvatar
+              username={user?.username || 'Ibrahim Fox'}
+              avatarUrl={user?.avatar_url}
+              equippedFrame={user?.equipped_frame}
+              size={compact ? 44 : 60}
+              className="border-2 border-orange-400 shadow-lg"
+            />
+          </div>
+          <div className="min-w-0">
+            <h1 className={`${compact ? 'text-sm' : 'text-xl md:text-2xl'} font-black text-white tracking-wide drop-shadow truncate`}>
+              <StreakName days={streak} override={cosmeticVisual(look.name)}>
+                {user?.username || 'Ibrahim Fox'}
+              </StreakName>
+            </h1>
+            <p className={`${compact ? 'text-[11px]' : 'text-xs md:text-sm'} text-emerald-300 font-medium truncate drop-shadow`}>
+              Striker • Web Developer & Creator
+            </p>
+          </div>
+        </div>
+      </FireGoalBackground>
+    );
+  }
+
   return (
     <div className={`relative overflow-hidden rounded-2xl border border-white/10 flex flex-col items-center justify-center gap-1.5 ${compact ? 'h-[104px]' : 'h-40'}`}>
       <StreakAura days={streak} override={cosmeticVisual(look.profile)} density={compact ? 'lite' : 'full'} />
