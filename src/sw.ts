@@ -78,7 +78,7 @@ self.addEventListener('push', (event) => {
   let data: { title: string; body: string; icon: string; badge: string; data: { url: string } } = {
     title: 'تنبيه جديد من Leh Physio! 📢',
     body: 'تفقد آخر التحديثات في المنصة الآن.',
-    icon: '/icons/icon-192x192.png',
+    icon: '/icon-192x192.png',
     badge: '/icons/icon-72x72.png',
     data: { url: '/' },
   };
