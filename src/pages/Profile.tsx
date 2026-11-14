@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StreakAura, StreakFlame, StreakName, StreakChip } from '../components/streak/Streak';
 import { getStreakTheme, nextTierLine } from '../utils/streakTheme';
+import { cosmeticVisual } from '../utils/cosmetics';
 import { rankName, rankEmoji } from '../utils/ranks';
 import { m, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -315,9 +316,9 @@ export const Profile: React.FC<ProfileProps> = ({
       className="w-full max-w-lg mx-auto px-4 xl:pt-6 space-y-4"
     >
       {/* ── Profile Card ──────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-zinc-900/60 p-6" style={{ borderColor: streakTheme.key !== 'none' ? `rgb(${streakTheme.glow} / 0.28)` : undefined }}>
+      <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-zinc-900/60 p-6" style={{ borderColor: (cosmeticVisual(user.cosmetics?.profile) || (streakTheme.key !== 'none' ? streakTheme : null)) ? `rgb(${(cosmeticVisual(user.cosmetics?.profile) || streakTheme).glow} / 0.3)` : undefined }}>
         {/* Animated background in the current streak colour */}
-        <StreakAura days={streak} className="streak-aura--header" />
+        <StreakAura days={streak} className="streak-aura--header" override={cosmeticVisual(user.cosmetics?.profile)} />
         <div className="relative z-10">
 
         {/* Avatar Section */}
@@ -392,7 +393,7 @@ export const Profile: React.FC<ProfileProps> = ({
           </div>
 
           {/* Username */}
-          <h2 className="text-2xl font-black text-white mb-1"><StreakName days={streak}>{user.username}</StreakName></h2>
+          <h2 className="text-2xl font-black text-white mb-1"><StreakName days={streak} override={cosmeticVisual(user.cosmetics?.name)}>{user.username}</StreakName></h2>
           {streak > 0 && <StreakChip days={streak} size="sm" showName className="mb-2" />}
 
           {/* Admin / Owner Badge */}
@@ -573,6 +574,16 @@ export const Profile: React.FC<ProfileProps> = ({
         >
           <Settings className="w-4 h-4" />
           غيّر شكل البروفايل
+        </m.button>
+
+        {/* ── Cosmetics studio shortcut ─────────────────────────────── */}
+        <m.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => { sessionStorage.setItem('shop_focus', 'cosmetics'); changePage('rewards'); }}
+          className="relative overflow-hidden w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-fuchsia-400/30 bg-gradient-to-r from-fuchsia-600/25 via-violet-600/20 to-cyan-500/20 text-white font-black text-sm mb-3 cursor-pointer"
+        >
+          🎨 استوديو الستايل — نيم بليت، رسايل، ثيم وألوان
         </m.button>
 
         {/* ── Actions ──────────────────────────────────────────────── */}

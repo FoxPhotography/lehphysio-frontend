@@ -5,6 +5,8 @@ import { Plus, X } from 'lucide-react';
 import { UserAvatar } from '../UserAvatar';
 import type { ChatReaction } from '../../types';
 import { QUICK_REACTIONS, normalizeEmoji } from '../../utils/chatReactions';
+import { streakVars, type StreakTheme } from '../../utils/streakTheme';
+import { StreakBubbleLayers } from '../streak/Streak';
 
 // ─── Phone back button closes overlays ──────────────────────────────────────
 
@@ -139,7 +141,8 @@ interface MessageActionOverlayProps {
   messageId: number | null;
   /** Message bubble the overlay anchors to (looked up by id `chat-msg-{id}`). */
   isMine: boolean;
-  preview: { username: string; text: string } | null;
+  /** bubble: the sender's streak / cosmetic look, so the preview matches the chat */
+  preview: { username: string; text: string; days?: number; bubble?: (StreakTheme & { fx?: string }) | null } | null;
   myReaction: string | null;
   canReact: boolean;
   actions: MessageAction[];
@@ -299,7 +302,18 @@ export const MessageActionOverlay: React.FC<MessageActionOverlayProps> = ({
             )}
 
             {/* Message preview */}
-            {preview && (
+            {preview && preview.bubble && (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className={`pointer-events-auto max-w-full rounded-2xl px-3.5 py-2.5 shadow-xl streak-bubble ${preview.bubble.fx ? `cos-fx cos-fx--${preview.bubble.fx}` : ''} ${isMine ? 'self-start' : 'self-end'}`}
+                style={streakVars(preview.bubble)}
+              >
+                <StreakBubbleLayers days={preview.days || 0} override={preview.bubble.fx ? (preview.bubble as any) : undefined} />
+                <div className="text-[11px] font-black mb-0.5" style={{ color: preview.bubble.text }}>{preview.username}</div>
+                <p dir="auto" className="text-[13px] font-semibold leading-relaxed line-clamp-3 whitespace-pre-wrap break-words">{preview.text}</p>
+              </div>
+            )}
+            {preview && !preview.bubble && (
               <div onClick={(e) => e.stopPropagation()} className={`pointer-events-auto max-w-full rounded-2xl px-3.5 py-2.5 border shadow-xl ${
                 isMine
                   ? 'self-start bg-gradient-to-r from-brand-orange to-brand-amber text-black border-transparent'

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StreakAura, StreakFlame, StreakName, StreakChip } from '../components/streak/Streak';
 import { getStreakTheme } from '../utils/streakTheme';
+import { cosmeticVisual } from '../utils/cosmetics';
 import { ArrowRight, Flame, Share2, Trophy, Zap } from 'lucide-react';
 import { API_BASE } from '../services/api';
 import { UserAvatar } from '../components/UserAvatar';
@@ -17,6 +18,7 @@ interface PublicProfileData {
   equipped_frame: string;
   total_xp: number;
   streak_count: number;
+  cosmetics?: { nameplate?: string; bubble?: string; profile?: string; name?: string };
   rank: { name_ar: string; emoji: string; tier: number };
   global_rank: number;
 }
@@ -102,7 +104,9 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
   }
 
   const { next, pct, remaining } = rankProgress(data.total_xp);
-  const streakTheme = getStreakTheme(data.streak_count);
+  const profileCos = cosmeticVisual(data.cosmetics?.profile);
+  // An equipped profile theme replaces the automatic streak colours
+  const streakTheme = profileCos || getStreakTheme(data.streak_count);
   const profileUrl = `${window.location.origin}/u/${encodeURIComponent(data.username)}`;
 
   const onShare = async () => {
@@ -130,12 +134,12 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
         style={{ borderColor: streakTheme.key !== 'none' ? `rgb(${streakTheme.glow} / 0.35)` : undefined, boxShadow: streakTheme.key !== 'none' ? `0 20px 60px -25px rgb(${streakTheme.glow} / 0.55)` : undefined }}
       >
         {/* The profile's background is the owner's current streak colour, alive */}
-        <StreakAura days={data.streak_count} />
+        <StreakAura days={data.streak_count} override={profileCos} />
         <div className="relative z-10">
           <UserAvatar username={data.username} avatarUrl={data.avatar_url} equippedFrame={data.equipped_frame} size={112} eager className="mt-2" />
         </div>
         <div className="relative z-10">
-          <h1 className="text-2xl font-black text-white" dir="auto"><StreakName days={data.streak_count}>{data.username}</StreakName></h1>
+          <h1 className="text-2xl font-black text-white" dir="auto"><StreakName days={data.streak_count} override={cosmeticVisual(data.cosmetics?.name)}>{data.username}</StreakName></h1>
           {data.batch && <p className="text-sm text-zinc-400 font-bold mt-0.5">{data.batch}</p>}
         </div>
         {data.streak_count > 0 && <StreakChip days={data.streak_count} size="md" showName className="relative z-10" />}

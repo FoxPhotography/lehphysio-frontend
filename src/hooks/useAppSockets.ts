@@ -366,6 +366,18 @@ export const useAppSockets = ({
       fetchDailyQuestion();
     };
 
+    // Shop cosmetics: someone (maybe me) changed their look → re-skin everywhere instantly
+    const handleCosmeticsUpdated = (data: { username: string; userId?: number; cosmetics: any }) => {
+      if (!data?.username) return;
+      setLeaderboard((prev: any[]) => prev.map(r => (r.username === data.username ? { ...r, cosmetics: data.cosmetics } : r)));
+      setUser((prev: any) => (prev && prev.username === data.username ? { ...prev, cosmetics: data.cosmetics } : prev));
+    };
+    const handleCosmeticsUnlocked = (data: { unlocked_cosmetics: string[] }) => {
+      if (!Array.isArray(data?.unlocked_cosmetics)) return;
+      setUser((prev: any) => (prev ? { ...prev, unlocked_cosmetics: data.unlocked_cosmetics } : prev));
+    };
+    socket.on('cosmetics_updated', handleCosmeticsUpdated);
+    socket.on('cosmetics_unlocked', handleCosmeticsUnlocked);
     socket.on('xp_updated', handleXpUpdated);
     socket.on('level_updated', handleLevelUpdated);
     socket.on('rank_updated', handleRankUpdated);
@@ -375,6 +387,8 @@ export const useAppSockets = ({
     socket.on('question:answered', handleQuestionAnswered);
 
     return () => {
+      socket.off('cosmetics_updated', handleCosmeticsUpdated);
+      socket.off('cosmetics_unlocked', handleCosmeticsUnlocked);
       socket.off('xp_updated', handleXpUpdated);
       socket.off('level_updated', handleLevelUpdated);
       socket.off('rank_updated', handleRankUpdated);

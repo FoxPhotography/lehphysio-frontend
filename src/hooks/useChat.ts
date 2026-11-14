@@ -307,8 +307,15 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
         }
       }
     };
+    // Someone changed their cosmetics → re-skin their messages without refetching
+    const handleCosmeticsUpdated = (data: { username: string; cosmetics: any }) => {
+      if (!data?.username) return;
+      setChatMessages(prev => prev.map(m => (m.username === data.username ? { ...m, cosmetics: data.cosmetics } as any : m)));
+    };
     socket.on('chat_update', handleChatUpdate);
+    socket.on('cosmetics_updated', handleCosmeticsUpdated);
     return () => {
+      socket.off('cosmetics_updated', handleCosmeticsUpdated);
       socket.off('chat_update', handleChatUpdate);
     };
   }, [communityTab, currentPage, socket]);

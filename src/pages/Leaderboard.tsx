@@ -5,6 +5,7 @@ import { m } from 'framer-motion';
 import { Trophy, Crown, Medal, Star } from 'lucide-react';
 import { UserAvatar } from '../components/UserAvatar';
 import { StreakNameplate, StreakName, StreakChip } from '../components/streak/Streak';
+import { cosmeticVisual } from '../utils/cosmetics';
 
 // Helper: strip emojis from DB fields
 const stripEmojis = (str: string) => {
@@ -200,7 +201,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   }`}
                 >
                   {/* Nameplate in the person's current streak colours */}
-                  <StreakNameplate days={u.streak_count || 0} className="flex items-center gap-3 px-4 py-3">
+                  <StreakNameplate days={u.streak_count || 0} override={cosmeticVisual((isMe ? user?.cosmetics : null)?.nameplate || u.cosmetics?.nameplate)} className="flex items-center gap-3 px-4 py-3">
                   {/* Rank Number */}
                   <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black flex-shrink-0 ${
                     idx === 0 ? 'bg-amber-500 text-black' :
@@ -223,7 +224,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className={`text-[13px] font-black truncate ${isMe ? 'text-orange-400' : 'text-white'}`}>
-                        <StreakName days={u.streak_count || 0}>{u.username}</StreakName>
+                        <StreakName days={u.streak_count || 0} override={cosmeticVisual((isMe ? user?.cosmetics : null)?.name || u.cosmetics?.name)}>{u.username}</StreakName>
                       </span>
                       {isMe && (
                         <span className="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 text-2xs font-black">إنت</span>

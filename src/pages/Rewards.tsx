@@ -14,6 +14,7 @@ import {
 import { playChatSound, setFramesCache } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
 import { API_BASE } from '../services/api';
+import { CosmeticsStudio } from '../components/shop/CosmeticsStudio';
 
 interface RewardsProps {
   user: any;
@@ -145,6 +146,14 @@ export const Rewards: React.FC<RewardsProps> = ({
   const [shopFrames, setShopFrames] = useState<any[]>([]);
   const [buyingFrameId, setBuyingFrameId] = useState<string | null>(null);
 
+  // Came from the profile's "استوديو الستايل" button → jump to the studio
+  useEffect(() => {
+    if (sessionStorage.getItem('shop_focus') === 'cosmetics') {
+      sessionStorage.removeItem('shop_focus');
+      setTimeout(() => document.getElementById('cosmetics-studio')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 250);
+    }
+  }, []);
+
   useEffect(() => {
     fetch(`${API_BASE}/api/frames`)
       .then(r => r.json())
@@ -195,7 +204,7 @@ export const Rewards: React.FC<RewardsProps> = ({
         </div>
         <div>
           <h1 className="text-xl font-black text-white leading-tight">متجر XP</h1>
-          <p className="text-xs text-zinc-500">المكافآت والفريمات</p>
+          <p className="text-xs text-zinc-500">ستايلات، فريمات ومكافآت</p>
         </div>
         {user && (
           <div className="ms-auto px-3 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20">
@@ -203,6 +212,9 @@ export const Rewards: React.FC<RewardsProps> = ({
           </div>
         )}
       </div>
+
+      {/* ── Cosmetics studio (nameplates, chat bubbles, profile themes, name colours) ── */}
+      {user && <CosmeticsStudio user={user} showToast={showToast} />}
 
       {/* ── Secret Code Redemption ──────────────────────────────────── */}
       <section className="rounded-2xl border border-white/8 bg-zinc-900/60 p-5">

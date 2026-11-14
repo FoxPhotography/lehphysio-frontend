@@ -38,6 +38,7 @@ import { EmojiPickerPopover } from '../components/common/EmojiPickerPopover';
 import { ReactionSummary, ReactionBurst, MessageActionOverlay, ReactionDetailsSheet, type MessageAction } from '../components/chat/ChatReactions';
 import { StreakBubbleLayers, StreakName, StreakFlame } from '../components/streak/Streak';
 import { getStreakTheme, streakVars } from '../utils/streakTheme';
+import { cosmeticVisual } from '../utils/cosmetics';
 import { QUICK_REACTIONS, normalizeEmoji } from '../utils/chatReactions';
 import { copyToClipboard } from '../utils/helpers';
 import { useAuth } from '../context/AuthContext';
@@ -168,7 +169,22 @@ export const Community: React.FC<CommunityProps> = ({
   const [reactionPickerMsgId, setReactionPickerMsgId] = useState<number | null>(null);
 
   // Reactions UX: double-tap ❤️, floating burst, "who reacted" sheet
-  const { showToast } = useAuth();
+  const { showToast, changePage } = useAuth();
+
+  // Tap an avatar / name → that person's public profile
+  const openProfile = (username: string) => {
+    if (!username || isMultiSelectMode) return;
+    changePage('public-profile', { username });
+  };
+
+  // Day separators: النهارده / امبارح / date
+  const dayLabel = (d: Date) => {
+    const today = new Date();
+    const yesterday = new Date(Date.now() - 86400000);
+    if (d.toDateString() === today.toDateString()) return 'النهارده';
+    if (d.toDateString() === yesterday.toDateString()) return 'امبارح';
+    return d.toLocaleDateString('ar-EG-u-nu-latn', { weekday: 'long', day: 'numeric', month: 'long' });
+  };
   const [reactionBurst, setReactionBurst] = useState<{ id: number; emoji: string; key: number } | null>(null);
   const [reactionDetailsMsgId, setReactionDetailsMsgId] = useState<number | null>(null);
   const lastTapRef = useRef<{ id: number; t: number } | null>(null);
@@ -649,15 +665,23 @@ export const Community: React.FC<CommunityProps> = ({
 
                 // Telegram-style grouping: consecutive messages from one person within 5 minutes
                 const msgTime = (x: any) => new Date(x?.created_at || x?.timestamp || 0).getTime();
+                const sameDay = (a: any, b: any) => !!a && !!b && new Date(msgTime(a)).toDateString() === new Date(msgTime(b)).toDateString();
                 const sameGroup = (a: any, b: any) =>
-                  !!a && !!b && a.username === b.username && Math.abs(msgTime(b) - msgTime(a)) < 5 * 60 * 1000;
+                  !!a && !!b && a.username === b.username && sameDay(a, b) && Math.abs(msgTime(b) - msgTime(a)) < 5 * 60 * 1000;
+                const showDay = !sameDay(visibleMessages[idx - 1], msg) && msgTime(msg) > 0;
                 const isFirstInGroup = !sameGroup(visibleMessages[idx - 1], msg);
                 const isLastInGroup = !sameGroup(msg, visibleMessages[idx + 1]);
 
                 // Sender's streak drives the bubble: 3+ days → animated bubble in their tier colours
                 const streakDays = isMyMsg ? (user?.streak_count ?? msg.streak_count ?? 0) : (msg.streak_count || 0);
                 const sTheme = getStreakTheme(streakDays);
-                const fancyBubble = streakDays >= 3;
+                // Equipped shop cosmetics win over the automatic streak look
+                const cos = isMyMsg ? (user?.cosmetics || msg.cosmetics) : msg.cosmetics;
+                const bubbleCos = cosmeticVisual(cos?.bubble);
+                const nameCos = cosmeticVisual(cos?.name);
+                const fancyBubble = !!bubbleCos || streakDays >= 3;
+                const bubbleTheme = bubbleCos || sTheme;
+                const styledName = !!nameCos || streakDays >= 3;
                 
                 const tx = swipeTranslateX[msg.id] || 0;
                 const isSwiping = swipeMessageIdRef.current === msg.id;
@@ -668,8 +692,15 @@ export const Community: React.FC<CommunityProps> = ({
                 );
 
                 return (
+                  <React.Fragment key={msg.id}>
+                  {showDay && (
+                    <div className="flex justify-center py-1 select-none" style={{ marginTop: idx === 0 ? 0 : 4 }}>
+                      <span className="text-[11px] font-black text-zinc-300 bg-zinc-900/90 border border-zinc-800 rounded-full px-3 py-1 shadow-md backdrop-blur">
+                        {dayLabel(new Date(msgTime(msg)))}
+                      </span>
+                    </div>
+                  )}
                   <div 
-                    key={msg.id} 
                     // The whole row (not just the bubble) takes taps, long-press and swipe — like WhatsApp
                     className={`group/msg relative flex w-full px-1.5 py-1 -my-1 rounded-2xl select-none [-webkit-touch-callout:none] transition-colors duration-200 ${
                       isMultiSelectMode ? 'cursor-pointer ps-10' : ''
@@ -756,12 +787,20 @@ export const Community: React.FC<CommunityProps> = ({
                       {!isMyMsg && (
                         <div className={`relative shrink-0 w-8 ${msg.reactions?.length ? 'mb-5' : ''}`}>
                           {isLastInGroup && (
-                            <UserAvatar 
-                              username={msg.username} 
-                              avatarUrl={msg.avatar_url} 
-                              equippedFrame={msg.equipped_frame} 
-                              size={32} 
-                            />
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); openProfile(msg.username); }}
+                              onTouchStart={(e) => e.stopPropagation()}
+                              aria-label={`بروفايل ${msg.username}`}
+                              className="block rounded-full cursor-pointer active:scale-95 transition-transform"
+                            >
+                              <UserAvatar 
+                                username={msg.username} 
+                                avatarUrl={msg.avatar_url} 
+                                equippedFrame={msg.equipped_frame} 
+                                size={32} 
+                              />
+                            </button>
                           )}
                         </div>
                       )}
@@ -772,9 +811,15 @@ export const Community: React.FC<CommunityProps> = ({
                         {isFirstInGroup && (
                         <div className="flex items-center gap-1.5 mb-1 select-none">
                           {streakDays > 0 && <StreakFlame days={streakDays} size={13} />}
-                          <span className="text-2xs font-black" style={fancyBubble ? undefined : { color: isMyMsg ? 'var(--color-brand-orange)' : getNameColor(msg.username) }}>
-                            {fancyBubble ? <StreakName days={streakDays}>{msg.username}</StreakName> : msg.username}
-                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); openProfile(msg.username); }}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            className="text-2xs font-black cursor-pointer hover:underline underline-offset-2"
+                            style={styledName ? undefined : { color: isMyMsg ? 'var(--color-brand-orange)' : getNameColor(msg.username) }}
+                          >
+                            {styledName ? <StreakName days={streakDays} override={nameCos}>{msg.username}</StreakName> : msg.username}
+                          </button>
                           <span className="text-2xs font-bold bg-zinc-900 border border-zinc-800/80 text-zinc-400 px-1.5 py-0.5 rounded-md">
                             {msg.batch}
                           </span>
@@ -804,23 +849,23 @@ export const Community: React.FC<CommunityProps> = ({
                                 : (isFirstInGroup ? 'rounded-ss-none' : 'rounded-ss-md')
                             } ${
                               fancyBubble
-                                ? `streak-bubble streak-bubble--${sTheme.key}`
+                                ? `streak-bubble streak-bubble--${bubbleTheme.key}${bubbleCos ? ` cos-fx cos-fx--${bubbleCos.fx}` : ''}`
                                 : isMyMsg 
                                   ? 'bg-gradient-to-r from-brand-orange to-brand-amber text-black' 
                                   : 'bg-zinc-900/60 border border-zinc-800 text-white'
                             }`}
-                            style={fancyBubble ? streakVars(sTheme) : undefined}
+                            style={fancyBubble ? streakVars(bubbleTheme) : undefined}
                           >
-                          {fancyBubble && <StreakBubbleLayers days={streakDays} />}
+                          {fancyBubble && <StreakBubbleLayers days={streakDays} override={bubbleCos} />}
                           {/* Quote reply */}
                           {msg.reply_to?.username && (
                             <div
                               className={`border-s-2 px-2.5 py-1.5 rounded-lg mb-2 text-2xs text-start ${
                                 fancyBubble ? 'bg-black/35 text-zinc-300' : isMyMsg ? 'bg-black/10 text-zinc-800 border-brand-orange' : 'bg-black/30 text-zinc-400 border-brand-orange'
                               }`}
-                              style={fancyBubble ? { borderColor: sTheme.c3 } : undefined}
+                              style={fancyBubble ? { borderColor: bubbleTheme.c3 } : undefined}
                             >
-                              <div className={`font-black ${fancyBubble ? '' : isMyMsg ? 'text-black' : 'text-brand-orange'}`} style={fancyBubble ? { color: sTheme.text } : undefined}>
+                              <div className={`font-black ${fancyBubble ? '' : isMyMsg ? 'text-black' : 'text-brand-orange'}`} style={fancyBubble ? { color: bubbleTheme.text } : undefined}>
                                 <bdi dir="ltr">@{msg.reply_to.username}</bdi>
                               </div>
                               <div dir="auto" className="truncate mt-0.5">{msg.reply_to.message}</div>
@@ -876,17 +921,26 @@ export const Community: React.FC<CommunityProps> = ({
                       {isMyMsg && (
                         <div className={`relative shrink-0 w-8 ${msg.reactions?.length ? 'mb-5' : ''}`}>
                           {isLastInGroup && (
-                            <UserAvatar 
-                              username={msg.username} 
-                              avatarUrl={msg.avatar_url} 
-                              equippedFrame={msg.equipped_frame} 
-                              size={32} 
-                            />
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); openProfile(msg.username); }}
+                              onTouchStart={(e) => e.stopPropagation()}
+                              aria-label={`بروفايل ${msg.username}`}
+                              className="block rounded-full cursor-pointer active:scale-95 transition-transform"
+                            >
+                              <UserAvatar 
+                                username={msg.username} 
+                                avatarUrl={msg.avatar_url} 
+                                equippedFrame={msg.equipped_frame} 
+                                size={32} 
+                              />
+                            </button>
                           )}
                         </div>
                       )}
                     </div>
                   </div>
+                  </React.Fragment>
                 );
               })}
             </div>
@@ -1296,7 +1350,11 @@ export const Community: React.FC<CommunityProps> = ({
             open={!!cm}
             messageId={cm?.messageId ?? null}
             isMine={isMine}
-            preview={msg ? { username: msg.username, text: msg.message } : null}
+            preview={msg ? (() => {
+              const days = isMine ? (user?.streak_count ?? msg.streak_count ?? 0) : (msg.streak_count || 0);
+              const cosB = cosmeticVisual((isMine ? (user?.cosmetics || msg.cosmetics) : msg.cosmetics)?.bubble);
+              return { username: msg.username, text: msg.message, days, bubble: cosB || (days >= 3 ? getStreakTheme(days) : null) };
+            })() : null}
             myReaction={mine ? normalizeEmoji(mine.emoji) : null}
             canReact={!!msg && msg.id > 0}
             actions={actions}

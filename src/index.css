@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./cosmetics.css";
 
 /* Self-hosted Tajawal (Arabic + Latin subsets). No third-party font request, no render-blocking chain. */
 @import "@fontsource/tajawal/400.css";

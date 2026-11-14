@@ -2,6 +2,11 @@ import React, { useId } from 'react';
 import { m } from 'framer-motion';
 import { getStreakTheme, streakVars, type StreakTheme } from '../../utils/streakTheme';
 import { daysLabel } from '../../utils/format';
+import type { CosmeticVisual } from '../../utils/cosmetics';
+
+/** Equipped shop cosmetic (if any) wins over the automatic streak colours. */
+type Override = CosmeticVisual | null | undefined;
+const fxClass = (o: Override) => (o ? ` cos-fx cos-fx--${o.fx}` : '');
 
 // Static pseudo-random layouts (no Math.random in render → stable between renders)
 const EMBERS = Array.from({ length: 14 }, (_, i) => ({
@@ -114,15 +119,17 @@ export const StreakChip: React.FC<{
 
 // ─── Animated background (profile headers, stat cards) ───────────────────────
 
-export const StreakAura: React.FC<{ days: number; density?: 'full' | 'lite'; className?: string }> = ({ days, density = 'full', className = '' }) => {
-  const t: StreakTheme = themeFor(days);
-  if (t.key === 'none') {
+export const StreakAura: React.FC<{ days: number; density?: 'full' | 'lite'; className?: string; override?: Override }> = ({ days, density = 'full', className = '', override }) => {
+  const t: StreakTheme = override || themeFor(days);
+  if (!override && t.key === 'none') {
     return <div aria-hidden className={`streak-aura streak-aura--off ${className}`} />;
   }
   const emberCount = density === 'lite' ? Math.round(4 + t.intensity * 4) : Math.round(6 + t.intensity * 8);
-  const showSparkles = t.key === 'supernova' || t.key === 'plasma';
+  const showSparkles = override
+    ? override.fx === 'stars' || override.fx === 'shine' || override.fx === 'holo'
+    : t.key === 'supernova' || t.key === 'plasma';
   return (
-    <div aria-hidden className={`streak-aura streak-aura--${t.key} ${className}`} style={streakVars(t)}>
+    <div aria-hidden className={`streak-aura streak-aura--${t.key}${fxClass(override)} ${className}`} style={streakVars(t)}>
       <div className="streak-aura__glow" />
       <div className="streak-aura__ring" />
       {density === 'full' && <div className="streak-aura__ring streak-aura__ring--rev" />}
@@ -142,7 +149,7 @@ export const StreakAura: React.FC<{ days: number; density?: 'full' | 'lite'; cla
       </div>
       {showSparkles && density === 'full' && (
         <div className="streak-aura__sparkles">
-          {SPARKLES.slice(0, t.key === 'supernova' ? 10 : 6).map((s, i) => (
+          {SPARKLES.slice(0, t.key === 'supernova' || override?.fx === 'stars' || override?.fx === 'holo' ? 10 : 6).map((s, i) => (
             <span key={i} style={{ left: s.x, top: s.y, width: s.size, height: s.size, animationDelay: `${s.delay}s` }} />
           ))}
         </div>
@@ -159,16 +166,19 @@ export const StreakNameplate: React.FC<{
   days: number;
   className?: string;
   children: React.ReactNode;
-} & React.HTMLAttributes<HTMLDivElement>> = ({ days, className = '', children, style, ...rest }) => {
-  const t = themeFor(days);
-  if (t.key === 'none') {
+  override?: Override;
+} & React.HTMLAttributes<HTMLDivElement>> = ({ days, className = '', children, style, override, ...rest }) => {
+  const t = override || themeFor(days);
+  if (!override && t.key === 'none') {
     return <div className={className} style={style} {...rest}>{children}</div>;
   }
-  const embers = t.key === 'supernova' ? 6 : t.key === 'plasma' ? 4 : 0;
+  const embers = override
+    ? (override.fx === 'embers' || override.fx === 'stars' || override.fx === 'holo' || override.fx === 'shine' ? 5 : 0)
+    : t.key === 'supernova' ? 6 : t.key === 'plasma' ? 4 : 0;
   return (
     <div
       {...rest}
-      className={`streak-plate streak-plate--${t.key} ${className}`}
+      className={`streak-plate streak-plate--${t.key}${fxClass(override)} ${className}`}
       style={{ ...streakVars(t), ...style }}
     >
       <span aria-hidden className="streak-plate__bg" />
@@ -196,11 +206,11 @@ export const StreakNameplate: React.FC<{
 };
 
 /** Username rendered in the tier's moving gradient (used on nameplates & profiles). */
-export const StreakName: React.FC<{ days: number; children: React.ReactNode; className?: string }> = ({ days, children, className = '' }) => {
-  const t = themeFor(days);
-  if (t.key === 'none') return <span className={className}>{children}</span>;
+export const StreakName: React.FC<{ days: number; children: React.ReactNode; className?: string; override?: Override }> = ({ days, children, className = '', override }) => {
+  const t = override || themeFor(days);
+  if (!override && t.key === 'none') return <span className={className}>{children}</span>;
   return (
-    <span className={`streak-text ${className}`} style={streakVars(t)}>
+    <span className={`streak-text${fxClass(override)} ${className}`} style={streakVars(t)}>
       {children}
     </span>
   );
@@ -210,9 +220,11 @@ export const StreakName: React.FC<{ days: number; children: React.ReactNode; cla
  * Animated layers for a chat bubble in the sender's streak colours (3+ days).
  * Put inside an element with className `streak-bubble` + streakVars(theme).
  */
-export const StreakBubbleLayers: React.FC<{ days: number }> = ({ days }) => {
-  const t = themeFor(days);
-  const embers = t.key === 'supernova' ? 4 : t.key === 'plasma' ? 3 : 0;
+export const StreakBubbleLayers: React.FC<{ days: number; override?: Override }> = ({ days, override }) => {
+  const t = override || themeFor(days);
+  const embers = override
+    ? (override.fx === 'flow' ? 0 : 3)
+    : t.key === 'supernova' ? 4 : t.key === 'plasma' ? 3 : 0;
   return (
     <>
       <span aria-hidden className="streak-plate__bg" />

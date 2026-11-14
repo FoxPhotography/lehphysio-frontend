@@ -1,0 +1,30 @@
+
+/* ═══ Shop cosmetics effects (cos-fx--*) layered on the streak classes ═══ */
+@keyframes cos-hue { from { filter: hue-rotate(0deg); } to { filter: hue-rotate(360deg); } }
+@keyframes cos-bg-pan { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+.cos-fx--holo .streak-plate__bg,
+.cos-fx--holo .streak-aura__glow,
+.cos-fx--holo .streak-aura__ring { animation-name: streak-slide, cos-hue; animation-duration: 6s, 5s; animation-timing-function: linear, linear; animation-iteration-count: infinite, infinite; }
+.cos-fx--holo .streak-aura__glow { animation-name: streak-drift, cos-hue; animation-duration: 8s, 5s; animation-timing-function: ease-in-out, linear; }
+.cos-fx--holo .streak-aura__ring { animation-name: streak-spin, cos-hue; animation-duration: 12s, 5s; }
+.streak-bubble.cos-fx--holo {
+  background: linear-gradient(120deg, #3b0764, #0e7490, #854d0e, #9d174d, #3b0764);
+  background-size: 300% 300%;
+  animation: cos-bg-pan 9s ease-in-out infinite;
+  border-color: rgb(255 255 255 / 0.25);
+}
+.streak-text.cos-fx--holo {
+  background: linear-gradient(90deg, #ff3d9a, #ffe600, #00e5ff, #a855f7, #ff3d9a);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: streak-text-pan 2.6s linear infinite;
+}
+.cos-fx--shine .streak-plate__sheen::after { animation-duration: 2.8s; width: 34%; background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.28), transparent); }
+.cos-fx--stars .streak-plate__embers span,
+.cos-fx--stars .streak-aura__embers span { background: radial-gradient(circle, #fff 0 25%, var(--s3) 45%, transparent 70%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cos-fx, .cos-fx * { animation: none !important; }
+}
