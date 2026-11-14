@@ -3,6 +3,9 @@ import { API_BASE } from '../services/api';
 
 interface UseUrlRoutingProps {
   token: string | null;
+  setToken?: (token: string) => void;
+  setUser?: (user: any) => void;
+  fetchUserProfile?: () => Promise<void>;
   setCurrentPage: (page: string) => void;
   setPageFromUrl: (page: string) => void;
   setCommunityTab: (tab: 'feed' | 'chat') => void;
@@ -17,6 +20,9 @@ interface UseUrlRoutingProps {
 
 export const useUrlRouting = ({
   token,
+  setToken,
+  setUser,
+  fetchUserProfile,
   setCurrentPage,
   setPageFromUrl,
   setCommunityTab,
@@ -155,15 +161,28 @@ export const useUrlRouting = ({
     } else if (path === '/auth/callback') {
       const callbackToken = params.get('token');
       const callbackError = params.get('error');
+      const callbackUserRaw = params.get('user');
       if (callbackToken) {
         localStorage.setItem('token', callbackToken);
+        if (setToken) setToken(callbackToken);
+        if (callbackUserRaw && setUser) {
+          try {
+            setUser(JSON.parse(decodeURIComponent(callbackUserRaw)));
+          } catch (e) {
+            console.error('Error parsing callback user:', e);
+          }
+        }
+        if (fetchUserProfile) fetchUserProfile();
         showToast('تم تسجيل الدخول بنجاح! مرحباً بك 🎉');
-        window.location.replace('/');
+        window.history.replaceState({}, document.title, '/');
+        setPageFromUrl('home');
       } else if (callbackError) {
         showToast(decodeURIComponent(callbackError));
-        window.location.replace('/login');
+        window.history.replaceState({}, document.title, '/login');
+        setPageFromUrl('login');
       } else {
-        window.location.replace('/');
+        window.history.replaceState({}, document.title, '/');
+        setPageFromUrl('home');
       }
     } else if (path === '/auth/social-register' || path === '/social-register') {
       setPageFromUrl('social-register');

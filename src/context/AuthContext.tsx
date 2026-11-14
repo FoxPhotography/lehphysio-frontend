@@ -114,7 +114,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Start on the page the URL points to, so deep links don't flash the home page first.
   const [currentPage, _setCurrentPage] = useState(() => pageFromPath(window.location.pathname));
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState(localStorage.getItem('token') || '');
+  const [token, setToken] = useState(() => {
+    if (window.location.pathname === '/auth/callback') {
+      const fromCallback = new URLSearchParams(window.location.search).get('token');
+      if (fromCallback) {
+        localStorage.setItem('token', fromCallback);
+        return fromCallback;
+      }
+    }
+    return localStorage.getItem('token') || '';
+  });
   const [confirmEmail, setConfirmEmail] = useState(() => {
     // One-tap link from the verification email: /confirm?email=...&code=...
     if (window.location.pathname === '/confirm') {

@@ -245,6 +245,9 @@ function InnerApp() {
 
   const { handleUrlRouting } = useUrlRouting({
     token,
+    setToken,
+    setUser,
+    fetchUserProfile,
     setCurrentPage,
     setPageFromUrl,
     setCommunityTab,
