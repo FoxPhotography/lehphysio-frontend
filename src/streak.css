@@ -248,14 +248,56 @@
   96% { opacity: 0; transform: scale(0.7) rotate(var(--rot, 0deg)); }
 }
 
-/* ── Fluttering Butterfly Effects (Plasma / Pink) ── */
+/* ── 7-Day Plasma Tier Effects (Dark Purple / Neon Magenta Electric Arc) ── */
 .streak-bubble--plasma {
-  border-color: rgba(255, 43, 214, 0.5) !important;
-  box-shadow: 0 0 15px rgba(255, 43, 214, 0.25), inset 0 0 10px rgba(255, 43, 214, 0.12);
+  border-color: rgba(255, 43, 214, 0.65) !important;
+  box-shadow: 0 0 20px rgba(255, 43, 214, 0.4), 0 0 35px rgba(109, 40, 255, 0.3), inset 0 0 12px rgba(255, 43, 214, 0.2);
 }
 .streak-plate--plasma .streak-plate__edge {
-  box-shadow: 0 0 14px #ff2bd6, 0 0 24px rgba(255, 43, 214, 0.6);
+  box-shadow: 0 0 16px #ff2bd6, 0 0 30px #6d28ff, 0 0 45px rgba(255, 43, 214, 0.55);
 }
+.streak-plasma-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  color: #ff2bd6;
+  filter: drop-shadow(0 0 6px #ff2bd6) drop-shadow(0 0 12px #6d28ff) drop-shadow(0 0 18px #ffd1fb);
+  animation: plasma-surge var(--dur, 2.6s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+.streak-plasma-particle .plasma-arc-svg {
+  animation: plasma-spin 2s linear infinite;
+}
+@keyframes plasma-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes plasma-surge {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.6) rotate(var(--rot, 0deg));
+    opacity: 0;
+    filter: drop-shadow(0 0 4px #ff2bd6);
+  }
+  20% {
+    opacity: 1;
+    transform: translate3d(var(--fly-x, 8px), -12px, 0) scale(1.25) rotate(calc(var(--rot, 0deg) + 45deg));
+    filter: drop-shadow(0 0 10px #ff2bd6) drop-shadow(0 0 18px #6d28ff);
+  }
+  55% {
+    transform: translate3d(calc(var(--fly-x, 8px) * -0.8), -30px, 0) scale(0.95) rotate(calc(var(--rot, 0deg) + 120deg));
+    opacity: 0.95;
+  }
+  85% {
+    opacity: 0.8;
+    filter: drop-shadow(0 0 14px #ffd1fb);
+  }
+  100% {
+    transform: translate3d(var(--fly-x, 8px), -55px, 0) scale(0.4) rotate(calc(var(--rot, 0deg) + 200deg));
+    opacity: 0;
+  }
+}
+
+/* ── Fluttering Butterfly Effects (Pinky Package) ── */
 .streak-butterfly-particle {
   position: absolute;
   pointer-events: none;
@@ -287,12 +329,12 @@
 
 /* ═══ Multi-Package Theming & Animations (All 7 Packages) ═══ */
 
-/* 1. Pinky / Rose / Plasma */
-.streak-bubble--cos-rose, .streak-bubble--plasma {
+/* 1. Pinky / Rose */
+.streak-bubble--cos-rose {
   border-color: rgba(255, 79, 163, 0.55) !important;
   box-shadow: 0 0 16px rgba(255, 79, 163, 0.3), inset 0 0 10px rgba(255, 79, 163, 0.15);
 }
-.streak-plate--cos-rose .streak-plate__edge, .streak-plate--plasma .streak-plate__edge {
+.streak-plate--cos-rose .streak-plate__edge {
   box-shadow: 0 0 14px #ff4fa3, 0 0 24px rgba(255, 79, 163, 0.6);
 }
 .streak-heart-particle {
@@ -456,12 +498,12 @@
 
 /* ═══ Multi-Package Theming & Animations (All 7 Packages) ═══ */
 
-/* 1. Pinky / Rose / Plasma */
-.streak-bubble--cos-rose, .streak-bubble--plasma {
+/* 1. Pinky / Rose */
+.streak-bubble--cos-rose {
   border-color: rgba(255, 79, 163, 0.55) !important;
   box-shadow: 0 0 16px rgba(255, 79, 163, 0.3), inset 0 0 10px rgba(255, 79, 163, 0.15);
 }
-.streak-plate--cos-rose .streak-plate__edge, .streak-plate--plasma .streak-plate__edge {
+.streak-plate--cos-rose .streak-plate__edge {
   box-shadow: 0 0 14px #ff4fa3, 0 0 24px rgba(255, 79, 163, 0.6);
 }
 .streak-heart-particle {

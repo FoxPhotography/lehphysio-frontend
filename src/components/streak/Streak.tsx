@@ -79,9 +79,81 @@ export const LightningSvg = () => (
   </svg>
 );
 
+export const PlasmaArcSvg = () => (
+  <svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" className="plasma-arc-svg">
+    {/* Swirling ionized plasma rings with glowing core */}
+    <circle cx="12" cy="12" r="3.5" fill="#ffffff" />
+    <path
+      d="M12 2C6.5 2 2 6.5 2 12c0 2.2.7 4.3 2 6l1.4-1.4A7.9 7.9 0 0 1 4 12c0-4.4 3.6-8 8-8 2 0 3.9.8 5.3 2l1.4-1.4A9.9 9.9 0 0 0 12 2z"
+      fill="currentColor"
+    />
+    <path
+      d="M12 22c5.5 0 10-4.5 10-10 0-2.2-.7-4.3-2-6l-1.4 1.4A7.9 7.9 0 0 1 20 12c0 4.4-3.6 8-8 8-2 0-3.9-.8-5.3-2l-1.4 1.4A9.9 9.9 0 0 0 12 22z"
+      fill="currentColor"
+    />
+    {/* Intense electric plasma discharge spikes */}
+    <path d="M12 4V1M12 23v-3M4 12H1M23 12h-3M6.3 6.3L4.2 4.2M19.8 19.8l-2.1-2.1M6.3 17.7l-2.1 2.1M19.8 4.2l-2.1 2.1" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
 export const PackageParticles: React.FC<{ themeKey: string; compact?: boolean }> = ({ themeKey, compact }) => {
-  // 1. Pinky / Rose / Plasma (فراشات وقلوب وردية ناعمة)
-  if (themeKey === 'cos-rose' || themeKey === 'plasma') {
+  // 1a. 7-Day Streak Tier: Plasma / بلازما (شحنات وأقواس بلازما كهربائية عملاقة)
+  if (themeKey === 'plasma') {
+    return (
+      <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+        <span
+          className="streak-plasma-particle"
+          style={{
+            left: '10%',
+            bottom: '12%',
+            width: compact ? '13px' : '17px',
+            height: compact ? '13px' : '17px',
+            ['--dur' as any]: '2.6s',
+            ['--delay' as any]: '0.1s',
+            ['--fly-x' as any]: '10px',
+            ['--rot' as any]: '20deg',
+          }}
+        >
+          <PlasmaArcSvg />
+        </span>
+        <span
+          className="streak-plasma-particle"
+          style={{
+            right: '12%',
+            top: '14%',
+            width: compact ? '11px' : '15px',
+            height: compact ? '11px' : '15px',
+            ['--dur' as any]: '3.2s',
+            ['--delay' as any]: '1.1s',
+            ['--fly-x' as any]: '-12px',
+            ['--rot' as any]: '-45deg',
+          }}
+        >
+          <PlasmaArcSvg />
+        </span>
+        {!compact && (
+          <span
+            className="streak-plasma-particle"
+            style={{
+              left: '46%',
+              top: '40%',
+              width: '15px',
+              height: '15px',
+              ['--dur' as any]: '2.2s',
+              ['--delay' as any]: '0.6s',
+              ['--fly-x' as any]: '6px',
+              ['--rot' as any]: '60deg',
+            }}
+          >
+            <PlasmaArcSvg />
+          </span>
+        )}
+      </span>
+    );
+  }
+
+  // 1b. Pinky / Rose / باكدج بينكي فقط (فراشات وقلوب وردية ناعمة)
+  if (themeKey === 'cos-rose') {
     return (
       <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
         <span
