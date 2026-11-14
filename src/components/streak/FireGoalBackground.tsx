@@ -981,7 +981,7 @@ export function FireGoalBackground({
 
     // Grab the ball when clicking/touching on or near the ball
     const distToBall = Math.hypot(x - sim.ball.x, y - sim.ball.y);
-    if (distToBall <= sim.ball.radius + 38) {
+    if (distToBall <= sim.ball.radius + 50) {
       sim.pointer.isDraggingBall = true;
       sim.ball.spawnX = sim.ball.x;
       sim.ball.spawnY = sim.ball.y;
@@ -1071,7 +1071,13 @@ export function FireGoalBackground({
       {/* Pure Interactive Physics Canvas */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full block z-10"
+        onMouseDown={handlePointerDown}
+        onMouseMove={handlePointerMove}
+        onMouseUp={handlePointerUp}
+        onTouchStart={handlePointerDown}
+        onTouchMove={handlePointerMove}
+        onTouchEnd={handlePointerUp}
+        className="absolute inset-0 w-full h-full block z-10 pointer-events-auto"
       />
 
       {/* Optional slot if you ever pass children over the background */}

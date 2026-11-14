@@ -204,6 +204,13 @@ export const Profile: React.FC<ProfileProps> = ({
   const [framesList, setFramesList] = useState<any[]>([]);
   const [animatedProgress, setAnimatedProgress] = useState(0);
 
+  const profileCos = cosmeticVisual(user.cosmetics?.profile);
+  const isCurvaProfile =
+    user.cosmetics?.profile === 'profile:curvanord' ||
+    profileCos?.fx === 'curva' ||
+    streakTheme.key === 'curvanord' ||
+    (streakTheme as any).key === 'cos-curvanord';
+
   // ─── XP & Rank Calculations ─────────────────────────────────────────────────
   const currentTier = user.rank?.tier || 1;
   const currentThreshold = RANK_THRESHOLDS[currentTier - 1] || 0;
@@ -350,6 +357,133 @@ export const Profile: React.FC<ProfileProps> = ({
     size: `${3 + (i * 0.7) % 4}px`,
   }));
 
+  const avatarSectionContent = (
+    <div className="flex flex-col items-center pointer-events-none">
+      {/* Circular Progress Ring */}
+      <div className="relative mb-4 pointer-events-none">
+        <svg width="140" height="140" className="-rotate-90 pointer-events-none">
+          <defs>
+            <linearGradient id="xp-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FF6A00" />
+              <stop offset="100%" stopColor="#FFB000" />
+            </linearGradient>
+          </defs>
+          {/* Track */}
+          <circle
+            cx="70" cy="70" r="60"
+            fill="transparent"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth="8"
+          />
+          {/* Fill */}
+          <circle
+            cx="70" cy="70" r="60"
+            fill="transparent"
+            stroke="url(#xp-grad)"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeDasharray={2 * Math.PI * 60}
+            strokeDashoffset={2 * Math.PI * 60 * (1 - animatedProgress / 100)}
+            className="transition-all duration-1000 ease-out"
+          />
+        </svg>
+
+        {/* Avatar inside the ring */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="relative pointer-events-none">
+            <UserAvatar
+              username={user.username}
+              avatarUrl={user.avatar_url}
+              equippedFrame={equippedFrame}
+              size={108}
+            />
+            {/* Camera Upload Overlay */}
+            <label
+              className={`absolute inset-0 rounded-full flex items-center justify-center cursor-pointer transition-all pointer-events-auto ${
+                isUploading ? 'bg-black/70 opacity-100' : 'bg-black/0 opacity-0 hover:bg-black/60 hover:opacity-100'
+              }`}
+            >
+              {isUploading ? (
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  <span className="text-2xs text-white font-bold">بنرفع</span>
+                </div>
+              ) : (
+                <Camera className="w-7 h-7 text-white" />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={onAvatarFileChange}
+                disabled={isUploading}
+              />
+            </label>
+          </div>
+        </div>
+
+        {/* Tier Pill */}
+        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-orange-500 text-black text-2xs font-black border-2 border-zinc-900 whitespace-nowrap z-20 pointer-events-none">
+          {rankName(user.rank)}
+        </div>
+      </div>
+
+      {/* Username */}
+      <h2 className="text-2xl font-black text-white mb-1 pointer-events-none select-none">
+        <StreakName days={streak} override={cosmeticVisual(user.cosmetics?.name)}>{user.username}</StreakName>
+      </h2>
+      {streak > 0 && <StreakChip days={streak} size="sm" showName className="mb-2 pointer-events-none" />}
+
+      {/* Admin / Owner Badge */}
+      {(user.role === 'admin' || user.role === 'owner') && (
+        <div
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black mb-2 pointer-events-none"
+          style={{
+            background: user.role === 'owner'
+              ? 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,140,0,0.15))'
+              : 'linear-gradient(135deg, rgba(255,106,0,0.15), rgba(255,140,0,0.15))',
+            border: `1px solid ${user.role === 'owner' ? 'rgba(255,215,0,0.3)' : 'rgba(255,106,0,0.3)'}`,
+            color: user.role === 'owner' ? '#FFD700' : '#FF6A00',
+          }}
+        >
+          {user.role === 'owner' ? <Crown className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+          {user.role === 'owner' ? 'المالك' : 'أدمن'}
+        </div>
+      )}
+
+      {/* Editable Batch */}
+      <div className="flex items-center gap-2 pointer-events-auto">
+        {isEditingBatch ? (
+          <select
+            className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 border border-white/15 text-white focus:outline-none focus:border-orange-500/60 pointer-events-auto"
+            value={selectedBatch}
+            autoFocus
+            onChange={(e) => {
+              const b = e.target.value;
+              setSelectedBatch(b);
+              handleUpdateProfile(b);
+              setIsEditingBatch(false);
+            }}
+            onBlur={() => setIsEditingBatch(false)}
+          >
+            {BATCHES.map(b => (
+              <option key={b.value} value={b.value}>{b.label}</option>
+            ))}
+          </select>
+        ) : (
+          <m.button
+            onClick={() => setIsEditingBatch(true)}
+            whileHover={{ scale: 1.04 }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold hover:border-orange-500/40 transition-colors pointer-events-auto"
+          >
+            {user.batch}
+            <Pencil className="w-3 h-3 opacity-70" />
+          </m.button>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <m.div
       initial={{ opacity: 0, y: 12 }}
@@ -359,137 +493,27 @@ export const Profile: React.FC<ProfileProps> = ({
       {/* ── Profile Card ──────────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-zinc-900/60 p-6" style={{ borderColor: (cosmeticVisual(user.cosmetics?.profile) || (streakTheme.key !== 'none' ? streakTheme : null)) ? `rgb(${(cosmeticVisual(user.cosmetics?.profile) || streakTheme).glow} / 0.3)` : undefined }}>
         
-        {/* ── Stadium Arena Hero Header (Streak Aura + Avatar) ── */}
-        <div className="relative -mx-6 -mt-6 p-6 pb-6 overflow-hidden border-b border-white/10 mb-6 min-h-[270px] flex flex-col justify-center">
-          {/* Animated background in the current streak colour */}
-          <StreakAura days={streak} className="streak-aura--header" override={cosmeticVisual(user.cosmetics?.profile)} />
-          
-          <div className="relative z-10">
-            {/* Avatar Section */}
-            <div className="flex flex-col items-center">
-              {/* Circular Progress Ring */}
-              <div className="relative mb-4">
-            <svg width="140" height="140" className="-rotate-90">
-              <defs>
-                <linearGradient id="xp-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FF6A00" />
-                  <stop offset="100%" stopColor="#FFB000" />
-                </linearGradient>
-              </defs>
-              {/* Track */}
-              <circle
-                cx="70" cy="70" r="60"
-                fill="transparent"
-                stroke="rgba(255,255,255,0.06)"
-                strokeWidth="8"
-              />
-              {/* Fill */}
-              <circle
-                cx="70" cy="70" r="60"
-                fill="transparent"
-                stroke="url(#xp-grad)"
-                strokeWidth="8"
-                strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 60}
-                strokeDashoffset={2 * Math.PI * 60 * (1 - animatedProgress / 100)}
-                className="transition-all duration-1000 ease-out"
-              />
-            </svg>
+        {/* If NOT Curva Nord, the animated streak background spans the ENTIRE card seamlessly without split */}
+        {!isCurvaProfile && (
+          <StreakAura days={streak} className="streak-aura--header" override={profileCos} />
+        )}
 
-            {/* Avatar inside the ring */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative">
-                <UserAvatar
-                  username={user.username}
-                  avatarUrl={user.avatar_url}
-                  equippedFrame={equippedFrame}
-                  size={108}
-                />
-                {/* Camera Upload Overlay */}
-                <label
-                  className={`absolute inset-0 rounded-full flex items-center justify-center cursor-pointer transition-all ${
-                    isUploading ? 'bg-black/70 opacity-100' : 'bg-black/0 opacity-0 hover:bg-black/60 hover:opacity-100'
-                  }`}
-                >
-                  {isUploading ? (
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                      <span className="text-2xs text-white font-bold">بنرفع</span>
-                    </div>
-                  ) : (
-                    <Camera className="w-7 h-7 text-white" />
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={onAvatarFileChange}
-                    disabled={isUploading}
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* Tier Pill */}
-            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-orange-500 text-black text-2xs font-black border-2 border-zinc-900 whitespace-nowrap z-20">
-              {rankName(user.rank)}
+        {/* ── Avatar / Striker Section ── */}
+        {isCurvaProfile ? (
+          /* For Curva Nord, the interactive stadium arena is isolated in the upper hero header with a dividing border */
+          <div className="relative -mx-6 -mt-6 p-6 pb-6 overflow-hidden border-b border-white/10 mb-6 min-h-[270px] flex flex-col justify-center">
+            <StreakAura days={streak} className="streak-aura--header" override={profileCos} />
+            <div className="relative z-10 pointer-events-none">
+              {avatarSectionContent}
             </div>
           </div>
-
-          {/* Username */}
-          <h2 className="text-2xl font-black text-white mb-1"><StreakName days={streak} override={cosmeticVisual(user.cosmetics?.name)}>{user.username}</StreakName></h2>
-          {streak > 0 && <StreakChip days={streak} size="sm" showName className="mb-2" />}
-
-          {/* Admin / Owner Badge */}
-          {(user.role === 'admin' || user.role === 'owner') && (
-            <div
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black mb-2"
-              style={{
-                background: user.role === 'owner'
-                  ? 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,140,0,0.15))'
-                  : 'linear-gradient(135deg, rgba(255,106,0,0.15), rgba(255,140,0,0.15))',
-                border: `1px solid ${user.role === 'owner' ? 'rgba(255,215,0,0.3)' : 'rgba(255,106,0,0.3)'}`,
-                color: user.role === 'owner' ? '#FFD700' : '#FF6A00',
-              }}
-            >
-              {user.role === 'owner' ? <Crown className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
-              {user.role === 'owner' ? 'المالك' : 'أدمن'}
-            </div>
-          )}
-
-          {/* Editable Batch */}
-          <div className="flex items-center gap-2">
-            {isEditingBatch ? (
-              <select
-                className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 border border-white/15 text-white focus:outline-none focus:border-orange-500/60"
-                value={selectedBatch}
-                autoFocus
-                onChange={(e) => {
-                  const b = e.target.value;
-                  setSelectedBatch(b);
-                  handleUpdateProfile(b);
-                  setIsEditingBatch(false);
-                }}
-                onBlur={() => setIsEditingBatch(false)}
-              >
-                {BATCHES.map(b => (
-                  <option key={b.value} value={b.value}>{b.label}</option>
-                ))}
-              </select>
-            ) : (
-              <m.button
-                onClick={() => setIsEditingBatch(true)}
-                whileHover={{ scale: 1.04 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold hover:border-orange-500/40 transition-colors"
-              >
-                {user.batch}
-                <Pencil className="w-3 h-3 opacity-70" />
-              </m.button>
-            )}
+        ) : (
+          /* For all other themes, standard unified avatar section without border or split */
+          <div className="relative z-10 pointer-events-none mb-6">
+            {avatarSectionContent}
           </div>
-        </div>
-      </div>
-    </div>
+        )}
+
 
     {/* ── Lower Profile Content (Rank Card, Stats, Actions) ── */}
     <div className="relative z-10">
