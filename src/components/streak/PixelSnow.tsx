@@ -128,7 +128,7 @@ const VARIANTS = ['square', 'round', 'snowflake'];
 const CELL = 9;
 const LEVELS = 5;
 const SLOTS = 8;
-const MAX_FLAKES = 4000;
+const MAX_FLAKES = 120;
 const LEVEL_WEIGHTS = [0.46, 0.27, 0.15, 0.08, 0.04];
 const LEVEL_FALL = [16, 24, 34, 48, 66];
 const LEVEL_LIGHT = [0.42, 0.58, 0.76, 0.92, 1];
@@ -435,6 +435,15 @@ export default function PixelSnow({
       stencil: false
     });
     if (!container || !canvas || !gl) return undefined;
+
+    const handleContextLost = (e: Event) => {
+      e.preventDefault();
+      if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
+    canvas.addEventListener('webglcontextlost', handleContextLost, false);
 
     const programs = {
       flake: link(gl, FLAKE_VERTEX, FLAKE_FRAGMENT, ['aCorner', 'aFlake']),
@@ -810,7 +819,11 @@ export default function PixelSnow({
       const s = settingsRef.current;
       const width = Math.max(1, container.clientWidth);
       const height = Math.max(1, container.clientHeight);
-      const ratio = Math.min(s.dpr || window.devicePixelRatio || 1, 2);
+    const isMobile =
+      typeof window !== 'undefined' &&
+      (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768);
+    const defaultMaxDpr = isMobile ? 0.45 : 0.6;
+    const ratio = Math.min(s.dpr || defaultMaxDpr, defaultMaxDpr);
       view.width = width;
       view.height = height;
       view.ratio = ratio;
@@ -859,8 +872,11 @@ export default function PixelSnow({
       if (visible) {
         last = 0;
         wake();
+      } else if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
       }
-    });
+    }, { threshold: 0.05 });
     intersection.observe(container);
     window.addEventListener('pointermove', onPointerMove, { passive: true });
     document.documentElement.addEventListener('pointerleave', onPointerLeave);
@@ -884,12 +900,14 @@ export default function PixelSnow({
 
     return () => {
       cancelAnimationFrame(raf);
+      raf = 0;
       wakeRef.current = null;
       resizeObserver.disconnect();
       intersection.disconnect();
       window.removeEventListener('pointermove', onPointerMove);
       document.documentElement.removeEventListener('pointerleave', onPointerLeave);
       document.removeEventListener('visibilitychange', onVisibility);
+      canvas.removeEventListener('webglcontextlost', handleContextLost);
       for (const target of [snow, ...down, ...up]) {
         gl.deleteTexture(target.texture);
         gl.deleteFramebuffer(target.framebuffer);
@@ -902,7 +920,7 @@ export default function PixelSnow({
       gl.deleteBuffer(instanceBuffer);
       gl.deleteVertexArray(quadVao);
       gl.deleteVertexArray(flakeVao);
-      if (!canvas.isConnected) gl.getExtension('WEBGL_lose_context')?.loseContext();
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
   }, []);
 

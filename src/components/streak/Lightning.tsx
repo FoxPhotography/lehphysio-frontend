@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './Lightning.css';
 
 const MAX_BOLTS = 4;
@@ -72,7 +72,7 @@ float fbm(vec2 p, int octaves) {
   float value = 0.0;
   float amplitude = 0.5;
   float period = PERIOD;
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 3; i++) {
     if (i >= octaves) break;
     value += amplitude * gnoise(p, period);
     p = p * 2.0 + vec2(17.0, 31.0);
@@ -86,10 +86,10 @@ float warpField(vec2 q, float base, float reach, int octaves) {
   float value = 0.0;
   float amplitude = 0.5;
   float period = PERIOD;
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 3; i++) {
     if (i >= octaves) break;
     float weight = 1.0;
-    if (i >= 3) {
+    if (i >= 2) {
       float estimate = abs(base + value * WARP);
       weight = 1.0 - smoothstep(reach * 0.6, reach, estimate);
       if (weight <= 0.0) break;
@@ -148,7 +148,7 @@ vec3 bolt(
   float core = (1.0 - smoothstep(gCore - gPixel, gCore + gPixel, d)) * min(strength, 1.6);
   float line = glow(d, gWidth * 0.55) * strength;
 
-  for (int k = 0; k < 6; k++) {
+  for (int k = 0; k < 2; k++) {
     float order = float(k) + 0.5;
     if (order > branches + heat * 2.0) break;
     float h = seed * 31.0 + float(k) * 13.7;
@@ -194,7 +194,7 @@ void main() {
   vec2 pointer = turn * uPointer.xy;
   vec2 toPointer = uv - uPointer.xy;
   float heat = uPointer.z * exp(-dot(toPointer, toPointer) / 0.09);
-  int octaves = uResolution.y > 1400.0 ? 8 : 7;
+  int octaves = 2;
 
   float energy = 0.0;
   float core = 0.0;
@@ -372,6 +372,7 @@ export const Lightning: React.FC<LightningProps> = ({
   className = '',
   style
 }) => {
+  const [fallback, setFallback] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<{ refresh: () => void } | null>(null);
   const settings = {
@@ -404,7 +405,20 @@ export const Lightning: React.FC<LightningProps> = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false });
-    if (!gl) return;
+    if (!gl) {
+      setFallback(true);
+      return;
+    }
+
+    const handleContextLost = (e: Event) => {
+      e.preventDefault();
+      setFallback(true);
+      if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
+    canvas.addEventListener('webglcontextlost', handleContextLost, false);
 
     const vShader = compile(gl, gl.VERTEX_SHADER, VERTEX);
     const fShader = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT);
@@ -438,7 +452,12 @@ export const Lightning: React.FC<LightningProps> = ({
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      const ratio = Math.min(settingsRef.current.dpr ?? window.devicePixelRatio ?? 1, 2);
+      const isMobile =
+        typeof window !== 'undefined' &&
+        (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768);
+      // Ultra-low resolution for maximum GPU performance (0.45 on mobile, 0.6 on desktop)
+      const defaultMaxDpr = isMobile ? 0.45 : 0.6;
+      const ratio = Math.min(settingsRef.current.dpr ?? defaultMaxDpr, defaultMaxDpr);
       view.width = Math.max(1, rect.width);
       view.height = Math.max(1, rect.height);
       view.left = rect.left;
@@ -596,9 +615,13 @@ export const Lightning: React.FC<LightningProps> = ({
       wake();
     };
 
-    window.addEventListener('pointermove', onMove, { passive: true });
-    window.addEventListener('pointerdown', onDown, { passive: true });
-    window.addEventListener('pointerout', onLeave);
+    if (settingsRef.current.mouseInteraction) {
+      window.addEventListener('pointermove', onMove, { passive: true });
+      window.addEventListener('pointerout', onLeave);
+    }
+    if (settingsRef.current.clickStrike) {
+      window.addEventListener('pointerdown', onDown, { passive: true });
+    }
 
     const resizeObserver = new ResizeObserver(() => {
       resize();
@@ -609,8 +632,13 @@ export const Lightning: React.FC<LightningProps> = ({
 
     const visibilityObserver = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
-      if (visible) wake();
-    });
+      if (visible) {
+        wake();
+      } else if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    }, { threshold: 0.05 });
     visibilityObserver.observe(canvas);
 
     const onVisibility = () => {
@@ -632,13 +660,17 @@ export const Lightning: React.FC<LightningProps> = ({
 
     return () => {
       disposed = true;
-      cancelAnimationFrame(raf);
+      if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
       resizeObserver.disconnect();
       visibilityObserver.disconnect();
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerdown', onDown);
       window.removeEventListener('pointerout', onLeave);
       document.removeEventListener('visibilitychange', onVisibility);
+      canvas.removeEventListener('webglcontextlost', handleContextLost);
       try {
         gl.deleteBuffer(buffer);
         gl.deleteProgram(program);
@@ -671,6 +703,15 @@ export const Lightning: React.FC<LightningProps> = ({
     paused,
     dpr
   ]);
+
+  if (fallback) {
+    return (
+      <div className={`lightning-container lightning-fallback ${className}`.trim()} style={style}>
+        <div className="lightning-fallback__beam" style={{ background: `linear-gradient(90deg, transparent 0%, ${color}22 30%, ${color}55 50%, ${color}22 70%, transparent 100%)` }} />
+        <div className="lightning-fallback__core" style={{ background: color, boxShadow: `0 0 8px ${color}, 0 0 16px ${color}88, 0 0 24px #fff` }} />
+      </div>
+    );
+  }
 
   return <canvas ref={canvasRef} className={`lightning-container ${className}`.trim()} style={style} />;
 };

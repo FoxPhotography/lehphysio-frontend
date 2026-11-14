@@ -543,17 +543,17 @@ export const StreakAura: React.FC<{ days: number; density?: 'full' | 'lite'; cla
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
           <Lightning
             color="#4d6bff"
-            bolts={3}
+            bolts={2}
             spread={0.8}
-            branches={0.8}
+            branches={0.4}
             xOffset={0}
             angle={0}
             size={1}
             thickness={1}
-            glow={0.9}
+            glow={0.85}
             intensity={1}
             speed={1}
-            flicker={0.85}
+            flicker={0.75}
             mouseInteraction={true}
             mouseStrength={1}
             clickStrike={true}
@@ -561,6 +561,7 @@ export const StreakAura: React.FC<{ days: number; density?: 'full' | 'lite'; cla
             fade={0}
             opacity={1}
             lightMode={false}
+            dpr={0.5}
           />
         </div>
       )}
@@ -639,22 +640,23 @@ export const StreakNameplate: React.FC<{
             color="#4d6bff"
             bolts={1}
             spread={0.6}
-            branches={0.2}
+            branches={0.15}
             xOffset={0}
             angle={90}
-            size={1.3}
+            size={1.2}
             thickness={1}
-            glow={0.75}
+            glow={0.7}
             intensity={1}
-            speed={2.2}
-            flicker={0.9}
-            mouseInteraction={true}
-            mouseStrength={1}
-            clickStrike={true}
-            intro={true}
+            speed={1.6}
+            flicker={0.7}
+            mouseInteraction={false}
+            mouseStrength={0}
+            clickStrike={false}
+            intro={false}
             fade={0}
-            opacity={1}
+            opacity={0.9}
             lightMode={false}
+            dpr={0.4}
           />
         </span>
       )}
@@ -662,16 +664,17 @@ export const StreakNameplate: React.FC<{
         <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
           <PixelSnow
             variant="snowflake"
-            density={0.4}
-            speed={1.5}
-            sway={0.4}
-            flakeSize={0.018}
-            depth={1.2}
-            brightness={1.2}
-            glow={0.6}
-            accumulate={true}
+            density={0.2}
+            speed={1.2}
+            sway={0.3}
+            flakeSize={0.015}
+            depth={1}
+            brightness={1.1}
+            glow={0.5}
+            accumulate={false}
             color="#e0f2fe"
             className="w-full h-full pointer-events-none"
+            dpr={0.4}
           />
         </span>
       )}
@@ -727,22 +730,23 @@ export const StreakBubbleLayers: React.FC<{ days: number; override?: Override }>
             color="#4d6bff"
             bolts={1}
             spread={0.6}
-            branches={0.2}
+            branches={0.15}
             xOffset={0}
             angle={90}
-            size={1.3}
+            size={1.2}
             thickness={1}
-            glow={0.75}
+            glow={0.7}
             intensity={1}
-            speed={2.2}
-            flicker={0.9}
-            mouseInteraction={true}
-            mouseStrength={1}
-            clickStrike={true}
-            intro={true}
+            speed={1.6}
+            flicker={0.7}
+            mouseInteraction={false}
+            mouseStrength={0}
+            clickStrike={false}
+            intro={false}
             fade={0}
-            opacity={1}
+            opacity={0.9}
             lightMode={false}
+            dpr={0.4}
           />
         </span>
       )}
@@ -750,16 +754,17 @@ export const StreakBubbleLayers: React.FC<{ days: number; override?: Override }>
         <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
           <PixelSnow
             variant="snowflake"
-            density={0.4}
-            speed={1.5}
-            sway={0.4}
-            flakeSize={0.018}
-            depth={1.2}
-            brightness={1.2}
-            glow={0.6}
-            accumulate={true}
+            density={0.2}
+            speed={1.2}
+            sway={0.3}
+            flakeSize={0.015}
+            depth={1}
+            brightness={1.1}
+            glow={0.5}
+            accumulate={false}
             color="#e0f2fe"
             className="w-full h-full pointer-events-none"
+            dpr={0.4}
           />
         </span>
       )}
