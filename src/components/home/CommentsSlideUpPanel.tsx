@@ -280,6 +280,49 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
     return canAll && 'all'.startsWith(mentionSearch.toLowerCase()) ? [{ username: 'all', avatar_url: null }, ...list] : list;
   };
 
+  // Start replying to a comment or a nested reply
+  const handleStartReply = (targetComment: any, isReplyComment: boolean, rootParentId?: number) => {
+    const targetParentId = isReplyComment ? rootParentId : targetComment.id;
+    if (!targetParentId) return;
+
+    setReplyingTo({ id: targetParentId, username: targetComment.username });
+
+    if (isReplyComment) {
+      const mention = `@${targetComment.username} `;
+      setCommentText(prev => {
+        const trimmed = prev.trimStart();
+        if (replyingTo && trimmed.startsWith(`@${replyingTo.username} `)) {
+          return trimmed.replace(`@${replyingTo.username} `, mention);
+        }
+        if (trimmed.startsWith('@')) {
+          return trimmed.replace(/^@[^\n\r]+?\s+/, mention);
+        }
+        return `${mention}${trimmed}`;
+      });
+      setExpandedReplies(prev => ({ ...prev, [targetParentId]: true }));
+    } else {
+      // If switching to top-level comment and input was only an old mention, clean it
+      setCommentText(prev => {
+        if (/^@\S+\s*$/.test(prev.trim())) {
+          return '';
+        }
+        return prev;
+      });
+    }
+
+    inputRef.current?.focus();
+  };
+
+  const handleCancelReply = () => {
+    if (replyingTo) {
+      const mentionPrefix = `@${replyingTo.username} `;
+      if (commentText.startsWith(mentionPrefix)) {
+        setCommentText(prev => prev.slice(mentionPrefix.length));
+      }
+    }
+    setReplyingTo(null);
+  };
+
   // Submit new comment or reply
   const handleSubmitComment = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -635,18 +678,13 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                 <span>{c.likes_count > 0 ? c.likes_count : 'لايك'}</span>
               </button>
 
-              {!isReply && (
-                <button
-                  onClick={() => {
-                    setReplyingTo({ id: c.id, username: c.username });
-                    inputRef.current?.focus();
-                  }}
-                  className="flex items-center gap-1 font-bold text-zinc-500 hover:text-brand-orange cursor-pointer transition-colors"
-                >
-                  <CornerUpLeft className="rtl:-scale-x-100 w-3.5 h-3.5" />
-                  <span>رد</span>
-                </button>
-              )}
+              <button
+                onClick={() => handleStartReply(c, isReply, parentId)}
+                className="flex items-center gap-1 font-bold text-zinc-500 hover:text-brand-orange cursor-pointer transition-colors"
+              >
+                <CornerUpLeft className="rtl:-scale-x-100 w-3.5 h-3.5" />
+                <span>رد</span>
+              </button>
             </div>
 
             {/* Threaded replies toggle */}
@@ -811,7 +849,7 @@ export const CommentsSlideUpPanel: React.FC<CommentsSlideUpPanelProps> = ({
                     <span>بترد على <bdi dir="ltr">@{replyingTo.username}</bdi></span>
                   </div>
                   <button
-                    onClick={() => setReplyingTo(null)}
+                    onClick={handleCancelReply}
                     className="text-zinc-400 hover:text-white p-1 cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />

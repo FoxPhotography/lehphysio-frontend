@@ -411,13 +411,31 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                                     <p dir={textDir(r.content)} className="text-xs text-zinc-300 font-medium leading-relaxed pe-1 mt-0.5">{renderTextWithMentions(r.content)}</p>
                                   )}
 
-                                  <div className="flex gap-2 items-center mt-1">
+                                  <div className="flex gap-3 items-center mt-1">
                                     <button 
                                       className={`flex items-center gap-1 text-2xs font-bold cursor-pointer transition-colors ${r.has_liked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
                                       onClick={() => handleCommentLike(r.id)}
                                     >
                                       <Heart className={`w-2.5 h-2.5 ${r.has_liked ? 'fill-current' : ''}`} /> 
                                       <span>{r.likes_count}</span>
+                                    </button>
+                                    <button 
+                                      className="flex items-center gap-1 text-2xs font-bold text-zinc-500 hover:text-brand-orange transition-colors cursor-pointer" 
+                                      onClick={() => {
+                                        setReplyingToComment({ ...c, replyTargetUser: r.username });
+                                        const mention = `@${r.username} `;
+                                        setCommentText(prev => {
+                                          const trimmed = prev.trimStart();
+                                          if (trimmed.startsWith('@')) {
+                                            return trimmed.replace(/^@[^\n\r]+?\s+/, mention);
+                                          }
+                                          return `${mention}${trimmed}`;
+                                        });
+                                        document.getElementById(`comment-input-${postId}`)?.focus();
+                                      }}
+                                    >
+                                      <CornerUpLeft className="rtl:-scale-x-100 w-2.5 h-2.5" /> 
+                                      <span>رد</span>
                                     </button>
                                   </div>
                                 </div>
@@ -440,10 +458,17 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                 <div className="flex items-center justify-between bg-brand-orange/5 border-s-2 border-brand-orange rounded-xl px-3 py-2 mb-3 text-xs font-bold text-brand-orange">
                   <div className="flex items-center gap-1.5">
                     <CornerUpLeft className="rtl:-scale-x-100 w-3.5 h-3.5 shrink-0" />
-                    <span>بترد على <strong><bdi dir="ltr">@{replyingToComment.username}</bdi></strong></span>
+                    <span>بترد على <strong><bdi dir="ltr">@{replyingToComment.replyTargetUser || replyingToComment.username}</bdi></strong></span>
                   </div>
                   <button 
-                    onClick={() => setReplyingToComment(null)}
+                    onClick={() => {
+                      const targetUser = replyingToComment.replyTargetUser || replyingToComment.username;
+                      const mentionPrefix = `@${targetUser} `;
+                      if (commentText.startsWith(mentionPrefix)) {
+                        setCommentText(prev => prev.slice(mentionPrefix.length));
+                      }
+                      setReplyingToComment(null);
+                    }}
                     className="text-zinc-500 hover:text-white cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
