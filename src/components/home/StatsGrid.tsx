@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { StreakLadderModal } from '../streak/StreakLadder';
 import { StreakAura, StreakFlame } from '../streak/Streak';
 import { getStreakTheme, nextTierLine } from '../../utils/streakTheme';
 import { rankProgress } from '../../utils/ranks';
@@ -13,6 +14,7 @@ const card = 'glass-card p-4 sm:p-5 text-start relative overflow-hidden flex fle
 const label = 'text-xs font-bold text-zinc-500';
 
 export const StatsGrid: React.FC<StatsGridProps> = ({ user, leaderboard = [] }) => {
+  const [showLadder, setShowLadder] = useState(false);
   if (!user) return null;
 
   const xp = user.total_xp || 0;
@@ -54,7 +56,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ user, leaderboard = [] }) 
         )}
       </div>
 
-      <div className={card} style={{ borderColor: theme.key !== 'none' ? `rgb(${theme.glow} / 0.35)` : undefined }}>
+      <button type="button" onClick={() => setShowLadder(true)} aria-label="شوف مستويات الستريك" className={`${card} cursor-pointer active:scale-[0.98] transition-transform`} style={{ borderColor: theme.key !== 'none' ? `rgb(${theme.glow} / 0.35)` : undefined }}>
         <StreakAura days={streak} density="lite" />
         <span className="text-xs font-bold text-zinc-300 relative z-10">الستريك بتاعك</span>
         <div className="relative z-10 flex items-center gap-2 mt-1">
@@ -66,7 +68,8 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ user, leaderboard = [] }) 
             ? 'ادخل النهارده وولّع الستريك 🔥'
             : `${theme.name} 🔥 ${nextTierLine(theme, streak)}`}
         </span>
-      </div>
+      </button>
+      <StreakLadderModal open={showLadder} onClose={() => setShowLadder(false)} days={streak} username={user.username} />
     </section>
   );
 };

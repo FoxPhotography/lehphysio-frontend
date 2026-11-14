@@ -30,7 +30,7 @@ export function formatTime(date: string | number | Date): string {
 export const formatNumber = (n: number) => new Intl.NumberFormat('en-US').format(n);
 
 /** "1 يوم" / "2 يوم" / "11 يوم" – simple, natural Egyptian counting for streak days. */
-export const daysLabel = (n: number) => (n === 1 ? 'يوم واحد' : n === 2 ? 'يومين' : `${n} أيام`);
+export const daysLabel = (n: number) => (n === 1 ? 'يوم واحد' : n === 2 ? 'يومين' : n > 10 ? `${n} يوم` : `${n} أيام`);
 
 /**
  * Direction for a message that may start with @mentions or emoji: decided by the first

@@ -49,6 +49,9 @@ const TIERS: (StreakTheme & { min: number })[] = [
   },
 ];
 
+/** Every lit tier, lowest first, with the day it starts on (for the streak ladder). */
+export const STREAK_LADDER: (StreakTheme & { min: number })[] = TIERS.filter(t => t.key !== 'none').slice().reverse();
+
 export function getStreakTheme(days: number | null | undefined): StreakTheme {
   const d = Math.max(0, Number(days) || 0);
   const tier = TIERS.find(t => d >= t.min) || TIERS[TIERS.length - 1];
@@ -60,7 +63,7 @@ export function getStreakTheme(days: number | null | undefined): StreakTheme {
 export function nextTierLine(theme: StreakTheme, days: number): string {
   if (!theme.next) return theme.tagline;
   const left = Math.max(1, theme.next.at - (Number(days) || 0));
-  const unit = left === 1 ? 'يوم' : left === 2 ? 'يومين' : `${left} أيام`;
+  const unit = left === 1 ? 'يوم' : left === 2 ? 'يومين' : left > 10 ? `${left} يوم` : `${left} أيام`;
   return `فاضلك ${unit} وتبقى ${theme.next.name}`;
 }
 

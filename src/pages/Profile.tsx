@@ -26,6 +26,8 @@ import {
   Download,
   Palette,
 } from 'lucide-react';
+import { StreakLadderModal } from '../components/streak/StreakLadder';
+import { daysLabel } from '../utils/format';
 import { UserAvatar } from '../components/UserAvatar';
 import { setFramesCache } from '../utils/helpers';
 import { API_BASE } from '../services/api';
@@ -161,6 +163,7 @@ export const Profile: React.FC<ProfileProps> = ({
   const [selectedBatch, setSelectedBatch] = useState(user.batch);
   const [isUploading, setIsUploading] = useState(false);
   const [showDecorationPicker, setShowDecorationPicker] = useState(false);
+  const [showStreakLadder, setShowStreakLadder] = useState(false);
   const [decoTab, setDecoTab] = useState<'themes' | 'frames'>('themes');
   const [framesList, setFramesList] = useState<any[]>([]);
   const [animatedProgress, setAnimatedProgress] = useState(0);
@@ -525,7 +528,7 @@ export const Profile: React.FC<ProfileProps> = ({
               <p className="text-lg font-black text-white leading-tight">{user.total_xp?.toLocaleString()}</p>
             </div>
           </div>
-          <div className="relative overflow-hidden rounded-xl border bg-black/30 p-3.5 flex items-center gap-2.5" style={{ borderColor: `rgb(${streakTheme.glow} / ${streakTheme.key === 'none' ? 0.15 : 0.35})` }}>
+          <button type="button" onClick={() => setShowStreakLadder(true)} aria-label="شوف مستويات الستريك" className="relative overflow-hidden rounded-xl border bg-black/30 p-3.5 flex items-center gap-2.5 text-start cursor-pointer active:scale-[0.98] transition-transform" style={{ borderColor: `rgb(${streakTheme.glow} / ${streakTheme.key === 'none' ? 0.15 : 0.35})` }}>
             <StreakAura days={streak} density="lite" />
             <div className="relative z-10 w-9 h-9 flex items-center justify-center flex-shrink-0">
               <StreakFlame days={streak} size={30} />
@@ -535,10 +538,11 @@ export const Profile: React.FC<ProfileProps> = ({
               <p className="text-2xs text-zinc-400 truncate">
                 الستريك{streakTheme.key !== 'none' && <> · <span className="font-black" style={{ color: streakTheme.text }}>{streakTheme.name}</span></>}
               </p>
-              <p className="text-lg font-black text-white leading-tight truncate">{user.streak_count === 1 ? 'يوم واحد' : user.streak_count === 2 ? 'يومين' : `${user.streak_count || 0} أيام`}</p>
+              <p className="text-lg font-black text-white leading-tight truncate">{daysLabel(streak)}</p>
               <p className="text-[10px] font-bold leading-snug text-zinc-500 truncate" title={nextTierLine(streakTheme, streak)}>{nextTierLine(streakTheme, streak).replace(/^فاضلك /, '')}</p>
             </div>
-          </div>
+          </button>
+          <StreakLadderModal open={showStreakLadder} onClose={() => setShowStreakLadder(false)} days={streak} username={user.username} />
         </div>
 
         {/* ── Share card + public profile + install ─────────────────── */}
