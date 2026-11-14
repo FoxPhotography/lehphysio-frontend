@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { Heart, X, Loader2, User as UserIcon } from 'lucide-react';
 import { UserAvatar } from '../UserAvatar';
-import { StreakName } from '../streak/Streak';
+import { StreakName, StreakNameplate } from '../streak/Streak';
 import { cosmeticVisual } from '../../utils/cosmetics';
 import { useAuth } from '../../context/AuthContext';
 import { communityService } from '../../services/communityService';
@@ -179,7 +179,7 @@ export const PostLikesSheet: React.FC<PostLikesSheetProps> = ({
             </div>
 
             {/* List Body */}
-            <div className="flex-1 overflow-y-auto overscroll-contain p-2.5 divide-y divide-zinc-900/60">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-2">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-3">
                   <Loader2 className="w-7 h-7 text-brand-orange animate-spin" />
@@ -223,7 +223,9 @@ export const PostLikesSheet: React.FC<PostLikesSheetProps> = ({
                   const isMe =
                     likeUser.is_me ||
                     (currentUser && String(currentUser.id) === String(likeUser.user_id));
-                  const nameCos = cosmeticVisual(likeUser.cosmetics?.name || likeUser.cosmetics?.nameplate);
+                  const myCos = isMe ? currentUser?.cosmetics : null;
+                  const plateCos = cosmeticVisual(myCos?.nameplate || likeUser.cosmetics?.nameplate);
+                  const nameCos = cosmeticVisual(myCos?.name || likeUser.cosmetics?.name);
                   const rankText =
                     typeof likeUser.rank === 'object' && likeUser.rank !== null
                       ? (likeUser.rank as any).name_ar
@@ -237,18 +239,20 @@ export const PostLikesSheet: React.FC<PostLikesSheetProps> = ({
                       : '');
 
                   return (
-                    <div
+                    <StreakNameplate
                       key={`${likeUser.user_id}-${likeUser.id}`}
+                      days={likeUser.streak_count || 0}
+                      override={plateCos}
                       onClick={() => {
                         onClose();
                         if (changePage) {
                           changePage('public-profile', { username: likeUser.username });
                         }
                       }}
-                      className="group flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-white/[0.04] active:bg-white/[0.08] transition-colors cursor-pointer"
+                      className="group relative flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/70 hover:border-zinc-700 active:scale-[0.99] transition-all cursor-pointer overflow-hidden shadow-sm"
                     >
                       {/* Avatar with Frame */}
-                      <div className="shrink-0">
+                      <div className="shrink-0 relative z-10">
                         <UserAvatar
                           username={likeUser.username}
                           avatarUrl={likeUser.avatar_url}
@@ -258,7 +262,7 @@ export const PostLikesSheet: React.FC<PostLikesSheetProps> = ({
                       </div>
 
                       {/* User Info */}
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 relative z-10">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <StreakName days={likeUser.streak_count || 0} override={nameCos}>
                             <span className="text-[13px] font-black truncate group-hover:text-brand-orange transition-colors">
@@ -287,10 +291,10 @@ export const PostLikesSheet: React.FC<PostLikesSheetProps> = ({
                       </div>
 
                       {/* Heart Icon */}
-                      <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#ff3b5c]/10 text-[#ff3b5c]">
+                      <div className="shrink-0 relative z-10 flex items-center justify-center w-8 h-8 rounded-full bg-[#ff3b5c]/15 text-[#ff3b5c]">
                         <Heart className="w-4 h-4 fill-current drop-shadow-[0_0_8px_rgba(255,59,92,0.4)]" />
                       </div>
-                    </div>
+                    </StreakNameplate>
                   );
                 })
               )}
