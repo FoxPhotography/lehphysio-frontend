@@ -54,6 +54,16 @@
 }
 
 /* Curva Nord / كورفانورد: Stadium Emerald Pitch + Blazing Fire Goal */
+.streak-aura.cos-fx--curva,
+.streak-aura--curvanord,
+.streak-aura--cos-curvanord {
+  pointer-events: auto !important;
+}
+.fire-goal-physics-container,
+.streak-aura.cos-fx--curva canvas {
+  pointer-events: auto !important;
+  touch-action: none;
+}
 .cos-fx--curva .streak-plate__bg {
   background: linear-gradient(100deg, rgb(2 44 34 / 0.95), rgb(6 78 59 / 0.8), rgb(249 115 22 / 0.35), rgb(2 44 34 / 0.95));
 }

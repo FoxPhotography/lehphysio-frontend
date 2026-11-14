@@ -962,17 +962,17 @@ export function FireGoalNameplate({
   }, [autoShoot, autoShootInterval, initNet, repairNet, shootBall, tearStrength]);
 
   // Pointer Events (Mouse + Touch) for Net Interaction, Slingshot, and Click-to-Shoot
-  const getLocalCoords = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  const getLocalCoords = (e: any) => {
+    const rect = canvasRef.current?.getBoundingClientRect() || { left: 0, top: 0 };
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
+    const clientY = e.clientY !== undefined ? e.clientY : (e.touches ? e.touches[0].clientY : 0);
     return {
       x: clientX - rect.left,
       y: clientY - rect.top,
     };
   };
 
-  const handlePointerDown = (e) => {
+  const handlePointerDown = (e: any) => {
     if (!canvasRef.current) return;
     const { x, y } = getLocalCoords(e);
     const sim = simRef.current;
@@ -983,75 +983,100 @@ export function FireGoalNameplate({
     sim.pointer.isDown = true;
 
     const distToBall = Math.hypot(x - sim.ball.x, y - sim.ball.y);
-    if (distToBall < 45) {
-      // Start slingshot drag
+    const isNearBall = distToBall < 55;
+    const isLeftSide = x < sim.goalBox.x - 45;
+
+    if (isNearBall) {
+      // User grabbed the ball!
       sim.pointer.isDraggingBall = true;
+      sim.dragOriginX = sim.ball.x;
+      sim.dragOriginY = sim.ball.y;
       sim.ball.vx = 0;
       sim.ball.vy = 0;
       setIsAiming(true);
+    } else if (isLeftSide) {
+      // Clicked on the pitch: Place ball and start slingshot drag!
+      sim.ball.x = x;
+      sim.ball.y = y;
+      sim.ball.vx = 0;
+      sim.ball.vy = 0;
+      sim.ball.scaleX = 1;
+      sim.ball.scaleY = 1;
+      sim.dragOriginX = x;
+      sim.dragOriginY = y;
+      sim.pointer.isDraggingBall = true;
+      setIsAiming(true);
     } else {
-      // Shoot directly toward clicked Y height or from clicked spot if on the left side
-      if (x < sim.goalBox.x - 40) {
-        shootBall({
-          startX: Math.min(x, sim.width * 0.45),
-          startY: y,
-          targetY: Math.max(
-            sim.goalBox.y + 20,
-            Math.min(sim.goalBox.y + sim.goalBox.h - 20, y)
-          ),
-          power: 31,
-          onFire: true,
-        });
-      } else {
-        // Clicked right on the net -> shoot directly at that net spot!
-        shootBall({
-          targetY: y,
-          power: 32,
-          onFire: true,
-        });
-      }
+      // Clicked on or near the net: Shoot directly at that spot!
+      shootBall({
+        targetY: y,
+        power: 32,
+        onFire: true,
+      });
     }
   };
 
-  const handlePointerMove = (e) => {
+  const handlePointerMove = (e: any) => {
     if (!canvasRef.current) return;
     const { x, y } = getLocalCoords(e);
     const sim = simRef.current;
     sim.pointer.x = x;
     sim.pointer.y = y;
 
-    // Hover trigger if enabled and cursor moves quickly near the ball
-    const distToBall = Math.hypot(x - sim.ball.x, y - sim.ball.y);
-    const now = performance.now();
-    if (
-      hoverToShoot &&
-      !sim.pointer.isDraggingBall &&
-      distToBall < 32 &&
-      Math.hypot(sim.ball.vx, sim.ball.vy) < 4 &&
-      now - sim.lastHoverShot > 900
-    ) {
-      sim.lastHoverShot = now;
-      shootBall({ power: 30, onFire: true });
+    if (sim.pointer.isDraggingBall) {
+      // Elastic pull back: ball moves slightly with the drag
+      const pullX = x - (sim.dragOriginX || sim.ball.x);
+      const pullY = y - (sim.dragOriginY || sim.ball.y);
+      const originX = sim.dragOriginX || sim.ball.x;
+      const originY = sim.dragOriginY || sim.ball.y;
+      sim.ball.x = originX + Math.max(-110, Math.min(60, pullX * 0.45));
+      sim.ball.y = originY + Math.max(-65, Math.min(65, pullY * 0.45));
+      sim.ball.vx = 0;
+      sim.ball.vy = 0;
+    } else {
+      // Hover trigger if enabled and cursor moves quickly near the ball
+      const distToBall = Math.hypot(x - sim.ball.x, y - sim.ball.y);
+      const now = performance.now();
+      if (
+        hoverToShoot &&
+        distToBall < 36 &&
+        Math.hypot(sim.ball.vx, sim.ball.vy) < 4 &&
+        now - sim.lastHoverShot > 900
+      ) {
+        sim.lastHoverShot = now;
+        shootBall({ power: 30, onFire: true });
+      }
     }
   };
 
   const handlePointerUp = () => {
     const sim = simRef.current;
     if (sim.pointer.isDraggingBall) {
-      const dx = sim.ball.x - sim.pointer.x;
-      const dy = sim.ball.y - sim.pointer.y;
+      const originX = sim.dragOriginX || sim.ball.x;
+      const originY = sim.dragOriginY || sim.ball.y;
+      const dx = originX - sim.pointer.x;
+      const dy = originY - sim.pointer.y;
       const pullDist = Math.hypot(dx, dy);
 
-      if (pullDist > 8) {
+      if (pullDist > 14) {
+        // Full slingshot shot!
+        const power = Math.min(38, Math.max(22, pullDist * 0.32));
+        const dist = pullDist || 1;
         shootBall({
           startX: sim.ball.x,
           startY: sim.ball.y,
-          vx: Math.max(18, Math.min(36, dx * 0.38)),
-          vy: Math.max(-18, Math.min(18, dy * 0.38)),
+          vx: Math.max(16, Math.min(38, (dx / dist) * power)),
+          vy: Math.max(-20, Math.min(20, (dy / dist) * power)),
           onFire: true,
         });
       } else {
-        shootBall({ power: 30, onFire: true });
+        // Quick tap: standard kick towards goal
+        shootBall({
+          startX: sim.ball.x,
+          startY: sim.ball.y,
+          power: 30,
+          onFire: true,
+        });
       }
       sim.pointer.isDraggingBall = false;
       setIsAiming(false);
@@ -1066,14 +1091,11 @@ export function FireGoalNameplate({
         height: height ? (typeof height === 'number' ? `${height}px` : height) : undefined,
         ...style,
       }}
-      onMouseDown={handlePointerDown}
-      onMouseMove={handlePointerMove}
-      onMouseUp={handlePointerUp}
-      onMouseLeave={handlePointerUp}
-      onTouchStart={handlePointerDown}
-      onTouchMove={handlePointerMove}
-      onTouchEnd={handlePointerUp}
-      className={`relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-emerald-950/90 to-slate-900 border border-emerald-500/30 shadow-[0_20px_60px_-15px_rgba(16,185,129,0.25)] select-none cursor-crosshair group ${className}`}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      className={`fire-goal-physics-container relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-emerald-950/90 to-slate-900 border border-emerald-500/30 shadow-[0_20px_60px_-15px_rgba(16,185,129,0.25)] select-none cursor-grab active:cursor-grabbing group ${className}`}
     >
       {/* Ambient Glowing Stadium Spotlights */}
       <div className="absolute -top-24 left-1/4 w-72 h-72 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -1082,7 +1104,7 @@ export function FireGoalNameplate({
       {/* Interactive 2D Physics Canvas */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full block z-10"
+        className="absolute inset-0 w-full h-full block z-10 pointer-events-auto"
       />
 
       {/* Optional Custom Content Overlay */}
