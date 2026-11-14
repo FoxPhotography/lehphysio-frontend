@@ -15,6 +15,7 @@ import {
   Zap,
   Megaphone,
 } from 'lucide-react';
+import { episodeLabel } from '../utils/episode';
 
 // Subcomponents
 import { StatsGrid } from '../components/home/StatsGrid';
@@ -193,7 +194,7 @@ export const Home: React.FC<HomeProps> = ({
                     حلقة جديدة
                   </span>
                   <span className="text-2xs font-bold tracking-wider bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md uppercase">
-                    حلقة {latestEp.id}
+                    {episodeLabel(latestEp)}
                   </span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-black text-white leading-tight">
@@ -307,7 +308,7 @@ export const Home: React.FC<HomeProps> = ({
               </div>
               <div className="text-start">
                 <h4 dir="auto" className="text-sm font-black text-white truncate">{ep.title_ar}</h4>
-                <div className="text-2xs text-zinc-500 font-extrabold mt-1">الحلقة {ep.id}</div>
+                <div className="text-2xs text-zinc-500 font-extrabold mt-1">{episodeLabel(ep)}</div>
               </div>
             </div>
           ))}

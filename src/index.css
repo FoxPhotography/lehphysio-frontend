@@ -310,3 +310,7 @@ html, body {
 @media (hover: hover) {
   .scroll-latest-btn:hover { border-color: rgb(249 115 22 / 0.45); }
 }
+
+/* Horizontal chip rows without a visible scrollbar */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

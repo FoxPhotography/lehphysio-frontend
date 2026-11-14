@@ -19,6 +19,8 @@ export interface User {
 
 export interface Episode {
   id: number;
+  season?: number;
+  episode_number?: number;
   title_ar: string;
   title_en?: string;
   description: string;

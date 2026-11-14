@@ -29,6 +29,7 @@ import {
   Calendar,
   Clock,
 } from 'lucide-react';
+import { episodeLabel, episodeSeason, episodeNumber, groupBySeason } from '../utils/episode';
 import { setFramesCache } from '../utils/helpers';
 import { API_BASE } from '../services/api';
 
@@ -324,6 +325,7 @@ export const Admin: React.FC<AdminProps> = ({
 
   const EMPTY_EPISODE = {
     episode_number: '',
+    season: '',
     title_ar: '', title_en: '', description: '', thumbnail_url: '',
     youtube_url: '', quiz_question: '', quiz_options: ['', '', '', ''],
     quiz_correct: 0, code: '', code_max_uses: 200, code_expiry: ''
@@ -371,9 +373,8 @@ export const Admin: React.FC<AdminProps> = ({
       thumbnail_url: thumbnailUrl,
       youtube_url: adminEpisodeForm.youtube_url,
     };
-    if (adminEpisodeForm.episode_number && !editingEpisodeId) {
-      body.episode_number = Number(adminEpisodeForm.episode_number);
-    }
+    if (adminEpisodeForm.episode_number) body.episode_number = Number(adminEpisodeForm.episode_number);
+    if (adminEpisodeForm.season) body.season = Number(adminEpisodeForm.season);
     if (adminEpisodeForm.quiz_question) {
       body.quiz = {
         question: adminEpisodeForm.quiz_question,
@@ -424,7 +425,8 @@ export const Admin: React.FC<AdminProps> = ({
       if (res.ok) {
         setEditingEpisodeId(episodeId);
         setAdminEpisodeForm({
-          episode_number: String(data.episode.id || data.episode._id || episodeId),
+          episode_number: String(episodeNumber(data.episode)),
+          season: String(episodeSeason(data.episode)),
           title_ar: data.episode.title_ar || '',
           title_en: data.episode.title_en || '',
           description: data.episode.description || '',
@@ -692,25 +694,43 @@ export const Admin: React.FC<AdminProps> = ({
               label={editingEpisodeId ? `تعديل: ${adminEpisodeForm.title_ar}` : 'انشر حلقة جديدة'}
             />
             <form onSubmit={handleEpisodeSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                <div className="space-y-1.5 sm:col-span-1">
-                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                    رقم الحلقة {editingEpisodeId ? '(ثابت)' : '(اختياري)'}
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    disabled={!!editingEpisodeId}
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 text-[13px] focus:outline-none focus:border-orange-500/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-bold"
-                    placeholder={editingEpisodeId ? `#${editingEpisodeId}` : "Auto"}
-                    value={adminEpisodeForm.episode_number || ''}
-                    onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, episode_number: e.target.value }))}
-                  />
-                </div>
-                <div className="sm:col-span-3">
+              {(() => {
+                // Suggest the next slot: latest season (never below 2), next number in it
+                const latestSeason = Math.max(2, ...episodes.map((ep: any) => episodeSeason(ep)));
+                const seasonVal = Number(adminEpisodeForm.season) || latestSeason;
+                const nextNum = Math.max(0, ...episodes.filter((ep: any) => episodeSeason(ep) === seasonVal).map((ep: any) => episodeNumber(ep))) + 1;
+                const inputCls = "w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 text-[13px] focus:outline-none focus:border-orange-500/60 transition-colors font-bold tabular-nums";
+                return (
+                  <div className="rounded-xl border border-orange-500/20 bg-orange-500/[0.04] p-3 space-y-2.5">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-zinc-400">الموسم</label>
+                        <input type="number" min="1" className={inputCls}
+                          placeholder={String(editingEpisodeId ? seasonVal : latestSeason)}
+                          value={adminEpisodeForm.season || ''}
+                          onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, season: e.target.value }))} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-zinc-400">رقم الحلقة في الموسم</label>
+                        <input type="number" min="1" className={inputCls}
+                          placeholder={String(nextNum)}
+                          value={adminEpisodeForm.episode_number || ''}
+                          onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, episode_number: e.target.value }))} />
+                      </div>
+                    </div>
+                    {!editingEpisodeId && (
+                      <p className="text-2xs text-zinc-500 font-bold">
+                        هتتنشر كـ <span className="text-orange-400">الموسم {seasonVal} · الحلقة {Number(adminEpisodeForm.episode_number) || nextNum}</span> — سيبهم فاضيين وهيتحسبوا لوحدهم. لموسم جديد اكتب رقمه.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+              <div>
+                <div>
                   <AdminInput
                     label="عنوان الحلقة"
-                    placeholder="مثال: ليه فيزيو؟ 🎙️ الحلقة 6 | أسرار العلاج الطبيعي"
+                    placeholder="مثال: ليه فيزيو؟ 🎙️ الموسم 2 · الحلقة 1 | أسرار العلاج الطبيعي"
                     value={adminEpisodeForm.title_ar}
                     onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, title_ar: e.target.value, title_en: e.target.value }))}
                     required
@@ -854,14 +874,16 @@ export const Admin: React.FC<AdminProps> = ({
               <p className="text-center text-zinc-600 text-[13px] py-6">مفيش حلقات منشورة لسه.</p>
             ) : (
               <div className="space-y-2">
-                {episodes.map((ep: any) => (
+                {groupBySeason(episodes as any[]).flatMap(g => [
+                  <p key={`season-${g.season}`} className="text-2xs font-black text-zinc-500 pt-2 first:pt-0">الموسم {g.season} · {g.episodes.length}</p>,
+                  ...g.episodes.map((ep: any) => (
                   <div key={ep.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/3 border border-white/8 hover:border-white/12 transition-colors">
                     {ep.thumbnail_url && (
                       <img src={ep.thumbnail_url} alt={ep.title_ar || ep.title_en} className="w-14 h-8 rounded-lg object-cover flex-shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-bold text-white truncate">
-                        <span className="text-orange-400 font-mono me-1.5 font-bold">#{ep.id}</span>
+                        <span className="text-orange-400 me-1.5 font-black tabular-nums">م{episodeSeason(ep)}·ح{episodeNumber(ep)}</span>
                         {ep.title_ar || ep.title_en}
                       </p>
                       <p className="text-xs text-zinc-500 truncate">
@@ -888,7 +910,8 @@ export const Admin: React.FC<AdminProps> = ({
                       </AdminBtn>
                     </div>
                   </div>
-                ))}
+                  ))
+                ])}
               </div>
             )}
           </SectionCard>
@@ -969,7 +992,7 @@ export const Admin: React.FC<AdminProps> = ({
                   <option value="" className="bg-zinc-900">كود لأي حلقة</option>
                   {episodes.map((ep: any) => (
                     <option key={ep.id} value={ep.id} className="bg-zinc-900">
-                      حلقة {ep.id}: {ep.title_ar || ep.title_en}
+                      {episodeLabel(ep)}: {ep.title_ar || ep.title_en}
                     </option>
                   ))}
                 </AdminSelect>
@@ -1028,7 +1051,7 @@ export const Admin: React.FC<AdminProps> = ({
                           {c.type === 'episode' ? (
                             c.episode_id ? (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold">
-                                حلقة {c.episode_id}
+                                {(() => { const ep = episodes.find((e: any) => e.id === c.episode_id); return ep ? `م${episodeSeason(ep)}·ح${episodeNumber(ep)}` : `حلقة ${c.episode_id}`; })()}
                               </span>
                             ) : (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-bold">

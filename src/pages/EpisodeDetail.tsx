@@ -25,6 +25,7 @@ import {
   AlertCircle,
   AlertTriangle
 } from 'lucide-react';
+import { episodeNumber, seasonName } from '../utils/episode';
 import { formatMentions } from '../utils/mentions';
 import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
 import { useNotifications } from '../context/NotificationContext';
@@ -165,8 +166,9 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
         <Thumb src={episode.thumbnail_url} width={640} eager className="opacity-40" />
         
         <div className="relative z-20 space-y-4">
-          <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase border border-brand-orange/10 self-start inline-block">
-            الحلقة {episode.id}
+          <span className="self-start inline-flex items-center rounded-lg overflow-hidden text-2xs font-black border border-white/10 bg-black/50">
+            <span className="px-2.5 py-1 text-zinc-300">{seasonName(Number(episode.season) || 1)}</span>
+            <span className="px-2.5 py-1 bg-brand-orange text-black">الحلقة {episodeNumber(episode)}</span>
           </span>
           <div className="space-y-1">
             <h1 dir="auto" className="text-xl md:text-2xl font-black text-white leading-tight">{episode.title_ar}</h1>
@@ -206,7 +208,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
       {/* Embedded video player */}
       {embedUrl ? (
         <section className="glass-card p-2 overflow-hidden">
-          <YouTubeFacade embedUrl={embedUrl} title={episode.title_ar || `الحلقة ${episode.id}`} thumbnail={episode.thumbnail_url} start={seekTo} />
+          <YouTubeFacade embedUrl={embedUrl} title={episode.title_ar || `الحلقة ${episodeNumber(episode)}`} thumbnail={episode.thumbnail_url} start={seekTo} />
         </section>
       ) : null}
 
