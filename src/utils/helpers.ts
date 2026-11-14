@@ -184,11 +184,33 @@ export const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
-// Frame image cache (populated by App.tsx on mount)
-let framesCache: any[] = [];
+// Local static frame paths bundled in the frontend for 0 network lag & 0 broken links
+export const DEFAULT_LOCAL_FRAMES: Record<number, string> = {
+  1: '/frames/1.png',
+  4: '/frames/4.png',
+  7: '/frames/7.png',
+  8: '/frames/8.png',
+  9: '/frames/9.png',
+  10: 'crystalized',
+};
+
+// Frame image cache: pre-populated with all bundled frames so it is NEVER empty
+let framesCache: any[] = [
+  { _id: 9, id: 9, name: 'Cat ears', price: 150, image_url: '/frames/9.png' },
+  { _id: 8, id: 8, name: 'Red hooded headband', price: 500, image_url: '/frames/8.png' },
+  { _id: 7, id: 7, name: 'Golden starburst', price: 1500, image_url: '/frames/7.png' },
+  { _id: 4, id: 4, name: 'Legendary', price: 3000, image_url: '/frames/4.png' },
+  { _id: 1, id: 1, name: 'Pookie', price: 6000, image_url: '/frames/1.png' },
+  { _id: 10, id: 10, name: 'كرة الكريستال (Ember Sphere)', price: 10000, image_url: 'crystalized' },
+];
 
 export const setFramesCache = (frames: any[]) => {
-  framesCache = frames;
+  if (Array.isArray(frames) && frames.length) {
+    framesCache = frames.map(f => {
+      const local = DEFAULT_LOCAL_FRAMES[Number(f._id || f.id)];
+      return local ? { ...f, image_url: local } : f;
+    });
+  }
 };
 
 export const copyToClipboard = async (text: string): Promise<void> => {
@@ -213,6 +235,9 @@ export const getFrameImage = (frameId: string | null | undefined): string | null
   if (frameId === 'crystalized' || frameId === 'crystalized-ball') return 'crystalized';
   const numericId = parseInt(frameId, 10);
   if (isNaN(numericId)) return null;
+  if (DEFAULT_LOCAL_FRAMES[numericId]) {
+    return DEFAULT_LOCAL_FRAMES[numericId];
+  }
   const frame = framesCache.find((f: any) => f._id === numericId || f.id === numericId);
   return frame?.image_url || null;
 };

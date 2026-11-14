@@ -99,7 +99,10 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
             height={numericSize}
             loading={eager ? 'eager' : 'lazy'}
             decoding="async"
-            onError={() => setImgFailed(true)}
+            onError={(e) => {
+              setImgFailed(true);
+              (e.currentTarget as HTMLElement).style.display = 'none';
+            }}
             className="w-full h-full object-cover rounded-full"
           />
         ) : (
@@ -107,14 +110,14 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
         )}
       </span>
 
-      {/* Crystalized Ball animated WebGL frame (highest XP frame) */}
+      {/* Crystalized Ball animated WebGL frame (highest XP frame) - tuned to hug the avatar snugly */}
       {isCrystalized && (
         <div
           aria-hidden
           className="absolute pointer-events-none z-10 select-none flex items-center justify-center"
           style={{
-            width: `${numericSize * 2.3}px`,
-            height: `${numericSize * 2.3}px`,
+            width: `${Math.round(numericSize * 1.35)}px`,
+            height: `${Math.round(numericSize * 1.35)}px`,
             left: '50%',
             top: '50%',
             transform: 'translate(-50%, -50%)',
@@ -123,7 +126,7 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
           <CrystalizedBall
             preset="ember"
             color="#FF8A2A"
-            size={0.68}
+            size={0.78}
             crackle={0.9}
             fill={0.35}
             interactive={numericSize >= 80}
@@ -132,7 +135,7 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
             flares={0.8}
             glow={1}
             sparks={0.8}
-            particleCount={Math.min(12000, Math.max(1200, numericSize * 40))}
+            particleCount={Math.min(10000, Math.max(1000, numericSize * 35))}
             particleShape="round"
             depth={0.7}
             sway={0.3}
@@ -147,13 +150,16 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
       {/* PNG frame overlay, auto-sized so its inner hole matches the photo (ring wraps it from outside) */}
       {frameImageUrl && frameImageUrl !== 'crystalized' && !frameFailed && (
         <img
-          onError={() => setFrameFailed(true)}
-          src={cld(frameImageUrl, { w: Math.round(numericSize * Math.max(1.15, fit.scale)) })}
+          onError={(e) => {
+            setFrameFailed(true);
+            (e.currentTarget as HTMLElement).style.display = 'none';
+          }}
+          src={frameImageUrl.startsWith('/') ? frameImageUrl : cld(frameImageUrl, { w: Math.round(numericSize * Math.max(1.15, fit.scale)) })}
           alt=""
           aria-hidden
           loading={eager ? 'eager' : 'lazy'}
           decoding="async"
-          className="absolute pointer-events-none z-10 select-none"
+          className="absolute pointer-events-none z-10 select-none object-contain"
           style={{
             width: `${framePct}%`,
             height: `${framePct}%`,

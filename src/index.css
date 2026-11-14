@@ -56,6 +56,11 @@
   ::-webkit-scrollbar-thumb:hover {
     background: #FF6A00;
   }
+
+  /* Prevent broken image placeholder box in Chromium/Safari */
+  img:not([src]), img[src=""], img[src="null"], img[src="undefined"] {
+    visibility: hidden !important;
+  }
 }
 
 /* Specialized Animations & Utilities */
