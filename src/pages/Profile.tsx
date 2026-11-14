@@ -571,7 +571,11 @@ export const Profile: React.FC<ProfileProps> = ({
         <m.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => setShowDecorationPicker(true)}
+          onClick={() => {
+            // Open the shop right at the themes (frames are just below it)
+            sessionStorage.setItem('shop_focus', 'cosmetics');
+            setCurrentPage('rewards');
+          }}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-black font-bold text-sm hover:from-orange-400 hover:to-amber-400 transition-colors mb-3 shadow-lg shadow-orange-500/15"
         >
           <Settings className="w-4 h-4" />
@@ -643,134 +647,6 @@ export const Profile: React.FC<ProfileProps> = ({
         </div>
         </div>
       </div>
-
-      {/* ── Decoration Picker Modal ───────────────────────────────────── */}
-      <AnimatePresence>
-        {showDecorationPicker && (
-          <m.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowDecorationPicker(false)}
-            className="fixed inset-0 z-[11000] bg-black/90 flex items-end sm:items-center justify-center p-4"
-          >
-            <m.div
-              initial={{ y: 60, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 60, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-2xl rounded-2xl border border-white/8 bg-zinc-900/95 p-5 max-h-[88vh] overflow-y-auto overscroll-contain"
-            >
-              {/* Modal Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Palette className="w-4.5 h-4.5 text-orange-400" />
-                  <h3 className="text-base font-black text-white">شكل البروفايل</h3>
-                </div>
-                <button
-                  onClick={() => setShowDecorationPicker(false)}
-                  className="p-1.5 rounded-lg hover:bg-white/8 text-zinc-500 hover:text-white transition-colors"
-                >
-                  <X className="w-4.5 h-4.5" />
-                </button>
-              </div>
-              <p className="text-xs text-zinc-500 mb-4">
-                غيّر الثيمات (نيم بليت، رسايل، بروفايل، لون اسمك) أو الفريم — والكل يشوف التغيير في ساعتها.
-              </p>
-
-              {/* Tabs: themes / frames */}
-              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-black/40 border border-white/8 mb-5">
-                {([['themes', '🎨 الثيمات'], ['frames', '🖼️ الفريمات']] as const).map(([k, label]) => (
-                  <button
-                    key={k}
-                    type="button"
-                    onClick={() => setDecoTab(k)}
-                    className={`h-10 rounded-xl text-xs font-black transition-colors cursor-pointer ${decoTab === k ? 'bg-white text-black' : 'text-zinc-400 hover:text-white'}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              {decoTab === 'themes' && <CosmeticsStudio user={user} showToast={showToastCtx} embedded />}
-
-              {decoTab === 'frames' && (<>
-              {/* Frames Section */}
-              <div className="mb-5">
-                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">الفريمات</p>
-                <div className="flex flex-wrap gap-2.5">
-                  {/* None */}
-                  <FrameOption
-                    label="ولا حاجة"
-                    equipped={equippedFrame === 'none'}
-                    onClick={() => handleEquipFrame('none')}
-                  >
-                    <UserAvatar
-                      username={user.username}
-                      avatarUrl={user.avatar_url}
-                      equippedFrame="none"
-                      size={48}
-                    />
-                  </FrameOption>
-
-
-
-                  {/* Database frames */}
-                  {framesList.map((f: any) => {
-                    const unlocked = isFrameUnlocked(f._id);
-                    const isEquipped = String(equippedFrame) === String(f._id);
-                    return (
-                      <FrameOption
-                        key={f._id}
-                        label={f.name}
-                        equipped={isEquipped}
-                        locked={!unlocked}
-                        onClick={() => unlocked && handleEquipFrame(String(f._id))}
-                      >
-                        <UserAvatar
-                          username={user.username}
-                          avatarUrl={user.avatar_url}
-                          equippedFrame={unlocked ? String(f._id) : 'none'}
-                          size={48}
-                        />
-                      </FrameOption>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Titles Section */}
-              <div>
-                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">الألقاب</p>
-                <div className="flex flex-wrap gap-2">
-                  {/* No Title */}
-                  <m.button
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => {
-                      setEquippedTitle('none');
-                      localStorage.setItem('eq_title', 'none');
-                      handleUpdateProfile(undefined, undefined, undefined, 'none');
-                      setShowDecorationPicker(false);
-                    }}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                      equippedTitle === 'none'
-                        ? 'border-orange-500/60 bg-orange-500/10 text-orange-400'
-                        : 'border-white/10 bg-white/3 text-zinc-400 hover:text-white hover:border-white/20'
-                    }`}
-                  >
-                    من غير لقب
-                  </m.button>
-
-
-                </div>
-              </div>
-              </>)}
-            </m.div>
-          </m.div>
-        )}
-      </AnimatePresence>
 
       {/* ── Crop Modal ────────────────────────────────────────────────── */}
       <AnimatePresence>

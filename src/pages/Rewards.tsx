@@ -178,8 +178,26 @@ export const Rewards: React.FC<RewardsProps> = ({
   useEffect(() => {
     if (sessionStorage.getItem('shop_focus') === 'cosmetics') {
       sessionStorage.removeItem('shop_focus');
-      setTimeout(() => document.getElementById('cosmetics-studio')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 250);
+      // Glide there once, then quietly re-align while content above (codes, box)
+      // is still loading — unless the user already started scrolling himself.
+      let touched = false;
+      const stop = () => { touched = true; };
+      window.addEventListener('wheel', stop, { passive: true, once: true });
+      window.addEventListener('touchstart', stop, { passive: true, once: true });
+      const go = (smooth: boolean) => {
+        const el = document.getElementById('cosmetics-studio');
+        if (el && !touched) el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+      };
+      const t1 = setTimeout(() => go(true), 120);
+      const t2 = setTimeout(() => go(false), 900);
+      const t3 = setTimeout(() => go(false), 1800);
+      return () => {
+        [t1, t2, t3].forEach(clearTimeout);
+        window.removeEventListener('wheel', stop);
+        window.removeEventListener('touchstart', stop);
+      };
     }
+    return undefined;
   }, []);
 
   useEffect(() => {
