@@ -4,6 +4,7 @@ import { daysLabel } from '../../utils/format';
 import type { CosmeticVisual } from '../../utils/cosmetics';
 import Lightning from './Lightning';
 import PixelSnow from './PixelSnow';
+import FireGoalBackground from './FireGoalBackground';
 
 /** Equipped shop cosmetic (if any) wins over the automatic streak colours. */
 type Override = CosmeticVisual | null | undefined;
@@ -444,6 +445,60 @@ export const PackageParticles: React.FC<{ themeKey: string; compact?: boolean }>
     );
   }
 
+  // 9. Curva Nord / كورفانورد (كرة نار وشرار الملاعب)
+  if (themeKey === 'cos-curvanord' || themeKey === 'curvanord') {
+    return (
+      <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+        <span
+          className="streak-curva-flame"
+          style={{
+            position: 'absolute',
+            left: '10%',
+            top: '25%',
+            width: compact ? '12px' : '15px',
+            height: compact ? '12px' : '15px',
+            fontSize: compact ? '11px' : '14px',
+            filter: 'drop-shadow(0 0 6px #f97316)',
+            animation: 'streak-ember 3.2s ease-out infinite',
+            lineHeight: 1,
+          }}
+        >
+          ⚽
+        </span>
+        <span
+          className="streak-curva-spark"
+          style={{
+            position: 'absolute',
+            right: '12%',
+            bottom: '20%',
+            width: compact ? '5px' : '7px',
+            height: compact ? '5px' : '7px',
+            borderRadius: '50%',
+            background: '#fbbf24',
+            boxShadow: '0 0 8px #f97316, 0 0 14px #ef4444',
+            animation: 'streak-twinkle 2.2s ease-in-out infinite',
+          }}
+        />
+        {!compact && (
+          <span
+            className="streak-curva-spark"
+            style={{
+              position: 'absolute',
+              right: '28%',
+              top: '30%',
+              width: '5px',
+              height: '5px',
+              borderRadius: '50%',
+              background: '#34d399',
+              boxShadow: '0 0 8px #10b981',
+              animation: 'streak-twinkle 2.8s ease-in-out infinite 0.9s',
+            }}
+          />
+        )}
+      </span>
+    );
+  }
+
   return null;
 };
 
@@ -601,6 +656,9 @@ export const StreakAura: React.FC<{ days: number; density?: 'full' | 'lite'; cla
             className="w-full h-full pointer-events-none"
           />
         </div>
+      )}
+      {(t.key === 'curvanord' || t.key === ('cos-curvanord' as any) || override?.fx === 'curva') && (
+        <FireGoalBackground standalone={false} compact={density !== 'full'} />
       )}
       <div className="streak-aura__embers">
         {EMBERS.slice(0, emberCount).map((e, i) => (

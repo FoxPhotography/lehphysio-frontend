@@ -52,6 +52,33 @@
   animation: streak-text-pan 3.5s ease-in-out infinite;
   filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.5));
 }
+
+/* Curva Nord / كورفانورد: Stadium Emerald Pitch + Blazing Fire Goal */
+.cos-fx--curva .streak-plate__bg {
+  background: linear-gradient(100deg, rgb(2 44 34 / 0.95), rgb(6 78 59 / 0.8), rgb(249 115 22 / 0.35), rgb(2 44 34 / 0.95));
+}
+.cos-fx--curva .streak-aura__glow {
+  background:
+    radial-gradient(40% 35% at 25% 30%, rgb(16 185 129 / 0.4), transparent 75%),
+    radial-gradient(45% 35% at 75% 30%, rgb(249 115 22 / 0.45), transparent 75%),
+    radial-gradient(50% 40% at 50% 65%, rgb(5 150 105 / 0.3), transparent 75%);
+}
+.streak-bubble.cos-fx--curva {
+  background: linear-gradient(125deg, #022c22 0%, #064e3b 40%, #15803d 70%, #c2410c 100%);
+  border-color: rgb(52 211 153 / 0.45);
+  box-shadow: 0 0 15px -3px rgba(16, 185, 129, 0.3), inset 0 0 12px rgba(249, 115, 22, 0.2);
+}
+.streak-text.cos-fx--curva {
+  background: linear-gradient(110deg, #34d399 0%, #fbbf24 30%, #ff4500 65%, #f97316 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  display: inline-block;
+  animation: streak-text-pan 3.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.4)) drop-shadow(0 0 10px rgba(249, 115, 22, 0.45));
+}
 .cos-fx--shine .streak-plate__sheen::after { animation-duration: 4.5s; width: 32%; background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.24), transparent); }
 .cos-fx--stars .streak-plate__embers span,
 .cos-fx--stars .streak-aura__embers span { background: radial-gradient(circle, #fff 0 25%, var(--s3) 45%, transparent 70%); }

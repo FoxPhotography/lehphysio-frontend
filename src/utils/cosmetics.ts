@@ -6,7 +6,7 @@ import type { StreakTheme } from './streakTheme';
  * XP is never deducted (same rule as frames).
  */
 export type CosmeticCategory = 'name' | 'bubble' | 'nameplate' | 'profile';
-export type CosmeticFx = 'flow' | 'embers' | 'shine' | 'stars' | 'holo' | 'snow';
+export type CosmeticFx = 'flow' | 'embers' | 'shine' | 'stars' | 'holo' | 'snow' | 'curva';
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
 
 export interface CosmeticVisual extends StreakTheme {
@@ -31,8 +31,9 @@ export const COSMETIC_THEMES: CosmeticTheme[] = [
   { key: 'ocean',  name: 'بحر',       vibe: 'موج رايح جاي',        rarity: 'rare',      base: 2000, c1: '#0c4a6e', c2: '#06b6d4', c3: '#cffafe', glow: '6 182 212',   text: '#67e8f9', intensity: 0.65, fx: 'flow' },
   { key: 'royal',  name: 'ملكي',      vibe: 'دهب وبرستيج',         rarity: 'epic',      base: 3000, c1: '#713f12', c2: '#facc15', c3: '#fff7cc', glow: '250 204 21',  text: '#fde047', intensity: 0.8,  fx: 'shine' },
   { key: 'galaxy', name: 'مجرّة',     vibe: 'نجوم بتلمع حواليك',   rarity: 'legendary', base: 4500, c1: '#1e1b4b', c2: '#8b5cf6', c3: '#f0abfc', glow: '139 92 246',  text: '#c4b5fd', intensity: 0.9,  fx: 'stars' },
-  { key: 'holo',   name: 'هولوجرام',  vibe: 'كل الألوان مرة واحدة', rarity: 'mythic',    base: 7000, c1: '#7c3aed', c2: '#00e5ff', c3: '#fff3a3', glow: '190 120 255', text: '#f5d0fe', intensity: 1,    fx: 'holo' },
+  { key: 'holo',   name: 'هولوجرام',  vibe: 'كل الألوان مرة واحدة', rarity: 'mythic',    base: 7000,  c1: '#7c3aed', c2: '#00e5ff', c3: '#fff3a3', glow: '190 120 255', text: '#f5d0fe', intensity: 1,    fx: 'holo' },
   { key: 'snow',   name: 'جليد',      vibe: 'عاصفة ثلجية بتتحرك وبتتراكم ❄️', rarity: 'mythic', base: 8500, c1: '#081726', c2: '#38bdf8', c3: '#e0f2fe', glow: '56 189 248',  text: '#bae6fd', intensity: 1,    fx: 'snow' },
+  { key: 'curvanord', name: 'كورفانورد', vibe: 'حريقة في المدرجات وهدف في التسعين ⚽🔥', rarity: 'mythic', base: 10000, c1: '#022c22', c2: '#10b981', c3: '#f97316', glow: '249 115 22', text: '#34d399', intensity: 1, fx: 'curva' },
 ];
 
 export const COSMETIC_CATEGORIES: { key: CosmeticCategory; label: string; hint: string; mult: number; field: string }[] = [
