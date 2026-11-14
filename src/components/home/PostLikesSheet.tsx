@@ -4,6 +4,7 @@ import { m, AnimatePresence } from 'framer-motion';
 import { Heart, X, Loader2, User as UserIcon } from 'lucide-react';
 import { UserAvatar } from '../UserAvatar';
 import { StreakName } from '../streak/Streak';
+import { cosmeticVisual } from '../../utils/cosmetics';
 import { useAuth } from '../../context/AuthContext';
 import { communityService } from '../../services/communityService';
 import type { PostLikeUser } from '../../types';
@@ -222,7 +223,18 @@ export const PostLikesSheet: React.FC<PostLikesSheetProps> = ({
                   const isMe =
                     likeUser.is_me ||
                     (currentUser && String(currentUser.id) === String(likeUser.user_id));
-                  const nameCos = likeUser.cosmetics?.nameplate;
+                  const nameCos = cosmeticVisual(likeUser.cosmetics?.name || likeUser.cosmetics?.nameplate);
+                  const rankText =
+                    typeof likeUser.rank === 'object' && likeUser.rank !== null
+                      ? (likeUser.rank as any).name_ar
+                      : typeof likeUser.rank === 'string'
+                      ? likeUser.rank
+                      : '';
+                  const rankEmoji =
+                    (likeUser as any).rank_emoji ||
+                    (typeof likeUser.rank === 'object' && likeUser.rank !== null
+                      ? (likeUser.rank as any).emoji
+                      : '');
 
                   return (
                     <div
@@ -265,10 +277,10 @@ export const PostLikesSheet: React.FC<PostLikesSheetProps> = ({
                           {likeUser.batch && (
                             <span className="text-zinc-500 font-bold">{likeUser.batch}</span>
                           )}
-                          {likeUser.rank && (
+                          {rankText && (
                             <>
                               <span className="text-zinc-700">•</span>
-                              <span className="text-zinc-400">{likeUser.rank}</span>
+                              <span className="text-zinc-400">{rankEmoji ? `${rankEmoji} ` : ''}{rankText}</span>
                             </>
                           )}
                         </div>
