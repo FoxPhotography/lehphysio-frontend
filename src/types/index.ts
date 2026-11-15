@@ -33,6 +33,7 @@ export interface Episode {
   quiz_correct: number;
   likes_count: number;
   comments_count: number;
+  shares_count?: number;
   isLiked?: boolean;
 }
 

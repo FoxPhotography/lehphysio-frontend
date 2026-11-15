@@ -93,15 +93,21 @@ export const Episodes: React.FC<EpisodesProps> = ({
               hidden: { opacity: 0, y: 20 },
               show: { opacity: 1, y: 0 }
             }}
+            whileHover={{ y: -4 }}
+            whileTap={{ scale: 0.99 }}
             onClick={() => navigateToEpisode(ep.id)} 
-            className="glass-card p-4 hover:border-brand-orange/30 flex flex-col gap-3.5 cursor-pointer group"
+            className="glass-card p-4 hover:border-brand-orange/40 hover:shadow-orange-glow/20 flex flex-col gap-3.5 cursor-pointer group transition-shadow"
           >
             <div className="w-full aspect-[16/9] rounded-xl bg-zinc-900 relative overflow-hidden border border-zinc-800/40">
               <Thumb src={ep.thumbnail_url} width={420} eager={index === 0} />
-              <div className="absolute inset-0 bg-black/20" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-80" />
               <span className="absolute top-3 end-3 flex items-center rounded-lg overflow-hidden text-2xs font-black border border-white/10 bg-black/55">
                 <span className="px-2 py-1 text-zinc-300">م{current?.season}</span>
                 <span className="px-2.5 py-1 bg-brand-orange text-black">الحلقة {episodeNumber(ep)}</span>
+              </span>
+              <span className="absolute bottom-3 start-3 inline-flex items-center gap-1.5 rounded-full bg-black/65 border border-white/10 px-2.5 py-1 text-2xs font-black text-brand-amber backdrop-blur-sm">
+                <Key className="w-3 h-3 fill-current" />
+                <span>كود + كويز</span>
               </span>
             </div>
             
@@ -128,6 +134,7 @@ export const Episodes: React.FC<EpisodesProps> = ({
             <div className="flex justify-around items-center pt-3 border-t border-zinc-900/60">
               <button 
                 className={`flex items-center gap-1.5 text-xs font-extrabold transition-colors cursor-pointer ${ep.isLiked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
+                aria-label={ep.isLiked ? 'إلغاء الإعجاب' : 'الإعجاب بالحلقة'}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleLikeEpisode(ep.id);
@@ -139,6 +146,7 @@ export const Episodes: React.FC<EpisodesProps> = ({
 
               <button 
                 className="flex items-center gap-1.5 text-xs font-extrabold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                aria-label="فتح تعليقات الحلقة"
                 onClick={(e) => {
                   e.stopPropagation();
                   navigateToEpisode(ep.id);
@@ -154,6 +162,7 @@ export const Episodes: React.FC<EpisodesProps> = ({
 
               <button 
                 className="flex items-center gap-1.5 text-xs font-extrabold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                aria-label="مشاركة الحلقة"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleShareEpisode(ep.id);

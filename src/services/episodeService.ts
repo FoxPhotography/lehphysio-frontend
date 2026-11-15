@@ -19,6 +19,14 @@ export const episodeService = {
     return res;
   },
 
+  async shareEpisode(episodeId: number, token?: string) {
+    const res = await apiFetch(`/api/episodes/${episodeId}/interact`, {
+      method: 'POST',
+      body: JSON.stringify({ type: 'share' }),
+    }, token);
+    return res;
+  },
+
   async submitQuiz(episodeId: number, answer: number, token?: string) {
     const res = await apiFetch(`/api/episodes/${episodeId}/interact`, {
       method: 'POST',

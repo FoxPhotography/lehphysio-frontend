@@ -350,12 +350,16 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           newsPosts={newsPosts}
           handleLikePost={handleLikePost}
           handleDeletePost={handleDeletePost}
+          handleCancelPostRevision={handleCancelPostRevision}
           handleSharePost={handleSharePost || ((id) => showToast('اتنسخ لينك البوست! 🔗'))}
           handleUploadImage={handleUploadImage}
           handleEditPost={handleEditPost}
           setCurrentPage={setCurrentPage}
           showToast={showToast}
           equippedFrame={equippedFrame}
+          usernames={usernamesDirectory}
+          triggerXpPopup={triggerXpPopup}
+          handleOpenReportModal={handleOpenReportModal}
           onOpenComments={onOpenComments}
         />
       );
@@ -382,6 +386,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           user={user}
           setCurrentPage={setCurrentPage}
           handleEpisodeInteract={handleEpisodeInteract}
+          handleShareEpisode={handleShareEpisode}
           handleQuizSubmit={handleQuizSubmit}
           redeemError={redeemError}
           redeemSuccess={redeemSuccess}

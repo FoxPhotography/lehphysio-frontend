@@ -1169,8 +1169,35 @@ function InnerApp() {
   const handleShareEpisode = async (episodeId: number) => {
     const ref = user ? user.username : '';
     const shareLink = `${window.location.origin}/episodes/${episodeId}${ref ? '?ref=' + ref : ''}`;
-    navigator.clipboard.writeText(shareLink).catch(() => {});
+    await copyToClipboard(shareLink).catch(() => {});
     showToast('اتنسخ لينك الحلقة! 🔗');
+
+    if (token) {
+      try {
+        const res = await episodeService.shareEpisode(episodeId, token);
+        if (res.ok) {
+          setEpisodes(prev => prev.map(ep => (
+            ep.id === episodeId
+              ? { ...ep, shares_count: (ep.shares_count || 0) + 1 }
+              : ep
+          )));
+        }
+      } catch (error) {
+        console.error('Error recording episode share:', error);
+      }
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'حلقة من Leh Physio',
+          text: 'شوف الحلقة دي على Leh Physio',
+          url: shareLink,
+        });
+      } catch {
+        // The native share sheet may be dismissed by the user.
+      }
+    }
   };
 
   const handleQuizSubmit = async (quizId: number) => {

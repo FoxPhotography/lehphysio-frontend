@@ -4,7 +4,7 @@ import { EpisodeNotes } from '../components/common/EpisodeNotes';
 import { YouTubeFacade } from '../components/common/YouTubeFacade';
 import { Thumb } from '../components/common/Thumb';
 import { m, AnimatePresence } from 'framer-motion';
-import { getYoutubeEmbedUrl, copyToClipboard } from '../utils/helpers';
+import { getYoutubeEmbedUrl } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
 import { 
   ArrowLeft, 
@@ -39,6 +39,7 @@ interface EpisodeDetailProps {
   user: any;
   setCurrentPage: (page: string) => void;
   handleEpisodeInteract: (type: string, content?: string, parentId?: number) => void;
+  handleShareEpisode: (id: number) => void;
   handleQuizSubmit: (quizId: number) => void;
   redeemError: string;
   redeemSuccess: string;
@@ -76,6 +77,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
   user,
   setCurrentPage,
   handleEpisodeInteract,
+  handleShareEpisode,
   handleQuizSubmit,
   redeemError,
   redeemSuccess,
@@ -194,12 +196,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
             </button>
             <button 
               className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-all" 
-              onClick={() => {
-                const ref = user ? user.username : '';
-                const shareLink = `${window.location.origin}/episodes/${episode.id}${ref ? '?ref=' + ref : ''}`;
-                copyToClipboard(shareLink);
-                showToast('اتنسخ لينك المشاركة! شاركه واكسب XP لما حد يدخل منه 🔗');
-              }}
+              onClick={() => handleShareEpisode(episode.id)}
             >
               <Share2 className="w-4 h-4" /> 
               <span>{shares_count} مشاركة</span>
