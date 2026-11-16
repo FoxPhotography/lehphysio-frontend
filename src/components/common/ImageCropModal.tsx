@@ -6,7 +6,9 @@ import { getCroppedImageFile } from '../../utils/cropImage';
 
 const ASPECTS = [
   { label: '1:1', value: 1 },
+  { label: '5:4', value: 5 / 4 },
   { label: '4:5', value: 4 / 5 },
+  { label: '16:9', value: 16 / 9 },
   { label: '9:16', value: 9 / 16 },
 ] as const;
 
