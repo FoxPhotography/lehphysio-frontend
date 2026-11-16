@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { HighlightWrapper } from '../notifications/HighlightWrapper';
 import { UserAvatar } from '../UserAvatar';
+import { ImageCropModal } from '../common/ImageCropModal';
 import { CommentsSection } from './CommentsSection';
 import { PostLikesSheet } from './PostLikesSheet';
 import { 
@@ -69,10 +70,13 @@ const PostCardImpl: React.FC<PostCardProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editPostContent, setEditPostContent] = useState('');
   const [editPostImageUrl, setEditPostImageUrl] = useState('');
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [cropFileName, setCropFileName] = useState('post-image.jpg');
   const [isUploadingEditImage, setIsUploadingEditImage] = useState(false);
 
   // Lightbox
   const [activeLightboxImg, setActiveLightboxImg] = useState<string | null>(null);
+  const [isTallImage, setIsTallImage] = useState(false);
 
   // Post Likes sheet & long press state
   const [showLikesSheet, setShowLikesSheet] = useState(false);
@@ -198,11 +202,23 @@ const PostCardImpl: React.FC<PostCardProps> = ({
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropFileName(file.name);
+      setCropImageSrc(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleCroppedEditImage = async (file: File) => {
     setIsUploadingEditImage(true);
-    const url = await handleUploadImage(e.target.files[0]);
+    const url = await handleUploadImage(file);
     setIsUploadingEditImage(false);
     if (url) {
       setEditPostImageUrl(url);
+      setCropImageSrc(null);
     }
   };
 
@@ -418,7 +434,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
 
             {post.image_url && (
               <div 
-                className="mt-4 rounded-xl overflow-hidden border border-zinc-900 bg-zinc-900/40 max-h-[300px] md:max-h-[460px] cursor-pointer relative group"
+                className={`mt-4 w-full overflow-hidden rounded-xl border border-zinc-900 bg-zinc-900/40 cursor-pointer relative group ${isTallImage ? 'aspect-[9/16]' : ''}`}
                 onDoubleClick={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -426,11 +442,15 @@ const PostCardImpl: React.FC<PostCardProps> = ({
                 }}
               >
                 <img
-                  src={cld(post.image_url, { w: 1200 })}
+                  src={cld(post.image_url, { w: 1600 })}
                   alt=""
                   loading="lazy"
                   decoding="async"
-                  className="w-full h-full object-contain max-h-[300px] md:max-h-[460px] group-hover:scale-[1.01] transition-transform duration-300"
+                  onLoad={(event) => {
+                    const image = event.currentTarget;
+                    setIsTallImage(image.naturalHeight / image.naturalWidth > 16 / 9);
+                  }}
+                  className={`block w-full ${isTallImage ? 'h-full object-cover' : 'h-auto'} group-hover:scale-[1.01] transition-transform duration-300`}
                 />
               </div>
             )}
@@ -595,6 +615,12 @@ const PostCardImpl: React.FC<PostCardProps> = ({
         postId={post.id}
         initialCount={post.likes_count}
         onClose={() => setShowLikesSheet(false)}
+      />
+      <ImageCropModal
+        imageSrc={cropImageSrc}
+        fileName={cropFileName}
+        onCancel={() => setCropImageSrc(null)}
+        onComplete={handleCroppedEditImage}
       />
     </HighlightWrapper>
   );

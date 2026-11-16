@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Image as ImageIcon, Loader2, Send } from 'lucide-react';
 import { UserAvatar } from '../UserAvatar';
+import { ImageCropModal } from '../common/ImageCropModal';
 
 interface PostComposerProps {
   user: any;
@@ -18,6 +19,8 @@ export const PostComposer: React.FC<PostComposerProps> = ({
   handleUploadImage,
 }) => {
   const [uploadedImageUrl, setUploadedImageUrl] = useState('');
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [cropFileName, setCropFileName] = useState('post-image.jpg');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
 
@@ -26,11 +29,22 @@ export const PostComposer: React.FC<PostComposerProps> = ({
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropFileName(file.name);
+      setCropImageSrc(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleCroppedImage = async (file: File) => {
     setIsUploadingImage(true);
     const url = await handleUploadImage(file);
     setIsUploadingImage(false);
     if (url) {
       setUploadedImageUrl(url);
+      setCropImageSrc(null);
     }
   };
 
@@ -45,17 +59,18 @@ export const PostComposer: React.FC<PostComposerProps> = ({
   };
 
   return (
-    <form 
-      onSubmit={handleSubmitPost} 
-      className="glass-card p-5 flex gap-4 items-start text-start border border-zinc-900/60"
-    >
-      <UserAvatar
-        username={user.username}
-        avatarUrl={user.avatar_url}
-        equippedFrame={user.equipped_frame}
-        size={40}
-      />
-      <div className="flex-1 space-y-3">
+    <>
+      <form 
+        onSubmit={handleSubmitPost} 
+        className="glass-card p-5 flex gap-4 items-start text-start border border-zinc-900/60"
+      >
+        <UserAvatar
+          username={user.username}
+          avatarUrl={user.avatar_url}
+          equippedFrame={user.equipped_frame}
+          size={40}
+        />
+        <div className="flex-1 space-y-3">
         <textarea
           className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl p-3.5 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none min-h-[90px]"
           placeholder="إيه اللي في دماغك النهارده؟ شارك سؤال أو إنجاز…"
@@ -105,7 +120,14 @@ export const PostComposer: React.FC<PostComposerProps> = ({
             )}
           </button>
         </div>
-      </div>
-    </form>
+        </div>
+      </form>
+      <ImageCropModal
+        imageSrc={cropImageSrc}
+        fileName={cropFileName}
+        onCancel={() => setCropImageSrc(null)}
+        onComplete={handleCroppedImage}
+      />
+    </>
   );
 };

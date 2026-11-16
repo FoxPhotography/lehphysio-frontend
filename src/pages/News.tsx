@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Image as ImageIcon, Loader2, Newspaper, Send, Volume2 } from 'lucide-react';
 import { UserAvatar } from '../components/UserAvatar';
+import { ImageCropModal } from '../components/common/ImageCropModal';
 import { PostCard } from '../components/home/PostCard';
 import { API_BASE } from '../services/api';
 import { useNotifications } from '../context/NotificationContext';
@@ -42,6 +43,8 @@ export const News: React.FC<NewsProps> = ({
   const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
   const [newPostContent, setNewPostContent] = useState('');
   const [uploadedImageUrl, setUploadedImageUrl] = useState('');
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [cropFileName, setCropFileName] = useState('news-image.jpg');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
   const isAdmin = user?.role === 'admin' || user?.role === 'owner';
@@ -49,10 +52,23 @@ export const News: React.FC<NewsProps> = ({
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropFileName(file.name);
+      setCropImageSrc(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleCroppedImage = async (file: File) => {
     setIsUploadingImage(true);
     const url = await handleUploadImage(file);
     setIsUploadingImage(false);
-    if (url) setUploadedImageUrl(url);
+    if (url) {
+      setUploadedImageUrl(url);
+      setCropImageSrc(null);
+    }
   };
 
   const handleSubmitPost = async (e: React.FormEvent) => {
@@ -92,7 +108,8 @@ export const News: React.FC<NewsProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 xl:pt-6 space-y-6">
+    <>
+      <div className="max-w-4xl mx-auto px-4 xl:pt-6 space-y-6">
       <div className="glass-card p-6 flex flex-col md:flex-row justify-between items-center gap-4 border border-zinc-950/40 relative overflow-hidden">
         <div className="absolute top-0 end-0 w-32 h-32 bg-brand-orange/5 rounded-full blur-3xl -z-10" />
         <div className="flex items-center gap-4 text-start w-full md:w-auto">
@@ -179,6 +196,13 @@ export const News: React.FC<NewsProps> = ({
           ))
         )}
       </div>
-    </div>
+      </div>
+      <ImageCropModal
+        imageSrc={cropImageSrc}
+        fileName={cropFileName}
+        onCancel={() => setCropImageSrc(null)}
+        onComplete={handleCroppedImage}
+      />
+    </>
   );
 };
