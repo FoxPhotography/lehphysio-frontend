@@ -434,7 +434,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
 
             {post.image_url && (
               <div 
-                className={`mt-4 w-full overflow-hidden rounded-xl border border-zinc-900 bg-zinc-900/40 cursor-pointer relative group ${isTallImage ? 'aspect-[9/16]' : ''}`}
+                className={`mt-4 w-full overflow-hidden rounded-xl border border-zinc-900 bg-zinc-900/40 cursor-pointer relative group ${isTallImage ? 'post-image-frame--tall' : ''}`}
                 onDoubleClick={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
