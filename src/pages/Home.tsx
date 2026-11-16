@@ -160,7 +160,7 @@ export const Home: React.FC<HomeProps> = ({
   }, [deepLinkTarget, communityPosts]);
 
   return (
-    <div className="space-y-10 xl:pt-6 max-w-4xl mx-auto px-4">
+    <div className="space-y-10 xl:pt-6 max-w-4xl xl:max-w-6xl 2xl:max-w-[1500px] mx-auto px-4">
       {/* Banner alerts */}
       {loginReward && loginReward.daily_login && (
         <m.div 
