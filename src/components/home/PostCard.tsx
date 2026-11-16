@@ -418,7 +418,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
 
             {post.image_url && (
               <div 
-                className="mt-4 rounded-xl overflow-hidden border border-zinc-900 bg-zinc-900/40 max-h-[300px] cursor-pointer relative group"
+                className="mt-4 rounded-xl overflow-hidden border border-zinc-900 bg-zinc-900/40 max-h-[300px] md:max-h-[460px] cursor-pointer relative group"
                 onDoubleClick={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -426,11 +426,11 @@ const PostCardImpl: React.FC<PostCardProps> = ({
                 }}
               >
                 <img
-                  src={cld(post.image_url, { w: 640 })}
+                  src={cld(post.image_url, { w: 1200 })}
                   alt=""
                   loading="lazy"
                   decoding="async"
-                  className="w-full h-full object-contain max-h-[300px] group-hover:scale-[1.01] transition-transform duration-300"
+                  className="w-full h-full object-contain max-h-[300px] md:max-h-[460px] group-hover:scale-[1.01] transition-transform duration-300"
                 />
               </div>
             )}
