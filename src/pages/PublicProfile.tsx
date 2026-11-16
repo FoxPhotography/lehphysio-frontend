@@ -121,7 +121,9 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
   };
 
   return (
-    <div className="max-w-lg mx-auto px-4 xl:pt-6 space-y-4">
+    <div className="relative isolate max-w-lg mx-auto px-4 xl:pt-6 space-y-4">
+      <StreakAura days={data.streak_count} className="streak-aura--page" override={profileCos} />
+
       <button
         className="flex items-center gap-2 text-zinc-400 hover:text-white font-bold text-sm"
         onClick={() => (window.history.length > 1 ? window.history.back() : setCurrentPage('leaderboard'))}

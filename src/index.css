@@ -282,6 +282,14 @@ html, body {
     height: min(78vh, 640px);
   }
 }
+
+/* Give desktop pages room to use the space beside the sidebar. Community keeps its own layout. */
+@media (min-width: 1280px) {
+  .app-main--wide > div[class*="max-w-"] {
+    width: 100%;
+    max-width: min(1500px, calc(100vw - 320px));
+  }
+}
 @media (min-width: 1280px) {
   .notif-panel {
     inset-inline-end: 304px; /* beside the right-hand sidebar */

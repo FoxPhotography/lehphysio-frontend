@@ -95,8 +95,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
             currentPage === 'community'
               ? 'app-main'
               : currentPage === 'play-game'
-                ? 'app-main pt-[calc(4rem+env(safe-area-inset-top,0px)+1rem)] xl:pt-0 pb-safe'
-                : 'app-main pt-[calc(4rem+env(safe-area-inset-top,0px)+1rem)] xl:pt-0 pb-nav xl:pb-8'
+                ? 'app-main app-main--wide pt-[calc(4rem+env(safe-area-inset-top,0px)+1rem)] xl:pt-0 pb-safe'
+                : 'app-main app-main--wide pt-[calc(4rem+env(safe-area-inset-top,0px)+1rem)] xl:pt-0 pb-nav xl:pb-8'
           }
         >
           {children}

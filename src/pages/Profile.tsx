@@ -488,8 +488,10 @@ export const Profile: React.FC<ProfileProps> = ({
     <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-lg mx-auto px-4 xl:pt-6 space-y-4"
+      className="relative isolate w-full max-w-lg mx-auto px-4 xl:pt-6 space-y-4"
     >
+      <StreakAura days={streak} className="streak-aura--page" override={profileCos} />
+
       {/* ── Profile Card ──────────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-zinc-900/60 p-6" style={{ borderColor: (cosmeticVisual(user.cosmetics?.profile) || (streakTheme.key !== 'none' ? streakTheme : null)) ? `rgb(${(cosmeticVisual(user.cosmetics?.profile) || streakTheme).glow} / 0.3)` : undefined }}>
         
