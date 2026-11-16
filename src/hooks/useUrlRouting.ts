@@ -163,11 +163,11 @@ export const useUrlRouting = ({
       const callbackError = params.get('error');
       const callbackUserRaw = params.get('user');
       if (callbackToken) {
+        let parsedUser: any = null;
         localStorage.setItem('token', callbackToken);
         if (setToken) setToken(callbackToken);
         if (callbackUserRaw && setUser) {
           try {
-            let parsedUser = null;
             try {
               parsedUser = JSON.parse(callbackUserRaw);
             } catch {

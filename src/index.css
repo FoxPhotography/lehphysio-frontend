@@ -63,17 +63,6 @@
   }
 }
 
-/* Keep portrait post cards readable without letting one image fill the viewport. */
-.post-image-frame--tall {
-  height: min(52dvh, 560px);
-}
-
-@media (min-width: 768px) {
-  .post-image-frame--tall {
-    height: min(62dvh, 720px);
-  }
-}
-
 /* Specialized Animations & Utilities */
 @keyframes firePulse {
   0% { transform: scale(1) rotate(-3deg); }

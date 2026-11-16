@@ -76,7 +76,6 @@ const PostCardImpl: React.FC<PostCardProps> = ({
 
   // Lightbox
   const [activeLightboxImg, setActiveLightboxImg] = useState<string | null>(null);
-  const [isTallImage, setIsTallImage] = useState(false);
 
   // Post Likes sheet & long press state
   const [showLikesSheet, setShowLikesSheet] = useState(false);
@@ -232,7 +231,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
     <HighlightWrapper isHighlighted={isPostHighlighted} className="rounded-2xl">
       <div 
         id={`post-${post.id}`} 
-        className={`glass-card p-5 text-start relative transition-all ${
+        className={`glass-card p-5 text-start relative transition-all xl:max-w-5xl xl:mx-auto ${
           hasPendingRevision || isPendingPost 
             ? 'border-dashed border-zinc-700/60' 
             : isRejectedPost 
@@ -434,7 +433,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
 
             {post.image_url && (
               <div 
-                className={`mt-4 w-full overflow-hidden rounded-xl border border-zinc-900 bg-zinc-900/40 cursor-pointer relative group ${isTallImage ? 'post-image-frame--tall' : ''}`}
+                className="mt-4 w-full overflow-hidden rounded-xl border border-zinc-900 bg-zinc-900/40 cursor-pointer relative group"
                 onDoubleClick={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -446,15 +445,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
                   alt=""
                   loading="lazy"
                   decoding="async"
-                  onLoad={(event) => {
-                    const image = event.currentTarget;
-                    const maxHeight = window.innerWidth >= 768
-                      ? Math.min(window.innerHeight * 0.62, 720)
-                      : Math.min(window.innerHeight * 0.52, 560);
-                    const renderedHeight = image.clientWidth * image.naturalHeight / image.naturalWidth;
-                    setIsTallImage(renderedHeight > maxHeight);
-                  }}
-                  className={`block w-full ${isTallImage ? 'h-full object-cover' : 'h-auto'} group-hover:scale-[1.01] transition-transform duration-300`}
+                  className="block w-full h-auto group-hover:scale-[1.01] transition-transform duration-300"
                 />
               </div>
             )}
