@@ -76,6 +76,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
 
   // Lightbox
   const [activeLightboxImg, setActiveLightboxImg] = useState<string | null>(null);
+  const [postMaxWidth, setPostMaxWidth] = useState<number | null>(null);
 
   // Post Likes sheet & long press state
   const [showLikesSheet, setShowLikesSheet] = useState(false);
@@ -231,14 +232,17 @@ const PostCardImpl: React.FC<PostCardProps> = ({
     <HighlightWrapper isHighlighted={isPostHighlighted} className="rounded-2xl">
       <div 
         id={`post-${post.id}`} 
-        className={`glass-card p-5 text-start relative transition-all xl:max-w-5xl xl:mx-auto ${
+        className={`glass-card p-5 text-start relative transition-all mx-auto ${
           hasPendingRevision || isPendingPost 
             ? 'border-dashed border-zinc-700/60' 
             : isRejectedPost 
             ? 'border-red-500/25 bg-red-950/5' 
             : 'border-zinc-900/60'
         }`}
-        style={{ opacity: (isPendingPost || hasPendingRevision) ? 0.6 : 1 }}
+        style={{
+          opacity: (isPendingPost || hasPendingRevision) ? 0.6 : 1,
+          maxWidth: postMaxWidth ? `${postMaxWidth}px` : undefined,
+        }}
       >
         <div className="flex justify-between items-start">
           <div className="flex gap-3 items-center">
@@ -445,6 +449,19 @@ const PostCardImpl: React.FC<PostCardProps> = ({
                   alt=""
                   loading="lazy"
                   decoding="async"
+                  onLoad={(event) => {
+                    if (window.innerWidth < 768) return;
+                    const image = event.currentTarget;
+                    const ratio = image.naturalWidth / image.naturalHeight;
+                    const maxWidth = ratio >= 1.6
+                      ? 1024
+                      : ratio >= 1.1
+                        ? 900
+                        : ratio >= 0.7
+                          ? 680
+                          : 520;
+                    setPostMaxWidth(maxWidth);
+                  }}
                   className="block w-full h-auto group-hover:scale-[1.01] transition-transform duration-300"
                 />
               </div>
