@@ -448,7 +448,11 @@ const PostCardImpl: React.FC<PostCardProps> = ({
                   decoding="async"
                   onLoad={(event) => {
                     const image = event.currentTarget;
-                    setIsTallImage(image.naturalHeight / image.naturalWidth > 16 / 9);
+                    const maxHeight = window.innerWidth >= 768
+                      ? Math.min(window.innerHeight * 0.62, 720)
+                      : Math.min(window.innerHeight * 0.52, 560);
+                    const renderedHeight = image.clientWidth * image.naturalHeight / image.naturalWidth;
+                    setIsTallImage(renderedHeight > maxHeight);
                   }}
                   className={`block w-full ${isTallImage ? 'h-full object-cover' : 'h-auto'} group-hover:scale-[1.01] transition-transform duration-300`}
                 />
