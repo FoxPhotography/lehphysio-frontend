@@ -231,7 +231,7 @@ const PostCardImpl: React.FC<PostCardProps> = ({
     <HighlightWrapper isHighlighted={isPostHighlighted} className="rounded-2xl">
       <div 
         id={`post-${post.id}`} 
-        className={`glass-card p-5 text-start relative transition-all mx-auto xl:max-w-5xl ${
+        className={`glass-card p-5 text-start relative transition-all mx-auto xl:max-w-4xl ${
           hasPendingRevision || isPendingPost 
             ? 'border-dashed border-zinc-700/60' 
             : isRejectedPost 
