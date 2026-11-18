@@ -75,11 +75,19 @@ registerRoute(
 
 // ── Push notifications ─────────────────────────────────────────────────────
 self.addEventListener('push', (event) => {
-  let data: { title: string; body: string; icon: string; badge: string; data: { url: string } } = {
+  let data: {
+    title: string;
+    body: string;
+    icon: string;
+    badge: string;
+    actions?: Array<{ action: string; title: string; type?: string; placeholder?: string }>;
+    data: { url: string; [key: string]: any };
+  } = {
     title: 'تنبيه جديد من Leh Physio! 📢',
     body: 'تفقد آخر التحديثات في المنصة الآن.',
     icon: '/icon-192x192.png',
     badge: '/icons/badge-96.png',
+    actions: [],
     data: { url: '/' },
   };
 
@@ -92,14 +100,32 @@ self.addEventListener('push', (event) => {
     }
   }
 
+  const sysLang = (self.navigator?.language || 'en').toLowerCase();
+  const isAr = sysLang.startsWith('ar');
+  const localizedActions = (data.actions || []).map((a) => {
+    if (a.action === 'mark_read') {
+      return { ...a, title: isAr ? 'تحديد كمقروء' : 'Mark as Read' };
+    }
+    if (a.action === 'reply') {
+      return {
+        ...a,
+        title: isAr ? 'رد' : 'Reply',
+        placeholder: isAr ? 'اكتب ردك...' : 'Write a reply...',
+      };
+    }
+    return a;
+  });
+
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
       icon: data.icon,
       badge: data.badge,
       data: data.data,
-      lang: 'ar',
-      dir: 'auto',
+      // @ts-expect-error actions is supported by NotificationOptions in ServiceWorker
+      actions: localizedActions,
+      lang: isAr ? 'ar' : 'en',
+      dir: isAr ? 'rtl' : 'ltr',
       // @ts-expect-error vibrate is supported on Android Chrome but missing from lib.dom typings
       vibrate: [100, 50, 100],
     })
@@ -108,7 +134,34 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetPath = event.notification.data?.url || '/';
+  const notifData = event.notification.data || {};
+  const action = event.action;
+
+  if (action === 'mark_read' || action === 'reply') {
+    const replyText = ((event as any).reply || '').trim();
+    if (action === 'reply' && !replyText) {
+      // Empty reply: fall through to opening the target URL
+    } else if (notifData.actionToken) {
+      event.waitUntil(
+        fetch('/api/notifications/sw-action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action,
+            actionToken: notifData.actionToken,
+            notificationId: notifData.notificationId,
+            type: notifData.type,
+            targetId: notifData.targetId,
+            metadata: notifData.metadata,
+            replyText: action === 'reply' ? replyText : undefined,
+          }),
+        }).catch(() => undefined)
+      );
+      return;
+    }
+  }
+
+  const targetPath = notifData.url || '/';
   const absoluteUrl = new URL(targetPath, self.location.origin).href;
 
   event.waitUntil(

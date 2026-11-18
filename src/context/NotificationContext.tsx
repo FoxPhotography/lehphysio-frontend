@@ -57,6 +57,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const nav = navigator as any;
+    if (typeof nav.setAppBadge === 'function') {
+      if (unreadCount > 0) {
+        nav.setAppBadge(unreadCount).catch(() => undefined);
+      } else if (typeof nav.clearAppBadge === 'function') {
+        nav.clearAppBadge().catch(() => undefined);
+      }
+    }
+  }, [unreadCount]);
   const [isLoading, setIsLoading] = useState(false);
   const [pagination, setPagination] = useState<NotificationPagination>({
     page: 1,
