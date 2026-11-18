@@ -31,7 +31,7 @@ import { ChangeUsernameModal, UsernameAuthMethod } from '../components/profile/C
 import { StreakLadderModal } from '../components/streak/StreakLadder';
 import { daysLabel } from '../utils/format';
 import { UserAvatar } from '../components/UserAvatar';
-import { usePresence, type PresenceChoice } from '../context/PresenceContext';
+import { usePresenceOptional } from '../context/PresenceContext';
 import { getGameModeLabel } from '../utils/gameInvite';
 import { setFramesCache } from '../utils/helpers';
 import { API_BASE } from '../services/api';
@@ -136,8 +136,8 @@ export const Profile: React.FC<ProfileProps> = ({
   if (!user) return null;
 
   const { getFlameTier, changePage, deferredPrompt, handleInstallPWA, isStandalone, setShowIOSInstall, showToast: showToastCtx, token, showConfirm, fetchUserProfile } = useAuth();
-  const { myStatus, setMyStatus, getUserPresence } = usePresence();
-  const myPresence = getUserPresence(user?.username);
+  const presenceCtx = usePresenceOptional();
+  const myPresence = presenceCtx?.getUserPresence(user?.username);
   const [sharingCard, setSharingCard] = useState(false);
   const [unlinkingGoogle, setUnlinkingGoogle] = useState(false);
   const [changeUsernameOpen, setChangeUsernameOpen] = useState(false);
@@ -474,41 +474,12 @@ export const Profile: React.FC<ProfileProps> = ({
         </div>
       )}
 
-      {/* Presence Status Picker + In-Game Indicator */}
-      <div className="flex flex-col items-center gap-2 mb-3 pointer-events-auto">
-        <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-900/90 border border-white/10">
-          {(
-            [
-              { id: 'online', label: 'أونلاين', dot: 'bg-emerald-500' },
-              { id: 'dnd', label: 'عدم إزعاج', dot: 'bg-red-500' },
-              { id: 'invisible', label: 'متخفي', dot: 'bg-zinc-500' },
-            ] as const
-          ).map((opt) => {
-            const active = myStatus === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => setMyStatus(opt.id as PresenceChoice)}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  active
-                    ? 'bg-white/12 text-white shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                <span className={`w-2 h-2 rounded-full ${opt.dot}`} />
-                <span>{opt.label}</span>
-              </button>
-            );
-          })}
+      {myPresence?.inGame && (
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-orange/15 border border-brand-orange/30 text-brand-orange text-xs font-extrabold mb-3 pointer-events-none">
+          <span>🎮</span>
+          <span>في روم: {getGameModeLabel(myPresence.inGame.mode).title}</span>
         </div>
-        {myPresence.inGame && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-orange/15 border border-brand-orange/30 text-brand-orange text-xs font-extrabold">
-            <span>🎮</span>
-            <span>في روم: {getGameModeLabel(myPresence.inGame.mode).title}</span>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Editable Batch */}
       <div className="flex items-center gap-2 pointer-events-auto">

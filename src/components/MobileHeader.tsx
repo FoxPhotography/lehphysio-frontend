@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { UserAvatar } from './UserAvatar';
 import { Store, LogIn } from 'lucide-react';
 import logo from '../assets/logo-wordmark.webp';
 import { NotificationBell } from './notifications/NotificationBell';
+import { PresenceMenu } from './PresenceMenu';
 
 interface MobileHeaderProps {
   setCurrentPage: (page: string) => void;
@@ -14,6 +15,9 @@ const iconBtn =
   'w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-white hover:border-brand-orange active:scale-95 transition-all cursor-pointer';
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({ setCurrentPage, user }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
   return (
     <header className="fixed top-0 inset-x-0 z-[100] xl:hidden pt-safe bg-zinc-950/95 border-b border-zinc-900/60">
       <div className="h-16 flex items-center justify-between px-4">
@@ -34,14 +38,24 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ setCurrentPage, user
           {user && <NotificationBell />}
 
           {user ? (
-            <UserAvatar
-              username={user.username}
-              avatarUrl={user.avatar_url}
-              equippedFrame={user.equipped_frame}
-              size={36}
-              onClick={() => setCurrentPage('profile')}
-              style={{ cursor: 'pointer' }}
-            />
+            <div className="relative" ref={menuRef}>
+              <UserAvatar
+                username={user.username}
+                avatarUrl={user.avatar_url}
+                equippedFrame={user.equipped_frame}
+                size={36}
+                onClick={() => setMenuOpen((prev) => !prev)}
+                style={{ cursor: 'pointer' }}
+              />
+              <PresenceMenu
+                open={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                onOpenProfile={() => setCurrentPage('profile')}
+                containerRef={menuRef}
+                direction="down"
+                alignClass="top-12 end-0 origin-top-end"
+              />
+            </div>
           ) : (
             <button className={iconBtn} onClick={() => setCurrentPage('login')} aria-label="تسجيل الدخول" title="تسجيل الدخول">
               <LogIn className="rtl:-scale-x-100 w-[18px] h-[18px]" />

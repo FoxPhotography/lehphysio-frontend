@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { rankName } from '../utils/ranks';
 import { UserAvatar } from './UserAvatar';
+import { PresenceMenu } from './PresenceMenu';
 import logo from '../assets/logo-wordmark.webp';
 import { NotificationBell } from './notifications/NotificationBell';
 import { 
@@ -41,6 +42,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   equippedTitle,
   getAvatarFrameClass
 }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const getCleanTitle = () => {
     if (equippedTitle && equippedTitle !== 'none') {
       return stripEmojis(equippedTitle);
@@ -191,12 +194,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }`}
             title="روح لحسابك"
           >
-            <UserAvatar 
-              username={user.username} 
-              avatarUrl={user.avatar_url} 
-              equippedFrame={user.equipped_frame} 
-              size={40} 
-            />
+            <div
+              className="relative shrink-0"
+              ref={menuRef}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <UserAvatar
+                username={user.username}
+                avatarUrl={user.avatar_url}
+                equippedFrame={user.equipped_frame}
+                size={40}
+                onClick={() => setMenuOpen((prev) => !prev)}
+                style={{ cursor: 'pointer' }}
+              />
+              <PresenceMenu
+                open={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                onOpenProfile={() => setCurrentPage('profile')}
+                containerRef={menuRef}
+                direction="up"
+                alignClass="bottom-12 start-0 origin-bottom-start"
+              />
+            </div>
             <div className="min-w-0 flex-1">
               <div className="font-extrabold text-sm text-white truncate group-hover:text-brand-orange transition-colors">
                 {user.username}

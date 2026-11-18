@@ -144,12 +144,12 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
             : 'bg-zinc-500';
         const dotSize =
           numericSize >= 80
-            ? 'w-5 h-5 border-[3px]'
+            ? 'w-6 h-6 border-[3px]'
             : numericSize >= 48
-            ? 'w-3.5 h-3.5 border-2'
+            ? 'w-4 h-4 border-2'
             : numericSize >= 28
-            ? 'w-2.5 h-2.5 border-2'
-            : 'w-2 h-2 border';
+            ? 'w-3 h-3 border-2'
+            : 'w-2.5 h-2.5 border';
         const statusTitle = presence.inGame
           ? 'في تحدي أونلاين 🎮'
           : presence.status === 'online'
