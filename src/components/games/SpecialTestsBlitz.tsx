@@ -71,13 +71,75 @@ const TEST_POOL: { prompt: string; region: string; correct: string }[] = [
   { prompt: 'إمالة الرقبة للخلف وللجنب مع ضغط خفيف من أعلى لالتهاب جذور أعصاب الرقبة', region: 'Cervical', correct: 'Spurling’s Test' },
   { prompt: 'تدوير الرقبة للناحية المصابة مع تتبع النبض الكعبري وأخذ نفس عميق لفحص Thoracic Outlet', region: 'Cervical / Vascular', correct: "Adson's Test" },
   { prompt: 'رفع الذراعين بزاوية 90° وفتح وقفل القبضة 3 دقائق لاكتشاف Thoracic Outlet Syndrome', region: 'Cervical / Vascular', correct: 'Roos (EAST) Test' },
+
+  // Additional 35 High-Yield OSCE Tests across all regions
+  { prompt: 'سحب الرأس لأعلى برفق والمريض مستلقي لتخفيف الضغط على جذور أعصاب الرقبة', region: 'Cervical', correct: 'Cervical Distraction Test' },
+  { prompt: 'ثني الرقبة للأمام وظهور صدمة كهربائية نازلة في العمود الفقري (MS / Myelopathy)', region: 'Cervical / Neuro', correct: "Lhermitte's Sign" },
+  { prompt: 'ثني العقلة الطرفية للوسطى ونقرها — انثناء الإبهام والسبابة يكشف إصابة UMN عنقية', region: 'Cervical / Neuro', correct: "Hoffmann's Sign" },
+  { prompt: 'اختبار أمان الشريان الفقري بعمل Extension + Rotation للرقبة 30 ثانية قبل الـ Manipulation', region: 'Cervical / Vascular', correct: 'Vertebral Artery (VBI) Test' },
+  { prompt: 'شد الرأس للأمام والورك مثني لقياس تيبس الفقرات القطنية في Ankylosing Spondylitis', region: 'Spine', correct: "Schober's Test" },
+  { prompt: 'الوقوف على رجل واحدة وعمل Lumbar Extension للخلف لاكتشاف Spondylolisthesis', region: 'Spine', correct: 'Stork Standing Test' },
+  { prompt: 'رفع الرجل السليمة والمريض مستلقي — ظهور ألم في الرجل المصابة يدل على Large Disc Herniation', region: 'Spine / Neuro', correct: 'Crossed Straight Leg Raise' },
+  { prompt: 'المريض جالس والظهر ممدود، ثني الصدر والأطراف السفلية للبحث عن ألم الجذر العصبي', region: 'Spine / Neuro', correct: 'Bragard’s Sign' },
+  { prompt: 'النوم على طرف السرير مع ترك رجل تنزل لأسفل والأخرى مضمومة للصدر لفحص مفصل SIJ', region: 'Hip / SIJ', correct: "Gaenslen's Test" },
+  { prompt: 'ثني الورك والركبة 90° ودفع عظمة الفخذ عمودياً للخلف نحو السرير لاستفزاز SIJ', region: 'Hip / SIJ', correct: 'Thigh Thrust (POSH) Test' },
+  { prompt: 'الضغط على حافتي الحوض للداخل والمريض نائم على جنبه لتقييم مفصل SIJ', region: 'Hip / SIJ', correct: 'SIJ Compression Test' },
+  { prompt: 'دفع الحوض للخارج والأسفل عند ASIS والمريض على ظهره لتقييم أربطة SIJ الأمامية', region: 'Hip / SIJ', correct: 'SIJ Distraction (Gapping) Test' },
+  { prompt: 'ثني الورك 90° مع Adduction و Internal Rotation لإحداث قرصة أمامية في مفصل الحوض (FAI)', region: 'Hip', correct: 'FADIR Test' },
+  { prompt: 'ثني الورك والركبة مع Adduction و Internal Rotation لشد عضلة Piriformis على العصب الوركي', region: 'Hip / Neuro', correct: 'FAIR Test' },
+  { prompt: 'مراقبة نزول الحوض للجهة المعاكسة عند الوقوف على رجل واحدة لكشف ضعف Gluteus Medius', region: 'Hip / Gait', correct: 'Trendelenburg Test' },
+  { prompt: 'قياس الزاوية بين اتجاه الفخذ واتجاه الساق لتقدير زاوية دوران عنق الفخذ (Anteversion)', region: 'Hip', correct: "Craig's Test" },
+  { prompt: 'المريض مستلقي على ظهره — ثني الركبة 90° وقياس قِصَر عضلة Rectus Femoris عند نزول الساق', region: 'Hip / Knee', correct: "Ely's Test" },
+  { prompt: 'دفع الكعب للخارج أثناء ثني الركبة مع لمس جانب الصابونة لكشف ميلها للخلع (Patellar Instability)', region: 'Knee', correct: 'Patellar Apprehension Test' },
+  { prompt: 'المريض جالس والركبة متنية 30° — سحب القصبة للأمام مع دوران للخارج للكشف عن PCL/Posterolateral', region: 'Knee', correct: 'Dial Test (Posterolateral)' },
+  { prompt: 'مسك الكعب وسحب عظمة الـ Talus للأمام والقدم مثنية قليلاً للأسفل لاختبار رباط ATFL بالكاحل', region: 'Ankle', correct: 'Anterior Drawer Test (Ankle)' },
+  { prompt: 'تدوير الكعب للداخل (Inversion) والقدم في الوضع المحايد لاختبار رباط CFL بالكاحل', region: 'Ankle', correct: 'Talar Tilt Test' },
+  { prompt: 'الضغط على عظمتي القصبة والشظية معاً في منتصف الساق لكشف High Ankle Sprain (Syndesmosis)', region: 'Ankle', correct: 'Squeeze Test (Syndesmosis)' },
+  { prompt: 'تدوير القدم للخارج (External Rotation) والركبة مثنية 90° لاستفزاز أربطة الـ Syndesmosis', region: 'Ankle', correct: 'Kleiger’s (External Rotation) Test' },
+  { prompt: 'رفع إصبع القدم الكبير لأعلى (Dorsiflexion) لتوتير اللفافة الأخمصية وإثارة ألم الكعب', region: 'Foot', correct: 'Windlass Test' },
+  { prompt: 'عصر مشط القدم عرضياً من الجانبين لإحداث طقطقة مؤلمة بين الأصابع (Morton’s Neuroma)', region: 'Foot', correct: "Mulder's Squeeze Test" },
+  { prompt: 'مسك الكعبين والمريض واقف — انحراف الكعب للداخل يكشف وجود قوس قدم طبيعي مرن', region: 'Foot', correct: 'Too Many Toes / Feiss Line' },
+  { prompt: 'ثني الذراعين للداخل على الحيط (Wall Push-Up) لملاحظة بروز لوح الكتف (Long Thoracic Nerve)', region: 'Shoulder / Scapula', correct: 'Wall Push-Up Test' },
+  { prompt: 'تحريك عظمة الترقوة عند AC Joint أو الضغط عليها لأسفل بعد خلع المفصل (Piano Key Sign)', region: 'Shoulder', correct: 'AC Shear / Piano Key Test' },
+  { prompt: 'دفع رأس العضد للأمام والخلف بإمساكه في الـ Glenoid لتقييم مدى ارتخاء الكتف (Load & Shift)', region: 'Shoulder', correct: 'Load and Shift Test' },
+  { prompt: 'ثني الكوع لأقصى مدى لمدة 60 ثانية لاستفزاز تنميل العصب الزندي في الخنصر والبنصر', region: 'Elbow / Nerve', correct: 'Elbow Flexion Test' },
+  { prompt: 'دفع الساعد للخارج والداخل والكوع مثني 20° لاختبار أربطة الكوع الجانبية (UCL / RCL)', region: 'Elbow', correct: 'Valgus/Varus Stress (Elbow)' },
+  { prompt: 'وضع ظهر الكفين على الترابيزة أو فرد الصوابع لتحديد انكماش الـ Palmar Fascia (Dupuytren)', region: 'Hand', correct: 'Tabletop (Hueston) Test' },
+  { prompt: 'الوقوف بقدمين مضمومتين وإغلاق العينين 30 ثانية لتقييم التوازن الحسي العميق (Dorsal Column)', region: 'Neurology', correct: 'Romberg Test' },
+  { prompt: 'خدش باطن القدم من الكعب للخارج ثم للداخل — فرد الصباع الكبير لأعلى يدل على إصابة UMN', region: 'Neurology', correct: 'Babinski Sign (Plantar Reflex)' },
+  { prompt: 'الاستلقاء السريع للخلف والرأس مدورة 45° ومائلة للأسفل 20° لإثارة النيستجمس في BPPV', region: 'Vestibular', correct: 'Dix-Hallpike Maneuver' },
 ];
 
 const ALL_TEST_NAMES = TEST_POOL.map((t) => t.correct);
 
 function buildDeck(): BlitzQuestion[] {
-  const shuffled = [...TEST_POOL].sort(() => Math.random() - 0.5);
-  return shuffled.map((item) => {
+  let seenPrompts: string[] = [];
+  try {
+    const raw = sessionStorage.getItem('pt_blitz_seen');
+    if (raw) seenPrompts = JSON.parse(raw);
+  } catch {
+    seenPrompts = [];
+  }
+
+  let unseen = TEST_POOL.filter((t) => !seenPrompts.includes(t.correct));
+  if (unseen.length < 15) {
+    seenPrompts = [];
+    unseen = [...TEST_POOL];
+  }
+
+  const ordered = [
+    ...unseen.sort(() => Math.random() - 0.5),
+    ...TEST_POOL.filter((t) => seenPrompts.includes(t.correct)).sort(() => Math.random() - 0.5),
+  ];
+
+  try {
+    const nextSeen = [...seenPrompts, ...unseen.slice(0, 15).map((t) => t.correct)];
+    sessionStorage.setItem('pt_blitz_seen', JSON.stringify(nextSeen));
+  } catch {
+    // Ignore storage errors
+  }
+
+  return ordered.map((item) => {
     const distractors = ALL_TEST_NAMES.filter((name) => name !== item.correct)
       .sort(() => Math.random() - 0.5)
       .slice(0, 3);

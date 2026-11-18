@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
   Gamepad2,
@@ -16,13 +16,22 @@ import {
   DoorOpen,
   Sparkles,
   Clock,
+  Loader2,
 } from 'lucide-react';
-import { LuckyWheel, SpinResult } from '../components/games/LuckyWheel';
-import { ClinicalDetectiveGame } from '../components/games/ClinicalDetectiveGame';
-import { SpecialTestsBlitz } from '../components/games/SpecialTestsBlitz';
+import type { SpinResult } from '../components/games/LuckyWheel';
 import { gameService } from '../services/gameService';
 import { fireWinConfetti } from '../utils/confetti';
 import { UserAvatar } from '../components/UserAvatar';
+
+const LuckyWheel = lazy(() =>
+  import('../components/games/LuckyWheel').then((mod) => ({ default: mod.LuckyWheel }))
+);
+const ClinicalDetectiveGame = lazy(() =>
+  import('../components/games/ClinicalDetectiveGame').then((mod) => ({ default: mod.ClinicalDetectiveGame }))
+);
+const SpecialTestsBlitz = lazy(() =>
+  import('../components/games/SpecialTestsBlitz').then((mod) => ({ default: mod.SpecialTestsBlitz }))
+);
 
 type GameMode = 'anatomy' | 'clinical' | 'special_tests';
 
@@ -301,21 +310,37 @@ export const Games: React.FC<GamesProps> = ({
               </button>
 
               {activeGame === 'diagnosis' && (
-                <ClinicalDetectiveGame
-                  onClaimXp={claimGameXP}
-                  xpReward={xpPerPlay}
-                  gamePlaySuccess={gamePlaySuccess}
-                  gamePlayError={gamePlayError}
-                />
+                <Suspense
+                  fallback={
+                    <div className="py-12 flex items-center justify-center">
+                      <Loader2 className="w-7 h-7 animate-spin text-brand-orange" />
+                    </div>
+                  }
+                >
+                  <ClinicalDetectiveGame
+                    onClaimXp={claimGameXP}
+                    xpReward={xpPerPlay}
+                    gamePlaySuccess={gamePlaySuccess}
+                    gamePlayError={gamePlayError}
+                  />
+                </Suspense>
               )}
 
               {activeGame === 'special-tests' && (
-                <SpecialTestsBlitz
-                  onClaimXp={claimGameXP}
-                  xpReward={xpPerPlay}
-                  gamePlaySuccess={gamePlaySuccess}
-                  gamePlayError={gamePlayError}
-                />
+                <Suspense
+                  fallback={
+                    <div className="py-12 flex items-center justify-center">
+                      <Loader2 className="w-7 h-7 animate-spin text-brand-orange" />
+                    </div>
+                  }
+                >
+                  <SpecialTestsBlitz
+                    onClaimXp={claimGameXP}
+                    xpReward={xpPerPlay}
+                    gamePlaySuccess={gamePlaySuccess}
+                    gamePlayError={gamePlayError}
+                  />
+                </Suspense>
               )}
 
               {activeGame === 'memory' && (
@@ -423,13 +448,21 @@ export const Games: React.FC<GamesProps> = ({
               )}
 
               {activeGame === 'spin' && (
-                <LuckyWheel
-                  wheelRotation={wheelRotation}
-                  isSpinning={isSpinning}
-                  hasSpunToday={hasSpunToday}
-                  onSpin={handleSpinWheelClick}
-                  lastSpinResult={lastSpinResult}
-                />
+                <Suspense
+                  fallback={
+                    <div className="py-12 flex items-center justify-center">
+                      <Loader2 className="w-7 h-7 animate-spin text-brand-orange" />
+                    </div>
+                  }
+                >
+                  <LuckyWheel
+                    wheelRotation={wheelRotation}
+                    isSpinning={isSpinning}
+                    hasSpunToday={hasSpunToday}
+                    onSpin={handleSpinWheelClick}
+                    lastSpinResult={lastSpinResult}
+                  />
+                </Suspense>
               )}
             </m.div>
           ) : (

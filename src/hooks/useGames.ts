@@ -223,39 +223,30 @@ export const useGames = () => {
     }
   };
 
-  // Single-player Memory Game (Anatomy & Clinical Pairs — 28 pairs pool, 8 random pairs per game)
-  const initMemoryGame = () => {
-    const ALL_MEMORY_PAIRS = [
-      { pairId: 1, a: { value: 'Deltoid 💪', sub: 'عضلة الكتف' }, b: { value: 'Axillary N. ⚡', sub: 'العصب المغذي' } },
-      { pairId: 2, a: { value: 'Biceps 💪', sub: 'ثني الكوع' }, b: { value: 'Musculocutaneous ⚡', sub: 'العصب المغذي' } },
-      { pairId: 3, a: { value: 'ACL 🎗️', sub: 'الرباط الصليبي' }, b: { value: 'Lachman Test 🔍', sub: 'أدق اختبار' } },
-      { pairId: 4, a: { value: 'Sciatic N. 🧠', sub: 'عرق النسا' }, b: { value: 'Piriformis 💪', sub: 'العضلة الضاغطة' } },
-      { pairId: 5, a: { value: 'Gastrocnemius 🦵', sub: 'عضلة السمانة' }, b: { value: 'Achilles Tendon 🦶', sub: 'وتر أخيل' } },
-      { pairId: 6, a: { value: 'Median N. ✋', sub: 'أول 3 صوابع' }, b: { value: 'Carpal Tunnel 🦴', sub: 'النفق الرسغي' } },
-      { pairId: 7, a: { value: 'Radial N. 🦾', sub: 'باسطات الرسغ' }, b: { value: 'Wrist Drop ⚠️', sub: 'علامة الإصابة' } },
-      { pairId: 8, a: { value: 'Femur 🦴', sub: 'أطول عظمة' }, b: { value: 'Greater Trochanter 📍', sub: 'بروز مميز' } },
-      { pairId: 9, a: { value: 'Serratus Anterior 💪', sub: 'ثبات اللوح' }, b: { value: 'Long Thoracic N. ⚡', sub: 'Winged Scapula' } },
-      { pairId: 10, a: { value: 'Upper Trapezius 💪', sub: 'رفع الكتف' }, b: { value: 'Accessory N. (XI) ⚡', sub: 'العصب المغذي' } },
-      { pairId: 11, a: { value: 'Ulnar N. ✋', sub: 'الخنصر والبنصر' }, b: { value: "Froment's Sign 🔍", sub: 'اختبار الإصابة' } },
-      { pairId: 12, a: { value: 'Common Peroneal N. ⚡', sub: 'رأس الـ Fibula' }, b: { value: 'Foot Drop ⚠️', sub: 'علامة الإصابة' } },
-      { pairId: 13, a: { value: 'Supraspinatus 💪', sub: 'أول 15° Abduction' }, b: { value: 'Empty Can Test 🔍', sub: 'الاختبار الخاص' } },
-      { pairId: 14, a: { value: 'Subscapularis 💪', sub: 'Internal Rotation' }, b: { value: 'Lift-Off Test 🔍', sub: 'الاختبار الخاص' } },
-      { pairId: 15, a: { value: 'PCL 🎗️', sub: 'الصليبي الخلفي' }, b: { value: 'Posterior Sag Sign 🔍', sub: 'علامة السقوط' } },
-      { pairId: 16, a: { value: 'Meniscus 🥏', sub: 'الغضروف الهلالي' }, b: { value: 'McMurray Test 🔍', sub: 'اختبار الطقطقة' } },
-      { pairId: 17, a: { value: 'MCL 🎗️', sub: 'الرباط الداخلي' }, b: { value: 'Valgus Stress 🔍', sub: 'الاختبار الخاص' } },
-      { pairId: 18, a: { value: 'De Quervain’s 🦴', sub: 'APL & EPB' }, b: { value: "Finkelstein's Test 🔍", sub: 'الاختبار الخاص' } },
-      { pairId: 19, a: { value: 'Tennis Elbow 💪', sub: 'وتر ECRB' }, b: { value: "Cozen's Test 🔍", sub: 'الاختبار الخاص' } },
-      { pairId: 20, a: { value: 'Iliopsoas 💪', sub: 'ثني الورك' }, b: { value: 'Thomas Test 🔍', sub: 'اختبار القِصَر' } },
-      { pairId: 21, a: { value: 'IT Band / TFL 🦵', sub: 'جانب الفخذ' }, b: { value: "Ober's Test 🔍", sub: 'اختبار الشد' } },
-      { pairId: 22, a: { value: 'ATFL 🎗️', sub: 'أشهر التواء كاحل' }, b: { value: 'Inversion Trauma ⚠️', sub: 'آلية الإصابة' } },
-      { pairId: 23, a: { value: 'C5 Myotome ⚡', sub: 'جذر عصبي' }, b: { value: 'Shoulder Abduction 💪', sub: 'الحركة المسؤولة' } },
-      { pairId: 24, a: { value: 'L4 Myotome ⚡', sub: 'جذر عصبي' }, b: { value: 'Ankle Dorsiflexion 🦶', sub: 'الحركة المسؤولة' } },
-      { pairId: 25, a: { value: 'S1 Myotome ⚡', sub: 'جذر عصبي' }, b: { value: 'Plantarflexion 🦶', sub: 'Achilles Reflex' } },
-      { pairId: 26, a: { value: 'Gluteus Medius 💪', sub: 'ثبات الحوض' }, b: { value: 'Trendelenburg Sign ⚠️', sub: 'علامة الضعف' } },
-      { pairId: 27, a: { value: 'Diaphragm 🫁', sub: 'عضلة التنفس' }, b: { value: 'Phrenic N. (C3-C5) ⚡', sub: 'العصب المغذي' } },
-      { pairId: 28, a: { value: 'Posterior Canal BPPV 🌀', sub: 'دوار موضعي' }, b: { value: 'Epley Maneuver 🔄', sub: 'مناورة العلاج' } },
-    ];
-    const pairs = [...ALL_MEMORY_PAIRS].sort(() => Math.random() - 0.5).slice(0, 8);
+  // Single-player Memory Game (dynamically loaded 60-pair bank, non-repeating per session)
+  const initMemoryGame = async () => {
+    const { ALL_MEMORY_PAIRS } = await import('../data/memoryPairs');
+    let seenIds: number[] = [];
+    try {
+      const raw = sessionStorage.getItem('pt_memory_seen');
+      if (raw) seenIds = JSON.parse(raw);
+    } catch {
+      seenIds = [];
+    }
+
+    let unseen = ALL_MEMORY_PAIRS.filter((p) => !seenIds.includes(p.pairId));
+    if (unseen.length < 8) {
+      seenIds = [];
+      unseen = [...ALL_MEMORY_PAIRS];
+    }
+
+    const pairs = [...unseen].sort(() => Math.random() - 0.5).slice(0, 8);
+    try {
+      sessionStorage.setItem('pt_memory_seen', JSON.stringify([...seenIds, ...pairs.map((p) => p.pairId)]));
+    } catch {
+      // Ignore storage errors
+    }
+
     const deck = pairs
       .flatMap((p) => [
         { id: `p${p.pairId}-a`, pairId: p.pairId, value: p.a.value, sub: p.a.sub, isFlipped: false, isMatched: false },
