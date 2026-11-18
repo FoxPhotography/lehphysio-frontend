@@ -92,8 +92,8 @@ export const gameService = {
     return res;
   },
 
-  async claimGamePlayXp(token?: string) {
-    const res = await apiFetch('/api/games/1/play', {
+  async claimGamePlayXp(token?: string, gameId: number = 1) {
+    const res = await apiFetch(`/api/games/${gameId}/play`, {
       method: 'POST',
     }, token);
     return res;

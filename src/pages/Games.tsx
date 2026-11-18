@@ -73,7 +73,7 @@ interface GamesProps {
   setCreateGameDuration: (val: number) => void;
   createGameMode: GameMode;
   setCreateGameMode: (mode: GameMode) => void;
-  claimGameXP: () => void;
+  claimGameXP: (gameId?: number) => void;
   handleCreateGameRoom: () => void;
   gameRoomCodeInput: string;
   setGameRoomCodeInput: (val: string) => void;
@@ -166,6 +166,8 @@ export const Games: React.FC<GamesProps> = ({
   const socket = useSocket();
 
   const xpPerPlay = xpSettings.game_play || 20;
+  const diagnosisXp = 100;
+  const osceXp = 200;
 
   useEffect(() => {
     setShowMultiplayerSetup(false);
@@ -346,8 +348,8 @@ export const Games: React.FC<GamesProps> = ({
                   }
                 >
                   <ClinicalDetectiveGame
-                    onClaimXp={claimGameXP}
-                    xpReward={xpPerPlay}
+                    onClaimXp={() => claimGameXP(2)}
+                    xpReward={diagnosisXp}
                     gamePlaySuccess={gamePlaySuccess}
                     gamePlayError={gamePlayError}
                   />
@@ -363,8 +365,8 @@ export const Games: React.FC<GamesProps> = ({
                   }
                 >
                   <SpecialTestsBlitz
-                    onClaimXp={claimGameXP}
-                    xpReward={xpPerPlay}
+                    onClaimXp={() => claimGameXP(3)}
+                    xpReward={osceXp}
                     gamePlaySuccess={gamePlaySuccess}
                     gamePlayError={gamePlayError}
                   />
@@ -527,7 +529,7 @@ export const Games: React.FC<GamesProps> = ({
                 </div>
                 <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
                   <span className="text-xs font-extrabold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">
-                    +{xpPerPlay} XP
+                    +{diagnosisXp} XP
                   </span>
                   <button
                     type="button"
@@ -564,7 +566,7 @@ export const Games: React.FC<GamesProps> = ({
                 </div>
                 <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
                   <span className="text-xs font-extrabold text-violet-300 bg-violet-500/10 px-2.5 py-1 rounded-full">
-                    +{xpPerPlay} XP
+                    +{osceXp} XP
                   </span>
                   <button
                     type="button"

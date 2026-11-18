@@ -257,6 +257,20 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     }
   };
 
+  useEffect(() => {
+    if (!socket) return undefined;
+    const handleOnlineCount = (payload?: { count?: number }) => {
+      if (typeof payload?.count === 'number') {
+        setOnlineCount(Math.max(1, payload.count));
+      }
+    };
+    socket.on('online_count_update', handleOnlineCount);
+    socket.emit('get_online_count');
+    return () => {
+      socket.off('online_count_update', handleOnlineCount);
+    };
+  }, [socket]);
+
   // Poll/Listen for chat updates via socket.io
   useEffect(() => {
     if (communityTab === 'chat' && currentPage === 'community') {

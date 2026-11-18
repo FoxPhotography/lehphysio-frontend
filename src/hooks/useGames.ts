@@ -303,10 +303,10 @@ export const useGames = () => {
     }
   };
 
-  const claimGameXP = async () => {
+  const claimGameXP = async (gameId: number = 1) => {
     if (!token) return;
     try {
-      const res = await gameService.claimGamePlayXp(token);
+      const res = await gameService.claimGamePlayXp(token, gameId);
       const data = await res.json();
       if (res.ok) {
         setGamePlaySuccess(data.message);
