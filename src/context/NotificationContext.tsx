@@ -4,6 +4,7 @@ import { useSocket } from './SocketContext';
 import { notificationService } from '../services/notificationService';
 import { feedCacheService } from '../services/feedCacheService';
 import { playChatSound } from '../utils/helpers';
+import { usePresenceOptional } from './PresenceContext';
 import type { AppNotification, NotificationPreferences, NotificationPagination } from '../types';
 
 interface NotificationContextType {
@@ -48,6 +49,11 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, user, changePage } = useAuth();
   const socket = useSocket();
+  const presenceCtx = usePresenceOptional();
+  const myStatusRef = useRef(presenceCtx?.myStatus ?? 'online');
+  useEffect(() => {
+    myStatusRef.current = presenceCtx?.myStatus ?? 'online';
+  }, [presenceCtx?.myStatus]);
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -464,8 +470,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return updated;
       });
       setUnreadCount(prev => prev + 1);
-      // Play sound
-      playChatSound('success');
+      // Play sound unless user is in Do Not Disturb (DND)
+      if (myStatusRef.current !== 'dnd') {
+        playChatSound('success');
+      }
     };
 
     const handleCountUpdate = (data: { unreadCount: number }) => {

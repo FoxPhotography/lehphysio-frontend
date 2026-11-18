@@ -4,6 +4,7 @@ import { useSocket } from '../context/SocketContext';
 import { useNotifications } from '../context/NotificationContext';
 import { chatService } from '../services/chatService';
 import { playChatSound } from '../utils/helpers';
+import { usePresenceOptional } from '../context/PresenceContext';
 import { ChatMessage } from '../types';
 import { applyReactionToggle, summarizeRawReactions } from '../utils/chatReactions';
 
@@ -32,6 +33,11 @@ const scheduleChatCache = (userId: number | string, messages: any[]) => {
 export const useChat = (communityTab: 'feed' | 'chat') => {
   const { token, user, showToast, showConfirm, currentPage } = useAuth();
   const socket = useSocket();
+  const presenceCtx = usePresenceOptional();
+  const myStatusRef = useRef(presenceCtx?.myStatus ?? 'online');
+  useEffect(() => {
+    myStatusRef.current = presenceCtx?.myStatus ?? 'online';
+  }, [presenceCtx?.myStatus]);
   const { deepLinkTarget, setDeepLinkTarget } = useNotifications();
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -193,7 +199,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
           if (chatMessagesRef.current && chatMessagesRef.current.length > 0 && data.length > 0) {
             const currentIds = new Set(chatMessagesRef.current.map((m: any) => m.id));
             const hasNewIncoming = data.some((m: any) => !currentIds.has(m.id) && (!userRef.current || m.username !== userRef.current.username));
-            if (hasNewIncoming) {
+            if (hasNewIncoming && myStatusRef.current !== 'dnd') {
               playChatSound('receive');
             }
           }
