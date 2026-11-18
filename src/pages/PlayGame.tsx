@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { playChatSound, copyToClipboard } from '../utils/helpers';
 import { fireWinConfetti, firePodiumFireworks } from '../utils/confetti';
-import { buildGameInvite } from '../utils/gameInvite';
+import { GAME_MODE_LABELS, buildGameInvite, getGameModeLabel } from '../utils/gameInvite';
 import { chatService } from '../services/chatService';
 import { gameService } from '../services/gameService';
 import { useSocket } from '../context/SocketContext';
@@ -38,12 +38,6 @@ interface FloatingReaction {
 }
 
 const REACTION_EMOJIS = ['🔥', '🧠', '⚡', '😂', '👏', '💀'];
-
-const GAME_MODE_LABELS: Record<string, { title: string; badge: string }> = {
-  anatomy: { title: 'تحدي التشريح أونلاين', badge: 'تشريح' },
-  clinical: { title: 'عيادة الطوارئ أونلاين', badge: 'تشخيص إكلينيكي' },
-  special_tests: { title: 'مبارزة الـ Special Tests', badge: 'OSCE' },
-};
 
 interface PlayGameProps {
   activeGameRoom: any;
@@ -148,9 +142,10 @@ export const PlayGame: React.FC<PlayGameProps> = ({
       showToast('تم نسخ رابط الدعوة بنجاح! 📋');
       playChatSound('success');
       
+      const modeLabel = getGameModeLabel(room.mode);
       const shareData = {
-        title: 'تحدي التشريح أونلاين 🧠',
-        text: `تعال انضم لتحدي التشريح المباشر معي في Leh Physio! كود الغرفة: ${room.code} ⚡`,
+        title: `${modeLabel.title} 🧠`,
+        text: `تعال انضم لـ ${modeLabel.title} معي في Leh Physio! كود الغرفة: ${room.code} ⚡`,
         url: inviteUrl,
       };
 
@@ -170,7 +165,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     if (Date.now() - sharedAt < 60000) { showToast('لسه باعت الدعوة في الشات — استنى دقيقة ⏳'); return; }
     setSharingToChat(true);
     try {
-      const res = await chatService.sendMessage(buildGameInvite(room.code), null, token);
+      const res = await chatService.sendMessage(buildGameInvite(room.code, room.mode), null, token);
       if (res.ok) {
         setSharedAt(Date.now());
         showToast('الدعوة اتبعتت في الشات العام 🎮');

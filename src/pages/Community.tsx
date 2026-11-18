@@ -39,7 +39,7 @@ import { ReactionSummary, ReactionBurst, MessageActionOverlay, ReactionDetailsSh
 import { StreakBubbleLayers, StreakName, StreakFlame } from '../components/streak/Streak';
 import { getStreakTheme, streakVars } from '../utils/streakTheme';
 import { cosmeticVisual } from '../utils/cosmetics';
-import { parseGameInvite, joinGameRoomFromInvite } from '../utils/gameInvite';
+import { parseGameInvite, parseGameInviteTitle, joinGameRoomFromInvite } from '../utils/gameInvite';
 import { QUICK_REACTIONS, normalizeEmoji } from '../utils/chatReactions';
 import { copyToClipboard } from '../utils/helpers';
 import { useAuth } from '../context/AuthContext';
@@ -1082,7 +1082,7 @@ export const Community: React.FC<CommunityProps> = ({
                                       {isClosed ? '🔒' : '🧠'}
                                     </span>
                                     <div className="min-w-0">
-                                      <p className={`text-[13px] font-black leading-tight ${isClosed ? 'text-zinc-400' : 'text-white'}`}>تحدي التشريح أونلاين</p>
+                                      <p className={`text-[13px] font-black leading-tight ${isClosed ? 'text-zinc-400' : 'text-white'}`}>{parseGameInviteTitle(msg.message)}</p>
                                       <p className="text-2xs font-bold text-zinc-400 truncate">
                                         {isClosed ? 'الروم اتقفلت' : (isMyMsg ? 'انت فاتح روم' : `${msg.username} فاتح روم ومستنيك`)}
                                       </p>
