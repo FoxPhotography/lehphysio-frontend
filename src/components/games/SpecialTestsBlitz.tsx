@@ -19,21 +19,58 @@ interface BlitzQuestion {
 }
 
 const TEST_POOL: { prompt: string; region: string; correct: string }[] = [
+  // Knee
   { prompt: 'أدق اختبار لقطع الرباط الصليبي الأمامي (ACL) عند ثني الركبة 20°–30°', region: 'Knee', correct: 'Lachman Test' },
+  { prompt: 'سحب القصبة للأمام والركبة مثنية 90° والقدم مثبتة لاختبار ACL', region: 'Knee', correct: 'Anterior Drawer Test (Knee)' },
+  { prompt: 'دفع القصبة للخلف والركبة مثنية 90° لاكتشاف قطع الرباط الصليبي الخلفي (PCL)', region: 'Knee', correct: 'Posterior Drawer Test' },
+  { prompt: 'ملاحظة سقوط القصبة للخلف تحت الجاذبية والركبة والورك مثنيين 90° (PCL)', region: 'Knee', correct: "Godfrey's (Posterior Sag) Sign" },
+  { prompt: 'ضغط للداخل على جانب الركبة الوحشي (Valgus Force) لاختبار سلامة الرباط الداخلي MCL', region: 'Knee', correct: 'Valgus Stress Test (MCL)' },
+  { prompt: 'ضغط للخارج على جانب الركبة الإنسي (Varus Force) لاختبار سلامة الرباط الخارجي LCL', region: 'Knee', correct: 'Varus Stress Test (LCL)' },
   { prompt: 'اختبار ثني وفرد الركبة مع دوران القصبة لاكتشاف قطع الغضروف الهلالي', region: 'Knee', correct: 'McMurray Test' },
+  { prompt: 'المريض على بطنه والركبة مثنية 90° مع ضغط لأسفل ودوران لكشف الغضروف الهلالي', region: 'Knee', correct: "Apley's Compression Test" },
+  { prompt: 'الوقوف على رجل واحدة مثنية 20° والالتفاف يمين وشمال لاكتشاف قطع الغضروف الهلالي', region: 'Knee', correct: 'Thessaly Test' },
+  { prompt: 'تثبيت الصابونة للأسفل ثم طلب شد عضلة الفخذ للكشف عن خشونة مفصل الصابونة PFPS', region: 'Knee', correct: "Clarke's Sign (Patellar Grind)" },
+  { prompt: 'اختبار ديناميكي يجمع بين Valgus و Internal Rotation وفرد الركبة لكشف عدم ثبات الـ ACL', region: 'Knee', correct: 'Pivot Shift Test' },
+  { prompt: 'الضغط على الـ Lateral Femoral Condyle أثناء فرد الركبة عند 30° لكشف ITB Syndrome', region: 'Knee', correct: "Noble's Compression Test" },
+
+  // Shoulder
   { prompt: 'رفع الذراع السلبي لأقصى مدى مع دوران داخلي لاكتشاف انحشار الكتف', region: 'Shoulder', correct: 'Neer’s Test' },
   { prompt: 'ثني الكتف 90° والكوع 90° ثم عمل دوران داخلي قسري للكتف', region: 'Shoulder', correct: 'Hawkins-Kennedy Test' },
+  { prompt: 'رفع الذراعين 90° في مستوى لوح الكتف مع تدوير الإبهامين لأسفل ومقاومة النزول (Supraspinatus)', region: 'Shoulder', correct: 'Empty Can (Jobe) Test' },
+  { prompt: 'رفع الذراع سلبياً لـ 90° ثم ترك المريض ينزله ببطء — سقوطه فجأة يدل على قطع كامل بالـ Rotator Cuff', region: 'Shoulder', correct: 'Drop Arm Test' },
+  { prompt: 'وضع ظهر اليد على أسفل الظهر ودفعها للخلف ضد مقاومة لعزل عضلة Subscapularis', region: 'Shoulder', correct: "Lift-Off (Gerber's) Test" },
+  { prompt: 'الضغط براحة اليد على البطن مع الحفاظ على المرفق للأمام لاختبار عضلة Subscapularis', region: 'Shoulder', correct: 'Belly-Press Test' },
   { prompt: 'ثني الكتف ضد مقاومة والكوع مفرود واليد Supinated لالتهاب وتر البايسبس', region: 'Shoulder', correct: 'Speed’s Test' },
+  { prompt: 'مقاومة الـ Supination والدوران الخارجي والكوع مثني 90° لفحص وتر البايسبس في الـ Bicipital Groove', region: 'Shoulder', correct: "Yergason's Test" },
+  { prompt: 'ثني الكتف 90° وتقريبه 15° مع تدوير الإبهام لأسفل ثم لأعلى لكشف SLAP Lesion', region: 'Shoulder', correct: "O'Brien's (Active Compression) Test" },
+  { prompt: 'سحب الذراع لأسفل والمريض جالس فينتج تجويف تحت الـ Acromion (Inferior Instability)', region: 'Shoulder', correct: 'Sulcus Sign' },
   { prompt: 'فتح الكتف 90° ودوران خارجي لكشف الخلع الأمامي المتكرر للكتف', region: 'Shoulder', correct: 'Apprehension Test' },
-  { prompt: 'ثني الرسغين لأقصى مدى لمدة 60 ثانية لتكرار تنميل متلازمة النفق الرسغي', region: 'Wrist', correct: 'Phalen’s Test' },
-  { prompt: 'ضم الإبهام داخل القبضة وثني الرسغ للناحية الزندية (De Quervain’s)', region: 'Wrist', correct: 'Finkelstein’s Test' },
+  { prompt: 'دفع رأس عظمة العضد للخلف أثناء وضع Apprehension لتخفيف القلق والألم', region: 'Shoulder', correct: 'Relocation (Jobe) Test' },
+  { prompt: 'تقريب الذراع المفرود بالعرض أمام الصدر للكتف المقابل لفحص مفصل AC Joint', region: 'Shoulder', correct: 'Scarf (Cross-Body Adduction) Test' },
+
+  // Elbow / Wrist / Hand
   { prompt: 'فرد الرسغ ضد مقاومة لاكتشاف Tennis Elbow (Lateral Epicondylitis)', region: 'Elbow', correct: 'Cozen’s Test' },
+  { prompt: 'مد الكوع بالكامل مع ثني الرسغ سلبياً وعمل Pronation لشد وتر باسطات الرسغ', region: 'Elbow', correct: "Mill's Test" },
+  { prompt: 'مقاومة ثني الرسغ والكوع مفرود والساعد Supinated لاكتشاف Golfer’s Elbow', region: 'Elbow', correct: "Golfer's Elbow Test" },
+  { prompt: 'ثني الرسغين لأقصى مدى لمدة 60 ثانية لتكرار تنميل متلازمة النفق الرسغي', region: 'Wrist', correct: 'Phalen’s Test' },
+  { prompt: 'الخبط الخفيف فوق النفق الرسغي لإحداث كهرباء في أول 3 صوابع ونص', region: 'Wrist', correct: "Tinel's Sign at Wrist" },
+  { prompt: 'ضم الإبهام داخل القبضة وثني الرسغ للناحية الزندية (De Quervain’s)', region: 'Wrist', correct: 'Finkelstein’s Test' },
+  { prompt: 'مسك ورقة بين الإبهام والسبابة — ثني عقلة الإبهام يكشف ضعف Adductor Pollicis (Ulnar Nerve)', region: 'Hand', correct: "Froment's Sign" },
+  { prompt: 'الضغط على الشريانين الكعبري والزندي وتفريغ الدم لفحص تروية اليد الشريانية', region: 'Hand / Vascular', correct: "Allen's Test" },
+  { prompt: 'الضغط على عظمة الـ Scaphoid أثناء تحريك الرسغ من الزندي للكعبري لكشف عدم ثباتها', region: 'Wrist', correct: "Watson's (Scaphoid Shift) Test" },
+  { prompt: 'تدوير وضغط قاعدة الإبهام محورياً لاكتشاف خشونة مفصل CMC للإبهام', region: 'Hand', correct: 'Grind Test (Thumb CMC)' },
+
+  // Hip / Pelvis / Ankle / Spine / Neuro
   { prompt: 'ضم الركبة للصدر في وضع الاستلقاء لاكتشاف قِصَر عضلة الـ Iliopsoas', region: 'Hip', correct: 'Thomas Test' },
   { prompt: 'الاستلقاء على الجنب وترك الرجل العلوية تنزل لاكتشاف شد الـ IT Band', region: 'Hip', correct: 'Ober’s Test' },
   { prompt: 'وضع كعب القدم على الركبة التانية (Figure-4) لفحص مفصل الحوض والـ SIJ', region: 'Hip / SIJ', correct: 'FABER (Patrick’s) Test' },
   { prompt: 'الضغط على عضلة السمانة والمريض على بطنه لاكتشاف قطع وتر أخيل', region: 'Ankle', correct: 'Thompson Test' },
+  { prompt: 'رفع الرجل مفرودة بالكامل والمريض مستلقي على ظهره لكشف شد جذور العصب الوركي (L4-S1)', region: 'Spine / Neuro', correct: "Straight Leg Raise (Lasègue's) Test" },
   { prompt: 'اختبار شد الأعصاب والمريض قاعد ومنحني الضهر مع فرد الركبة', region: 'Spine / Neuro', correct: 'Slump Test' },
+  { prompt: 'ثني الركبة والمريض مستلقي على بطنه لشد العصب الفخذي (Femoral Nerve L2-L4)', region: 'Spine / Neuro', correct: 'Prone Knee Bend (Femoral Tension)' },
   { prompt: 'إمالة الرقبة للخلف وللجنب مع ضغط خفيف من أعلى لالتهاب جذور أعصاب الرقبة', region: 'Cervical', correct: 'Spurling’s Test' },
+  { prompt: 'تدوير الرقبة للناحية المصابة مع تتبع النبض الكعبري وأخذ نفس عميق لفحص Thoracic Outlet', region: 'Cervical / Vascular', correct: "Adson's Test" },
+  { prompt: 'رفع الذراعين بزاوية 90° وفتح وقفل القبضة 3 دقائق لاكتشاف Thoracic Outlet Syndrome', region: 'Cervical / Vascular', correct: 'Roos (EAST) Test' },
 ];
 
 const ALL_TEST_NAMES = TEST_POOL.map((t) => t.correct);

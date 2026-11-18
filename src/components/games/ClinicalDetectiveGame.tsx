@@ -224,10 +224,413 @@ const CLINICAL_CASES: ClinicalCase[] = [
     correctIndex: 2,
     pearl: 'الـ Inversion + Plantarflexion بيشد مباشرة على الـ Anterior Talofibular Ligament (ATFL)، وأكتر اختبار بيكشفه هو الـ Anterior Drawer للكاحل.',
   },
+  {
+    id: 11,
+    title: 'تنميل الذراع مع رفع اليد',
+    specialty: 'Vascular & Neuro',
+    clues: [
+      'رسام حوائط بيشتكي من تنميل وبرودة في الذراع والصباع الصغير لما يرفع إيده فوق راسه.',
+      'الأعراض بتظهر في الـ Ulnar border (C8-T1) مع ضعف قبضة اليد أحياناً.',
+      'عند عمل Adson’s Test بيقل النبض الكعبري (Radial Pulse) بوضوح.',
+      'اختبار Roos (EAST) برفع الذراعين وفتح وقفل الإيد 3 دقايق كرر الأعراض فوراً.',
+    ],
+    options: [
+      'Thoracic Outlet Syndrome (TOS)',
+      'Carpal Tunnel Syndrome',
+      'Radial Nerve Palsy',
+      'C5 Radiculopathy',
+    ],
+    correctIndex: 0,
+    pearl: 'ضعف النبض مع Adson’s Test وإيجابية Roos (EAST) وتنميل الإيد مع رفع الذراع تشخص Thoracic Outlet Syndrome.',
+  },
+  {
+    id: 12,
+    title: 'كهرباء في الخنصر والبنصر',
+    specialty: 'Peripheral Nerve',
+    clues: [
+      'طالب بيذاكر وساند كوعه على المكتب ساعات طويلة حاسس بتنميل في الصباع الصغير ونص البنصر.',
+      'إحساس ضهر الكف من ناحية الصباع الصغير متأثر برضه.',
+      'ثني الكوع لأقصى مدى لمدة دقيقة (Elbow Flexion Test) زوّد التنميل جداً.',
+      'اختبار Froment’s Sign: المريض بيتني عقلة الإبهام لما يمسك ورقة بين الإبهام والسبابة.',
+    ],
+    options: [
+      'Carpal Tunnel Syndrome',
+      'Cubital Tunnel Syndrome (Ulnar Nerve)',
+      'Pronator Teres Syndrome',
+      'C6 Cervical Radiculopathy',
+    ],
+    correctIndex: 1,
+    pearl: 'ضغط العصب الزندي (Ulnar Nerve) عند الكوع يعمل تنميل في الخنصر ونص البنصر مع إيجابية Froment’s Sign.',
+  },
+  {
+    id: 13,
+    title: 'إصابة التابلوه في الركبة',
+    specialty: 'Sports Rehab',
+    clues: [
+      'راكب عربية خبطت ركبته المتنية بقوة في التابلوه أثناء حادث (Dashboard Injury).',
+      'عند الفحص والركبة متنية 90° في وضع الاستلقاء، القصبة ساقطة لورا (Posterior Sag Sign).',
+      'اختبار Quadriceps Active Test رجّع القصبة لمكانها لقدام لما المريض شد الكوادرسيبس.',
+      'اختبار Posterior Drawer أظهر حركة زائدة للقصبة للخلف.',
+    ],
+    options: [
+      'ACL Tear',
+      'PCL Tear (Dashboard Injury)',
+      'LCL Sprain',
+      'Lateral Meniscus Tear',
+    ],
+    correctIndex: 1,
+    pearl: 'خبطة التابلوه على ركبة متنية + Posterior Sag Sign + Posterior Drawer إيجابي = قطع في الرباط الصليبي الخلفي (PCL).',
+  },
+  {
+    id: 14,
+    title: 'قفل الركبة والطقطقة',
+    specialty: 'Sports Rehab',
+    clues: [
+      'لاعب كورة بيشتكي إن ركبته بتعلق ومش بتتفرد للآخر أحياناً (Locking) مع وجع داخلي.',
+      'في ألم موضعي واضح على الـ Medial Joint Line.',
+      'الركبة بتورم بشكل تدريجي بعد التمرين مش فوراً (Delayed Effusion).',
+      'اختبار McMurray واختبار Thessaly (اللف على رجل واحدة متنية 20°) طلعوا إيجابيين.',
+    ],
+    options: [
+      'Medial Meniscus Tear',
+      'ACL Tear',
+      'Patellar Tendinopathy',
+      'Baker’s Cyst Rupture',
+    ],
+    correctIndex: 0,
+    pearl: 'الـ Locking مع التورم المتأخر وألم خط المفصل وإيجابية McMurray و Thessaly علامات كلاسيكية لقطع الغضروف الهلالي (Meniscus Tear).',
+  },
+  {
+    id: 15,
+    title: 'وجع الصابونة على السلالم',
+    specialty: 'Orthopedics',
+    clues: [
+      'بنت 22 سنة بتشتكي من وجع قدام الركبة بيزيد مع نزول السلالم أو القعدة الطويلة في السينما (Theater Sign).',
+      'يوجد ضعف واضح في عضلة VMO وعضلات الحوض الـ Hip Abductors/External Rotators.',
+      'زيادة في زاوية Q-Angle وميل للـ Patella للخارج.',
+      'الضغط على الصابونة أثناء شد عضلة الفخذ (Clarke’s Grind Test) أظهر ألم وخشونة.',
+    ],
+    options: [
+      'Patellofemoral Pain Syndrome (PFPS)',
+      'Osgood-Schlatter Disease',
+      'PCL Tear',
+      'Pes Anserinus Bursitis',
+    ],
+    correctIndex: 0,
+    pearl: 'وجع قدام الركبة مع نزول السلالم والقعدة الطويلة (Movie/Theater Sign) وضعف VMO والـ Hip Abductors يميز الـ PFPS.',
+  },
+  {
+    id: 16,
+    title: 'وجع الجري على جانب الركبة',
+    specialty: 'Sports Rehab',
+    clues: [
+      'عدّاء ماراثون بيجيله ألم حاد في الجنب الخارجي للركبة بعد كل مرة يجري فيها أكتر من 3 كم.',
+      'الألم مركز فوق الـ Lateral Femoral Condyle بحوالي 2 سم.',
+      'اختبار Ober’s Test أظهر شد قوي جداً في العضلات الوحشية للفخذ.',
+      'اختبار Noble’s Compression عند ثني وفرد الركبة عند 30° كرر نفس الألم بدقة.',
+    ],
+    options: [
+      'LCL Sprain',
+      'Iliotibial Band (ITB) Syndrome',
+      'Lateral Meniscus Tear',
+      'Common Peroneal Entrapment',
+    ],
+    correctIndex: 1,
+    pearl: 'ألم عدائين المسافات عند الـ Lateral Femoral Condyle عند زاوية 30° مع إيجابية Ober’s و Noble’s = متلازمة الشريط الحرقفي الظنبوبي (ITB Syndrome).',
+  },
+  {
+    id: 17,
+    title: 'ألم الجنب أثناء النوم على السرير',
+    specialty: 'Hip & Pelvis',
+    clues: [
+      'سيدة 48 سنة مش قادرة تنام على جنبها اليمين بسبب ألم حاد في جانب الحوض الخارجي.',
+      'يوجد تندرنس شديد عند الضغط على الـ Greater Trochanter.',
+      'الألم بيزيد مع المشي الطويل، الوقوف على رجل واحدة، وصعود السلالم.',
+      'اختبار FABER واختبار Resisted Hip Abduction زودوا الألم عند بروز الفخذ الجانبي.',
+    ],
+    options: [
+      'Hip Osteoarthritis',
+      'Greater Trochanteric Pain Syndrome (Trochanteric Bursitis)',
+      'Femoroacetabular Impingement (FAI)',
+      'Meralgia Paresthetica',
+    ],
+    correctIndex: 1,
+    pearl: 'الألم الجانبي للحوض عند الضغط على الـ Greater Trochanter وعدم القدرة على النوم على الجنب هو الـ GTPS / Trochanteric Bursitis.',
+  },
+  {
+    id: 18,
+    title: 'التنميل مع المشي والراحة بالانحناء',
+    specialty: 'Spine',
+    clues: [
+      'رجل 65 سنة بيحس بتقل وتنميل في الرجلين بعد المشي 10 دقايق بس.',
+      'الألم بيختفي تماماً لما يقعد أو يوطي لقدام وهو ساند على عربية السوبرماركت (Shopping Cart Sign).',
+      'الوقوف مفرود الضهر أو المشي لتحت منحدر (Extension) بيزود الأعراض جداً.',
+      'النبض في القدم سليم تماماً (تفرق عن المشاكل الشريانية).',
+    ],
+    options: [
+      'Lumbar Spinal Stenosis (Neurogenic Claudication)',
+      'Acute Lumbar Disc Herniation',
+      'Peripheral Artery Disease (Vascular)',
+      'Sacroiliac Joint Dysfunction',
+    ],
+    correctIndex: 0,
+    pearl: 'الـ Shopping Cart Sign (الراحة مع الانحناء والزيادة مع الفرد) في كبار السن مع نبض قدم سليم تشخص ضيق القناة الشوكية (Lumbar Spinal Stenosis).',
+  },
+  {
+    id: 19,
+    title: 'درجة سلم في أسفل الضهر',
+    specialty: 'Spine',
+    clues: [
+      'لاعب جمباز شاب بيشتكي من ألم أسفل الضهر بيزيد مع الحركات الخلفية (Lumbar Extension).',
+      'عند تحسس الفقرات القطنية بنلاقي فجوة أو خطوة محسوسة (Step-off Deformity) عند L5-S1.',
+      'اختبار Stork Standing Test (الوقوف على رجل واحدة مع فرد الضهر للخلف) مؤلم جداً.',
+      'الأشعة الجانبية أظهرت انزلاق فقرة L5 للأمام فوق S1.',
+    ],
+    options: [
+      'Spondylolisthesis',
+      'Lumbar Disc Herniation',
+      'Piriformis Syndrome',
+      'Ankylosing Spondylitis',
+    ],
+    correctIndex: 0,
+    pearl: 'وجود Step-off Deformity وألم مع الـ Extension و Stork Test إيجابي في لاعبي الجمباز يشير إلى Spondylolisthesis.',
+  },
+  {
+    id: 20,
+    title: 'تيبس الضهر الصباحي في الشباب',
+    specialty: 'Rheumatology / Spine',
+    clues: [
+      'شاب 26 سنة عنده ألم في أسفل الضهر والحوض بقاله أكتر من 4 شهور بيصحيه الفجر.',
+      'تيبس صباحي (Morning Stiffness) بيقعد أكتر من ساعة كاملة وبيتحسن جداً مع الحركة والرياضة مش الراحة!',
+      'محدودية واضحة في حركة الصدر أثناء التنفس وحركة العمود الفقري (Positive Schober’s Test).',
+      'الأشعة أظهرت التهاب في مفاصل الحوض (Sacroiliitis) وبداية شكل Bamboo Spine.',
+    ],
+    options: [
+      'Ankylosing Spondylitis',
+      'Mechanical Low Back Pain',
+      'Lumbar Spinal Stenosis',
+      'Compression Fracture',
+    ],
+    correctIndex: 0,
+    pearl: 'ألم ضهر التهابي في شاب يقل بالحركة ويزيد بالراحة + تيبس صباحي > ساعة + إيجابية Schober’s Test = Ankylosing Spondylitis.',
+  },
+  {
+    id: 21,
+    title: 'تنميل الإبهام وألم الرقبة',
+    specialty: 'Cervical Spine',
+    clues: [
+      'مريض رقبة بيشتكي من ألم نازل من الرقبة للجنب الخارجي للساعد ولحد الإبهام.',
+      'في ضعف في ثني الكوع (Biceps) وضعف في رد فعل الوتر بتاعها (Biceps Reflex).',
+      'اختبار Spurling’s Test زوّد التنميل في الإبهام فوراً.',
+      'شد الرقبة لفوق بلطف (Cervical Distraction Test) ريّح الألم في ثواني.',
+    ],
+    options: [
+      'C6 Cervical Radiculopathy',
+      'C8 Cervical Radiculopathy',
+      'Carpal Tunnel Syndrome',
+      'Cervical Myelopathy',
+    ],
+    correctIndex: 0,
+    pearl: 'جذر العصب C6 مسؤول عن إحساس الإبهام + عضلة Biceps/Wrist Extensors + Biceps Reflex.',
+  },
+  {
+    id: 22,
+    title: 'عدم اتزان وصعوبة زراير القميص',
+    specialty: 'Red Flag 🚨',
+    isRedFlag: true,
+    clues: [
+      'مريض 58 سنة بيشتكي إن إيديه الاتنين بقوا تقال ومش عارف يقفل زراير القميص (Loss of Fine Motor).',
+      'رجليه فيهم تشنج خفيف ومشيته بقت واسعة ومش متزنة (Broad-based Ataxic Gait).',
+      'ظهرت علامات Upper Motor Neuron زي Hyperreflexia و Babinski إيجابي و Hoffmann’s Sign.',
+      'تدهور عصبي مركزي في الرقبة (Red Flag) — ممنوع الـ Cervical Manipulation ويجب العرض جراحياً!',
+    ],
+    options: [
+      'Cervical Myelopathy (Red Flag 🚨)',
+      'Cervical Muscle Strain',
+      'Bell’s Palsy',
+      'Thoracic Outlet Syndrome',
+    ],
+    correctIndex: 0,
+    pearl: '🚨 علامات UMN (Babinski + Hoffmann + عدم اتزان + فقدان المهارات الدقيقة لليد) تعني ضغط على الحبل الشوكي العنقي (Cervical Myelopathy).',
+  },
+  {
+    id: 23,
+    title: 'تورم وسخونة في السمانة',
+    specialty: 'Red Flag 🚨',
+    isRedFlag: true,
+    clues: [
+      'مريض لسه راجع من سفر طيران 10 ساعات (أو عامل عملية حديثة) وبيشتكي من وجع في السمانة.',
+      'السمانة الشمال وارمة بفرق أكتر من 3 سم عن اليمين، وحمراء وسخنة جداً.',
+      'الألم بيزيد مع المشي والضغط العميق على السمانة.',
+      'حالة Red Flag خطيرة — ممنوع تماماً المساج أو الـ Calf Stretching ويجب التحويل لعمل Doppler فوراً!',
+    ],
+    options: [
+      'Deep Vein Thrombosis (DVT) [Red Flag 🚨]',
+      'Gastrocnemius Muscle Strain',
+      'Achilles Tendinitis',
+      'Shin Splints (MTSS)',
+    ],
+    correctIndex: 0,
+    pearl: '🚨 تورم أحادي بالسمانة + سخونة + احمرار بعد سفر أو جراحة = اشتباه جلطة وريدية (DVT)، ممنوع المساج والتحويل للطوارئ فوراً.',
+  },
+  {
+    id: 24,
+    title: 'الكتف المجنّح بعد خبطة أو جراحة',
+    specialty: 'Peripheral Nerve',
+    clues: [
+      'مريضة بعد عملية جراحية في الإبط (أو شيل شنطة تقيلة) مش قادرة ترفع دراعها فوق الـ 90° بالكامل.',
+      'الـ Medial Border بتاع لوح الكتف بيبرز لبرا بوضوح لما تزق الحيط بإيديها (Wall Push-Up).',
+      'العضلة المصابة هي الـ Serratus Anterior.',
+      'إصابة في العصب الصدري الطويل (Long Thoracic Nerve).',
+    ],
+    options: [
+      'Long Thoracic Nerve Injury (Winged Scapula)',
+      'Spinal Accessory Nerve Palsy',
+      'Axillary Nerve Injury',
+      'Rotator Cuff Tear',
+    ],
+    correctIndex: 0,
+    pearl: 'ضعف الـ Serratus Anterior نتيجة إصابة Long Thoracic Nerve يظهر كـ Medial Scapular Winging أثناء الـ Wall Push-Up.',
+  },
+  {
+    id: 25,
+    title: 'حرقان بين صوابع القدم في الشوز الضيق',
+    specialty: 'Foot & Ankle',
+    clues: [
+      'سيدة بتلبس كعب عالي وشوز ضيق بتشتكي من ألم وحرقان بين الصباع التالت والرابع في مشط الرجل.',
+      'بتحس كأنها ماشية على حصوة صغيرة جوه الشوز وبتضطر تقلعه وتفرك رجلها.',
+      'عند عصر مشط القدم من الجنبين (Mulder’s Squeeze Test) بنسمع ونحس Click مؤلم.',
+      'تضخم ليفي حميد حول العصب الأصبعي الأخمصي (Interdigital Neuroma).',
+    ],
+    options: [
+      'Morton’s Neuroma',
+      'Plantar Fasciitis',
+      'Metatarsal Stress Fracture',
+      'Gout Arthritis',
+    ],
+    correctIndex: 0,
+    pearl: 'الألم الحارق بين الصباع الـ 3 والـ 4 مع إحساس الحصوة وإيجابية Mulder’s Click يشخص Morton’s Neuroma.',
+  },
+  {
+    id: 26,
+    title: 'تنميل باطن القدم من الكعب',
+    specialty: 'Peripheral Nerve',
+    clues: [
+      'مريض فلات فوت حاسس بحرقان وتنميل في باطن القدم وأصابع القدم.',
+      'الأعراض بتزيد جداً مع الوقوف والمشي الطويل.',
+      'يوجد ألم عند الضغط أو الخبط (Tinel’s Sign) خلف الـ Medial Malleolus.',
+      'انضغاط العصب الظنبوبي الخلفي (Posterior Tibial Nerve) تحت الـ Flexor Retinaculum.',
+    ],
+    options: [
+      'Tarsal Tunnel Syndrome',
+      'Plantar Fasciitis',
+      'Morton’s Neuroma',
+      'Sciatic Nerve Palsy',
+    ],
+    correctIndex: 0,
+    pearl: 'الخبط ورا الـ Medial Malleolus (Tinel’s Sign) وتنميل باطن القدم يميز انضغاط الـ Tibial Nerve في الـ Tarsal Tunnel.',
+  },
+  {
+    id: 27,
+    title: 'بروز مؤلم تحت الركبة في مراهق',
+    specialty: 'Pediatrics / Sports',
+    clues: [
+      'ولد 13 سنة بيلعب كورة وسلة طول الأسبوع بيشتكي من ألم وتورم قدام وتحت الركبة.',
+      'يوجد بروز عظمي واضح ومؤلم جداً عند الـ Tibial Tuberosity.',
+      'الألم بيزيد مع الجري والنط ومقاومة فرد الركبة (Quadriceps Contraction).',
+      'حالة Traction Apophysitis شائعة في فترة الطفرة النمو (Growth Spurt).',
+    ],
+    options: [
+      'Osgood-Schlatter Disease',
+      'Sever’s Disease',
+      'Meniscal Tear',
+      'Patellar Dislocation',
+    ],
+    correctIndex: 0,
+    pearl: 'ألم وتورم الـ Tibial Tuberosity في مراهق رياضي وقت النمو = Osgood-Schlatter Disease.',
+  },
+  {
+    id: 28,
+    title: 'وجع كعب طفل بيلعب كورة',
+    specialty: 'Pediatrics / Sports',
+    clues: [
+      'طفل 10 سنين بيشتكي من ألم في مؤخرة الكعب بيزيد مع الجري واللعب حافي.',
+      'الألم متركز عند الـ Calcaneal Apophysis مكان التصاق وتر أخيل.',
+      'عصر الكعب من الجنبين (Calcaneal Squeeze Test) بيسبب ألم واضح.',
+      'حالة Calcaneal Apophysitis حميدة بتتحسن بالراحة وتمديد عضلات السمانة.',
+    ],
+    options: [
+      'Sever’s Disease',
+      'Osgood-Schlatter Disease',
+      'Achilles Rupture',
+      'Plantar Fasciitis',
+    ],
+    correctIndex: 0,
+    pearl: 'ألم كعب الأطفال النشطين (8–14 سنة) مع Calcaneal Squeeze Test إيجابي هو Sever’s Disease.',
+  },
+  {
+    id: 29,
+    title: 'دوخة شديدة عند التقلب في السرير',
+    specialty: 'Vestibular Rehab',
+    clues: [
+      'سيدة بتشتكي من نوبات دوار شديد (Spinning Vertigo) بتقعد 20 ثانية لما تتقلب في السرير أو تبص لفوق.',
+      'السمع سليم تماماً ومفيش طنين في الأذن.',
+      'في اختبار Dix-Hallpike: ظهر دوران سريع للعين (Torsional Up-beating Nystagmus) بعد ثواني قليلة.',
+      'بتتعالج بكفاءة عالية في جلسة أو اتنين باستخدام مناورة Epley (Canalith Repositioning).',
+    ],
+    options: [
+      'Posterior Canal BPPV',
+      'Meniere’s Disease',
+      'Vertebrobasilar Insufficiency',
+      'Cerebellar Stroke',
+    ],
+    correctIndex: 0,
+    pearl: 'دوار موضعي قصير (< دقيقة) مع إيجابية Dix-Hallpike بدون فقدان سمع = BPPV ويتعالج بمناورة Epley.',
+  },
+  {
+    id: 30,
+    title: 'فقدان الدوران الخارجي وضعف العضلة فوق الشوكة',
+    specialty: 'Peripheral Nerve',
+    clues: [
+      'لاعب كرة طائرة محترف بيشتكي من ضعف تدريجي في رفع الكتف والدوران الخارجي من غير ألم حاد.',
+      'في ضمور (Atrophy) ملحوظ في منطقتي Supraspinatus و Infraspinatus Fossae.',
+      'الضربات المتكررة (Overhead Smashes) عملت شد على العصب جوه الـ Suprascapular Notch.',
+      'الإحساس على جلد الكتف طبيعي (عكس إصابة الـ Axillary Nerve).',
+    ],
+    options: [
+      'Suprascapular Nerve Entrapment',
+      'Axillary Nerve Palsy',
+      'Long Thoracic Nerve Injury',
+      'Frozen Shoulder',
+    ],
+    correctIndex: 0,
+    pearl: 'ضمور Supraspinatus و Infraspinatus مع سلامة الإحساس في لاعبي الطائرة والتنس يدل على Suprascapular Nerve Entrapment.',
+  },
 ];
 
 function pickSessionCases(): ClinicalCase[] {
-  return [...CLINICAL_CASES].sort(() => Math.random() - 0.5).slice(0, 5);
+  let seenIds: number[] = [];
+  try {
+    const raw = sessionStorage.getItem('pt_detective_seen');
+    if (raw) seenIds = JSON.parse(raw);
+  } catch {
+    seenIds = [];
+  }
+
+  let unseen = CLINICAL_CASES.filter((c) => !seenIds.includes(c.id));
+  if (unseen.length < 5) {
+    seenIds = [];
+    unseen = [...CLINICAL_CASES];
+  }
+
+  const picked = [...unseen].sort(() => Math.random() - 0.5).slice(0, 5);
+  try {
+    const nextSeen = [...seenIds, ...picked.map((p) => p.id)];
+    sessionStorage.setItem('pt_detective_seen', JSON.stringify(nextSeen));
+  } catch {
+    // Ignore storage errors
+  }
+  return picked;
 }
 
 export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
