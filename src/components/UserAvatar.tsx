@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { DEFAULT_FIT, getCachedFit, measureFrame, type FrameFit } from '../utils/frameFit';
 import { getFrameImage } from '../utils/helpers';
 import { cld } from '../utils/image';
+import { usePresenceOptional } from '../context/PresenceContext';
 
 interface UserAvatarProps {
   username: string;
@@ -13,6 +14,8 @@ interface UserAvatarProps {
   style?: React.CSSProperties;
   /** Above-the-fold avatars (profile header) can opt out of lazy loading. */
   eager?: boolean;
+  /** Show live presence dot (Online / DND / Offline) above the frame. */
+  showPresence?: boolean;
 }
 
 const getInitials = (name: string) => {
@@ -39,7 +42,10 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
   onClick,
   style = {},
   eager = false,
+  showPresence = true,
 }) => {
+  const presenceCtx = usePresenceOptional();
+  const presence = showPresence && presenceCtx ? presenceCtx.getUserPresence(username) : null;
   const [imgFailed, setImgFailed] = useState(false);
   const [frameFailed, setFrameFailed] = useState(false);
   const sizePx = typeof size === 'number' ? `${size}px` : size;
@@ -128,6 +134,39 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
           }}
         />
       )}
+
+      {presence && (() => {
+        const dotColor =
+          presence.status === 'online'
+            ? 'bg-emerald-500'
+            : presence.status === 'dnd'
+            ? 'bg-red-500'
+            : 'bg-zinc-500';
+        const dotSize =
+          numericSize >= 80
+            ? 'w-5 h-5 border-[3px]'
+            : numericSize >= 48
+            ? 'w-3.5 h-3.5 border-2'
+            : numericSize >= 28
+            ? 'w-2.5 h-2.5 border-2'
+            : 'w-2 h-2 border';
+        const statusTitle = presence.inGame
+          ? 'في تحدي أونلاين 🎮'
+          : presence.status === 'online'
+          ? 'أونلاين'
+          : presence.status === 'dnd'
+          ? 'عدم إزعاج'
+          : 'غير متصل';
+        return (
+          <span
+            title={statusTitle}
+            aria-label={statusTitle}
+            className={`absolute bottom-0 end-0 z-20 rounded-full border-zinc-950 pointer-events-none ${dotColor} ${dotSize} ${
+              presence.inGame ? 'ring-2 ring-brand-orange/70' : ''
+            }`}
+          />
+        );
+      })()}
     </div>
   );
 };

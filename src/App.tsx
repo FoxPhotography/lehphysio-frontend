@@ -13,6 +13,7 @@ import { feedCacheService } from './services/feedCacheService';
 // Context
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider, useSocket } from './context/SocketContext';
+import { PresenceProvider } from './context/PresenceContext';
 import { NotificationProvider, useNotifications } from './context/NotificationContext';
 
 // Hooks
@@ -2128,9 +2129,11 @@ function App() {
   return (
     <AuthProvider>
       <SocketProvider>
-        <NotificationProvider>
-          <InnerApp />
-        </NotificationProvider>
+        <PresenceProvider>
+          <NotificationProvider>
+            <InnerApp />
+          </NotificationProvider>
+        </PresenceProvider>
       </SocketProvider>
     </AuthProvider>
   );

@@ -5,6 +5,8 @@ import { cosmeticVisual } from '../utils/cosmetics';
 import { ArrowRight, Flame, Share2, Trophy, Zap } from 'lucide-react';
 import { API_BASE } from '../services/api';
 import { UserAvatar } from '../components/UserAvatar';
+import { usePresenceOptional } from '../context/PresenceContext';
+import { getGameModeLabel } from '../utils/gameInvite';
 import { SkeletonBlock } from '../components/common/Skeleton';
 import { rankName, rankEmoji, rankProgress } from '../utils/ranks';
 import { daysLabel } from '../utils/format';
@@ -35,6 +37,7 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
   const [data, setData] = useState<PublicProfileData | null>(null);
   const [state, setState] = useState<'loading' | 'ok' | 'missing'>('loading');
   const [sharing, setSharing] = useState(false);
+  const presenceCtx = usePresenceOptional();
 
   useEffect(() => {
     let cancelled = false;
@@ -143,6 +146,30 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
         <div className="relative z-10">
           <h1 className="text-2xl font-black text-white" dir="auto"><StreakName days={data.streak_count} override={cosmeticVisual(data.cosmetics?.name)}>{data.username}</StreakName></h1>
           {data.batch && <p className="text-sm text-zinc-400 font-bold mt-0.5">{data.batch}</p>}
+          {(() => {
+            const p = presenceCtx?.getUserPresence(data.username);
+            if (!p) return null;
+            const statusCfg =
+              p.status === 'online'
+                ? { dot: 'bg-emerald-500', text: 'أونلاين', cls: 'text-emerald-400 border-emerald-500/25 bg-emerald-500/10' }
+                : p.status === 'dnd'
+                ? { dot: 'bg-red-500', text: 'عدم إزعاج', cls: 'text-red-400 border-red-500/25 bg-red-500/10' }
+                : { dot: 'bg-zinc-500', text: 'غير متصل', cls: 'text-zinc-400 border-zinc-700 bg-zinc-900/70' };
+            return (
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-xs font-bold ${statusCfg.cls}`}>
+                  <span className={`w-2 h-2 rounded-full ${statusCfg.dot}`} />
+                  <span>{statusCfg.text}</span>
+                </span>
+                {p.inGame && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-brand-orange/35 bg-brand-orange/15 text-brand-orange text-xs font-extrabold">
+                    <span>🎮</span>
+                    <span>في روم: {getGameModeLabel(p.inGame.mode).title}</span>
+                  </span>
+                )}
+              </div>
+            );
+          })()}
         </div>
         {data.streak_count > 0 && <StreakChip days={data.streak_count} size="md" showName className="relative z-10" />}
         <span className="relative z-10 text-sm font-black text-brand-amber bg-black/40 border border-brand-orange/30 rounded-full px-4 py-1.5">
