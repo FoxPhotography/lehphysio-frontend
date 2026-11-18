@@ -10,10 +10,23 @@ export const gameService = {
     return res;
   },
 
-  async createGameRoom(rounds: number, duration: number, token?: string) {
+  async createGameRoom(rounds: number, duration: number, token?: string, gameMode: string = 'anatomy') {
     const res = await apiFetch('/api/games/create', {
       method: 'POST',
-      body: JSON.stringify({ rounds, roundDuration: duration }),
+      body: JSON.stringify({ rounds, roundDuration: duration, gameMode }),
+    }, token);
+    return res;
+  },
+
+  async fetchOpenRooms() {
+    const res = await apiFetch('/api/games/open-rooms');
+    return res;
+  },
+
+  async sendRoomReaction(code: string, emoji: string, token?: string) {
+    const res = await apiFetch('/api/games/react', {
+      method: 'POST',
+      body: JSON.stringify({ roomCode: code, emoji }),
     }, token);
     return res;
   },
@@ -39,10 +52,10 @@ export const gameService = {
     return res;
   },
 
-  async submitGameAnswer(code: string, answer: string, token?: string) {
+  async submitGameAnswer(code: string, answer: string, token?: string, fromOption: boolean = false) {
     const res = await apiFetch('/api/games/submit-answer', {
       method: 'POST',
-      body: JSON.stringify({ roomCode: code, answer }),
+      body: JSON.stringify({ roomCode: code, answer, fromOption }),
     }, token);
     return res;
   },

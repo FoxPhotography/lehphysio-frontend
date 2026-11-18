@@ -56,7 +56,11 @@ export const ChangeUsernameModal: React.FC<ChangeUsernameModalProps> = ({
     setSendingCode(true);
     try {
       const res = await authService.requestUsername2FA(token);
-      setCodeSentTo(res.maskedEmail || 'بريدك الإلكتروني');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || 'تعذر إرسال كود التحقق.');
+      }
+      setCodeSentTo(data.maskedEmail || 'بريدك الإلكتروني');
       showToast('تم إرسال كود التحقق إلى بريدك الإلكتروني ✉️');
     } catch (err: any) {
       setError(err?.message || 'تعذر إرسال كود التحقق.');
@@ -113,15 +117,19 @@ export const ChangeUsernameModal: React.FC<ChangeUsernameModalProps> = ({
         },
         token
       );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || 'حدث خطأ أثناء تغيير اسم المستخدم.');
+      }
 
-      if (res?.token) {
-        localStorage.setItem('token', res.token);
-        setToken(res.token);
+      if (data?.token) {
+        localStorage.setItem('token', data.token);
+        setToken(data.token);
       }
       sessionStorage.removeItem('username_reauth_token');
       sessionStorage.removeItem('pending_new_username');
       await fetchUserProfile();
-      showToast(res?.message || 'تم تغيير اسم المستخدم بنجاح! 🎉');
+      showToast(data?.message || 'تم تغيير اسم المستخدم بنجاح! 🎉');
       onClose();
     } catch (err: any) {
       setError(err?.message || 'حدث خطأ أثناء تغيير اسم المستخدم.');

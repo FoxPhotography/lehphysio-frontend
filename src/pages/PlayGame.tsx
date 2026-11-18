@@ -19,100 +19,30 @@ import {
   RotateCcw,
   Loader2,
   Zap,
-  UserMinus
+  UserMinus,
+  Flame,
 } from 'lucide-react';
 import { playChatSound, copyToClipboard } from '../utils/helpers';
+import { fireWinConfetti, firePodiumFireworks } from '../utils/confetti';
 import { buildGameInvite } from '../utils/gameInvite';
 import { chatService } from '../services/chatService';
+import { gameService } from '../services/gameService';
+import { useSocket } from '../context/SocketContext';
 import { UserAvatar } from '../components/UserAvatar';
 
-// ─── Confetti Particle System ──────────────────────────────────────────────────
-const ConfettiEffect: React.FC<{ active: boolean; onComplete: () => void }> = ({
-  active,
-  onComplete,
-}) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+interface FloatingReaction {
+  id: number;
+  username: string;
+  emoji: string;
+  leftPct: number;
+}
 
-  useEffect(() => {
-    if (!active) return () => {};
-    const canvas = canvasRef.current;
-    if (!canvas) return () => {};
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return () => {};
+const REACTION_EMOJIS = ['🔥', '🧠', '⚡', '😂', '👏', '💀'];
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const handleResize = () => {
-      if (canvas) {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-      }
-    };
-    window.addEventListener('resize', handleResize);
-
-    const particles: any[] = [];
-    const colors = ['#FF6A00', '#FFB000', '#2ed573', '#ff4757', '#2e90ff', '#eccc68', '#ffa502'];
-
-    for (let i = 0; i < 150; i++) {
-      particles.push({
-        x: canvas.width / 2,
-        y: canvas.height * 0.4,
-        vx: (Math.random() - 0.5) * 18,
-        vy: (Math.random() - 0.5) * 18 - 6,
-        radius: Math.random() * 5 + 3,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        alpha: 1,
-        decay: Math.random() * 0.015 + 0.008,
-      });
-    }
-
-    let animationFrameId: number;
-
-    const render = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      let alive = false;
-
-      particles.forEach((p) => {
-        if (p.alpha <= 0) return;
-        alive = true;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.22;
-        p.alpha -= p.decay;
-
-        ctx.save();
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      });
-
-      if (alive) {
-        animationFrameId = requestAnimationFrame(render);
-      } else {
-        onComplete();
-      }
-    };
-
-    render();
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [active, onComplete]);
-
-  if (!active) return null;
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-[9999]"
-    />
-  );
+const GAME_MODE_LABELS: Record<string, { title: string; badge: string }> = {
+  anatomy: { title: 'تحدي التشريح أونلاين', badge: 'تشريح' },
+  clinical: { title: 'عيادة الطوارئ أونلاين', badge: 'تشخيص إكلينيكي' },
+  special_tests: { title: 'مبارزة الـ Special Tests', badge: 'OSCE' },
 };
 
 interface PlayGameProps {
@@ -154,7 +84,10 @@ const getLogIcon = (type: string) => {
 // ─── Question type label ───────────────────────────────────────────────────────
 const getTypeLabel = (type: string) => {
   if (type === 'muscle') return 'عضلة';
-  if (type === 'bone')   return 'عظمة';
+  if (type === 'bone') return 'عظمة';
+  if (type === 'ligament') return 'رباط';
+  if (type === 'clinical') return 'حالة إكلينيكية';
+  if (type === 'special_test') return 'Special Test';
   return 'عصب';
 };
 
@@ -174,8 +107,10 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   apiBase,
   setActiveGameRoom,
 }) => {
+  const socket = useSocket();
   const [chatMessage, setChatMessage] = useState('');
-  const [confettiActive, setConfettiActive] = useState(false);
+  const [floatingReactions, setFloatingReactions] = useState<FloatingReaction[]>([]);
+  const [submittingOption, setSubmittingOption] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
   const prevWinnerRef = useRef<string | null>(null);
@@ -263,7 +198,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     const prevWinner = prevWinnerRef.current;
     if (currentWinner && currentWinner !== prevWinner && currentWinner !== 'timeout') {
       if (currentWinner === user?.username) {
-        setConfettiActive(true);
+        fireWinConfetti();
         playChatSound('success');
       } else {
         playChatSound('receive');
@@ -275,12 +210,107 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     const prevStatus = prevStatusRef.current;
     if (currentStatus === 'finished' && prevStatus === 'playing') {
       if (room.finalWinner === user?.username) {
-        setConfettiActive(true);
+        firePodiumFireworks();
         playChatSound('win');
+      } else {
+        fireWinConfetti();
       }
     }
     prevStatusRef.current = currentStatus;
   }, [room.status, room.roundWinner, room.finalWinner, user?.username]);
+
+  // Listen for live floating emoji reactions
+  useEffect(() => {
+    if (!socket || !room?.code) return undefined;
+    const onReaction = (payload: { id: number; username: string; emoji: string }) => {
+      const leftPct = 15 + ((payload.id * 97) % 70);
+      setFloatingReactions((prev) => [...prev.slice(-14), { ...payload, leftPct }]);
+      setTimeout(() => {
+        setFloatingReactions((prev) => prev.filter((r) => r.id !== payload.id));
+      }, 2100);
+    };
+    socket.on('game_reaction', onReaction);
+    return () => {
+      socket.off('game_reaction', onReaction);
+    };
+  }, [socket, room?.code]);
+
+  const handleSendReaction = async (emoji: string) => {
+    if (!token || !room?.code) return;
+    try {
+      await gameService.sendRoomReaction(room.code, emoji, token);
+    } catch {
+      // Ignore transient reaction errors
+    }
+  };
+
+  const handleOptionClick = async (option: string) => {
+    if (!token || !room?.code || submittingOption) return;
+    setSubmittingOption(option);
+    try {
+      const res = await gameService.submitGameAnswer(room.code, option, token, true);
+      const data = await res.json();
+      if (res.ok) {
+        if (data.room) setActiveGameRoom(data.room);
+        if (data.isCorrect) {
+          playChatSound('success');
+        } else {
+          playChatSound('error');
+        }
+      } else if (data?.error) {
+        showToast(data.error);
+      }
+    } catch {
+      showToast('مشكلة في الاتصال.');
+    } finally {
+      setSubmittingOption(null);
+    }
+  };
+
+  const renderFloatingReactions = () => (
+    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+      <AnimatePresence>
+        {floatingReactions.map((r) => (
+          <m.div
+            key={r.id}
+            initial={{ opacity: 0, y: 0, scale: 0.6 }}
+            animate={{ opacity: [0, 1, 1, 0], y: -260, scale: [0.6, 1.25, 1] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 2, ease: 'easeOut' }}
+            style={{ left: `${r.leftPct}%`, bottom: '18%' }}
+            className="absolute flex flex-col items-center gap-0.5"
+          >
+            <span className="text-3xl drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]">{r.emoji}</span>
+            <span className="text-[10px] font-black text-white bg-black/70 border border-white/10 px-1.5 py-0.5 rounded-full">
+              @{r.username}
+            </span>
+          </m.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+
+  const renderReactionBar = () => (
+    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-2xl bg-zinc-900/50 border border-zinc-800/70">
+      <span className="text-2xs font-extrabold text-zinc-500">تفاعل مباشر:</span>
+      <div className="flex items-center gap-1.5">
+        {REACTION_EMOJIS.map((em) => (
+          <m.button
+            key={em}
+            type="button"
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.85 }}
+            onClick={() => handleSendReaction(em)}
+            className="w-8 h-8 rounded-xl bg-zinc-950/80 hover:bg-white/10 border border-white/5 flex items-center justify-center text-base cursor-pointer transition-colors"
+          >
+            {em}
+          </m.button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const modeInfo = GAME_MODE_LABELS[room.gameMode || 'anatomy'] || GAME_MODE_LABELS.anatomy;
 
   // Send chat message
   const handleSendChatMessage = async (e: React.FormEvent) => {
@@ -452,16 +482,16 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   if (room.status === 'waiting') {
     return (
       <div className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-32 px-4 max-w-xl mx-auto text-start space-y-4">
-        <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
+        {renderFloatingReactions()}
 
         {/* Top Header Bar */}
         <div className="flex items-center justify-between gap-3 pt-1">
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-2xs font-extrabold uppercase tracking-wider mb-1">
               <Loader2 className="w-3 h-3 animate-spin" />
-              <span>مستنيين اللاعبين</span>
+              <span>مستنيين اللاعبين • {modeInfo.badge}</span>
             </div>
-            <h2 className="text-xl font-black text-white">تحدي التشريح أونلاين</h2>
+            <h2 className="text-xl font-black text-white">{modeInfo.title}</h2>
           </div>
           <m.button
             whileHover={{ scale: 1.03 }}
@@ -564,6 +594,9 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         {/* Room Chat */}
         {renderChatBox('120px')}
 
+        {/* Live Reactions */}
+        {renderReactionBar()}
+
         {/* Start Button */}
         <div className="pt-2">
           {isHost ? (
@@ -607,20 +640,21 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     const currentHintIdx = Math.min(3, Math.floor(elapsed / (room.roundDuration / 4)));
     const currentHint = question?.hints?.[currentHintIdx] || '';
     const timerColor = timeLeft <= 5 ? 'text-red-400 animate-pulse' : timeLeft <= 10 ? 'text-amber-400' : 'text-white';
+    const hasUsedOptionThisRound = Array.isArray(room.roundOptionUsed) && room.roundOptionUsed.includes(user?.username);
 
     return (
       <div className="w-full max-w-xl mx-auto text-start pt-20 xl:pt-8 pb-8 px-4 flex flex-col space-y-3">
-        <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
+        {renderFloatingReactions()}
 
         {/* Top Arena Header Bar */}
         <div className="flex items-center justify-between pb-2 border-b border-zinc-800/70 gap-2">
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 text-brand-orange text-2xs font-black uppercase tracking-wider mb-1">
-              Round {room.currentRound} of {room.rounds}
+              Round {room.currentRound} of {room.rounds} • {modeInfo.badge}
             </div>
             <h3 className="text-base font-black text-white flex items-center gap-1.5">
               <Zap className="w-4 h-4 text-brand-orange fill-current" />
-              <span>خمّن التركيب</span>
+              <span>{modeInfo.title}</span>
             </h3>
           </div>
           <div className="flex items-center gap-2">
@@ -685,6 +719,37 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               ) : currentHint}
             </m.p>
           </AnimatePresence>
+
+          {/* Interactive 4-Option Quick Cards */}
+          {!room.roundWinner && Array.isArray(question?.options) && question.options.length > 0 && (
+            <div className="pt-2 space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {question.options.map((opt: string) => (
+                  <m.button
+                    key={opt}
+                    type="button"
+                    dir="ltr"
+                    whileTap={hasUsedOptionThisRound ? undefined : { scale: 0.97 }}
+                    disabled={hasUsedOptionThisRound || !!submittingOption}
+                    onClick={() => handleOptionClick(opt)}
+                    className={`p-3 rounded-xl border text-left text-xs font-extrabold transition-all flex items-center justify-between gap-2 ${
+                      hasUsedOptionThisRound
+                        ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-600 cursor-not-allowed opacity-60'
+                        : 'bg-zinc-950/90 border-zinc-700/80 hover:border-brand-orange/70 hover:bg-brand-orange/10 text-white cursor-pointer'
+                    }`}
+                  >
+                    <span>{opt}</span>
+                    {submittingOption === opt && <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-orange shrink-0" />}
+                  </m.button>
+                ))}
+              </div>
+              {hasUsedOptionThisRound && (
+                <p className="text-2xs font-bold text-amber-400 text-center">
+                  استخدمت محاولة الاختيارات في الجولة دي — كمل تخمين في الشات!
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Intermission Banner */}
@@ -730,10 +795,19 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                 size={20} 
               />
               <span className="text-xs font-bold text-zinc-300"><bdi dir="ltr">@{p.username}</bdi></span>
+              {(p.streak || 0) >= 2 && (
+                <span className="inline-flex items-center gap-0.5 text-[10px] font-black text-amber-300 bg-amber-500/15 px-1.5 py-0.5 rounded-md">
+                  <Flame className="w-3 h-3 fill-current text-brand-orange" />
+                  {p.streak}
+                </span>
+              )}
               <span className="text-xs font-black text-brand-orange font-mono">{p.score}</span>
             </div>
           ))}
         </div>
+
+        {/* Live Reactions */}
+        {renderReactionBar()}
 
         {/* Live Answer Feed & Chat */}
         {renderChatBox('140px')}
@@ -747,7 +821,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
 
     return (
       <div className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-32 px-4 max-w-md mx-auto text-start space-y-4">
-        <ConfettiEffect active={confettiActive} onComplete={() => setConfettiActive(false)} />
+        {renderFloatingReactions()}
 
         {/* Trophy Icon */}
         <div className="text-center pt-2">

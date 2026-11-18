@@ -46,9 +46,9 @@ export const SurpriseBoxModal: React.FC<SurpriseBoxModalProps> = ({
   useEffect(() => {
     if (!open || phase === 'charging') {
       setDisplayXp(0);
-      return;
+      return undefined;
     }
-    if (xpEarned <= 0) return;
+    if (xpEarned <= 0) return undefined;
 
     const duration = 650;
     const start = performance.now();

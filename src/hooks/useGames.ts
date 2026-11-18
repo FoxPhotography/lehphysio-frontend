@@ -15,6 +15,7 @@ export const useGames = () => {
   const [gameRoomCodeInput, setGameRoomCodeInput] = useState('');
   const [createGameRounds, setCreateGameRounds] = useState(5);
   const [createGameDuration, setCreateGameDuration] = useState(60);
+  const [createGameMode, setCreateGameMode] = useState<'anatomy' | 'clinical' | 'special_tests'>('anatomy');
   const [submittedGameAnswer, setSubmittedGameAnswer] = useState('');
   const [isGameLoading, setIsGameLoading] = useState(false);
   const [gameError, setGameError] = useState('');
@@ -22,7 +23,7 @@ export const useGames = () => {
   const [isMultiplayerExpanded, setIsMultiplayerExpanded] = useState(false);
 
   // Single-player Games States
-  const [activeGame, setActiveGame] = useState<any>(null); // memory, spin, quiz
+  const [activeGame, setActiveGame] = useState<'memory' | 'spin' | 'diagnosis' | 'special-tests' | null>(null);
   const [gameQuestionIdx, setGameQuestionIdx] = useState(0);
   const [gameScore, setGameScore] = useState(0);
   const [gameFinished, setGameFinished] = useState(false);
@@ -114,7 +115,7 @@ export const useGames = () => {
     setIsGameLoading(true);
     setGameError('');
     try {
-      const res = await gameService.createGameRoom(createGameRounds, createGameDuration, token);
+      const res = await gameService.createGameRoom(createGameRounds, createGameDuration, token, createGameMode);
       const data = await res.json();
       if (res.ok) {
         setActiveGameRoom(data);
@@ -122,9 +123,6 @@ export const useGames = () => {
       } else {
         setGameError(data.error);
         showToast(data.error || 'الروم دي اتقفلت خلاص 🔒');
-        if (res.status === 404 || (data.error && data.error.includes('started'))) {
-          window.dispatchEvent(new CustomEvent('game-room-closed-event', { detail: { code: code.toUpperCase() } }));
-        }
       }
     } catch (e) {
       setGameError('مش قادرين نوصل للسيرفر.');
@@ -225,11 +223,23 @@ export const useGames = () => {
     }
   };
 
-  // Single-player Memory Game
+  // Single-player Memory Game (Anatomy & Clinical Pairs)
   const initMemoryGame = () => {
-    const terms = ['Femur 🦴', 'Deltoid 💪', 'ACL 🎗️', 'Neuron 🧠', 'Patella 🥏', 'Spasticity ⚡', 'Clavicle 🦴', 'Synapse ⚡'];
-    const deck = [...terms, ...terms]
-      .map((val, idx) => ({ id: idx, value: val, isFlipped: false, isMatched: false }))
+    const pairs = [
+      { pairId: 1, a: { value: 'Deltoid 💪', sub: 'عضلة الكتف' }, b: { value: 'Axillary N. ⚡', sub: 'العصب المغذي' } },
+      { pairId: 2, a: { value: 'Biceps 💪', sub: 'ثني الكوع' }, b: { value: 'Musculocutaneous ⚡', sub: 'العصب المغذي' } },
+      { pairId: 3, a: { value: 'ACL 🎗️', sub: 'الرباط الصليبي' }, b: { value: 'Lachman Test 🔍', sub: 'أدق اختبار' } },
+      { pairId: 4, a: { value: 'Sciatic N. 🧠', sub: 'عرق النسا' }, b: { value: 'Piriformis 💪', sub: 'العضلة الضاغطة' } },
+      { pairId: 5, a: { value: 'Gastrocnemius 🦵', sub: 'عضلة السمانة' }, b: { value: 'Achilles Tendon 🦶', sub: 'وتر أخيل' } },
+      { pairId: 6, a: { value: 'Median N. ✋', sub: 'أول 3 صوابع' }, b: { value: 'Carpal Tunnel 🦴', sub: 'النفق الرسغي' } },
+      { pairId: 7, a: { value: 'Radial N. 🦾', sub: 'باسطات الرسغ' }, b: { value: 'Wrist Drop ⚠️', sub: 'علامة الإصابة' } },
+      { pairId: 8, a: { value: 'Femur 🦴', sub: 'أطول عظمة' }, b: { value: 'Greater Trochanter 📍', sub: 'بروز مميز' } },
+    ];
+    const deck = pairs
+      .flatMap((p) => [
+        { id: `p${p.pairId}-a`, pairId: p.pairId, value: p.a.value, sub: p.a.sub, isFlipped: false, isMatched: false },
+        { id: `p${p.pairId}-b`, pairId: p.pairId, value: p.b.value, sub: p.b.sub, isFlipped: false, isMatched: false },
+      ])
       .sort(() => Math.random() - 0.5);
     setMemoryCards(deck);
     setFlippedCards([]);
@@ -253,7 +263,7 @@ export const useGames = () => {
     if (nextFlipped.length === 2) {
       setMemoryMoves(prev => prev + 1);
       const [firstIdx, secondIdx] = nextFlipped;
-      if (newCards[firstIdx].value === newCards[secondIdx].value) {
+      if (newCards[firstIdx].pairId === newCards[secondIdx].pairId) {
         newCards[firstIdx].isMatched = true;
         newCards[secondIdx].isMatched = true;
         setMemoryCards(newCards);
@@ -276,7 +286,7 @@ export const useGames = () => {
           setMemoryCards(newCards);
           setFlippedCards([]);
           playChatSound('error');
-        }, 1000);
+        }, 900);
       }
     }
   };
@@ -439,6 +449,7 @@ export const useGames = () => {
     gameRoomCodeInput, setGameRoomCodeInput,
     createGameRounds, setCreateGameRounds,
     createGameDuration, setCreateGameDuration,
+    createGameMode, setCreateGameMode,
     submittedGameAnswer, setSubmittedGameAnswer,
     isGameLoading, setIsGameLoading,
     gameError, setGameError,
@@ -452,7 +463,7 @@ export const useGames = () => {
     gameFeedback, setGameFeedback,
     gamePlayError, setGamePlayError,
     gamePlaySuccess, setGamePlaySuccess,
-    memoryCards, initMemoryGame, handleCardClick, memoryMoves, memoryMatches,
+    memoryCards, initMemoryGame, handleCardClick, memoryMoves, memoryMatches, claimGameXP,
     isSpinning, wheelRotation, handleSpinWheelClick, lastSpinResult,
     handleCreateGameRoom, handleJoinGameRoom, handleStartGame, handleSubmitGameAnswer, handleNextRound, handlePlayAgain, handleLeaveGameRoom
   };
