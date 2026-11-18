@@ -12,7 +12,6 @@ import {
   Stethoscope,
   Activity,
   Brain,
-  Flame,
   DoorOpen,
   Sparkles,
   Clock,
@@ -23,6 +22,8 @@ import { gameService } from '../services/gameService';
 import { fireWinConfetti } from '../utils/confetti';
 import { UserAvatar } from '../components/UserAvatar';
 import { useSocket } from '../context/SocketContext';
+import { StreakFlame } from '../components/streak/Streak';
+import { getStreakTheme } from '../utils/streakTheme';
 
 const LuckyWheel = lazy(() =>
   import('../components/games/LuckyWheel').then((mod) => ({ default: mod.LuckyWheel }))
@@ -238,29 +239,48 @@ export const Games: React.FC<GamesProps> = ({
             </p>
           </div>
 
-          {user && (
-            <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-              <div className="px-3.5 py-2 rounded-2xl bg-zinc-950/80 border border-white/10 text-center">
-                <span className="block text-2xs font-bold text-zinc-500">مجموع XP</span>
-                <span className="text-sm font-black text-brand-amber font-mono tabular-nums">
-                  {user.total_xp || 0}
-                </span>
+          {user && (() => {
+            const streakDays = user.streak_count || 0;
+            const st = getStreakTheme(streakDays);
+            const hasStreak = st.key !== 'none';
+            return (
+              <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+                <div className="px-3.5 py-2 rounded-2xl bg-zinc-950/80 border border-white/10 text-center">
+                  <span className="block text-2xs font-bold text-zinc-500">مجموع XP</span>
+                  <span className="text-sm font-black text-brand-amber font-mono tabular-nums">
+                    {user.total_xp || 0}
+                  </span>
+                </div>
+                <div
+                  className="px-3.5 py-1.5 rounded-2xl border text-center flex items-center gap-2 transition-all"
+                  style={{
+                    backgroundColor: hasStreak ? `rgb(${st.glow} / 0.10)` : 'rgba(9, 9, 11, 0.8)',
+                    borderColor: hasStreak ? `rgb(${st.glow} / 0.38)` : 'rgba(255, 255, 255, 0.1)',
+                    boxShadow: hasStreak ? `0 0 18px rgb(${st.glow} / 0.18)` : undefined,
+                  }}
+                >
+                  <StreakFlame days={streakDays} size={24} />
+                  <div className="text-start">
+                    <span className="block text-[10px] font-bold text-zinc-400 leading-tight">
+                      {hasStreak ? st.name : 'الستريك'}
+                    </span>
+                    <span
+                      className="text-sm font-black font-mono tabular-nums leading-tight"
+                      style={{ color: hasStreak ? st.text : '#a1a1aa' }}
+                    >
+                      {streakDays}
+                    </span>
+                  </div>
+                </div>
+                <div className="px-3.5 py-2 rounded-2xl bg-zinc-950/80 border border-white/10 text-center">
+                  <span className="block text-2xs font-bold text-zinc-500">مكافأة اللعب</span>
+                  <span className="text-sm font-black text-emerald-400 font-mono">
+                    +{xpPerPlay}×3
+                  </span>
+                </div>
               </div>
-              <div className="px-3.5 py-2 rounded-2xl bg-zinc-950/80 border border-white/10 text-center">
-                <span className="block text-2xs font-bold text-zinc-500">الستريك</span>
-                <span className="text-sm font-black text-brand-orange flex items-center justify-center gap-1 font-mono">
-                  <Flame className="w-3.5 h-3.5 fill-current" />
-                  {user.streak_count || 0}
-                </span>
-              </div>
-              <div className="px-3.5 py-2 rounded-2xl bg-zinc-950/80 border border-white/10 text-center">
-                <span className="block text-2xs font-bold text-zinc-500">مكافأة اللعب</span>
-                <span className="text-sm font-black text-emerald-400 font-mono">
-                  +{xpPerPlay}×3
-                </span>
-              </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </m.div>
 
