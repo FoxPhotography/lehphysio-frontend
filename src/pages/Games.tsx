@@ -22,6 +22,7 @@ import type { SpinResult } from '../components/games/LuckyWheel';
 import { gameService } from '../services/gameService';
 import { fireWinConfetti } from '../utils/confetti';
 import { UserAvatar } from '../components/UserAvatar';
+import { useSocket } from '../context/SocketContext';
 
 const LuckyWheel = lazy(() =>
   import('../components/games/LuckyWheel').then((mod) => ({ default: mod.LuckyWheel }))
@@ -161,6 +162,7 @@ export const Games: React.FC<GamesProps> = ({
   const [openRooms, setOpenRooms] = useState<OpenRoom[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const memoryConfettiFiredRef = useRef(false);
+  const socket = useSocket();
 
   const xpPerPlay = xpSettings.game_play || 20;
 
@@ -197,9 +199,15 @@ export const Games: React.FC<GamesProps> = ({
   useEffect(() => {
     if (gameTab !== 'multiplayer' || showMultiplayerSetup) return undefined;
     loadOpenRooms();
-    const id = setInterval(loadOpenRooms, 8000);
-    return () => clearInterval(id);
-  }, [gameTab, showMultiplayerSetup, loadOpenRooms]);
+    if (!socket) return undefined;
+    const onRoomsUpdated = (rooms: OpenRoom[]) => {
+      if (Array.isArray(rooms)) setOpenRooms(rooms);
+    };
+    socket.on('open_rooms_updated', onRoomsUpdated);
+    return () => {
+      socket.off('open_rooms_updated', onRoomsUpdated);
+    };
+  }, [gameTab, showMultiplayerSetup, loadOpenRooms, socket]);
 
   const openModeSetup = (mode: GameMode) => {
     setCreateGameMode(mode);

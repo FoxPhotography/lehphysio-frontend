@@ -196,13 +196,15 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     if (!room) return;
     const currentWinner = room.roundWinner;
     const prevWinner = prevWinnerRef.current;
-    if (currentWinner && currentWinner !== prevWinner && currentWinner !== 'timeout') {
+    if (currentWinner && currentWinner !== prevWinner && currentWinner !== 'timeout' && currentWinner !== 'draw') {
       if (currentWinner === user?.username) {
         fireWinConfetti();
         playChatSound('success');
       } else {
         playChatSound('receive');
       }
+    } else if (currentWinner === 'draw' && prevWinner !== 'draw') {
+      playChatSound('error');
     }
     prevWinnerRef.current = currentWinner;
 
@@ -362,7 +364,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     }
   };
 
-  // ─── Clean Room Chat Box ───────────────────────────────────────────────────────
+  const isEliminatedThisRound = Array.isArray(room.roundOptionUsed) && room.roundOptionUsed.includes(user?.username);
   const renderChatBox = (maxH = '130px') => (
     <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/40 p-3 text-start flex flex-col shrink-0">
       <div className="flex items-center justify-between mb-1.5 px-1">
@@ -449,7 +451,11 @@ export const PlayGame: React.FC<PlayGameProps> = ({
             data-bwignore="true"
             data-form-type="other"
             className="w-full bg-transparent text-sm text-white placeholder-zinc-500 focus:outline-none resize-none overflow-y-auto leading-relaxed py-1.5 px-3 min-h-[32px] max-h-[85px] font-medium"
-            placeholder={room.status === 'playing' && !room.roundWinner ? "اكتب تخمينك أو رسالة…" : "اكتب رسالة…"}
+            placeholder={
+              room.status === 'playing' && !room.roundWinner
+                ? (isEliminatedThisRound ? 'دورك خلص في الجولة دي (شات فقط)…' : 'اكتب تخمينك أو رسالة…')
+                : 'اكتب رسالة…'
+            }
             value={chatMessage}
             onChange={(e) => {
               setChatMessage(e.target.value);
@@ -744,8 +750,8 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                 ))}
               </div>
               {hasUsedOptionThisRound && (
-                <p className="text-2xs font-bold text-amber-400 text-center">
-                  استخدمت محاولة الاختيارات في الجولة دي — كمل تخمين في الشات!
+                <p className="text-2xs font-bold text-red-400 text-center">
+                  إجابتك غلط — دورك خلص في الجولة دي ومش هتقدر تخمّن في الشات!
                 </p>
               )}
             </div>
@@ -764,7 +770,9 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               <h4 className="text-sm md:text-base font-black text-brand-amber">
                 {room.roundWinner === 'timeout'
                   ? '⏱️ الوقت خلص!'
-                  : `🎉 @${room.roundWinner} answered correctly!`}
+                  : room.roundWinner === 'draw'
+                    ? '🤝 تعادل! كل اللاعبين اختاروا غلط!'
+                    : `🎉 @${room.roundWinner} جاوب صح!`}
               </h4>
               <p className="text-xs text-zinc-300">
                 الإجابة الصح: <strong className="text-emerald-400 font-extrabold">{question?.structure}</strong>
