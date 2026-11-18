@@ -251,6 +251,14 @@ export const useAppSockets = ({
       });
     };
 
+    const handleXpCodeUpdated = (updatedCode: any) => {
+      if (!setAdminCodes) return;
+      const idStr = String(updatedCode.id ?? updatedCode._id);
+      setAdminCodes(prev => prev.map(c =>
+        String(c.id ?? c._id) === idStr ? { ...c, ...updatedCode, id: updatedCode.id ?? updatedCode._id } : c
+      ));
+    };
+
     const handleXpCodeDeleted = (data: { id: any; code?: string }) => {
       if (!setAdminCodes) return;
       setAdminCodes(prev => prev.filter(c => String(c.id ?? c._id) !== String(data.id) && (!data.code || c.code !== data.code)));
@@ -269,6 +277,7 @@ export const useAppSockets = ({
     socket.on('suggestion_updated', handleSuggestionUpdated);
     socket.on('suggestion_deleted', handleSuggestionDeleted);
     socket.on('xp_code_created', handleXpCodeCreated);
+    socket.on('xp_code_updated', handleXpCodeUpdated);
     socket.on('xp_code_deleted', handleXpCodeDeleted);
 
     return () => {
@@ -285,6 +294,7 @@ export const useAppSockets = ({
       socket.off('suggestion_updated', handleSuggestionUpdated);
       socket.off('suggestion_deleted', handleSuggestionDeleted);
       socket.off('xp_code_created', handleXpCodeCreated);
+      socket.off('xp_code_updated', handleXpCodeUpdated);
       socket.off('xp_code_deleted', handleXpCodeDeleted);
     };
   }, [socket, user, token, setAdminCodes]);

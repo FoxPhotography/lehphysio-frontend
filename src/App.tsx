@@ -643,6 +643,45 @@ function InnerApp() {
     }
   };
 
+  const handleAdminUpdateCode = async (codeId: number | string): Promise<boolean> => {
+    if (!token) return false;
+    setAdminSubmitting(true);
+    setAdminMessage('');
+    try {
+      const res = await gameService.adminUpdateCode(codeId, {
+        code: adminCodeForm.code,
+        xp_reward: Number(adminCodeForm.xp_reward),
+        type: adminCodeForm.type,
+        episode_id: adminCodeForm.type === 'episode' && adminCodeForm.episode_id ? Number(adminCodeForm.episode_id) : null,
+        max_uses: Number(adminCodeForm.max_uses),
+        expiry_date: adminCodeForm.expiry_date || null
+      }, token);
+      const data = await res.json();
+      setAdminMessage(data.message || data.error);
+      if (res.ok) {
+        showToast('كود الـ XP اتعدّل! ✏️');
+        if (data.code) {
+          const updatedObj = {
+            ...data.code,
+            id: data.code.id ?? data.code._id ?? codeId
+          };
+          const idStr = String(updatedObj.id);
+          setAdminCodes((prev: any[]) => prev.map(c => String(c.id ?? c._id) === idStr ? { ...c, ...updatedObj } : c));
+        } else {
+          fetchAdminCodes();
+        }
+        setAdminCodeForm({ code: '', xp_reward: 50, type: 'social', episode_id: '', max_uses: 1000, expiry_date: '' });
+        return true;
+      }
+      return false;
+    } catch (err) {
+      setAdminMessage('مش قادرين نوصل للسيرفر.');
+      return false;
+    } finally {
+      setAdminSubmitting(false);
+    }
+  };
+
   const handleAdminUpdateUserRole = async (userId: number, newRole: string) => {
     if (!token) return;
     try {
@@ -2036,6 +2075,7 @@ function InnerApp() {
         adminCodeForm={adminCodeForm}
         setAdminCodeForm={setAdminCodeForm}
         handleAdminCreateCode={handleAdminCreateCode}
+        handleAdminUpdateCode={handleAdminUpdateCode}
         handleAdminUpdateUserRole={handleAdminUpdateUserRole}
         handleAdminUpdateSuggestionStatus={handleAdminUpdateSuggestionStatus}
         handleAdminDeleteCode={handleAdminDeleteCode}

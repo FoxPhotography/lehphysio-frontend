@@ -50,6 +50,7 @@ interface AdminProps {
   adminCodeForm: any;
   setAdminCodeForm: React.Dispatch<React.SetStateAction<any>>;
   handleAdminCreateCode: (e: React.FormEvent) => void;
+  handleAdminUpdateCode: (codeId: number | string) => Promise<boolean>;
   handleAdminUpdateUserRole: (userId: number, role: string) => Promise<void>;
   handleAdminUpdateSuggestionStatus: (suggestionId: number, status: 'approved' | 'rejected') => void;
   handleAdminDeleteCode: (codeId: number | string, codeName: string) => void;
@@ -183,6 +184,7 @@ export const Admin: React.FC<AdminProps> = ({
   adminCodeForm,
   setAdminCodeForm,
   handleAdminCreateCode,
+  handleAdminUpdateCode,
   handleAdminUpdateUserRole,
   handleAdminUpdateSuggestionStatus,
   handleAdminDeleteCode,
@@ -198,6 +200,36 @@ export const Admin: React.FC<AdminProps> = ({
   const [thumbnailUploading, setThumbnailUploading] = useState(false);
   const [editingEpisodeId, setEditingEpisodeId] = useState<number | null>(null);
   const [editingLoading, setEditingLoading] = useState(false);
+  const [editingCodeId, setEditingCodeId] = useState<number | string | null>(null);
+
+  const handleStartEditCode = (c: any) => {
+    const codeId = c.id ?? c._id;
+    setEditingCodeId(codeId);
+    setAdminCodeForm({
+      code: c.code || '',
+      xp_reward: Number(c.xp_reward ?? 50),
+      type: c.type || 'social',
+      episode_id: c.episode_id ? String(c.episode_id) : '',
+      max_uses: Number(c.max_uses ?? 1000),
+      expiry_date: c.expiry_date ? String(c.expiry_date).slice(0, 10) : ''
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEditCode = () => {
+    setEditingCodeId(null);
+    setAdminCodeForm({ code: '', xp_reward: 50, type: 'social', episode_id: '', max_uses: 1000, expiry_date: '' });
+  };
+
+  const handleSubmitCodeForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingCodeId !== null) {
+      const ok = await handleAdminUpdateCode(editingCodeId);
+      if (ok) setEditingCodeId(null);
+    } else {
+      handleAdminCreateCode(e);
+    }
+  };
 
   const token = localStorage.getItem('token');
 
@@ -922,8 +954,11 @@ export const Admin: React.FC<AdminProps> = ({
       {adminSection === 'codes' && (
         <div className="space-y-5">
           <SectionCard>
-            <SectionTitle icon={<Key className="w-4 h-4" />} label="اعمل كود XP" />
-            <form onSubmit={handleAdminCreateCode} className="space-y-4">
+            <SectionTitle
+              icon={<Key className="w-4 h-4" />}
+              label={editingCodeId !== null ? `تعديل كود: ${adminCodeForm.code}` : 'اعمل كود XP'}
+            />
+            <form onSubmit={handleSubmitCodeForm} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
@@ -998,9 +1033,20 @@ export const Admin: React.FC<AdminProps> = ({
                 </AdminSelect>
               )}
 
-              <AdminBtn type="submit" disabled={adminSubmitting} className="w-full justify-center">
-                <Plus className="w-4 h-4" /> اعمل الكود
-              </AdminBtn>
+              <div className="flex items-center gap-2">
+                <AdminBtn type="submit" disabled={adminSubmitting} className="flex-1 justify-center">
+                  {editingCodeId !== null ? (
+                    <><Save className="w-4 h-4" /> حفظ التعديلات</>
+                  ) : (
+                    <><Plus className="w-4 h-4" /> اعمل الكود</>
+                  )}
+                </AdminBtn>
+                {editingCodeId !== null && (
+                  <AdminBtn type="button" variant="ghost" onClick={handleCancelEditCode}>
+                    إلغاء
+                  </AdminBtn>
+                )}
+              </div>
             </form>
           </SectionCard>
 
@@ -1064,15 +1110,22 @@ export const Admin: React.FC<AdminProps> = ({
                             </span>
                           )}
                         </td>
-                        <td className="py-2.5 pe-3 text-zinc-400">{c.current_uses}/{c.max_uses}</td>
+                        <td className="py-2.5 pe-3 text-zinc-400">
+                          {c.current_uses}/{c.max_uses >= 1000000000 ? '∞' : c.max_uses}
+                        </td>
                         <td className={`py-2.5 pe-3 ${isExpired ? 'text-red-400' : 'text-zinc-400'}`}>
                           {c.expiry_date ? new Date(c.expiry_date).toLocaleDateString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Never'}
                           {isExpired && ' (Expired)'}
                         </td>
                         <td className="py-2.5 text-center">
-                          <AdminBtn size="sm" variant="danger" onClick={() => handleAdminDeleteCode(codeId, c.code)}>
-                            <Trash2 className="w-3 h-3" />
-                          </AdminBtn>
+                          <div className="inline-flex items-center gap-1.5">
+                            <AdminBtn size="sm" variant="ghost" onClick={() => handleStartEditCode(c)} title="تعديل الكود">
+                              <Pencil className="w-3 h-3" />
+                            </AdminBtn>
+                            <AdminBtn size="sm" variant="danger" onClick={() => handleAdminDeleteCode(codeId, c.code)} title="مسح الكود">
+                              <Trash2 className="w-3 h-3" />
+                            </AdminBtn>
+                          </div>
                         </td>
                       </tr>
                     );

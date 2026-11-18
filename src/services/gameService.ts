@@ -113,6 +113,14 @@ export const gameService = {
     return res;
   },
 
+  async adminUpdateCode(codeId: number | string, body: any, token?: string) {
+    const res = await apiFetch(`/api/admin/xp-codes/${codeId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }, token);
+    return res;
+  },
+
   async adminDeleteCode(codeId: number | string, token?: string) {
     const res = await apiFetch(`/api/admin/xp-codes/${codeId}`, {
       method: 'DELETE',

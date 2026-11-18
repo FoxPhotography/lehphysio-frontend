@@ -170,6 +170,7 @@ interface AppRouterProps {
   adminCodeForm: any;
   setAdminCodeForm: React.Dispatch<React.SetStateAction<any>>;
   handleAdminCreateCode: (e: React.FormEvent) => Promise<void>;
+  handleAdminUpdateCode: (codeId: number | string) => Promise<boolean>;
   handleAdminUpdateUserRole: (userId: number, role: string) => Promise<void>;
   handleAdminUpdateSuggestionStatus: (suggestionId: number, status: 'approved' | 'rejected', action?: string, reason?: string) => Promise<void>;
   handleAdminDeleteCode: (codeId: number | string, name: string) => void;
@@ -272,6 +273,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
   adminCodeForm,
   setAdminCodeForm,
   handleAdminCreateCode,
+  handleAdminUpdateCode,
   handleAdminUpdateUserRole,
   handleAdminUpdateSuggestionStatus,
   handleAdminDeleteCode,
@@ -666,6 +668,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           adminCodeForm={adminCodeForm}
           setAdminCodeForm={setAdminCodeForm}
           handleAdminCreateCode={handleAdminCreateCode}
+          handleAdminUpdateCode={handleAdminUpdateCode}
           handleAdminUpdateUserRole={handleAdminUpdateUserRole}
           handleAdminUpdateSuggestionStatus={handleAdminUpdateSuggestionStatus}
           handleAdminDeleteCode={handleAdminDeleteCode}

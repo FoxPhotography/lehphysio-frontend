@@ -10,7 +10,7 @@ export default function ProfileHeader() {
           alt="Ibrahim Fox"
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).src =
-              'https://res.cloudinary.com/dp3gh51gn/image/upload/v1781337240/physioleague/k0qolxiu1gmrqtlsrtjm.jpg';
+              '/default-avatar.jpg';
           }}
           className="w-16 h-16 rounded-full border-2 border-orange-400 shadow-lg object-cover"
         />

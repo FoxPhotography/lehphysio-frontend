@@ -193,7 +193,7 @@ export const useUrlRouting = ({
         setPageFromUrl('login');
       } else if (params.get('code')) {
         // Fallback: If Google redirected to frontend with ?code=..., forward to backend callback
-        window.location.href = `https://lehphysio.up.railway.app/api/auth/google/callback${window.location.search}`;
+        window.location.href = `/api/auth/google/callback${window.location.search}`;
         return;
       } else {
         window.history.replaceState({}, document.title, '/');
