@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { m } from 'framer-motion';
-import { Rocket, Tv, Gamepad2, Trophy, Clock, Shield, Loader2 } from 'lucide-react';
+import { Rocket, Tv, Gamepad2, Trophy, Clock, Shield, Loader2, CheckCircle, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { authService } from '../services/authService';
+import { GoogleIcon } from './AuthComponents';
 
 // Official launch: Thursday Nov 19, 2026 at 6:00 PM Cairo time (+02:00)
 export const OFFICIAL_LAUNCH_TIMESTAMP = new Date('2026-11-19T18:00:00+02:00').getTime();
@@ -30,7 +31,12 @@ export const LaunchCountdownGate: React.FC<LaunchCountdownGateProps> = ({
   onLaunchOpened,
   children,
 }) => {
-  const { setToken, setUser, showToast } = useAuth();
+  const { user, setToken, setUser, showToast, currentPage } = useAuth();
+  const handleLogoutClick = () => {
+    localStorage.removeItem('token');
+    setToken('');
+    setUser(null);
+  };
   const socket = useSocket();
   const [now, setNow] = useState(() => Date.now());
   const [backendOpened, setBackendOpened] = useState(false);
@@ -41,8 +47,14 @@ export const LaunchCountdownGate: React.FC<LaunchCountdownGateProps> = ({
   const [loginError, setLoginError] = useState('');
   const launchTriggeredRef = useRef(false);
 
+  const path = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isGoogleFlowRoute =
+    path.startsWith('/auth/callback') ||
+    path.startsWith('/auth/social-register') ||
+    currentPage === 'social-register';
+
   const remaining = OFFICIAL_LAUNCH_TIMESTAMP - now;
-  const isLocked = remaining > 0 && !backendOpened && !isStaff;
+  const isLocked = remaining > 0 && !backendOpened && !isStaff && !isGoogleFlowRoute;
 
   useEffect(() => {
     if (remaining <= 0) {
@@ -185,6 +197,44 @@ export const LaunchCountdownGate: React.FC<LaunchCountdownGateProps> = ({
         <div className="flex items-center justify-center gap-1.5 text-2xs font-bold text-zinc-500 pt-1">
           <Clock className="w-3.5 h-3.5 text-brand-orange" />
           <span>التطبيق هيفتح تلقائياً أول ما العداد يخلص</span>
+        </div>
+
+        {/* Google / Gmail Pre-Registration */}
+        <div className="pt-1">
+          {user ? (
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 flex items-center justify-between gap-3 text-start">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-emerald-300 truncate">
+                    حسابك جاهز للافتتاح (<bdi dir="ltr">@{user.username}</bdi>)
+                  </p>
+                  <p className="text-2xs text-emerald-400/80 font-semibold">
+                    أول ما العداد يخلص هتدخل المنافسة علطول!
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogoutClick}
+                title="تسجيل الخروج"
+                className="p-2 rounded-xl bg-white/5 hover:bg-red-500/15 text-zinc-400 hover:text-red-400 transition-colors cursor-pointer shrink-0"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = authService.getGoogleAuthUrl();
+              }}
+              className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-zinc-100 text-black font-black text-xs md:text-sm flex items-center justify-center gap-2.5 shadow-lg active:scale-[0.99] transition-all cursor-pointer"
+            >
+              <GoogleIcon className="w-5 h-5 shrink-0" />
+              <span>سجّل حسابك بـ Google من دلوقتي</span>
+            </button>
+          )}
         </div>
 
         {/* Staff / Admin Access */}
