@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Home } from '../pages/Home';
 import { PageSkeleton } from '../components/common/Skeleton';
+import { OFFICIAL_LAUNCH_TIMESTAMP } from '../components/LaunchCountdownGate';
 
 // Every page except Home is code-split: a visitor downloads only what they open.
 // Named exports are adapted to React.lazy's default-export contract.
@@ -491,7 +492,10 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           setGameRoomCodeInput={gamesHook.setGameRoomCodeInput}
           handleJoinGameRoom={gamesHook.handleJoinGameRoom}
           isGameLoading={gamesHook.isGameLoading}
-          hasSpunToday={!!(user && user.last_spin_wheel_date === getLocalDateString())}
+          hasSpunToday={
+            !(user && ['moderator', 'admin', 'owner'].includes(user.role) && Date.now() < OFFICIAL_LAUNCH_TIMESTAMP) &&
+            !!(user && user.last_spin_wheel_date === getLocalDateString())
+          }
           xpSettings={xpSettings}
         />
       );
@@ -554,7 +558,10 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           claimMockReward={async (amt) => {}}
           unlockedCosmetics={unlockedCosmetics}
           handleShopPurchase={handleShopPurchase}
-          hasOpenedBoxToday={!!(user && user.last_surprise_box_date === getLocalDateString())}
+          hasOpenedBoxToday={
+            !(user && ['moderator', 'admin', 'owner'].includes(user.role) && Date.now() < OFFICIAL_LAUNCH_TIMESTAMP) &&
+            !!(user && user.last_surprise_box_date === getLocalDateString())
+          }
           handleClaimSurpriseBox={handleClaimSurpriseBox}
           handleBuyFrame={handleBuyFrame}
         />
