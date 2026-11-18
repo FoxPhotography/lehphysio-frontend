@@ -40,6 +40,12 @@ export const useGames = () => {
   // Spin Wheel State
   const [isSpinning, setIsSpinning] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
+  const [lastSpinResult, setLastSpinResult] = useState<{
+    label: string;
+    xp: number;
+    tryAgain: boolean;
+    isMystery: boolean;
+  } | null>(null);
 
   const { currentPage, changePage, setCurrentPage } = useAuth();
 
@@ -302,6 +308,7 @@ export const useGames = () => {
       return;
     }
     setIsSpinning(true);
+    setLastSpinResult(null);
     (window as any).__isSpinningWheel = true;
 
     try {
@@ -322,30 +329,50 @@ export const useGames = () => {
 
       const { prizeIndex, prizeLabel, xpAmount, try_again } = data;
 
-      // Animate the wheel to land on prizeIndex
-      const targetDeg = (12 - prizeIndex) * 30 % 360;
+      // Animate the wheel to land on prizeIndex with realistic physics:
+      // 1) Brief anticipation wind-up (-14 deg)
+      // 2) 6-8 full spins + random jitter inside the winning 30-deg slice
+      // 3) Suspenseful deceleration + subtle peg-settle rock at the end
+      const jitter = (Math.random() - 0.5) * 18; // stay safely inside +-9 deg of slice center
+      const targetDeg = ((12 - prizeIndex) * 30 + jitter + 360) % 360;
       const startAngle = wheelRotation;
-      const randomRotations = 1440; // 4 full spins
-      const newRot = startAngle + randomRotations + ((targetDeg - (startAngle % 360) + 360) % 360);
+      const windUpDeg = 14;
+      const fullSpins = (6 + Math.floor(Math.random() * 3)) * 360;
+      const deltaToTarget = (targetDeg - (startAngle % 360) + 360) % 360;
+      const newRot = startAngle + fullSpins + deltaToTarget;
 
       playChatSound('start');
 
       const startTime = performance.now();
-      const duration = 5000;
+      const windUpMs = 180;
+      const spinMs = 5820;
+      const duration = windUpMs + spinMs;
       let lastSegmentIndex = Math.floor((startAngle - 15) / 30);
       let lastTickTime = 0;
 
       const animateTicks = (now: number) => {
         const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easeProgress = 1 - Math.pow(1 - progress, 5);
-        const currentAngle = startAngle + easeProgress * (newRot - startAngle);
+        let currentAngle = startAngle;
+
+        if (elapsed < windUpMs) {
+          const w = elapsed / windUpMs;
+          const easeWind = Math.sin((w * Math.PI) / 2);
+          currentAngle = startAngle - windUpDeg * easeWind;
+        } else {
+          const t = Math.min((elapsed - windUpMs) / spinMs, 1);
+          const easeOut = 1 - Math.pow(1 - t, 3.6);
+          const settle = t > 0.85 ? Math.sin(((t - 0.85) / 0.15) * Math.PI) * 2.2 * ((1 - t) / 0.15) : 0;
+          const pulledStart = startAngle - windUpDeg;
+          currentAngle = pulledStart + easeOut * (newRot - pulledStart) + settle;
+        }
+
         setWheelRotation(currentAngle);
 
         const currentSegmentIndex = Math.floor((currentAngle - 15) / 30);
         if (currentSegmentIndex !== lastSegmentIndex) {
           const timeNow = performance.now();
-          const minThrottle = progress > 0.8 ? 80 : 35; 
+          const progress = Math.min(elapsed / duration, 1);
+          const minThrottle = progress > 0.8 ? 70 : 32;
           if (timeNow - lastTickTime > minThrottle) {
             playChatSound('tick');
             lastTickTime = timeNow;
@@ -353,7 +380,7 @@ export const useGames = () => {
           lastSegmentIndex = currentSegmentIndex;
         }
 
-        if (progress < 1) {
+        if (elapsed < duration) {
           requestAnimationFrame(animateTicks);
         }
       };
@@ -362,12 +389,19 @@ export const useGames = () => {
       setTimeout(() => {
         (window as any).__isSpinningWheel = false;
         setWheelRotation(newRot);
+        const isMystery = prizeIndex === 0;
+        setLastSpinResult({
+          label: prizeLabel,
+          xp: xpAmount || 0,
+          tryAgain: !!try_again,
+          isMystery,
+        });
         
         // Show results
         if (try_again) {
           showToast('جرّب تاني! ليك لفة كمان! 🍀');
         } else {
-          showToast(`Spin Wheel: You won ${prizeLabel}`);
+          showToast(isMystery ? `جاكبوت! كسبت +${xpAmount} XP 🎁` : `كسبت +${xpAmount} XP ⚡`);
           if (xpAmount > 0) {
             playChatSound('win');
             triggerXpPopup(xpAmount);
@@ -419,7 +453,7 @@ export const useGames = () => {
     gamePlayError, setGamePlayError,
     gamePlaySuccess, setGamePlaySuccess,
     memoryCards, initMemoryGame, handleCardClick, memoryMoves, memoryMatches,
-    isSpinning, wheelRotation, handleSpinWheelClick,
+    isSpinning, wheelRotation, handleSpinWheelClick, lastSpinResult,
     handleCreateGameRoom, handleJoinGameRoom, handleStartGame, handleSubmitGameAnswer, handleNextRound, handlePlayAgain, handleLeaveGameRoom
   };
 };

@@ -70,6 +70,15 @@ export const SurpriseBoxModal: React.FC<SurpriseBoxModalProps> = ({
 
   const isBurstOrRevealed = phase === 'burst' || phase === 'revealed';
 
+  const tier =
+    xpEarned >= 400
+      ? { label: 'مكافأة أسطورية', badgeCls: 'bg-amber-500/20 text-amber-300 border-amber-400/50' }
+      : xpEarned >= 250
+        ? { label: 'مكافأة ملحمية', badgeCls: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-400/50' }
+        : xpEarned >= 120
+          ? { label: 'مكافأة نادرة', badgeCls: 'bg-cyan-500/15 text-cyan-300 border-cyan-400/40' }
+          : { label: 'صندوق اليوم', badgeCls: 'bg-violet-500/15 text-violet-300 border-violet-500/30' };
+
   return (
     <AnimatePresence>
       {open && (
@@ -239,8 +248,8 @@ export const SurpriseBoxModal: React.FC<SurpriseBoxModalProps> = ({
                   <PackageOpen className="w-10 h-10 text-amber-300" />
                 </m.div>
 
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-2xs font-black bg-violet-500/15 text-violet-300 border border-violet-500/30 mb-2">
-                  صندوق اليوم
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-2xs font-black border mb-2 ${tier.badgeCls}`}>
+                  {tier.label}
                 </span>
 
                 <m.div

@@ -424,7 +424,7 @@ export const Rewards: React.FC<RewardsProps> = ({
               <>
                 <p className="text-sm font-bold text-white">دوس على الصندوق عشان تفتحه!</p>
                 <p className="text-xs text-zinc-500 mt-1">
-                  XP عشوائي كل يوم. صندوق واحد في اليوم.
+                  XP عشوائي من 50 لـ 500 كل يوم. صندوق واحد في اليوم.
                 </p>
               </>
             )}

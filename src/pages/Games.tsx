@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Play
 } from 'lucide-react';
+import { LuckyWheel, SpinResult } from '../components/games/LuckyWheel';
 
 interface GamesProps {
   user: any;
@@ -33,6 +34,7 @@ interface GamesProps {
   wheelRotation: number;
   handleSpinWheelClick: () => void;
   isSpinning: boolean;
+  lastSpinResult?: SpinResult | null;
   gameError: string;
   createGameRounds: number;
   setCreateGameRounds: (val: number) => void;
@@ -65,6 +67,7 @@ export const Games: React.FC<GamesProps> = ({
   wheelRotation,
   handleSpinWheelClick,
   isSpinning,
+  lastSpinResult,
   gameError,
   createGameRounds,
   setCreateGameRounds,
@@ -192,80 +195,13 @@ export const Games: React.FC<GamesProps> = ({
               )}
 
               {activeGame === 'spin' && (
-                <div className="flex flex-col items-center space-y-6">
-                  <div className="space-y-1 text-center">
-                    <h3 className="text-lg font-black text-white flex items-center justify-center gap-2">
-                      <Zap className="w-5 h-5 text-brand-orange" />
-                      <span>عجلة الحظ اليومية</span>
-                    </h3>
-                    <p className="text-xs text-zinc-500 font-semibold">لف العجلة كل يوم واكسب XP عشوائي!</p>
-                  </div>
-                  
-                  <div className="relative flex flex-col items-center">
-                    {/* pointer */}
-                    <div className="w-0 h-0 border-s-[10px] border-s-transparent border-e-[10px] border-e-transparent border-t-[18px] border-t-brand-orange drop-shadow-[0_4px_10px_rgba(255,106,0,0.5)] z-20 absolute -top-1" />
-                    
-                    <div className="w-64 h-64 md:w-80 md:h-80 rounded-full border-4 border-zinc-900 bg-zinc-950 shadow-2xl relative overflow-hidden flex items-center justify-center">
-                      <svg 
-                        className="w-full h-full select-none" 
-                        viewBox="0 0 100 100" 
-                        style={{ transform: `rotate(${wheelRotation}deg)` }}
-                      >
-                        {/* segments */}
-                        {Array.from({ length: 12 }).map((_, i) => {
-                          const angle = 255 + i * 30; 
-                          const x1 = 50 + 50 * Math.cos((angle * Math.PI) / 180);
-                          const y1 = 50 + 50 * Math.sin((angle * Math.PI) / 180);
-                          const x2 = 50 + 50 * Math.cos(((angle + 30) * Math.PI) / 180);
-                          const y2 = 50 + 50 * Math.sin(((angle + 30) * Math.PI) / 180);
-                          
-                          let fillColor = 'rgba(255, 106, 0, 0.1)';
-                          if (i === 0) fillColor = 'rgba(255, 215, 0, 0.35)'; // Mystery Gold
-                          else if (i === 7) fillColor = 'rgba(255, 106, 0, 0.35)'; // High XP orange
-                          else if (i % 3 === 0) fillColor = 'rgba(255, 176, 0, 0.2)';
-                          else if (i % 3 === 1) fillColor = 'rgba(255, 255, 255, 0.04)';
-                          
-                          return (
-                            <path
-                              key={i}
-                              d={`M50,50 L${x1},${y1} A50,50 0 0,1 ${x2},${y2} Z`}
-                              fill={fillColor}
-                              stroke="rgba(255, 106, 0, 0.2)"
-                              strokeWidth="0.5"
-                            />
-                          );
-                        })}
-                        
-                        {/* Text segment labels */}
-                        {['MYSTERY', '5 XP', '30 XP', '100 XP', 'لفة مجانية', '15 XP', '5 XP', '50 XP', 'لفة مجانية', '20 XP', '10 XP', '5 XP'].map((lbl, idx) => {
-                          const rot = idx * 30; 
-                          const isSpecial = lbl === 'MYSTERY' || lbl === 'لفة مجانية';
-                          return (
-                            <text
-                              key={idx}
-                              x="50"
-                              y="15" 
-                              transform={`rotate(${rot} 50 50)`}
-                              fill={lbl === 'MYSTERY' ? '#FFD700' : isSpecial ? '#9b9b9f' : '#fff'}
-                              className="text-[4.5px] font-black tracking-wide"
-                              textAnchor="middle"
-                            >
-                              {lbl}
-                            </text>
-                          );
-                        })}
-                      </svg>
-                    </div>
-                  </div>
-
-                  <button 
-                    className="w-full max-w-xs bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-sm py-3 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow disabled:opacity-60 disabled:cursor-not-allowed" 
-                    onClick={handleSpinWheelClick} 
-                    disabled={isSpinning || hasSpunToday}
-                  >
-                    {isSpinning ? 'بتلف…' : hasSpunToday ? 'لفّيت النهارده' : 'لف دلوقتي!'}
-                  </button>
-                </div>
+                <LuckyWheel
+                  wheelRotation={wheelRotation}
+                  isSpinning={isSpinning}
+                  hasSpunToday={hasSpunToday}
+                  onSpin={handleSpinWheelClick}
+                  lastSpinResult={lastSpinResult}
+                />
               )}
             </div>
           ) : (

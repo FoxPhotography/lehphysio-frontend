@@ -477,6 +477,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           wheelRotation={gamesHook.wheelRotation}
           handleSpinWheelClick={gamesHook.handleSpinWheelClick}
           isSpinning={gamesHook.isSpinning}
+          lastSpinResult={gamesHook.lastSpinResult}
           gameError={gamesHook.gameError}
           createGameRounds={gamesHook.createGameRounds}
           setCreateGameRounds={gamesHook.setCreateGameRounds}
