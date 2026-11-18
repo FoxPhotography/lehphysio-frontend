@@ -153,6 +153,10 @@ export const useUrlRouting = ({
       if (params.get('googleLinked') === 'true') {
         showToast('تم ربط حسابك بـ Google بنجاح! 🎉');
         window.history.replaceState({}, document.title, '/profile');
+      } else if (params.get('usernameReauthToken')) {
+        sessionStorage.setItem('username_reauth_token', params.get('usernameReauthToken')!);
+        window.history.replaceState({}, document.title, '/profile');
+        window.dispatchEvent(new CustomEvent('username-google-verified'));
       } else if (params.get('googleError')) {
         showToast(decodeURIComponent(params.get('googleError')!));
         window.history.replaceState({}, document.title, '/profile');

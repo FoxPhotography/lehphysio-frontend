@@ -130,6 +130,27 @@ export const authService = {
     return `${API_BASE}/api/auth/google?action=link&token=${encodeURIComponent(token)}&origin=${encodeURIComponent(orig)}`;
   },
 
+  getGoogleVerifyUsernameUrl(token: string, origin?: string) {
+    const orig = origin || window.location.origin;
+    return `${API_BASE}/api/auth/google?action=verify-username&token=${encodeURIComponent(token)}&origin=${encodeURIComponent(orig)}`;
+  },
+
+  async requestUsername2FA(token: string) {
+    return apiFetch('/api/users/username/request-2fa', {
+      method: 'POST',
+    }, token);
+  },
+
+  async changeUsername(
+    data: { newUsername: string; method: 'password' | '2fa' | 'google'; password?: string; code?: string; reauthToken?: string },
+    token: string
+  ) {
+    return apiFetch('/api/users/username/change', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, token);
+  },
+
   async completeGoogleRegistration(data: { regToken: string; username: string; batch: string; password: string }) {
     const res = await apiFetch('/api/auth/google/complete-registration', {
       method: 'POST',

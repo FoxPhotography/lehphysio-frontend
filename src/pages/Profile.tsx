@@ -25,7 +25,9 @@ import {
   Eye,
   Download,
   Palette,
+  UserCog,
 } from 'lucide-react';
+import { ChangeUsernameModal, UsernameAuthMethod } from '../components/profile/ChangeUsernameModal';
 import { StreakLadderModal } from '../components/streak/StreakLadder';
 import { daysLabel } from '../utils/format';
 import { UserAvatar } from '../components/UserAvatar';
@@ -134,6 +136,23 @@ export const Profile: React.FC<ProfileProps> = ({
   const { getFlameTier, changePage, deferredPrompt, handleInstallPWA, isStandalone, setShowIOSInstall, showToast: showToastCtx, token, showConfirm, fetchUserProfile } = useAuth();
   const [sharingCard, setSharingCard] = useState(false);
   const [unlinkingGoogle, setUnlinkingGoogle] = useState(false);
+  const [changeUsernameOpen, setChangeUsernameOpen] = useState(false);
+  const [usernameAuthMethod, setUsernameAuthMethod] = useState<UsernameAuthMethod>('password');
+  const [usernameReauthToken, setUsernameReauthToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkGoogleReauth = () => {
+      const saved = sessionStorage.getItem('username_reauth_token');
+      if (saved) {
+        setUsernameReauthToken(saved);
+        setUsernameAuthMethod('google');
+        setChangeUsernameOpen(true);
+      }
+    };
+    checkGoogleReauth();
+    window.addEventListener('username-google-verified', checkGoogleReauth);
+    return () => window.removeEventListener('username-google-verified', checkGoogleReauth);
+  }, []);
 
   const handleLinkGoogle = () => {
     if (!token) return;
@@ -660,6 +679,32 @@ export const Profile: React.FC<ProfileProps> = ({
 
         {/* ── Actions ──────────────────────────────────────────────── */}
         <div className="flex flex-col gap-2.5">
+          {/* Change Username */}
+          <m.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="button"
+            onClick={() => {
+              setUsernameAuthMethod('password');
+              setUsernameReauthToken(null);
+              setChangeUsernameOpen(true);
+            }}
+            className="w-full flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white transition-all cursor-pointer"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-brand-orange/15 border border-brand-orange/30 flex items-center justify-center flex-shrink-0 text-brand-orange">
+                <UserCog className="w-4 h-4" />
+              </div>
+              <div className="text-start min-w-0">
+                <p className="text-xs font-bold text-white">تغيير اسم المستخدم</p>
+                <p className="text-2xs text-zinc-400 mt-0.5">بكلمة المرور أو 2FA أو حساب Google</p>
+              </div>
+            </div>
+            <span className="text-xs font-bold text-brand-orange bg-brand-orange/10 border border-brand-orange/30 px-2.5 py-1 rounded-lg flex-shrink-0">
+              تعديل
+            </span>
+          </m.button>
+
           {/* Google Account Connection */}
           {user.has_google_linked ? (
             <div className="w-full flex items-center justify-between p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-emerald-400">
@@ -865,6 +910,14 @@ export const Profile: React.FC<ProfileProps> = ({
           </m.div>
         )}
       </AnimatePresence>
+
+      <ChangeUsernameModal
+        open={changeUsernameOpen}
+        currentUsername={user.username}
+        initialMethod={usernameAuthMethod}
+        initialReauthToken={usernameReauthToken}
+        onClose={() => setChangeUsernameOpen(false)}
+      />
     </m.div>
   );
 };

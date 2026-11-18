@@ -40,6 +40,19 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
   }
+
+  /* Disable native browser text selection across desktop & mobile while keeping form fields editable */
+  *, *::before, *::after {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  input, textarea, select, [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
   
   /* Custom Scrollbars */
   ::-webkit-scrollbar {
