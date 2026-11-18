@@ -10,7 +10,7 @@ import {
   ArrowLeft, 
   Heart, 
   MessageCircle, 
-  Share2, 
+  Send, 
   ChevronDown, 
   ShieldAlert, 
   MoreVertical, 
@@ -179,27 +179,39 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
             <h1 dir="auto" className="text-xl md:text-2xl font-black text-white leading-tight">{episode.title_ar}</h1>
           </div>
 
-          <div className="flex gap-4 pt-2">
-            <button 
-              className={`flex items-center gap-1.5 text-xs font-bold transition-all ${has_liked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`} 
+          <div className="flex items-center gap-5 pt-2">
+            <button
+              type="button"
+              dir="ltr"
+              aria-label={has_liked ? 'إلغاء اللايك' : 'لايك'}
+              aria-pressed={!!has_liked}
+              className={`h-10 -my-1 flex items-center gap-1.5 transition-colors select-none cursor-pointer ${has_liked ? 'text-[#ff3b5c]' : 'text-zinc-200 hover:text-white'}`}
               onClick={() => handleEpisodeInteract('like')}
             >
-              <Heart className={`w-4 h-4 ${has_liked ? 'fill-current' : ''}`} /> 
-              <span>{likes_count} لايك</span>
+              <m.span key={has_liked ? 'on' : 'off'} initial={{ scale: has_liked ? 0.6 : 1 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 600, damping: 14 }} className="flex">
+                <Heart className={`w-[24px] h-[24px] ${has_liked ? 'fill-current' : ''}`} strokeWidth={1.9} />
+              </m.span>
+              <span className="text-sm font-bold tabular-nums leading-none">{likes_count || 0}</span>
             </button>
-            <button 
-              className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-all" 
+            <button
+              type="button"
+              dir="ltr"
+              aria-label="التعليقات"
+              className="h-10 -my-1 flex items-center gap-1.5 text-zinc-200 hover:text-white transition-colors cursor-pointer"
               onClick={openComments}
             >
-              <MessageCircle className="w-4 h-4" /> 
-              <span>{totalComments} تعليق</span>
+              <MessageCircle className="w-[24px] h-[24px] -scale-x-100" strokeWidth={1.9} />
+              <span className="text-sm font-bold tabular-nums leading-none">{totalComments || 0}</span>
             </button>
-            <button 
-              className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-all" 
+            <button
+              type="button"
+              dir="ltr"
+              aria-label="مشاركة"
+              className="h-10 -my-1 flex items-center gap-1.5 text-zinc-200 hover:text-white transition-colors cursor-pointer"
               onClick={() => handleShareEpisode(episode.id)}
             >
-              <Share2 className="w-4 h-4" /> 
-              <span>{shares_count} مشاركة</span>
+              <Send className="w-[22px] h-[22px]" strokeWidth={1.9} />
+              {(shares_count || 0) > 0 && <span className="text-sm font-bold tabular-nums leading-none">{shares_count}</span>}
             </button>
           </div>
         </div>

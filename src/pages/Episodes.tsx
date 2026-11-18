@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Thumb } from '../components/common/Thumb';
 import { m } from 'framer-motion';
-import { Tv, Heart, MessageCircle, Share2, Key } from 'lucide-react';
+import { Tv, Heart, MessageCircle, Send, Key } from 'lucide-react';
 import { groupBySeason, episodeNumber, seasonName } from '../utils/episode';
 
 interface EpisodesProps {
@@ -130,23 +130,30 @@ export const Episodes: React.FC<EpisodesProps> = ({
               </span>
             </div>
 
-            {/* Social action feedback row */}
-            <div className="flex justify-around items-center pt-3 border-t border-zinc-900/60">
-              <button 
-                className={`flex items-center gap-1.5 text-xs font-extrabold transition-colors cursor-pointer ${ep.isLiked ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'}`}
-                aria-label={ep.isLiked ? 'إلغاء الإعجاب' : 'الإعجاب بالحلقة'}
+            {/* Actions row — matches PostCard on Home */}
+            <div className="flex items-center gap-5 pt-3 border-t border-zinc-900/60">
+              <button
+                type="button"
+                dir="ltr"
+                aria-label={ep.isLiked ? 'إلغاء اللايك' : 'لايك'}
+                aria-pressed={!!ep.isLiked}
+                className={`h-10 -my-1 flex items-center gap-1.5 transition-colors select-none cursor-pointer ${ep.isLiked ? 'text-[#ff3b5c]' : 'text-zinc-200 hover:text-white'}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleLikeEpisode(ep.id);
                 }}
               >
-                <Heart className={`w-4 h-4 ${ep.isLiked ? 'fill-current' : ''}`} /> 
-                <span>{ep.likes_count || 0}</span>
+                <m.span key={ep.isLiked ? 'on' : 'off'} initial={{ scale: ep.isLiked ? 0.6 : 1 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 600, damping: 14 }} className="flex">
+                  <Heart className={`w-[24px] h-[24px] ${ep.isLiked ? 'fill-current' : ''}`} strokeWidth={1.9} />
+                </m.span>
+                <span className="text-sm font-bold tabular-nums leading-none">{ep.likes_count || 0}</span>
               </button>
 
-              <button 
-                className="flex items-center gap-1.5 text-xs font-extrabold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
-                aria-label="فتح تعليقات الحلقة"
+              <button
+                type="button"
+                dir="ltr"
+                aria-label="التعليقات"
+                className="h-10 -my-1 flex items-center gap-1.5 text-zinc-200 hover:text-white transition-colors cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   navigateToEpisode(ep.id);
@@ -156,20 +163,22 @@ export const Episodes: React.FC<EpisodesProps> = ({
                   }, 150);
                 }}
               >
-                <MessageCircle className="w-4 h-4" /> 
-                <span>{ep.comments_count || 0}</span>
+                <MessageCircle className="w-[24px] h-[24px] -scale-x-100" strokeWidth={1.9} />
+                <span className="text-sm font-bold tabular-nums leading-none">{ep.comments_count || 0}</span>
               </button>
 
-              <button 
-                className="flex items-center gap-1.5 text-xs font-extrabold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
-                aria-label="مشاركة الحلقة"
+              <button
+                type="button"
+                dir="ltr"
+                aria-label="مشاركة"
+                className="h-10 -my-1 flex items-center gap-1.5 text-zinc-200 hover:text-white transition-colors cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleShareEpisode(ep.id);
                 }}
               >
-                <Share2 className="w-4 h-4" /> 
-                <span>{ep.shares_count || 0}</span>
+                <Send className="w-[22px] h-[22px]" strokeWidth={1.9} />
+                {(ep.shares_count || 0) > 0 && <span className="text-sm font-bold tabular-nums leading-none">{ep.shares_count}</span>}
               </button>
             </div>
           </m.div>
