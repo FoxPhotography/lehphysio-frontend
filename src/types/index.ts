@@ -9,7 +9,7 @@ export interface User {
   total_xp: number;
   weekly_xp: number;
   streak_count: number;
-  role: 'user' | 'admin' | 'owner';
+  role: 'user' | 'moderator' | 'admin' | 'owner';
   has_google_linked?: boolean;
   google_id?: string | null;
   last_poll_vote_date?: string;

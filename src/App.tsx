@@ -1929,7 +1929,10 @@ function InnerApp() {
   const unseenCount = currentPage === 'community' ? 0 : chatHook.chatMessages.filter((msg: any) => Number(msg.id || 0) > chatHook.lastSeenMessageId).length;
 
   return (
-    <LaunchCountdownGate isAdmin={user?.role === 'admin'}>
+    <LaunchCountdownGate
+      isStaff={['moderator', 'admin', 'owner'].includes(user?.role)}
+      onLaunchOpened={fetchUserProfile}
+    >
       <MainLayout
         unseenCount={unseenCount}
         setCommunityTab={setCommunityTab}

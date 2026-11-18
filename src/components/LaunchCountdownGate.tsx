@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { m } from 'framer-motion';
-import { Rocket, Tv, Gamepad2, Trophy, Clock, Shield } from 'lucide-react';
+import { Rocket, Tv, Gamepad2, Trophy, Clock, Shield, Loader2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
+import { authService } from '../services/authService';
 
 // Official launch: Thursday Nov 19, 2026 at 6:00 PM Cairo time (+02:00)
 export const OFFICIAL_LAUNCH_TIMESTAMP = new Date('2026-11-19T18:00:00+02:00').getTime();
 
 interface LaunchCountdownGateProps {
-  isAdmin?: boolean;
+  isStaff?: boolean;
+  onLaunchOpened?: () => void;
   children: React.ReactNode;
 }
 
@@ -21,20 +25,83 @@ function getTimeParts(diffMs: number) {
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-export const LaunchCountdownGate: React.FC<LaunchCountdownGateProps> = ({ isAdmin, children }) => {
+export const LaunchCountdownGate: React.FC<LaunchCountdownGateProps> = ({
+  isStaff,
+  onLaunchOpened,
+  children,
+}) => {
+  const { setToken, setUser, showToast } = useAuth();
+  const socket = useSocket();
   const [now, setNow] = useState(() => Date.now());
-  const [adminBypass, setAdminBypass] = useState(false);
+  const [backendOpened, setBackendOpened] = useState(false);
+  const [showStaffLogin, setShowStaffLogin] = useState(false);
+  const [staffUsername, setStaffUsername] = useState('');
+  const [staffPassword, setStaffPassword] = useState('');
+  const [loggingIn, setLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const launchTriggeredRef = useRef(false);
 
   const remaining = OFFICIAL_LAUNCH_TIMESTAMP - now;
-  const isLocked = remaining > 0 && !(isAdmin && adminBypass);
+  const isLocked = remaining > 0 && !backendOpened && !isStaff;
 
   useEffect(() => {
-    if (remaining <= 0) return undefined;
+    if (remaining <= 0) {
+      if (!launchTriggeredRef.current) {
+        launchTriggeredRef.current = true;
+        // Brief delay so backend launch reset completes before refetching user profile
+        const t = setTimeout(() => {
+          onLaunchOpened?.();
+        }, 1500);
+        return () => clearTimeout(t);
+      }
+      return undefined;
+    }
     const id = setInterval(() => {
       setNow(Date.now());
     }, 1000);
     return () => clearInterval(id);
-  }, [remaining]);
+  }, [remaining, onLaunchOpened]);
+
+  useEffect(() => {
+    if (!socket) return undefined;
+    const onOpened = () => {
+      setBackendOpened(true);
+      onLaunchOpened?.();
+    };
+    socket.on('official_launch_opened', onOpened);
+    return () => {
+      socket.off('official_launch_opened', onOpened);
+    };
+  }, [socket, onLaunchOpened]);
+
+  const handleStaffLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loggingIn) return;
+    setLoginError('');
+    setLoggingIn(true);
+    try {
+      const res = await authService.login({ username: staffUsername.trim(), password: staffPassword });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setLoginError(data?.error || 'بيانات الدخول غير صحيحة.');
+        return;
+      }
+      if (data?.token && data?.user) {
+        localStorage.setItem('token', data.token);
+        setToken(data.token);
+        setUser(data.user);
+        if (['moderator', 'admin', 'owner'].includes(data.user.role)) {
+          showToast('أهلاً بك في وضع معاينة الإدارة 👋');
+        } else {
+          setLoginError('الحساب ده مش إداري — استنى معاد الافتتاح الرسمي.');
+        }
+      }
+    } catch {
+      setLoginError('مشكلة في الاتصال.');
+    } finally {
+      setLoggingIn(false);
+    }
+  };
 
   if (!isLocked) {
     return <>{children}</>;
@@ -120,16 +187,57 @@ export const LaunchCountdownGate: React.FC<LaunchCountdownGateProps> = ({ isAdmi
           <span>التطبيق هيفتح تلقائياً أول ما العداد يخلص</span>
         </div>
 
-        {isAdmin && (
-          <button
-            type="button"
-            onClick={() => setAdminBypass(true)}
-            className="inline-flex items-center gap-1.5 text-[11px] font-bold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer pt-1"
-          >
-            <Shield className="w-3 h-3" />
-            <span>دخول الأدمن للمعاينة</span>
-          </button>
-        )}
+        {/* Staff / Admin Access */}
+        <div className="pt-1">
+          {!showStaffLogin ? (
+            <button
+              type="button"
+              onClick={() => setShowStaffLogin(true)}
+              className="inline-flex items-center gap-1.5 text-[11px] font-bold text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+            >
+              <Shield className="w-3 h-3" />
+              <span>دخول الإدارة / الستاف</span>
+            </button>
+          ) : (
+            <form onSubmit={handleStaffLogin} className="mt-2 p-3.5 rounded-2xl bg-zinc-900/70 border border-white/10 space-y-2.5 text-start">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-zinc-300">تسجيل دخول الإدارة</span>
+                <button
+                  type="button"
+                  onClick={() => setShowStaffLogin(false)}
+                  className="text-2xs text-zinc-500 hover:text-white cursor-pointer"
+                >
+                  إغلاق
+                </button>
+              </div>
+              <input
+                type="text"
+                dir="ltr"
+                value={staffUsername}
+                onChange={(e) => setStaffUsername(e.target.value)}
+                placeholder="اسم المستخدم"
+                className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white outline-none focus:border-brand-orange/60"
+              />
+              <input
+                type="password"
+                dir="ltr"
+                value={staffPassword}
+                onChange={(e) => setStaffPassword(e.target.value)}
+                placeholder="كلمة المرور"
+                className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white outline-none focus:border-brand-orange/60"
+              />
+              {loginError && <p className="text-2xs font-bold text-red-400">{loginError}</p>}
+              <button
+                type="submit"
+                disabled={loggingIn}
+                className="w-full py-2 rounded-xl bg-brand-orange text-black font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+              >
+                {loggingIn && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>دخول</span>
+              </button>
+            </form>
+          )}
+        </div>
       </m.div>
     </div>
   );
