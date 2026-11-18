@@ -417,6 +417,7 @@ export const Admin: React.FC<AdminProps> = ({
     if (adminEpisodeForm.code) {
       body.xp_code = {
         code: adminEpisodeForm.code,
+        existing_code_id: adminEpisodeForm.existing_code_id || null,
         max_uses: adminEpisodeForm.code_max_uses,
         expiry_date: adminEpisodeForm.code_expiry || null,
       };
@@ -852,7 +853,7 @@ export const Admin: React.FC<AdminProps> = ({
                     type="button"
                     onClick={() => {
                       const rand = Math.floor(1000 + Math.random() * 9000);
-                      setAdminEpisodeForm((p: any) => ({ ...p, code: `EP-${rand}` }));
+                      setAdminEpisodeForm((p: any) => ({ ...p, code: `EP-${rand}`, existing_code_id: null }));
                     }}
                     className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-400 hover:bg-orange-500/25 text-xs font-bold cursor-pointer transition-colors"
                   >
@@ -860,26 +861,76 @@ export const Admin: React.FC<AdminProps> = ({
                     <span>اعمل كود</span>
                   </button>
                 </div>
-                <AdminInput
-                  label="Code Name"
-                  placeholder="e.g. EP-4892"
-                  value={adminEpisodeForm.code || ''}
-                  onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code: e.target.value }))}
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <AdminInput
-                    label="أقصى عدد استخدام"
-                    type="number"
-                    value={adminEpisodeForm.code_max_uses || 200}
-                    onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code_max_uses: Number(e.target.value) }))}
-                  />
-                  <AdminInput
-                    label="تاريخ الانتهاء"
-                    type="date"
-                    value={adminEpisodeForm.code_expiry || ''}
-                    onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code_expiry: e.target.value }))}
-                  />
-                </div>
+
+                {adminCodes.length > 0 && (
+                  <AdminSelect
+                    label="ربط بكود موجود بالفعل"
+                    value={adminEpisodeForm.existing_code_id || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) {
+                        setAdminEpisodeForm((p: any) => ({ ...p, existing_code_id: null, code: '' }));
+                        return;
+                      }
+                      const found = adminCodes.find((c: any) => String(c.id ?? c._id) === String(val));
+                      if (found) {
+                        setAdminEpisodeForm((p: any) => ({
+                          ...p,
+                          existing_code_id: found.id ?? found._id,
+                          code: found.code,
+                          code_max_uses: Number(found.max_uses ?? 200),
+                          code_expiry: found.expiry_date ? String(found.expiry_date).slice(0, 10) : '',
+                        }));
+                      }
+                    }}
+                  >
+                    <option value="" className="bg-zinc-900">— أو اكتب / اعمل كود جديد تحت —</option>
+                    {adminCodes.map((c: any) => {
+                      const cid = c.id ?? c._id;
+                      return (
+                        <option key={cid} value={cid} className="bg-zinc-900">
+                          {c.code} (+{c.xp_reward} XP{c.episode_id ? ` • مربوط بحلقة ${c.episode_id}` : ''})
+                        </option>
+                      );
+                    })}
+                  </AdminSelect>
+                )}
+
+                {adminEpisodeForm.existing_code_id ? (
+                  <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 font-bold">
+                    <span>🔗 هيتم ربط الكود {adminEpisodeForm.code} بالحلقة دي بنفس إعداداته الحالية</span>
+                    <button
+                      type="button"
+                      onClick={() => setAdminEpisodeForm((p: any) => ({ ...p, existing_code_id: null, code: '' }))}
+                      className="text-zinc-400 hover:text-white underline text-[11px] shrink-0 cursor-pointer"
+                    >
+                      فك الاختيار
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <AdminInput
+                      label="Code Name"
+                      placeholder="e.g. EP-4892"
+                      value={adminEpisodeForm.code || ''}
+                      onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code: e.target.value, existing_code_id: null }))}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <AdminInput
+                        label="أقصى عدد استخدام"
+                        type="number"
+                        value={adminEpisodeForm.code_max_uses || 200}
+                        onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code_max_uses: Number(e.target.value) }))}
+                      />
+                      <AdminInput
+                        label="تاريخ الانتهاء"
+                        type="date"
+                        value={adminEpisodeForm.code_expiry || ''}
+                        onChange={(e) => setAdminEpisodeForm((p: any) => ({ ...p, code_expiry: e.target.value }))}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="flex gap-3">
