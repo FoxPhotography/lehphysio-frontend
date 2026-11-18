@@ -15,6 +15,8 @@ export interface User {
   last_poll_vote_date?: string;
   last_spin_wheel_date?: string;
   last_surprise_box_date?: string;
+  is_beta_user?: boolean;
+  has_seen_launch_notice?: boolean;
   global_rank?: number;
   total_users?: number;
 }
