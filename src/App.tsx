@@ -1751,8 +1751,8 @@ function InnerApp() {
     }
   };
 
-  const handleClaimSurpriseBox = async () => {
-    if (!token) return;
+  const handleClaimSurpriseBox = async (): Promise<{ xp_earned: number } | null> => {
+    if (!token) return null;
     const todayStr = getLocalDateString();
     try {
       const res = await fetch(`${API_BASE}/api/rewards/surprise-box`, {
@@ -1765,15 +1765,17 @@ function InnerApp() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || 'فتحت صندوق اليوم! كسبت +50 XP ⚡');
-        playChatSound('win');
         fetchUserProfile();
+        return { xp_earned: data.xp_earned ?? 50 };
       } else {
         showToast(data.error || 'معرفناش نفتح الصندوق.');
         playChatSound('error');
+        return null;
       }
     } catch (err) {
       showToast('مشكلة في الاتصال.');
+      playChatSound('error');
+      return null;
     }
   };
 

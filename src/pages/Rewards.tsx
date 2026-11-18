@@ -15,6 +15,7 @@ import { playChatSound, setFramesCache } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
 import { API_BASE } from '../services/api';
 import { CosmeticsStudio } from '../components/shop/CosmeticsStudio';
+import { SurpriseBoxModal, SurpriseBoxPhase } from '../components/rewards/SurpriseBoxModal';
 import { useAuth } from '../context/AuthContext';
 
 interface RewardsProps {
@@ -30,7 +31,7 @@ interface RewardsProps {
   unlockedCosmetics: string[];
   handleShopPurchase: (item: any) => void;
   hasOpenedBoxToday: boolean;
-  handleClaimSurpriseBox: () => void;
+  handleClaimSurpriseBox: () => Promise<{ xp_earned: number } | null>;
   handleBuyFrame?: (frameId: string, price: number) => Promise<boolean>;
 }
 
@@ -173,6 +174,41 @@ export const Rewards: React.FC<RewardsProps> = ({
     showToast(next === 'none' ? 'اتشال الفريم 👌' : 'الفريم اتفعّل ✨');
   };
   const [buyingFrameId, setBuyingFrameId] = useState<string | null>(null);
+  const [boxModalOpen, setBoxModalOpen] = useState(false);
+  const [boxPhase, setBoxPhase] = useState<SurpriseBoxPhase>('charging');
+  const [claimedXp, setClaimedXp] = useState(0);
+  const [claimingBox, setClaimingBox] = useState(false);
+
+  const onOpenSurpriseBox = async () => {
+    if (hasOpenedBoxToday || claimingBox) return;
+    setClaimingBox(true);
+    setBoxPhase('charging');
+    setClaimedXp(0);
+    setBoxModalOpen(true);
+    playChatSound('start');
+
+    try {
+      const [result] = await Promise.all([
+        handleClaimSurpriseBox(),
+        new Promise((r) => setTimeout(r, 1150)),
+      ]);
+
+      if (!result) {
+        setBoxModalOpen(false);
+        return;
+      }
+
+      setClaimedXp(result.xp_earned);
+      setBoxPhase('burst');
+      playChatSound('win');
+
+      setTimeout(() => {
+        setBoxPhase('revealed');
+      }, 380);
+    } finally {
+      setClaimingBox(false);
+    }
+  };
 
   // Came from the profile's "استوديو الستايل" button → jump to the studio
   useEffect(() => {
@@ -338,7 +374,7 @@ export const Rewards: React.FC<RewardsProps> = ({
             )}
             
             <m.button
-              onClick={hasOpenedBoxToday ? undefined : handleClaimSurpriseBox}
+              onClick={hasOpenedBoxToday || claimingBox ? undefined : onOpenSurpriseBox}
               animate={hasOpenedBoxToday ? {} : { 
                 y: [0, -6, 0] 
               }}
@@ -485,6 +521,13 @@ export const Rewards: React.FC<RewardsProps> = ({
           })}
         </div>
       </section>
+
+      <SurpriseBoxModal
+        open={boxModalOpen}
+        phase={boxPhase}
+        xpEarned={claimedXp}
+        onClose={() => setBoxModalOpen(false)}
+      />
     </m.div>
   );
 };

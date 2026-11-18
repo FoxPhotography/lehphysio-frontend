@@ -135,7 +135,7 @@ interface AppRouterProps {
 
   // Shop / Rewards
   handleShopPurchase: (item: any) => Promise<boolean>;
-  handleClaimSurpriseBox: () => Promise<void>;
+  handleClaimSurpriseBox: () => Promise<{ xp_earned: number } | null>;
   handleBuyFrame: () => Promise<boolean>;
 
   // Login/Register forms and errors
