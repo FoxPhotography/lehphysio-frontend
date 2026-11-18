@@ -18,11 +18,7 @@ const loadMotionFeatures = () => import('./motionFeatures').then((mod) => mod.de
 // Service worker (precache + offline + push). A new version waits until the user taps "update".
 if ('serviceWorker' in navigator) {
   import('virtual:pwa-register').then(({ registerSW }) => {
-    const updateSW = registerSW({
-      onNeedRefresh() {
-        window.dispatchEvent(new CustomEvent('pwa:need-refresh', { detail: () => updateSW(true) }));
-      },
-    });
+    registerSW({ immediate: true });
   });
 }
 

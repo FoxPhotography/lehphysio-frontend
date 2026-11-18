@@ -14,6 +14,9 @@ declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: Array<{ url: str
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 clientsClaim();
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
 
 // SPA navigations: try the network (fresh HTML after a deploy), fall back to the cached shell.
 const shell = createHandlerBoundToURL('/index.html');
