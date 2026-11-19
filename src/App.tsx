@@ -1245,20 +1245,24 @@ function InnerApp() {
   const handleQuizSubmit = async (quizId: number) => {
     if (quizAnswer === null || !token || !selectedEpisodeId) return;
     try {
-      const res = await episodeService.submitQuiz(selectedEpisodeId, quizAnswer, token);
+      const res = await episodeService.submitQuiz(selectedEpisodeId, quizId, quizAnswer, token);
       const data = await res.json();
       if (res.ok) {
         setQuizResult(data);
-        if (data.isCorrect) {
+        const isCorrect = Boolean(data.is_correct ?? data.isCorrect);
+        if (isCorrect) {
           playChatSound('win');
           triggerXpPopup(data.xp_earned || 150);
         } else {
           playChatSound('error');
         }
         fetchUserProfile();
+      } else {
+        showToast(data.error || 'حصلت مشكلة في إرسال الإجابة.');
       }
     } catch (e) {
       console.error(e);
+      showToast('مش قادرين نوصل للسيرفر.');
     }
   };
 

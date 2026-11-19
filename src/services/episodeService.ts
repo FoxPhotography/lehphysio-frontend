@@ -27,10 +27,10 @@ export const episodeService = {
     return res;
   },
 
-  async submitQuiz(episodeId: number, answer: number, token?: string) {
-    const res = await apiFetch(`/api/episodes/${episodeId}/interact`, {
+  async submitQuiz(episodeId: number, quizId: number, answerIndex: number, token?: string) {
+    const res = await apiFetch(`/api/episodes/${episodeId}/quiz/submit`, {
       method: 'POST',
-      body: JSON.stringify({ type: 'quiz', answer }),
+      body: JSON.stringify({ quiz_id: quizId, answer_index: answerIndex }),
     }, token);
     return res;
   },
