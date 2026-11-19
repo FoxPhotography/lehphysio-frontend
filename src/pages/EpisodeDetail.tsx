@@ -220,7 +220,22 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
       {/* Embedded video player */}
       {embedUrl ? (
         <section className="glass-card p-2 overflow-hidden">
-          <YouTubeFacade embedUrl={embedUrl} title={episode.title_ar || `الحلقة ${episodeNumber(episode)}`} thumbnail={episode.thumbnail_url} start={seekTo} />
+          <YouTubeFacade
+            embedUrl={embedUrl}
+            title={episode.title_ar || `الحلقة ${episodeNumber(episode)}`}
+            thumbnail={episode.thumbnail_url}
+            start={seekTo}
+            autoPlay={(() => {
+              try {
+                const pending = sessionStorage.getItem('autoplay_episode');
+                if (pending && String(pending) === String(episode.id)) {
+                  sessionStorage.removeItem('autoplay_episode');
+                  return true;
+                }
+              } catch {}
+              return false;
+            })()}
+          />
         </section>
       ) : null}
 

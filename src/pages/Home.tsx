@@ -182,12 +182,20 @@ export const Home: React.FC<HomeProps> = ({
           const latestEp = sorted.length > 0 ? sorted[0] : null;
           return latestEp ? (
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-8 items-center relative z-10">
-              <div className="md:col-span-2 aspect-[16/9] w-full rounded-2xl bg-zinc-900 relative shadow-2xl overflow-hidden border border-zinc-800/40">
-                <Thumb src={latestEp.thumbnail_url} width={480} eager className="group-hover:scale-[1.02] transition-transform duration-500" />
-                <span className="absolute bottom-3 end-3 w-11 h-11 rounded-full bg-brand-orange text-black flex items-center justify-center shadow-lg z-10" aria-hidden>
+              <button
+                type="button"
+                onClick={() => {
+                  try { sessionStorage.setItem('autoplay_episode', String(latestEp.id)); } catch {}
+                  navigateToEpisode(latestEp.id);
+                }}
+                aria-label={`تشغيل: ${latestEp.title_ar || 'الحلقة الجديدة'}`}
+                className="md:col-span-2 aspect-[16/9] w-full rounded-2xl bg-zinc-900 relative shadow-2xl overflow-hidden border border-zinc-800/40 cursor-pointer text-start focus:outline-none focus:ring-2 focus:ring-brand-orange/60"
+              >
+                <Thumb src={latestEp.thumbnail_url} width={480} eager className="group-hover:scale-[1.03] transition-transform duration-500" />
+                <span className="absolute bottom-3 end-3 w-11 h-11 rounded-full bg-brand-orange text-black flex items-center justify-center shadow-lg z-10 group-hover:scale-110 transition-transform" aria-hidden>
                   <Play className="w-5 h-5 fill-current ms-0.5" />
                 </span>
-              </div>
+              </button>
               <div className="md:col-span-3 flex flex-col gap-4 text-start">
                 <div className="flex gap-2">
                   <span className="text-2xs font-black tracking-wider bg-brand-orange/20 text-brand-orange px-2.5 py-1 rounded-md uppercase">
@@ -206,7 +214,10 @@ export const Home: React.FC<HomeProps> = ({
                 <div className="mt-2">
                   <button 
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-sm px-6 py-3 rounded-full cursor-pointer hover:shadow-orange-intense hover:scale-102 active:scale-98 transition-all shadow-orange-glow" 
-                    onClick={() => navigateToEpisode(latestEp.id)}
+                    onClick={() => {
+                      try { sessionStorage.setItem('autoplay_episode', String(latestEp.id)); } catch {}
+                      navigateToEpisode(latestEp.id);
+                    }}
                   >
                     <Play className="w-4 h-4 fill-current" /> اتفرج دلوقتي
                   </button>

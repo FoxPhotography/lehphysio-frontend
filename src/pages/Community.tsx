@@ -1065,7 +1065,7 @@ export const Community: React.FC<CommunityProps> = ({
                             </div>
                           )}
 
-                          <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1 w-full min-w-0">
+                          <div className="relative z-10 flex flex-wrap items-end justify-between gap-x-3 gap-y-1 w-full min-w-0">
                             {(() => {
                               const inviteCode = parseGameInvite(msg.message);
                               if (!inviteCode) return (

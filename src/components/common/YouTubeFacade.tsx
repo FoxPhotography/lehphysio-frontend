@@ -9,6 +9,8 @@ interface YouTubeFacadeProps {
   thumbnail?: string | null;
   /** Seconds to start from; changing it (e.g. tapping a timestamp) starts playback there. */
   start?: number | null;
+  /** Immediately mount the YouTube player with autoplay when navigated from a play button. */
+  autoPlay?: boolean;
 }
 
 const videoIdFrom = (embedUrl: string) => embedUrl.match(/embed\/([\w-]{6,})/)?.[1] ?? null;
@@ -17,10 +19,10 @@ const videoIdFrom = (embedUrl: string) => embedUrl.match(/embed\/([\w-]{6,})/)?.
  * Shows a poster + play button and only loads YouTube's ~1MB player after a tap.
  * The iframe starts with autoplay so the first tap plays immediately.
  */
-export const YouTubeFacade: React.FC<YouTubeFacadeProps> = ({ embedUrl, title, thumbnail, start = null }) => {
-  const [active, setActive] = useState(false);
+export const YouTubeFacade: React.FC<YouTubeFacadeProps> = ({ embedUrl, title, thumbnail, start = null, autoPlay = false }) => {
+  const [active, setActive] = useState(Boolean(autoPlay));
   const [posterFailed, setPosterFailed] = useState(false);
-  useEffect(() => { if (start != null) setActive(true); }, [start]);
+  useEffect(() => { if (start != null || autoPlay) setActive(true); }, [start, autoPlay]);
   const id = videoIdFrom(embedUrl);
   const poster = thumbnail ? cld(thumbnail, { w: 720, h: 405, crop: 'fill' }) : id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : '';
   const src = embedUrl + (embedUrl.includes('?') ? '&' : '?') + 'autoplay=1&rel=0&playsinline=1' + (start ? `&start=${Math.floor(start)}` : '');

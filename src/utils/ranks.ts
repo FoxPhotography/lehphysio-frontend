@@ -4,10 +4,10 @@
  */
 export const RANKS = [
   { tier: 1, min: 0, name: 'مستجد', emoji: '🧪' },
-  { tier: 2, min: 500, name: 'نازل تدريب', emoji: '⚡' },
-  { tier: 3, min: 1500, name: 'ثيرابيست', emoji: '🦴' },
-  { tier: 4, min: 3000, name: 'كبير الفيزيو', emoji: '🧠' },
-  { tier: 5, min: 6000, name: 'فحل الفيزيو', emoji: '👑' },
+  { tier: 2, min: 5000, name: 'نازل تدريب', emoji: '⚡' },
+  { tier: 3, min: 10000, name: 'ثيرابيست', emoji: '🦴' },
+  { tier: 4, min: 15000, name: 'الاستشاري', emoji: '🧠' },
+  { tier: 5, min: 20000, name: 'فحل الفيزيو', emoji: '👑' },
 ] as const;
 
 /** Display name for a rank object from the API (uses the tier, so old server names are replaced too). */

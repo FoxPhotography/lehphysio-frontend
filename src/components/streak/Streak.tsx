@@ -5,6 +5,8 @@ import type { CosmeticVisual } from '../../utils/cosmetics';
 import Lightning from './Lightning';
 import PixelSnow from './PixelSnow';
 import FireGoalBackground from './FireGoalBackground';
+import PlasmaEnergy from './PlasmaEnergy';
+import ShadowVoid from './ShadowVoid';
 
 /** Equipped shop cosmetic (if any) wins over the automatic streak colours. */
 type Override = CosmeticVisual | null | undefined;
@@ -100,59 +102,9 @@ export const PlasmaArcSvg = () => (
 );
 
 export const PackageParticles: React.FC<{ themeKey: string; compact?: boolean }> = ({ themeKey, compact }) => {
-  // 1a. 7-Day Streak Tier: Plasma / بلازما (شحنات وأقواس بلازما كهربائية عملاقة)
+  // 1a. 7-Day Streak Tier: Plasma / بلازما now uses the silky canvas PlasmaEnergy layer
   if (themeKey === 'plasma') {
-    return (
-      <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
-        <span
-          className="streak-plasma-particle"
-          style={{
-            left: '10%',
-            bottom: '12%',
-            width: compact ? '13px' : '17px',
-            height: compact ? '13px' : '17px',
-            ['--dur' as any]: '2.6s',
-            ['--delay' as any]: '0.1s',
-            ['--fly-x' as any]: '10px',
-            ['--rot' as any]: '20deg',
-          }}
-        >
-          <PlasmaArcSvg />
-        </span>
-        <span
-          className="streak-plasma-particle"
-          style={{
-            right: '12%',
-            top: '14%',
-            width: compact ? '11px' : '15px',
-            height: compact ? '11px' : '15px',
-            ['--dur' as any]: '3.2s',
-            ['--delay' as any]: '1.1s',
-            ['--fly-x' as any]: '-12px',
-            ['--rot' as any]: '-45deg',
-          }}
-        >
-          <PlasmaArcSvg />
-        </span>
-        {!compact && (
-          <span
-            className="streak-plasma-particle"
-            style={{
-              left: '46%',
-              top: '40%',
-              width: '15px',
-              height: '15px',
-              ['--dur' as any]: '2.2s',
-              ['--delay' as any]: '0.6s',
-              ['--fly-x' as any]: '6px',
-              ['--rot' as any]: '60deg',
-            }}
-          >
-            <PlasmaArcSvg />
-          </span>
-        )}
-      </span>
-    );
+    return null;
   }
 
   // 1b. Pinky / Rose / باكدج بينكي فقط (فراشات وقلوب وردية ناعمة)
@@ -614,6 +566,11 @@ export const StreakAura: React.FC<{ days: number; density?: 'full' | 'lite'; cla
       <div className="streak-aura__glow" />
       <div className="streak-aura__ring" />
       {density === 'full' && <div className="streak-aura__ring streak-aura__ring--rev" />}
+      {t.key === 'plasma' && (
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
+          <PlasmaEnergy variant={density === 'full' ? 'full' : 'compact'} opacity={0.95} />
+        </div>
+      )}
       {t.key === 'supernova' && density === 'full' && (
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
           <Lightning
@@ -638,6 +595,11 @@ export const StreakAura: React.FC<{ days: number; density?: 'full' | 'lite'; cla
             lightMode={false}
             dpr={0.5}
           />
+        </div>
+      )}
+      {(t.key === ('cos-shadow' as any) || override?.fx === 'shadow') && (
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
+          <ShadowVoid variant={density === 'full' ? 'full' : 'compact'} opacity={0.96} />
         </div>
       )}
       {(t.key === 'snow' || t.key === ('cos-snow' as any) || override?.fx === 'snow') && (
@@ -712,6 +674,11 @@ export const StreakNameplate: React.FC<{
       <span aria-hidden className="streak-plate__bg" />
       <span aria-hidden className="streak-plate__sheen" />
       <span aria-hidden className="streak-plate__edge" />
+      {t.key === 'plasma' && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
+          <PlasmaEnergy variant="compact" opacity={0.85} />
+        </span>
+      )}
       {t.key === 'supernova' && (
         <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
           <Lightning
@@ -736,6 +703,11 @@ export const StreakNameplate: React.FC<{
             lightMode={false}
             dpr={0.4}
           />
+        </span>
+      )}
+      {(t.key === ('cos-shadow' as any) || override?.fx === 'shadow') && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
+          <ShadowVoid variant="compact" opacity={0.92} />
         </span>
       )}
       {(t.key === 'snow' || t.key === ('cos-snow' as any) || override?.fx === 'snow') && (
@@ -803,6 +775,11 @@ export const StreakBubbleLayers: React.FC<{ days: number; override?: Override }>
     <>
       <span aria-hidden className="streak-plate__bg" />
       <span aria-hidden className="streak-plate__sheen" />
+      {t.key === 'plasma' && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
+          <PlasmaEnergy variant="compact" opacity={0.85} />
+        </span>
+      )}
       {t.key === 'supernova' && (
         <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
           <Lightning
@@ -827,6 +804,11 @@ export const StreakBubbleLayers: React.FC<{ days: number; override?: Override }>
             lightMode={false}
             dpr={0.4}
           />
+        </span>
+      )}
+      {(t.key === ('cos-shadow' as any) || override?.fx === 'shadow') && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0">
+          <ShadowVoid variant="compact" opacity={0.92} />
         </span>
       )}
       {(t.key === 'snow' || t.key === ('cos-snow' as any) || override?.fx === 'snow') && (
