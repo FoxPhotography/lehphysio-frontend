@@ -216,7 +216,11 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
             pendingMessages.forEach(m => map.set(m.id, m));
 
             // Client-side reconciliation for deletions within the returned data range
-            if (data.length > 0) {
+            if (data.length === 0) {
+              for (const [id, msg] of map.entries()) {
+                if (!msg.isPending) map.delete(id);
+              }
+            } else {
               const oldestIncoming = data[0];
               const oldestTime = new Date(oldestIncoming.created_at || oldestIncoming.timestamp || 0).getTime();
               
