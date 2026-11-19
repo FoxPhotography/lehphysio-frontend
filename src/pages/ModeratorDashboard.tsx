@@ -1213,23 +1213,21 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                         </td>
                         <td className="py-3 text-center">
                           <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => handleEditClick(q)}
+                              title="تعديل"
+                              className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/5 border border-white/8 text-zinc-400 hover:text-white cursor-pointer hover:border-white/15 transition-all"
+                            >
+                              <FileEdit className="w-3.5 h-3.5" />
+                            </button>
                             {(q.status === 'Draft' || q.status === 'Scheduled') ? (
-                              <>
-                                <button
-                                  onClick={() => handleEditClick(q)}
-                                  title="تعديل"
-                                  className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/5 border border-white/8 text-zinc-400 hover:text-white cursor-pointer hover:border-white/15 transition-all"
-                                >
-                                  <FileEdit className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => handleQDelete(q._id || q.id)}
-                                  title="حذف"
-                                  className="w-7 h-7 rounded-lg flex items-center justify-center bg-red-500/10 border border-red-500/25 text-red-400 hover:bg-red-500/20 cursor-pointer transition-all"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </>
+                              <button
+                                onClick={() => handleQDelete(q._id || q.id)}
+                                title="حذف"
+                                className="w-7 h-7 rounded-lg flex items-center justify-center bg-red-500/10 border border-red-500/25 text-red-400 hover:bg-red-500/20 cursor-pointer transition-all"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             ) : (
                               <button
                                 onClick={() => fetchQStats(q._id || q.id)}
@@ -1322,6 +1320,8 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                   >
                     <option value="Draft">مسودة</option>
                     <option value="Scheduled">مجدول</option>
+                    {editingQuestionId && <option value="Published">منشور</option>}
+                    {editingQuestionId && <option value="Expired">منتهي</option>}
                   </CustomSelect>
                 </div>
               </div>
