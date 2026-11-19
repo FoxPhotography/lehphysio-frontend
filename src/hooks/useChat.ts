@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { useNotifications } from '../context/NotificationContext';
 import { chatService } from '../services/chatService';
+import { API_BASE } from '../services/api';
 import { playChatSound } from '../utils/helpers';
 import { usePresenceOptional } from '../context/PresenceContext';
 import { ChatMessage } from '../types';
@@ -163,7 +164,12 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
       } else {
         setIsRefreshingChat(true);
       }
-      const res = await chatService.fetchChatMessages(beforeId, tokenRef.current);
+      const [res, activeIdsData] = await Promise.all([
+        chatService.fetchChatMessages(beforeId, tokenRef.current),
+        !beforeId
+          ? fetch(`${API_BASE}/api/chat/active-ids`).then(r => (r.ok ? r.json() : null)).catch(() => null)
+          : Promise.resolve(null),
+      ]);
       const data = await res.json();
       if (res.ok) {
         if (beforeId) {
@@ -215,8 +221,16 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
             // Ensure pending messages are preserved
             pendingMessages.forEach(m => map.set(m.id, m));
 
-            // Client-side reconciliation for deletions within the returned data range
-            if (data.length === 0) {
+            // Client-side reconciliation for deletions (full server ID check + empty state)
+            if (activeIdsData && Array.isArray(activeIdsData.ids)) {
+              const activeSet = new Set(activeIdsData.ids.map((id: any) => Number(id)));
+              for (const [id, msg] of map.entries()) {
+                if (msg.isPending) continue;
+                if (!activeSet.has(Number(id))) {
+                  map.delete(id);
+                }
+              }
+            } else if (data.length === 0) {
               for (const [id, msg] of map.entries()) {
                 if (!msg.isPending) map.delete(id);
               }
@@ -291,24 +305,40 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
 
   useEffect(() => {
     const handleChatUpdate = (payload?: any) => {
+      // Always process deletions & clear_all even if user is on another tab/page so cache stays clean
+      if (payload?.type === 'clear_all') {
+        setChatMessages(prev => {
+          const pendingOnly = prev.filter(m => m.isPending);
+          if (userRef.current?.id) {
+            scheduleChatCache(userRef.current.id, pendingOnly);
+          }
+          return pendingOnly;
+        });
+        return;
+      }
+      if (payload?.type === 'delete') {
+        setChatMessages(prev => {
+          const filtered = prev.filter(m => m.id !== payload.messageId);
+          if (userRef.current?.id) {
+            scheduleChatCache(userRef.current.id, filtered.slice(-1000));
+          }
+          return filtered;
+        });
+        return;
+      }
+      if (payload?.type === 'delete_bulk') {
+        setChatMessages(prev => {
+          const filtered = prev.filter(m => !payload.messageIds.includes(m.id));
+          if (userRef.current?.id) {
+            scheduleChatCache(userRef.current.id, filtered.slice(-1000));
+          }
+          return filtered;
+        });
+        return;
+      }
+
       if (communityTab === 'chat' && currentPage === 'community') {
-        if (payload?.type === 'delete') {
-          setChatMessages(prev => {
-            const filtered = prev.filter(m => m.id !== payload.messageId);
-            if (userRef.current?.id) {
-              scheduleChatCache(userRef.current.id, filtered.slice(-1000));
-            }
-            return filtered;
-          });
-        } else if (payload?.type === 'delete_bulk') {
-          setChatMessages(prev => {
-            const filtered = prev.filter(m => !payload.messageIds.includes(m.id));
-            if (userRef.current?.id) {
-              scheduleChatCache(userRef.current.id, filtered.slice(-1000));
-            }
-            return filtered;
-          });
-        } else if (payload?.type === 'reaction') {
+        if (payload?.type === 'reaction') {
           // Patch just this message's reactions — no full refetch
           const nextReactions = summarizeRawReactions(payload.reactions || [], userRef.current?.id);
           setChatMessages(prev => {
