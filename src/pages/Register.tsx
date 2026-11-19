@@ -1,5 +1,6 @@
 import React from 'react';
 import { User, Mail, Lock, GraduationCap } from 'lucide-react';
+import { CustomSelect } from '../components/common/CustomSelect';
 import {
   AuthLayout,
   FormField,
@@ -97,18 +98,18 @@ export const Register: React.FC<RegisterProps> = ({
 
         <FormField label="الدفعة" icon={<GraduationCap className="w-3 h-3" />}>
           <div className="relative">
-            <GraduationCap className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 pointer-events-none" />
-            <select
-              className="w-full ps-10 pe-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-orange-500/60 transition-colors appearance-none"
+            <GraduationCap className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 pointer-events-none z-10" />
+            <CustomSelect
+              className="w-full ps-10 pe-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-orange-500/60 transition-colors"
               value={registerForm.batch}
               onChange={(e) => setRegisterForm((prev: any) => ({ ...prev, batch: e.target.value }))}
             >
               {BATCHES.map(b => (
-                <option key={b.value} value={b.value} className="bg-zinc-900">
+                <option key={b.value} value={b.value}>
                   {b.label}
                 </option>
               ))}
-            </select>
+            </CustomSelect>
           </div>
         </FormField>
 

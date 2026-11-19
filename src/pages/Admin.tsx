@@ -32,6 +32,7 @@ import {
 import { episodeLabel, episodeSeason, episodeNumber, groupBySeason } from '../utils/episode';
 import { setFramesCache } from '../utils/helpers';
 import { API_BASE } from '../services/api';
+import { CustomSelect } from '../components/common/CustomSelect';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface AdminProps {
@@ -112,20 +113,26 @@ const AdminInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label
   </div>
 );
 
-const AdminSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label?: string }> = ({
-  label, children, className, ...props
+const AdminSelect: React.FC<{
+  label?: string;
+  value?: string | number;
+  onChange?: (e: { target: { value: string } }) => void;
+  children?: React.ReactNode;
+  className?: string;
+  disabled?: boolean;
+}> = ({
+  label, children, className, value = '', onChange, disabled,
 }) => (
   <div className="space-y-1.5">
     {label && <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{label}</label>}
-    <div className="relative">
-      <select
-        {...props}
-        className={`w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-[13px] focus:outline-none focus:border-orange-500/60 appearance-none transition-colors ${className || ''}`}
-      >
-        {children}
-      </select>
-      <ChevronDown className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 pointer-events-none" />
-    </div>
+    <CustomSelect
+      value={value}
+      onChange={(e) => onChange?.(e)}
+      disabled={disabled}
+      className={`w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-[13px] focus:outline-none focus:border-orange-500/60 transition-colors ${className || ''}`}
+    >
+      {children}
+    </CustomSelect>
   </div>
 );
 

@@ -14,6 +14,7 @@ import { feedCacheService } from './services/feedCacheService';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider, useSocket } from './context/SocketContext';
 import { PresenceProvider } from './context/PresenceContext';
+import { CustomSelect } from './components/common/CustomSelect';
 import { NotificationProvider, useNotifications } from './context/NotificationContext';
 
 // Hooks
@@ -1872,8 +1873,8 @@ function InnerApp() {
 
             <div>
               <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">سبب الإبلاغ</label>
-              <select 
-                value={reportReason} 
+              <CustomSelect
+                value={reportReason}
                 onChange={(e) => setReportReason(e.target.value)}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm text-white font-bold mt-1.5 focus:border-red-500/50 outline-none cursor-pointer"
               >
@@ -1882,7 +1883,7 @@ function InnerApp() {
                 <option value="محتوى غير لائق">محتوى غير لائق</option>
                 <option value="معلومات غلط">معلومات غلط</option>
                 <option value="Other">سبب تاني</option>
-              </select>
+              </CustomSelect>
             </div>
           </div>
 
@@ -1918,8 +1919,8 @@ function InnerApp() {
           <div className="flex flex-col gap-4 text-start">
             <div>
               <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">الإجراء</label>
-              <select 
-                value={moderationAction} 
+              <CustomSelect
+                value={moderationAction}
                 onChange={(e) => setModerationAction(e.target.value)}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm text-white font-bold mt-1.5 focus:border-red-500/50 outline-none"
               >
@@ -1927,14 +1928,14 @@ function InnerApp() {
                 <option value="unmute">إلغاء الكتم</option>
                 <option value="ban">حظر</option>
                 <option value="unban">إلغاء الحظر</option>
-              </select>
+              </CustomSelect>
             </div>
 
             {['mute', 'ban'].includes(moderationAction) && (
               <div>
                 <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">المدة</label>
-                <select 
-                  value={moderationDuration} 
+                <CustomSelect
+                  value={moderationDuration}
                   onChange={(e) => setModerationDuration(e.target.value)}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm text-white font-bold mt-1.5 focus:border-red-500/50 outline-none"
                 >
@@ -1942,7 +1943,7 @@ function InnerApp() {
                   <option value="1d">يوم</option>
                   <option value="7d">7 أيام</option>
                   <option value="permanent">دائم</option>
-                </select>
+                </CustomSelect>
               </div>
             )}
           </div>

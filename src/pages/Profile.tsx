@@ -37,6 +37,7 @@ import { setFramesCache } from '../utils/helpers';
 import { API_BASE } from '../services/api';
 import { GoogleIcon } from '../components/AuthComponents';
 import { authService } from '../services/authService';
+import { CustomSelect } from '../components/common/CustomSelect';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 const stripEmojis = (str: string) => {
@@ -484,8 +485,8 @@ export const Profile: React.FC<ProfileProps> = ({
       {/* Editable Batch */}
       <div className="flex items-center gap-2 pointer-events-auto">
         {isEditingBatch ? (
-          <select
-            className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 border border-white/15 text-white focus:outline-none focus:border-orange-500/60 pointer-events-auto"
+          <CustomSelect
+            className="min-w-[130px] px-3 py-1.5 text-xs rounded-lg bg-zinc-800 border border-white/15 text-white focus:outline-none focus:border-orange-500/60 pointer-events-auto"
             value={selectedBatch}
             autoFocus
             onChange={(e) => {
@@ -499,7 +500,7 @@ export const Profile: React.FC<ProfileProps> = ({
             {BATCHES.map(b => (
               <option key={b.value} value={b.value}>{b.label}</option>
             ))}
-          </select>
+          </CustomSelect>
         ) : (
           <m.button
             onClick={() => setIsEditingBatch(true)}

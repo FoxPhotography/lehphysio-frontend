@@ -27,6 +27,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { PremiumDateTimePicker } from '../components/PremiumDateTimePicker';
+import { CustomSelect } from '../components/common/CustomSelect';
 import { useNotifications } from '../context/NotificationContext';
 import { DashboardShell } from '../components/admin/DashboardShell';
 
@@ -1010,19 +1011,16 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 {['mute', 'ban'].includes(modAction) && (
                   <div className="space-y-1.5">
                     <label className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">المدة</label>
-                    <div className="relative">
-                      <select
-                        value={modDuration}
-                        onChange={(e) => setModDuration(e.target.value)}
-                        className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3 text-xs text-white font-bold focus:border-red-500/50 outline-none appearance-none"
-                      >
-                        <option value="1h">1 Hour</option>
-                        <option value="1d">1 Day</option>
-                        <option value="7d">7 Days</option>
-                        <option value="permanent">دائم</option>
-                      </select>
-                      <ChevronDown className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
-                    </div>
+                    <CustomSelect
+                      value={modDuration}
+                      onChange={(e) => setModDuration(e.target.value)}
+                      className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3 text-xs text-white font-bold focus:border-red-500/50 outline-none"
+                    >
+                      <option value="1h">1 Hour</option>
+                      <option value="1d">1 Day</option>
+                      <option value="7d">7 Days</option>
+                      <option value="permanent">دائم</option>
+                    </CustomSelect>
                   </div>
                 )}
 
@@ -1317,17 +1315,14 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
 
                 <div className="space-y-1.5">
                   <label className="text-2xs font-bold text-zinc-550 uppercase tracking-wider block">الحالة</label>
-                  <div className="relative">
-                    <select
-                      value={qStatus}
-                      onChange={(e) => setQStatus(e.target.value as any)}
-                      className="w-full bg-zinc-950 border border-white/10 rounded-xl p-2.5 text-xs text-white font-bold focus:border-emerald-500/50 outline-none appearance-none cursor-pointer"
-                    >
-                      <option value="Draft">مسودة</option>
-                      <option value="Scheduled">مجدول</option>
-                    </select>
-                    <ChevronDown className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-550 pointer-events-none" />
-                  </div>
+                  <CustomSelect
+                    value={qStatus}
+                    onChange={(e) => setQStatus(e.target.value as any)}
+                    className="w-full bg-zinc-950 border border-white/10 rounded-xl p-2.5 text-xs text-white font-bold focus:border-emerald-500/50 outline-none cursor-pointer"
+                  >
+                    <option value="Draft">مسودة</option>
+                    <option value="Scheduled">مجدول</option>
+                  </CustomSelect>
                 </div>
               </div>
 
