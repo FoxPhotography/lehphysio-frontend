@@ -29,7 +29,6 @@ import { MainLayout } from './layouts/MainLayout';
 import { AppRouter, prefetchCorePages } from './routes/router';
 import { useStableProps } from './hooks/useStableProps';
 import { CommentsSlideUpPanel } from './components/home/CommentsSlideUpPanel';
-import { LaunchCountdownGate } from './components/LaunchCountdownGate';
 import { LaunchNoticeModal } from './components/LaunchNoticeModal';
 
 const getUserId = (user: any, token: string): string | null => {
@@ -1970,10 +1969,6 @@ function InnerApp() {
   const unseenCount = currentPage === 'community' ? 0 : chatHook.chatMessages.filter((msg: any) => Number(msg.id || 0) > chatHook.lastSeenMessageId).length;
 
   return (
-    <LaunchCountdownGate
-      isStaff={['moderator', 'admin', 'owner'].includes(user?.role)}
-      onLaunchOpened={fetchUserProfile}
-    >
       <MainLayout
         unseenCount={unseenCount}
         setCommunityTab={setCommunityTab}
@@ -2116,7 +2111,6 @@ function InnerApp() {
         {renderReportModal()}
         <LaunchNoticeModal />
       </MainLayout>
-    </LaunchCountdownGate>
   );
 }
 
