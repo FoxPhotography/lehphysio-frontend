@@ -24,8 +24,8 @@ interface NerveLevel {
 const LEVELS: NerveLevel[] = [
   {
     id: 'median',
-    title: 'العصب المتوسط',
-    enTitle: 'Median Nerve (C6–T1)',
+    title: 'Median Nerve',
+    enTitle: 'C6–T1 · Brachial Plexus',
     rootLabel: 'Brachial Plexus (C6–T1)',
     targetLabel: 'Thenar & Pronator Teres',
     clinicalTip: 'إصابة الـ Median Nerve عند الـ Carpal Tunnel بتسبب ضعف الـ Opposition وبتعمل علامة Ape Hand.',
@@ -43,8 +43,8 @@ const LEVELS: NerveLevel[] = [
   },
   {
     id: 'radial',
-    title: 'العصب الكعبري',
-    enTitle: 'Radial Nerve (C5–T1)',
+    title: 'Radial Nerve',
+    enTitle: 'C5–T1 · Posterior Cord',
     rootLabel: 'Posterior Cord (C5–T1)',
     targetLabel: 'Wrist & Finger Extensors',
     clinicalTip: 'إصابة الـ Radial Nerve عند الـ Spiral Groove في الـ Humerus بتسبب Wrist Drop شهير.',
@@ -62,8 +62,8 @@ const LEVELS: NerveLevel[] = [
   },
   {
     id: 'sciatic',
-    title: 'العصب الوركي',
-    enTitle: 'Sciatic Nerve (L4–S3)',
+    title: 'Sciatic Nerve',
+    enTitle: 'L4–S3 · Lumbosacral Plexus',
     rootLabel: 'Lumbosacral Plexus (L4–S3)',
     targetLabel: 'Hamstrings & Leg',
     clinicalTip: 'أكبر وأطول عصب في جسم الإنسان؛ ضغط جذوره بيعمل ألم عرق النسا (Sciatica) بطول الطرف السفلي.',
@@ -81,11 +81,11 @@ const LEVELS: NerveLevel[] = [
   },
   {
     id: 'peroneal',
-    title: 'العصب الشظوي المشترك',
-    enTitle: 'Common Peroneal (L4–S2)',
+    title: 'Common Peroneal Nerve',
+    enTitle: 'L4–S2 · Fibular Neck',
     rootLabel: 'Sciatic Bifurcation',
     targetLabel: 'Tibialis Anterior (Dorsiflexion)',
-    clinicalTip: 'العصب الشظوي سطحي جداً عند الـ Fibular Head، وإصابته بتعمل Foot Drop ومشية الـ Steppage Gait.',
+    clinicalTip: 'العصب الشظوي (Common Peroneal) سطحي جداً عند الـ Fibular Head، وإصابته بتعمل Foot Drop ومشية الـ Steppage Gait.',
     solvedGrid: [
       { id: 'p0', ports: ['T', 'B'] },
       { id: 'p1', ports: ['L', 'R'] },
@@ -100,11 +100,11 @@ const LEVELS: NerveLevel[] = [
   },
   {
     id: 'femoral',
-    title: 'العصب الفخذي',
-    enTitle: 'Femoral Nerve (L2–L4)',
+    title: 'Femoral Nerve',
+    enTitle: 'L2–L4 · Lumbar Plexus',
     rootLabel: 'Lumbar Plexus (L2–L4)',
     targetLabel: 'Quadriceps Femoris',
-    clinicalTip: 'المسؤول الأساسي عن فرد الركبة (Knee Extension)؛ ضعفه بيظهر بوضوح أثناء طلوع السلم أو الوقوف من الجلوس.',
+    clinicalTip: 'الـ Femoral Nerve مسؤول أساسي عن فرد الركبة (Knee Extension)؛ ضعفه بيظهر بوضوح أثناء طلوع السلم أو الوقوف من الجلوس.',
     solvedGrid: [
       { id: 'f0', ports: ['T', 'R'] },
       { id: 'f1', ports: ['L', 'B'] },
@@ -532,14 +532,14 @@ export const NervePathGame: React.FC<NervePathGameProps> = ({
               </div>
             </m.div>
           ) : (
-            <div className="mt-4 flex items-center justify-between gap-3 pt-3 border-t border-white/5">
-              <p className="text-2xs font-bold text-zinc-400">
+            <div className="mt-4 flex flex-col gap-3 pt-3.5 border-t border-white/5">
+              <p className="text-xs font-bold text-zinc-400 text-center leading-relaxed w-full">
                 اضغط على أي مكعب جنب المكان الفاضي عشان تحركه وتوصل الكهربا من الجدع للعضلة ⚡
               </p>
               <button
                 type="button"
                 onClick={() => startLevel(levelIdx)}
-                className="inline-flex items-center gap-1.5 text-xs font-black text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 border border-cyan-500/25 px-3 py-1.5 rounded-xl cursor-pointer shrink-0 transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 text-xs font-black text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/15 border border-cyan-500/25 py-2.5 px-4 rounded-xl cursor-pointer active:scale-[0.99] transition-all"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>لخبط تاني</span>
