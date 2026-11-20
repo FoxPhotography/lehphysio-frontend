@@ -222,6 +222,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
         <section className="glass-card p-2 overflow-hidden">
           <YouTubeFacade
             embedUrl={embedUrl}
+            rawUrl={episode.youtube_url}
             title={episode.title_ar || `الحلقة ${episodeNumber(episode)}`}
             thumbnail={episode.thumbnail_url}
             start={seekTo}

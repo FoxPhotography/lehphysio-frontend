@@ -495,6 +495,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           isGameLoading={gamesHook.isGameLoading}
           hasSpunToday={!!(user && user.last_spin_wheel_date === getLocalDateString())}
           xpSettings={xpSettings}
+          dailyPlays={gamesHook.dailyPlays}
         />
       );
     case 'play-game':

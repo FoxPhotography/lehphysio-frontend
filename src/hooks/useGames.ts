@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { API_BASE } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
@@ -31,13 +31,14 @@ export const useGames = () => {
   const [gameFeedback, setGameFeedback] = useState('');
   const [gamePlayError, setGamePlayError] = useState('');
   const [gamePlaySuccess, setGamePlaySuccess] = useState('');
+  const [dailyPlays, setDailyPlays] = useState<Record<number, number>>({ 1: 0, 2: 0, 3: 0 });
 
   // Memory Game State
   const [memoryCards, setMemoryCards] = useState<any[]>([]);
   const [flippedCards, setFlippedCards] = useState<number[]>([]);
   const [memoryMoves, setMemoryMoves] = useState(0);
   const [memoryMatches, setMemoryMatches] = useState(0);
-  
+
   // Spin Wheel State
   const [isSpinning, setIsSpinning] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
@@ -107,7 +108,7 @@ export const useGames = () => {
         socket.off('connect', joinRoom);
       };
     }
-    return () => {};
+    return () => { };
   }, [activeGameRoom?.code, currentPage, token, user?.username, socket]);
 
   const handleCreateGameRoom = async () => {
@@ -264,14 +265,14 @@ export const useGames = () => {
 
   const handleCardClick = (index: number) => {
     if (flippedCards.length === 2 || memoryCards[index].isFlipped || memoryCards[index].isMatched) return;
-    
+
     const newCards = [...memoryCards];
     newCards[index].isFlipped = true;
     setMemoryCards(newCards);
-    
+
     const nextFlipped = [...flippedCards, index];
     setFlippedCards(nextFlipped);
-    
+
     if (nextFlipped.length === 2) {
       setMemoryMoves(prev => prev + 1);
       const [firstIdx, secondIdx] = nextFlipped;
@@ -303,6 +304,25 @@ export const useGames = () => {
     }
   };
 
+  const loadDailyPlays = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await gameService.fetchDailyPlays(token);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.plays_by_game) {
+          setDailyPlays(data.plays_by_game);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [token]);
+
+  useEffect(() => {
+    loadDailyPlays();
+  }, [loadDailyPlays]);
+
   const claimGameXP = async (gameId: number = 1) => {
     if (!token) return;
     try {
@@ -312,6 +332,9 @@ export const useGames = () => {
         setGamePlaySuccess(data.message);
         if (data.xp_earned > 0) {
           triggerXpPopup(data.xp_earned);
+        }
+        if (data.plays_today !== undefined) {
+          setDailyPlays(prev => ({ ...prev, [gameId]: data.plays_today }));
         }
         fetchUserProfile();
       } else {
@@ -418,7 +441,7 @@ export const useGames = () => {
           tryAgain: !!try_again,
           isMystery,
         });
-        
+
         // Show results
         if (try_again) {
           showToast('جرّب تاني! ليك لفة كمان! 🍀');
@@ -431,7 +454,7 @@ export const useGames = () => {
             playChatSound('error');
           }
         }
-        
+
         // Refresh profile to update XP immediately
         fetchUserProfile();
         setIsSpinning(false);
@@ -475,6 +498,7 @@ export const useGames = () => {
     gameFeedback, setGameFeedback,
     gamePlayError, setGamePlayError,
     gamePlaySuccess, setGamePlaySuccess,
+    dailyPlays, loadDailyPlays,
     memoryCards, initMemoryGame, handleCardClick, memoryMoves, memoryMatches, claimGameXP,
     isSpinning, wheelRotation, handleSpinWheelClick, lastSpinResult,
     handleCreateGameRoom, handleJoinGameRoom, handleStartGame, handleSubmitGameAnswer, handleNextRound, handlePlayAgain, handleLeaveGameRoom

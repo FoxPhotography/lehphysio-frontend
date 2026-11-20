@@ -99,6 +99,11 @@ export const gameService = {
     return res;
   },
 
+  async fetchDailyPlays(token?: string) {
+    const res = await apiFetch('/api/games/plays-today', {}, token);
+    return res;
+  },
+
   // Admin XP Code management
   async fetchAdminCodes(token?: string) {
     const res = await apiFetch('/api/admin/xp-codes', {}, token);

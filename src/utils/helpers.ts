@@ -166,12 +166,17 @@ export const getNameColor = (username: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
+export const getYoutubeVideoId = (url: string): string | null => {
+  if (!url) return null;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  if (match && match[1]) return match[1];
+  const simpleMatch = url.match(/([a-zA-Z0-9_-]{11})/);
+  return simpleMatch ? simpleMatch[1] : null;
+};
+
 export const getYoutubeEmbedUrl = (url: string) => {
-  if (!url) return '';
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  // Use youtube-nocookie.com for privacy-enhanced mode (reduces tracking)
-  return (match && match[2].length === 11) ? `https://www.youtube-nocookie.com/embed/${match[2]}?rel=0&modestbranding=1` : '';
+  const id = getYoutubeVideoId(url);
+  return id ? `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1` : '';
 };
 
 export const getLocalDateString = () => {
