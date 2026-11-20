@@ -6,7 +6,7 @@ import { getNameColor, getFrameImage } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
 import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
 import { useNotifications } from '../context/NotificationContext';
-import { formatChatText } from '../utils/mentions';
+import { formatChatText, filterChatTags, ChatTagItem } from '../utils/mentions';
 import { 
   MessageSquare, 
   Lightbulb, 
@@ -245,6 +245,12 @@ export const Community: React.FC<CommunityProps> = ({
   const [mentionStartIndex, setMentionStartIndex] = useState(-1);
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [activeSuggestionIdx, setActiveSuggestionIdx] = useState(0);
+
+  // Hash tags autocomplete state (#)
+  const [hashSearch, setHashSearch] = useState('');
+  const [hashStartIndex, setHashStartIndex] = useState(-1);
+  const [showHashSuggestions, setShowHashSuggestions] = useState(false);
+  const [activeHashIdx, setActiveHashIdx] = useState(0);
 
   // Emoji picker states
   const [reactionPickerMsgId, setReactionPickerMsgId] = useState<number | null>(null);
@@ -583,6 +589,18 @@ export const Community: React.FC<CommunityProps> = ({
   const renderTextWithMentions = (text: string) => {
     return formatChatText(text, usernames, 'text-yellow-400 font-extrabold hover:underline cursor-pointer transition-colors', {
       onMentionClick: openProfile,
+      onTagClick: (item: ChatTagItem) => {
+        if (item.kind === 'channel') {
+          if (item.target === 'suggestions') {
+            setActiveSubTab('suggestions');
+            window.history.replaceState({}, '', '/chat?tab=suggestions');
+          }
+        } else if (item.kind === 'page') {
+          changePage(item.target);
+        } else if (item.kind === 'game') {
+          changePage('games');
+        }
+      },
       onChannelClick: () => {
         setActiveSubTab('suggestions');
         window.history.replaceState({}, '', '/chat?tab=suggestions');
@@ -600,8 +618,23 @@ export const Community: React.FC<CommunityProps> = ({
     const selectionStart = e.target.selectionStart || 0;
     const textBeforeCursor = value.substring(0, selectionStart);
     
+    // Check for @ mentions and # hashtags
     const lastAtIdx = textBeforeCursor.lastIndexOf('@');
-    if (lastAtIdx !== -1) {
+    const lastHashIdx = textBeforeCursor.lastIndexOf('#');
+
+    if (lastHashIdx > lastAtIdx && lastHashIdx !== -1) {
+      const isStartOrAfterSpace = lastHashIdx === 0 || textBeforeCursor[lastHashIdx - 1] === ' ' || textBeforeCursor[lastHashIdx - 1] === '\n';
+      const textAfterHash = textBeforeCursor.substring(lastHashIdx + 1);
+
+      if (isStartOrAfterSpace && !textAfterHash.includes('\n') && textAfterHash.length <= 25) {
+        setHashSearch(textAfterHash);
+        setHashStartIndex(lastHashIdx);
+        setShowHashSuggestions(true);
+        setActiveHashIdx(0);
+        setShowMentionSuggestions(false);
+        return;
+      }
+    } else if (lastAtIdx !== -1) {
       const isStartOrAfterSpace = lastAtIdx === 0 || textBeforeCursor[lastAtIdx - 1] === ' ' || textBeforeCursor[lastAtIdx - 1] === '\n';
       const textAfterAt = textBeforeCursor.substring(lastAtIdx + 1);
       
@@ -610,11 +643,36 @@ export const Community: React.FC<CommunityProps> = ({
         setMentionStartIndex(lastAtIdx);
         setShowMentionSuggestions(true);
         setActiveSuggestionIdx(0);
+        setShowHashSuggestions(false);
         return;
       }
     }
     
     setShowMentionSuggestions(false);
+    setShowHashSuggestions(false);
+  };
+
+  const handleSelectHashTag = (targetTag: string) => {
+    if (hashStartIndex === -1) return;
+    const value = draft;
+    const inserted = `${targetTag} `;
+    const selectionStart = hashStartIndex + inserted.length;
+    const newValue = 
+      value.substring(0, hashStartIndex) + 
+      inserted + 
+      value.substring(hashStartIndex + hashSearch.length + 1);
+    
+    setDraft(newValue);
+    setShowHashSuggestions(false);
+    setActiveHashIdx(0);
+    
+    setTimeout(() => {
+      const inputEl = document.getElementById('community-chat-input') as HTMLTextAreaElement;
+      if (inputEl) {
+        inputEl.focus();
+        inputEl.setSelectionRange(selectionStart, selectionStart);
+      }
+    }, 50);
   };
 
   const handleSelectMention = (targetUsername: string) => {
@@ -1343,6 +1401,63 @@ export const Community: React.FC<CommunityProps> = ({
                 );
               })()}
 
+              {/* Hash tag (#) dropdown container */}
+              {showHashSuggestions && (() => {
+                const filteredTags = filterChatTags(hashSearch);
+                if (filteredTags.length === 0) {
+                  return (
+                    <div className="absolute bottom-[calc(100%+8px)] start-3 end-3 md:start-0 md:end-0 max-h-[180px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-2xl p-3 shadow-2xl text-xs text-zinc-500 text-center font-bold">
+                      مفيش صفحة أو لعبة أو تشانل بالاسم ده
+                    </div>
+                  );
+                }
+                return (
+                  <div className="absolute bottom-[calc(100%+8px)] start-3 end-3 md:start-0 md:end-0 max-h-[240px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-2xl p-1.5 shadow-2xl backdrop-blur-md">
+                    <div className="px-3 py-1.5 text-3xs font-black text-zinc-500 uppercase tracking-wider flex items-center justify-between border-b border-zinc-900/60 mb-1">
+                      <span>القنوات والألعاب والأقسام</span>
+                      <span className="text-brand-orange">{filteredTags.length} عنصر</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      {filteredTags.map((item, idx) => (
+                        <button
+                          key={item.tag}
+                          type="button"
+                          onClick={() => handleSelectHashTag(item.tag)}
+                          onMouseEnter={() => setActiveHashIdx(idx)}
+                          className={`w-full flex items-center justify-between gap-3 p-2 cursor-pointer rounded-xl text-start transition-all ${
+                            idx === activeHashIdx
+                              ? 'bg-brand-orange/20 border border-brand-orange/30 shadow-orange-glow'
+                              : 'hover:bg-white/5 border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className="w-8 h-8 rounded-xl bg-zinc-900 border border-white/5 flex items-center justify-center text-base shrink-0">
+                              {item.icon}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-extrabold text-white text-xs truncate">
+                                  {item.label}
+                                </span>
+                                <span className="text-2xs text-brand-orange font-bold font-mono">
+                                  {item.tag}
+                                </span>
+                              </div>
+                              <span className="text-3xs text-zinc-400 block truncate font-medium">
+                                {item.description}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-3xs px-2 py-0.5 rounded-md bg-zinc-900 text-zinc-400 font-bold shrink-0 border border-white/5">
+                            {item.category}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Editing tag indicator */}
               {editingMessage && (
                 <div className="flex justify-between items-center bg-brand-amber/5 border-s-2 border-brand-amber rounded-xl px-3 py-2.5 mb-2 text-xs font-bold text-brand-amber">
@@ -1398,17 +1513,33 @@ export const Community: React.FC<CommunityProps> = ({
                       }}
                       onBlur={() => setIsInputFocused(false)}
                       onKeyDown={(e) => {
-                        const filtered = getMentionSuggestions();
-                        if (showMentionSuggestions && filtered.length > 0) {
+                        const filteredMentions = getMentionSuggestions();
+                        const filteredTags = filterChatTags(hashSearch);
+
+                        if (showHashSuggestions && filteredTags.length > 0) {
                           if (e.key === 'ArrowDown') {
                             e.preventDefault();
-                            setActiveSuggestionIdx(prev => (prev + 1) % filtered.length);
+                            setActiveHashIdx(prev => (prev + 1) % filteredTags.length);
                           } else if (e.key === 'ArrowUp') {
                             e.preventDefault();
-                            setActiveSuggestionIdx(prev => (prev - 1 + filtered.length) % filtered.length);
+                            setActiveHashIdx(prev => (prev - 1 + filteredTags.length) % filteredTags.length);
                           } else if (e.key === 'Enter') {
                             e.preventDefault();
-                            handleSelectMention(filtered[activeSuggestionIdx].username);
+                            handleSelectHashTag(filteredTags[activeHashIdx].tag);
+                          } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            setShowHashSuggestions(false);
+                          }
+                        } else if (showMentionSuggestions && filteredMentions.length > 0) {
+                          if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            setActiveSuggestionIdx(prev => (prev + 1) % filteredMentions.length);
+                          } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            setActiveSuggestionIdx(prev => (prev - 1 + filteredMentions.length) % filteredMentions.length);
+                          } else if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSelectMention(filteredMentions[activeSuggestionIdx].username);
                           } else if (e.key === 'Escape') {
                             e.preventDefault();
                             setShowMentionSuggestions(false);
