@@ -1183,7 +1183,7 @@ export const Community: React.FC<CommunityProps> = ({
                             >
                               <div className={`font-black flex items-center gap-1.5 truncate min-w-0 ${isMyMsg && !fancyBubble ? 'text-black' : 'text-amber-400'}`}>
                                 <Lightbulb className="w-3 h-3 shrink-0 text-amber-400" />
-                                <span className="text-3xs">اقتراح من</span>
+                                <span className="text-[10px]">اقتراح من</span>
                                 <bdi dir="ltr">@{msg.reply_to_suggestion.username}</bdi>
                               </div>
                               <div className={`font-bold text-xs truncate mt-0.5 ${isMyMsg && !fancyBubble ? 'text-zinc-900' : 'text-white'}`}>
@@ -1192,7 +1192,7 @@ export const Community: React.FC<CommunityProps> = ({
                               {msg.reply_to_suggestion.content && (
                                 <div
                                   dir="auto"
-                                  className="line-clamp-2 break-words [word-break:break-word] mt-0.5 leading-snug opacity-80 text-3xs"
+                                  className="line-clamp-2 break-words [word-break:break-word] mt-0.5 leading-snug opacity-80 text-[10px]"
                                 >
                                   {msg.reply_to_suggestion.content}
                                 </div>
@@ -1414,7 +1414,7 @@ export const Community: React.FC<CommunityProps> = ({
                 }
                 return (
                   <div className="absolute bottom-[calc(100%+8px)] start-3 end-3 md:start-0 md:end-0 max-h-[240px] overflow-y-auto z-50 bg-zinc-950/95 border border-zinc-850 rounded-2xl p-1.5 shadow-2xl backdrop-blur-md">
-                    <div className="px-3 py-1.5 text-3xs font-black text-zinc-500 uppercase tracking-wider flex items-center justify-between border-b border-zinc-900/60 mb-1">
+                    <div className="px-3 py-1.5 text-[10px] font-black text-zinc-500 uppercase tracking-wider flex items-center justify-between border-b border-zinc-900/60 mb-1">
                       <span>القنوات والألعاب والأقسام</span>
                       <span className="text-brand-orange">{filteredTags.length} عنصر</span>
                     </div>
@@ -1432,24 +1432,24 @@ export const Community: React.FC<CommunityProps> = ({
                           }`}
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <span className="w-8 h-8 rounded-xl bg-zinc-900 border border-white/5 flex items-center justify-center text-base shrink-0">
+                            <span className="w-7 h-7 rounded-lg bg-zinc-900 border border-white/5 flex items-center justify-center text-sm shrink-0">
                               {item.icon}
                             </span>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="font-extrabold text-white text-xs truncate">
+                                <span className="font-extrabold text-white text-[11px] truncate">
                                   {item.label}
                                 </span>
-                                <span className="text-2xs text-brand-orange font-bold font-mono">
+                                <span className="text-[10px] text-brand-orange font-bold font-mono">
                                   {item.tag}
                                 </span>
                               </div>
-                              <span className="text-3xs text-zinc-400 block truncate font-medium">
+                              <span className="text-[10px] text-zinc-400 block truncate font-medium">
                                 {item.description}
                               </span>
                             </div>
                           </div>
-                          <span className="text-3xs px-2 py-0.5 rounded-md bg-zinc-900 text-zinc-400 font-bold shrink-0 border border-white/5">
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-zinc-900 text-zinc-400 font-bold shrink-0 border border-white/5">
                             {item.category}
                           </span>
                         </button>
@@ -1612,16 +1612,16 @@ export const Community: React.FC<CommunityProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowSuggForm((prev) => !prev)}
-                  className="w-full glass-card px-4 py-3 border border-brand-orange/25 hover:border-brand-orange/50 flex items-center justify-between gap-3 transition-all cursor-pointer group"
+                  className="w-full glass-card px-3.5 py-2.5 border border-brand-orange/25 hover:border-brand-orange/50 flex items-center justify-between gap-3 transition-all cursor-pointer group"
                 >
                   <div className="flex items-center gap-2.5 text-start min-w-0">
-                    <div className="w-8 h-8 rounded-xl bg-brand-orange/15 border border-brand-orange/25 flex items-center justify-center shrink-0">
-                      <Lightbulb className="w-4 h-4 text-brand-orange" />
+                    <div className="w-7 h-7 rounded-lg bg-brand-orange/15 border border-brand-orange/25 flex items-center justify-center shrink-0">
+                      <Lightbulb className="w-3.5 h-3.5 text-brand-orange" />
                     </div>
                     <div className="min-w-0">
                       <span className="text-xs font-black text-white block truncate">قدّم اقتراح أو رأي</span>
-                      <span className="text-3xs font-bold text-zinc-400 block truncate">
-                        عندك فكرة جديدة؟ اضغط هنا واكسب +{xpSettings.suggestion_create !== undefined ? xpSettings.suggestion_create : 50} XP
+                      <span className="text-[11px] font-semibold text-zinc-400 block truncate">
+                        عندك فكرة؟ اضغط هنا (+{xpSettings.suggestion_create !== undefined ? xpSettings.suggestion_create : 50} XP)
                       </span>
                     </div>
                   </div>
