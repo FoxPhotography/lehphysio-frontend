@@ -3,7 +3,8 @@ import { StreakAura, StreakFlame, StreakName, StreakChip } from '../components/s
 import { getStreakTheme, nextTierLine } from '../utils/streakTheme';
 import { cosmeticVisual } from '../utils/cosmetics';
 import { CosmeticsStudio } from '../components/shop/CosmeticsStudio';
-import { rankName, rankEmoji } from '../utils/ranks';
+import { rankName, rankEmoji, rankProgress } from '../utils/ranks';
+import { RankLadderModal } from '../components/ranks/RankLadderModal';
 import { m, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -72,6 +73,7 @@ const BATCHES = [
   { value: 'PT 12', label: 'PT 12 (سنة تالتة)' },
   { value: 'PT 13', label: 'PT 13 (سنة تانية)' },
   { value: 'PT 14', label: 'PT 14 (سنة أولى)' },
+  { value: 'Other', label: 'Other (جامعة أخرى)' },
 ];
 
 // ─── Next rank names ───────────────────────────────────────────────────────────
@@ -224,6 +226,7 @@ export const Profile: React.FC<ProfileProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [showDecorationPicker, setShowDecorationPicker] = useState(false);
   const [showStreakLadder, setShowStreakLadder] = useState(false);
+  const [showRankLadder, setShowRankLadder] = useState(false);
   const [decoTab, setDecoTab] = useState<'themes' | 'frames'>('themes');
   const [framesList, setFramesList] = useState<any[]>([]);
   const [animatedProgress, setAnimatedProgress] = useState(0);
@@ -236,12 +239,9 @@ export const Profile: React.FC<ProfileProps> = ({
     (streakTheme as any).key === 'cos-curvanord';
 
   // ─── XP & Rank Calculations ─────────────────────────────────────────────────
-  const currentTier = user.rank?.tier || 1;
-  const currentThreshold = RANK_THRESHOLDS[currentTier - 1] || 0;
-  const nextThreshold = RANK_THRESHOLDS[currentTier] || null;
-  const progressPct = nextThreshold
-    ? ((user.total_xp - currentThreshold) / (nextThreshold - currentThreshold)) * 100
-    : 100;
+  const { current: rankCur, next: rankNext, pct: progressPct, remaining: rankRemaining } = rankProgress(user.total_xp || 0);
+  const currentThreshold = rankCur.min;
+  const nextThreshold = rankNext?.min ?? null;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -486,7 +486,7 @@ export const Profile: React.FC<ProfileProps> = ({
       <div className="flex items-center gap-2 pointer-events-auto">
         {isEditingBatch ? (
           <CustomSelect
-            className="min-w-[130px] px-3 py-1.5 text-xs rounded-lg bg-zinc-800 border border-white/15 text-white focus:outline-none focus:border-orange-500/60 pointer-events-auto"
+            className="min-w-[195px] px-3 py-1.5 text-xs rounded-lg bg-zinc-800 border border-white/15 text-white focus:outline-none focus:border-orange-500/60 pointer-events-auto"
             value={selectedBatch}
             autoFocus
             onChange={(e) => {
@@ -551,7 +551,12 @@ export const Profile: React.FC<ProfileProps> = ({
     {/* ── Lower Profile Content (Rank Card, Stats, Actions) ── */}
     <div className="relative z-10">
       {/* ── Rank Card ───────────────────────────────────────────────── */}
-      <div className="relative rounded-xl overflow-hidden border border-orange-500/20 bg-gradient-to-br from-orange-500/8 via-transparent to-amber-500/5 p-4 mb-5">
+      <button
+        type="button"
+        onClick={() => setShowRankLadder(true)}
+        aria-label="عرض سلم الرتب والمستويات"
+        className="w-full text-start relative rounded-xl overflow-hidden border border-orange-500/20 hover:border-orange-500/45 bg-gradient-to-br from-orange-500/8 via-transparent to-amber-500/5 p-4 mb-5 cursor-pointer active:scale-[0.99] transition-all"
+      >
           {/* Particles */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             {PARTICLES.map((p, i) => (
@@ -571,13 +576,13 @@ export const Profile: React.FC<ProfileProps> = ({
           </div>
 
           <div className="relative flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/15 border border-orange-500/20 flex items-center justify-center flex-shrink-0">
-              <Star className="w-5 h-5 text-amber-400" />
+            <div className="w-10 h-10 rounded-xl bg-orange-500/15 border border-orange-500/20 flex items-center justify-center flex-shrink-0 text-lg">
+              {rankCur.emoji}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-zinc-500 uppercase tracking-wider font-bold">الرتبة الحالية</p>
+              <p className="text-xs text-zinc-500 uppercase tracking-wider font-bold">الرتبة الحالية · اضغط للتفاصيل</p>
               <p className="text-base font-black text-white truncate">
-                {rankName(user.rank)}
+                {rankCur.name}
               </p>
             </div>
             <span className="text-[13px] font-black text-orange-400" dir="ltr">{user.total_xp?.toLocaleString()} XP</span>
@@ -592,15 +597,16 @@ export const Profile: React.FC<ProfileProps> = ({
               className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400"
             />
           </div>
-          <div className="flex justify-between text-2xs text-zinc-600">
-            <span>{user.total_xp - currentThreshold} XP في الرتبة دي</span>
+          <div className="flex justify-between text-2xs text-zinc-500 font-bold">
+            <span>{(user.total_xp || 0) - currentThreshold} XP في الرتبة دي</span>
             <span>
-              {nextThreshold
-                ? `فاضلك ${(nextThreshold - user.total_xp).toLocaleString('en-US')} XP وتبقى ${RANK_NAMES[currentTier] || 'في القمة'}`
-                : 'أعلى رتبة'}
+              {rankNext
+                ? `فاضلك ${rankRemaining.toLocaleString('en-US')} XP وتبقى ${rankNext.name}`
+                : 'أعلى رتبة 👑'}
             </span>
           </div>
-        </div>
+      </button>
+      <RankLadderModal open={showRankLadder} onClose={() => setShowRankLadder(false)} totalXp={user.total_xp || 0} username={user.username} />
 
         {/* ── Stats Badges ──────────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-3 mb-5">

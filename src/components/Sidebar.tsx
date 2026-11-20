@@ -72,14 +72,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside className="fixed top-0 start-0 bottom-0 w-[280px] bg-zinc-950/80 border-e border-zinc-900/60 p-8 flex flex-col z-50 hidden xl:flex">
       {/* Logo */}
-      <a
-        href="/"
-        className="flex items-center justify-center w-full mb-8 mt-2 hover:opacity-90 transition-opacity"
-        onClick={(e) => { e.preventDefault(); setCurrentPage('home'); }}
+      <button
+        type="button"
+        className="flex items-center justify-center w-full mb-8 mt-2 hover:opacity-90 transition-opacity cursor-pointer select-none bg-transparent border-0 p-0"
+        style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
+        onContextMenu={(e) => e.preventDefault()}
+        onClick={() => setCurrentPage('home')}
         aria-label="ليه فيزيو؟ — الرئيسية"
       >
-        <img src={logo} alt="Leh Physio" width={210} height={43} className="w-[210px] h-auto" decoding="async" />
-      </a>
+        <img
+          src={logo}
+          alt="Leh Physio"
+          width={210}
+          height={43}
+          className="w-[210px] h-auto pointer-events-none select-none"
+          draggable={false}
+          decoding="async"
+        />
+      </button>
 
       {user && (
         <div className="flex items-center justify-between mb-6 px-3.5 py-1.5 bg-zinc-900/20 rounded-xl border border-zinc-900/40 shrink-0">

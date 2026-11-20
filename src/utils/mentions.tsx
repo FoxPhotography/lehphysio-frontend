@@ -144,6 +144,17 @@ export const CHAT_DISCOVERY_TAGS: ChatTagItem[] = [
     target: 'special_tests',
     aliases: ['#اختبارات_الفحص_الخاص', '#فحص_خاص', '#special_tests', '#osce']
   },
+  // مسار الأعصاب
+  {
+    tag: '#مسار الاعصاب',
+    label: 'لعبة مسار الأعصاب',
+    description: 'حرّك المكعبات ووصل الإشارة العصبية من الجدع للعضلة',
+    category: 'ألعاب',
+    icon: '🔌',
+    kind: 'game',
+    target: 'nerve-path',
+    aliases: ['#مسار_الاعصاب', '#مسار الأعصاب', '#نيرف', '#اعصاب', '#nerve_path']
+  },
   // المتصدرين
   {
     tag: '#المتصدرين',

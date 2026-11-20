@@ -21,14 +21,25 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ setCurrentPage, user
   return (
     <header className="fixed top-0 inset-x-0 z-[100] xl:hidden pt-safe bg-zinc-950/95 border-b border-zinc-900/60">
       <div className="h-16 flex items-center justify-between px-4">
-        <a
-          href="/"
-          className="flex items-center hover:opacity-90 transition-opacity"
-          onClick={(e) => { e.preventDefault(); setCurrentPage('home'); }}
+        <button
+          type="button"
+          className="flex items-center hover:opacity-90 transition-opacity cursor-pointer select-none bg-transparent border-0 p-0"
+          style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
+          onContextMenu={(e) => e.preventDefault()}
+          onClick={() => setCurrentPage('home')}
           aria-label="ليه فيزيو؟ — الرئيسية"
         >
-          <img src={logo} alt="Leh Physio" width={148} height={30} className="h-[30px] w-auto" decoding="async" fetchPriority="high" />
-        </a>
+          <img
+            src={logo}
+            alt="Leh Physio"
+            width={148}
+            height={30}
+            className="h-[30px] w-auto pointer-events-none select-none"
+            draggable={false}
+            decoding="async"
+            fetchPriority="high"
+          />
+        </button>
 
         <div className="flex items-center gap-2">
           <button className={iconBtn} onClick={() => setCurrentPage('rewards')} aria-label="متجر المكافآت" title="متجر المكافآت">

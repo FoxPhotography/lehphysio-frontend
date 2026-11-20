@@ -81,10 +81,12 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     const spaceBelow = window.innerHeight - rect.bottom;
     const menuHeight = Math.min(248, parsedOptions.length * 40 + 16);
     const openUp = spaceBelow < menuHeight && rect.top > spaceBelow;
+    const minMenuWidth = Math.min(window.innerWidth - 24, Math.max(rect.width, 210));
+    const clampedLeft = Math.max(12, Math.min(rect.left, window.innerWidth - minMenuWidth - 12));
     setCoords({
       top: openUp ? rect.top - 6 : rect.bottom + 6,
-      left: rect.left,
-      width: rect.width,
+      left: clampedLeft,
+      width: minMenuWidth,
       openUp,
     });
   };

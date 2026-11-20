@@ -30,6 +30,7 @@ const BATCHES = [
   { value: 'PT 12', label: 'PT 12 (سنة تالتة)' },
   { value: 'PT 13', label: 'PT 13 (سنة تانية)' },
   { value: 'PT 14', label: 'PT 14 (سنة أولى)' },
+  { value: 'Other', label: 'Other (جامعة أخرى)' },
 ];
 
 export const Register: React.FC<RegisterProps> = ({

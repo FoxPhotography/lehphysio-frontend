@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StreakLadderModal } from '../streak/StreakLadder';
+import { RankLadderModal } from '../ranks/RankLadderModal';
 import { StreakAura, StreakFlame } from '../streak/Streak';
 import { getStreakTheme, nextTierLine } from '../../utils/streakTheme';
 import { rankProgress } from '../../utils/ranks';
@@ -15,6 +16,7 @@ const label = 'text-xs font-bold text-zinc-500';
 
 export const StatsGrid: React.FC<StatsGridProps> = ({ user, leaderboard = [] }) => {
   const [showLadder, setShowLadder] = useState(false);
+  const [showRankLadder, setShowRankLadder] = useState(false);
   if (!user) return null;
 
   const xp = user.total_xp || 0;
@@ -35,7 +37,12 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ user, leaderboard = [] }) 
         </svg>
       </div>
 
-      <div className={card}>
+      <button
+        type="button"
+        onClick={() => setShowRankLadder(true)}
+        aria-label="شوف سلم الرتب والمستويات"
+        className={`${card} cursor-pointer hover:border-brand-orange/35 active:scale-[0.98] transition-all`}
+      >
         <span className={label}>رتبتك</span>
         <div className="text-base font-black text-white mt-1 truncate">{current.emoji} {current.name}</div>
         <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden mt-3 border border-zinc-800/40" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
@@ -44,7 +51,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ user, leaderboard = [] }) 
         <span className="text-2xs text-zinc-500 font-bold mt-1.5">
           {next ? <>باقي <bdi dir="ltr">{remaining.toLocaleString('en-US')} XP</bdi> على {next.name}</> : 'وصلت لأعلى رتبة 👑'}
         </span>
-      </div>
+      </button>
 
       <div className={card}>
         <span className={label}>ترتيبك العام</span>
@@ -70,6 +77,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ user, leaderboard = [] }) 
         </span>
       </button>
       <StreakLadderModal open={showLadder} onClose={() => setShowLadder(false)} days={streak} username={user.username} />
+      <RankLadderModal open={showRankLadder} onClose={() => setShowRankLadder(false)} totalXp={xp} username={user.username} />
     </section>
   );
 };

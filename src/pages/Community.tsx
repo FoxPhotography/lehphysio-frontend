@@ -235,7 +235,8 @@ export const Community: React.FC<CommunityProps> = ({
     });
   }, [chatMessages]);
   
-  // Suggestion editing states
+  // Suggestion editing & form states
+  const [showSuggForm, setShowSuggForm] = useState(false);
   const [editingSuggId, setEditingSuggId] = useState<number | null>(null);
   const [editSuggTitle, setEditSuggTitle] = useState('');
   const [editSuggContent, setEditSuggContent] = useState('');
@@ -1607,42 +1608,83 @@ export const Community: React.FC<CommunityProps> = ({
         ) : (
           <div className="flex flex-col flex-1 overflow-hidden">
             {user ? (
-              <form 
-                onSubmit={submitSuggestion} 
-                className="glass-card p-4 flex flex-col gap-3 mb-3 border border-zinc-900/60 shrink-0 text-start"
-              >
-                <h4 className="text-xs font-black text-brand-orange flex items-center gap-1.5">
-                  <Lightbulb className="w-4.5 h-4.5" />
-                  <span>قدّم اقتراح أو رأي</span>
-                </h4>
-                <input 
-                  type="text" 
-                  placeholder="عنوان مختصر (مثلًا: إضافة بنك أسئلة)" 
-                  className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl px-3 py-2 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200"
-                  value={suggTitle}
-                  onChange={(e) => setSuggTitle(e.target.value)}
-                  onFocus={() => setIsInputFocused(true)}
-                  onBlur={() => setIsInputFocused(false)}
-                  required
-                />
-                <textarea 
-                  placeholder="اشرح فكرتك أو رأيك بالتفصيل…" 
-                  className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl p-3 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none"
-                  value={suggContent}
-                  onChange={(e) => setSuggContent(e.target.value)}
-                  onFocus={() => setIsInputFocused(true)}
-                  onBlur={() => setIsInputFocused(false)}
-                  required
-                  rows={2}
-                />
-                <button 
-                  type="submit" 
-                  className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-xs py-2 px-4 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow self-start flex items-center gap-1.5"
+              <div className="mb-3 shrink-0 px-3 md:px-0">
+                <button
+                  type="button"
+                  onClick={() => setShowSuggForm((prev) => !prev)}
+                  className="w-full glass-card px-4 py-3 border border-brand-orange/25 hover:border-brand-orange/50 flex items-center justify-between gap-3 transition-all cursor-pointer group"
                 >
-                  <Zap className="w-3.5 h-3.5 fill-current" />
-                  <span>Submit Idea +{xpSettings.suggestion_create !== undefined ? xpSettings.suggestion_create : 50} XP</span>
+                  <div className="flex items-center gap-2.5 text-start min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-brand-orange/15 border border-brand-orange/25 flex items-center justify-center shrink-0">
+                      <Lightbulb className="w-4 h-4 text-brand-orange" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-black text-white block truncate">قدّم اقتراح أو رأي</span>
+                      <span className="text-3xs font-bold text-zinc-400 block truncate">
+                        عندك فكرة جديدة؟ اضغط هنا واكسب +{xpSettings.suggestion_create !== undefined ? xpSettings.suggestion_create : 50} XP
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-brand-orange transition-transform duration-300 shrink-0 ${showSuggForm ? 'rotate-180' : ''}`} />
                 </button>
-              </form>
+
+                <AnimatePresence initial={false}>
+                  {showSuggForm && (
+                    <m.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <form 
+                        onSubmit={(e) => {
+                          submitSuggestion(e);
+                          setShowSuggForm(false);
+                        }} 
+                        className="glass-card p-4 flex flex-col gap-3 mt-2 border border-zinc-900/60 text-start"
+                      >
+                        <input 
+                          type="text" 
+                          placeholder="عنوان مختصر (مثلًا: إضافة بنك أسئلة)" 
+                          className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl px-3 py-2 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200"
+                          value={suggTitle}
+                          onChange={(e) => setSuggTitle(e.target.value)}
+                          onFocus={() => setIsInputFocused(true)}
+                          onBlur={() => setIsInputFocused(false)}
+                          required
+                        />
+                        <textarea 
+                          placeholder="اشرح فكرتك أو رأيك بالتفصيل…" 
+                          className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/30 text-white rounded-xl p-3 text-xs font-semibold placeholder-zinc-500 outline-none transition-all duration-200 resize-none"
+                          value={suggContent}
+                          onChange={(e) => setSuggContent(e.target.value)}
+                          onFocus={() => setIsInputFocused(true)}
+                          onBlur={() => setIsInputFocused(false)}
+                          required
+                          rows={2}
+                        />
+                        <div className="flex items-center gap-2">
+                          <button 
+                            type="submit" 
+                            className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-xs py-2 px-4 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow flex items-center gap-1.5"
+                          >
+                            <Zap className="w-3.5 h-3.5 fill-current" />
+                            <span>إرسال الاقتراح (+{xpSettings.suggestion_create !== undefined ? xpSettings.suggestion_create : 50} XP)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowSuggForm(false)}
+                            className="text-xs font-bold text-zinc-400 hover:text-white px-3 py-2 rounded-xl border border-zinc-800 hover:bg-zinc-900 transition-colors cursor-pointer"
+                          >
+                            إلغاء
+                          </button>
+                        </div>
+                      </form>
+                    </m.div>
+                  )}
+                </AnimatePresence>
+              </div>
             ) : (
               <div 
                 className="text-zinc-500 text-xs font-bold text-center py-6 border border-dashed border-zinc-800 rounded-xl mb-4 uppercase tracking-wide shrink-0 bg-[#0a0a0a]"

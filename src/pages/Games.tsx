@@ -34,6 +34,9 @@ const ClinicalDetectiveGame = lazy(() =>
 const SpecialTestsBlitz = lazy(() =>
   import('../components/games/SpecialTestsBlitz').then((mod) => ({ default: mod.SpecialTestsBlitz }))
 );
+const NervePathGame = lazy(() =>
+  import('../components/games/NervePathGame').then((mod) => ({ default: mod.NervePathGame }))
+);
 
 type GameMode = 'anatomy' | 'clinical' | 'special_tests';
 
@@ -51,8 +54,8 @@ interface GamesProps {
   user: any;
   gameTab: 'single' | 'multiplayer';
   setGameTab: (tab: 'single' | 'multiplayer') => void;
-  activeGame: 'memory' | 'spin' | 'diagnosis' | 'special-tests' | null;
-  setActiveGame: (game: 'memory' | 'spin' | 'diagnosis' | 'special-tests' | null) => void;
+  activeGame: 'memory' | 'spin' | 'diagnosis' | 'special-tests' | 'nerve-path' | null;
+  setActiveGame: (game: 'memory' | 'spin' | 'diagnosis' | 'special-tests' | 'nerve-path' | null) => void;
   gameFinished: boolean;
   setGameFinished: (val: boolean) => void;
   memoryMoves: number;
@@ -174,6 +177,7 @@ export const Games: React.FC<GamesProps> = ({
   const detectivePlays = dailyPlays?.[2] ?? 0;
   const oscePlays = dailyPlays?.[3] ?? 0;
   const memoryPlays = dailyPlays?.[1] ?? 0;
+  const nervePlays = dailyPlays?.[4] ?? 0;
 
   useEffect(() => {
     setShowMultiplayerSetup(false);
@@ -375,6 +379,24 @@ export const Games: React.FC<GamesProps> = ({
                     xpReward={osceXp}
                     gamePlaySuccess={gamePlaySuccess}
                     gamePlayError={gamePlayError}
+                  />
+                </Suspense>
+              )}
+
+              {activeGame === 'nerve-path' && (
+                <Suspense
+                  fallback={
+                    <div className="py-12 flex items-center justify-center">
+                      <Loader2 className="w-7 h-7 animate-spin text-cyan-400" />
+                    </div>
+                  }
+                >
+                  <NervePathGame
+                    onBack={() => setActiveGame(null)}
+                    onWin={() => claimGameXP(4)}
+                    dailyPlaysCount={nervePlays}
+                    maxDailyPlays={3}
+                    xpReward={120}
                   />
                 </Suspense>
               )}
@@ -598,6 +620,52 @@ export const Games: React.FC<GamesProps> = ({
                     onClick={() => setActiveGame('special-tests')}
                   >
                     <Play className="w-3.5 h-3.5 fill-current" /> ابدأ السباق
+                  </button>
+                </div>
+              </m.div>
+
+              {/* Game 5: Nerve Path Sliding Puzzle */}
+              <m.div
+                whileHover={{ y: -4 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+                className="relative overflow-hidden rounded-3xl border border-cyan-500/25 bg-zinc-900/65 p-5 md:p-6 text-start flex flex-col justify-between min-h-[220px] hover:border-cyan-400/60 group shadow-lg"
+              >
+                <div className="absolute -top-12 -end-12 w-32 h-32 rounded-full bg-cyan-500/15 blur-2xl pointer-events-none" />
+                <div className="relative space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-2xs font-black tracking-wider bg-cyan-500/15 text-cyan-300 px-2.5 py-1 rounded-lg border border-cyan-500/25">
+                      جديد · ألغاز عصبية
+                    </span>
+                    <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-500/25 flex items-center justify-center text-cyan-300">
+                      <Activity className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-black text-white group-hover:text-cyan-300 transition-colors">
+                    مسار الأعصاب
+                  </h3>
+                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
+                    حرّك المكعبات ورتّب المسار العصبي عشان توصل الإشارة الكهربائية من الجدع للعضلة!
+                  </p>
+                </div>
+                <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-extrabold text-cyan-300 bg-cyan-500/10 px-2.5 py-1 rounded-full">
+                      +120 XP
+                    </span>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
+                      nervePlays >= 3 
+                        ? 'bg-zinc-800 text-zinc-400 border-zinc-700' 
+                        : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
+                    }`}>
+                      {nervePlays >= 3 ? 'استنفدت محاولات اليوم (3/3)' : `${3 - nervePlays}/3 محاولات XP`}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="bg-gradient-to-r from-cyan-500 to-emerald-400 text-black font-black text-xs py-2.5 px-5 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all flex items-center gap-1.5"
+                    onClick={() => setActiveGame('nerve-path')}
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" /> العب
                   </button>
                 </div>
               </m.div>
