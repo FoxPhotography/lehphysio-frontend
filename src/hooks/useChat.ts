@@ -44,6 +44,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [replyingTo, setReplyingTo] = useState<any>(null);
+  const [replyingToSuggestion, setReplyingToSuggestion] = useState<{ id: number; title: string; content?: string; username: string } | null>(null);
   const [activeReactionMenu, setActiveReactionMenu] = useState<number | null>(null);
   const [editingMessage, setEditingMessage] = useState<any>(null);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
@@ -512,9 +513,16 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     const replyMention = replyingTo?.username && replyingTo.username !== user?.username
       ? `@${replyingTo.username}`
       : '';
-    const messageText = replyMention && !new RegExp(`@${replyingTo.username.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}(?=[\\s.,!?:;)]|$)`, 'i').test(rawMessageText)
-      ? `${replyMention} ${rawMessageText}`.trim()
-      : rawMessageText;
+    const suggMention = replyingToSuggestion?.username && replyingToSuggestion.username !== user?.username
+      ? `@${replyingToSuggestion.username}`
+      : '';
+    let messageText = rawMessageText;
+    if (replyMention && !new RegExp(`@${replyingTo.username.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}(?=[\\s.,!?:;)]|$)`, 'i').test(messageText)) {
+      messageText = `${replyMention} ${messageText}`.trim();
+    }
+    if (suggMention && !new RegExp(`@${replyingToSuggestion.username.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}(?=[\\s.,!?:;)]|$)`, 'i').test(messageText)) {
+      messageText = `${suggMention} ${messageText}`.trim();
+    }
     if (!messageText || !token) return;
 
     if (editingMessage) {
@@ -539,6 +547,12 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
         username: replyingTo.username,
         message: replyingTo.message
       } : null,
+      reply_to_suggestion: replyingToSuggestion ? {
+        id: replyingToSuggestion.id,
+        title: replyingToSuggestion.title,
+        content: replyingToSuggestion.content || '',
+        username: replyingToSuggestion.username
+      } : null,
       reactions: [],
       isPending: true
     };
@@ -547,14 +561,29 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     chatMessagesRef.current = [...chatMessagesRef.current, optimisticMsg];
     setChatInput('');
     setReplyingTo(null);
+    setReplyingToSuggestion(null);
 
     try {
-      const res = await chatService.sendMessage(messageText, optimisticMsg.reply_to?.id, token);
+      const res = await chatService.sendMessage(messageText, optimisticMsg.reply_to?.id, token, optimisticMsg.reply_to_suggestion?.id);
       const data = await res.json();
       if (res.ok) {
         playChatSound('send');
-        setChatMessages(prev => prev.map(m => m.id === optimisticId ? { ...m, id: data.id, isPending: false, equipped_frame: data.equipped_frame || m.equipped_frame, avatar_url: data.avatar_url || m.avatar_url } : m));
-        chatMessagesRef.current = chatMessagesRef.current.map(m => m.id === optimisticId ? { ...m, id: data.id, isPending: false, equipped_frame: data.equipped_frame || m.equipped_frame, avatar_url: data.avatar_url || m.avatar_url } : m);
+        setChatMessages(prev => prev.map(m => m.id === optimisticId ? {
+          ...m,
+          id: data.id,
+          isPending: false,
+          equipped_frame: data.equipped_frame || m.equipped_frame,
+          avatar_url: data.avatar_url || m.avatar_url,
+          reply_to_suggestion: data.reply_to_suggestion || m.reply_to_suggestion
+        } : m));
+        chatMessagesRef.current = chatMessagesRef.current.map(m => m.id === optimisticId ? {
+          ...m,
+          id: data.id,
+          isPending: false,
+          equipped_frame: data.equipped_frame || m.equipped_frame,
+          avatar_url: data.avatar_url || m.avatar_url,
+          reply_to_suggestion: data.reply_to_suggestion || m.reply_to_suggestion
+        } : m);
       } else {
         setChatMessages(prev => prev.filter(m => m.id !== optimisticId));
         showToast(data.error || 'الرسالة ماتبعتتش');
@@ -659,6 +688,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     chatMessages, setChatMessages,
     chatInput, setChatInput,
     replyingTo, setReplyingTo,
+    replyingToSuggestion, setReplyingToSuggestion,
     activeReactionMenu, setActiveReactionMenu,
     editingMessage, setEditingMessage,
     isMultiSelectMode, setIsMultiSelectMode,

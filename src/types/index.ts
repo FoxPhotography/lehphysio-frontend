@@ -103,6 +103,12 @@ export interface ChatMessage {
     username: string;
     message: string;
   } | null;
+  reply_to_suggestion?: {
+    id: number;
+    title: string;
+    content?: string;
+    username: string;
+  } | null;
   reactions?: ChatReaction[];
   isPending?: boolean;
 }

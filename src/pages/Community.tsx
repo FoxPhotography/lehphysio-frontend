@@ -59,6 +59,8 @@ interface CommunityProps {
   swipeMessageIdRef: React.MutableRefObject<number | null>;
   replyingTo: any;
   setReplyingTo: (val: any) => void;
+  replyingToSuggestion?: any;
+  setReplyingToSuggestion?: (val: any) => void;
   editingMessage: any;
   setEditingMessage: (val: any) => void;
   chatInput: string;
@@ -111,6 +113,8 @@ export const Community: React.FC<CommunityProps> = ({
   swipeMessageIdRef,
   replyingTo,
   setReplyingTo,
+  replyingToSuggestion,
+  setReplyingToSuggestion,
   editingMessage,
   setEditingMessage,
   chatInput,
@@ -1090,6 +1094,53 @@ export const Community: React.FC<CommunityProps> = ({
                             </div>
                           )}
 
+                          {/* Quote reply to suggestion */}
+                          {msg.reply_to_suggestion?.id && (
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveSubTab('suggestions');
+                                setDeepLinkTarget({
+                                  type: 'suggestion',
+                                  suggestionId: msg.reply_to_suggestion.id
+                                });
+                                window.history.replaceState({}, '', `/chat?tab=suggestions#suggestion-${msg.reply_to_suggestion.id}`);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  e.currentTarget.click();
+                                }
+                              }}
+                              className={`border-s-2 px-2.5 py-1.5 rounded-lg mb-2 text-2xs text-start w-full min-w-0 max-w-[min(280px,70vw)] overflow-hidden cursor-pointer transition-all ${
+                                fancyBubble
+                                  ? 'bg-black/35 text-zinc-300 border-amber-400'
+                                  : isMyMsg
+                                    ? 'bg-black/10 text-zinc-800 border-amber-500'
+                                    : 'bg-amber-500/10 border-amber-400 text-zinc-200'
+                              }`}
+                            >
+                              <div className={`font-black flex items-center gap-1.5 truncate min-w-0 ${isMyMsg && !fancyBubble ? 'text-black' : 'text-amber-400'}`}>
+                                <Lightbulb className="w-3 h-3 shrink-0 text-amber-400" />
+                                <span className="text-3xs">اقتراح من</span>
+                                <bdi dir="ltr">@{msg.reply_to_suggestion.username}</bdi>
+                              </div>
+                              <div className={`font-bold text-xs truncate mt-0.5 ${isMyMsg && !fancyBubble ? 'text-zinc-900' : 'text-white'}`}>
+                                {msg.reply_to_suggestion.title}
+                              </div>
+                              {msg.reply_to_suggestion.content && (
+                                <div
+                                  dir="auto"
+                                  className="line-clamp-2 break-words [word-break:break-word] mt-0.5 leading-snug opacity-80 text-3xs"
+                                >
+                                  {msg.reply_to_suggestion.content}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           <div className="relative z-10 flex flex-wrap items-end justify-between gap-x-3 gap-y-1 w-full min-w-0">
                             {(() => {
                               const inviteCode = parseGameInvite(msg.message);
@@ -1225,6 +1276,31 @@ export const Community: React.FC<CommunityProps> = ({
                     <span dir="auto" className="text-zinc-500 font-medium">{replyingTo.message}</span>
                   </div>
                   <button onClick={() => setReplyingTo(null)} className="text-zinc-500 hover:text-white cursor-pointer shrink-0">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* Suggestion reply tag indicator */}
+              {replyingToSuggestion && (
+                <div className="flex justify-between items-center bg-amber-500/10 border-s-2 border-amber-400 rounded-xl px-3 py-2 mb-2 text-xs font-bold text-amber-400 min-w-0 max-w-full">
+                  <div className="truncate pe-4 min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Lightbulb className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>بترد على اقتراح: <strong>{replyingToSuggestion.title}</strong></span>
+                      <span className="text-zinc-400 font-normal">بواسطة <bdi dir="ltr">@{replyingToSuggestion.username}</bdi></span>
+                    </div>
+                    {replyingToSuggestion.content && (
+                      <span dir="auto" className="block text-zinc-400 font-normal text-2xs truncate mt-0.5">
+                        {replyingToSuggestion.content}
+                      </span>
+                    )}
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setReplyingToSuggestion && setReplyingToSuggestion(null)} 
+                    className="text-zinc-400 hover:text-white cursor-pointer shrink-0"
+                  >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -1557,7 +1633,34 @@ export const Community: React.FC<CommunityProps> = ({
                               <span>{s.upvotes || 0} Upvotes</span>
                             </button>
 
-                            <div className="flex gap-3">
+                            <div className="flex items-center gap-2">
+                              <button 
+                                type="button" 
+                                className="flex items-center gap-1.5 text-2xs font-extrabold text-brand-orange hover:text-brand-amber transition-all cursor-pointer px-2.5 py-1 rounded-lg bg-brand-orange/10 border border-brand-orange/20 hover:bg-brand-orange/20 active:scale-95" 
+                                onClick={() => {
+                                  setReplyingTo?.(null);
+                                  setReplyingToSuggestion?.({
+                                    id: s.id,
+                                    title: s.title,
+                                    content: s.content,
+                                    username: s.username
+                                  });
+                                  setChatInput?.((prev) => {
+                                    const mention = `@${s.username}`;
+                                    const current = typeof prev === 'string' ? prev : '';
+                                    return current.includes(mention) ? current : `${mention} ${current}`.trimStart();
+                                  });
+                                  setActiveSubTab('chat');
+                                  window.history.replaceState({}, '', '/chat');
+                                  setTimeout(() => {
+                                    document.getElementById('community-chat-input')?.focus();
+                                  }, 60);
+                                }}
+                              >
+                                <MessageSquare className="w-3.5 h-3.5" /> 
+                                <span>رد في الشات</span>
+                              </button>
+
                               {isAuthor && !s.delete_pending && (
                                 <button 
                                   type="button" 

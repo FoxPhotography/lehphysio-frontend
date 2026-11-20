@@ -8,10 +8,14 @@ export const chatService = {
     return res;
   },
 
-  async sendMessage(message: string, replyToId?: number | null, token?: string) {
+  async sendMessage(message: string, replyToId?: number | null, token?: string, replyToSuggestionId?: number | null) {
     const res = await apiFetch('/api/chat', {
       method: 'POST',
-      body: JSON.stringify({ message, reply_to: replyToId || null }),
+      body: JSON.stringify({
+        message,
+        reply_to: replyToId || null,
+        reply_to_suggestion_id: replyToSuggestionId || null
+      }),
     }, token);
     return res;
   },
