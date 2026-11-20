@@ -6,7 +6,7 @@ import { getNameColor, getFrameImage } from '../utils/helpers';
 import { UserAvatar } from '../components/UserAvatar';
 import { HighlightWrapper } from '../components/notifications/HighlightWrapper';
 import { useNotifications } from '../context/NotificationContext';
-import { formatMentions } from '../utils/mentions';
+import { formatChatText } from '../utils/mentions';
 import { 
   MessageSquare, 
   Lightbulb, 
@@ -577,7 +577,14 @@ export const Community: React.FC<CommunityProps> = ({
   }, [deepLinkTarget, suggestions]);
 
   const renderTextWithMentions = (text: string) => {
-    return formatMentions(text, usernames, 'text-yellow-400 font-extrabold hover:underline cursor-pointer transition-colors');
+    return formatChatText(text, usernames, 'text-yellow-400 font-extrabold hover:underline cursor-pointer transition-colors', {
+      onMentionClick: openProfile,
+      onChannelClick: () => {
+        setActiveSubTab('suggestions');
+        window.history.replaceState({}, '', '/chat?tab=suggestions');
+      },
+      onGameClick: () => changePage('games'),
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -1040,8 +1047,26 @@ export const Community: React.FC<CommunityProps> = ({
                           {/* Quote reply */}
                           {msg.reply_to?.username && (
                             <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!msg.reply_to?.id) return;
+                                setDeepLinkTarget({
+                                  type: 'chat_message',
+                                  targetId: msg.reply_to.id,
+                                  messageId: msg.reply_to.id
+                                });
+                                window.history.replaceState({}, '', `/chat#message-${msg.reply_to.id}`);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  e.currentTarget.click();
+                                }
+                              }}
                               className={`border-s-2 px-2.5 py-1.5 rounded-lg mb-2 text-2xs text-start w-full min-w-0 max-w-[min(280px,70vw)] overflow-hidden ${
-                                fancyBubble ? 'bg-black/35 text-zinc-300' : isMyMsg ? 'bg-black/10 text-zinc-800 border-brand-orange' : 'bg-black/30 text-zinc-400 border-brand-orange'
+                                fancyBubble ? 'bg-black/35 text-zinc-300 cursor-pointer' : isMyMsg ? 'bg-black/10 text-zinc-800 border-brand-orange cursor-pointer' : 'bg-black/30 text-zinc-400 border-brand-orange cursor-pointer'
                               }`}
                               style={fancyBubble ? { borderColor: bubbleTheme.c3 } : undefined}
                             >

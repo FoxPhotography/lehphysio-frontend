@@ -508,7 +508,13 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
 
   const handleSendChatMessage = async (e: React.FormEvent, text?: string) => {
     e.preventDefault();
-    const messageText = (text ?? chatInput).trim();
+    const rawMessageText = (text ?? chatInput).trim();
+    const replyMention = replyingTo?.username && replyingTo.username !== user?.username
+      ? `@${replyingTo.username}`
+      : '';
+    const messageText = replyMention && !new RegExp(`@${replyingTo.username.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}(?=[\\s.,!?:;)]|$)`, 'i').test(rawMessageText)
+      ? `${replyMention} ${rawMessageText}`.trim()
+      : rawMessageText;
     if (!messageText || !token) return;
 
     if (editingMessage) {
