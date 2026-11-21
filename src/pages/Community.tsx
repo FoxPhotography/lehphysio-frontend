@@ -32,7 +32,8 @@ import {
   Plus,
   Copy,
   SmilePlus,
-  Lock
+  Lock,
+  ImagePlus
 } from 'lucide-react';
 import { EmojiPickerPopover } from '../components/common/EmojiPickerPopover';
 import { ReactionSummary, ReactionBurst, MessageActionOverlay, ReactionDetailsSheet, type MessageAction } from '../components/chat/ChatReactions';
@@ -77,7 +78,8 @@ interface CommunityProps {
   handleDeleteMessage: (messageId: number) => void;
   handleBulkDeleteMessages: () => void;
   suggestions: any[];
-  handleCreateSuggestion: (title: string, content: string) => void;
+  handleCreateSuggestion: (title: string, content: string, imageUrl?: string | null) => void;
+  handleUploadImage?: (file: File) => Promise<string | null>;
   handleUpvoteSuggestion: (id: number) => void;
   handleOpenModerationModal: (username: string, userId: number) => void;
   handleDeleteSuggestion: (id: number) => void;
@@ -132,6 +134,7 @@ export const Community: React.FC<CommunityProps> = ({
   handleBulkDeleteMessages,
   suggestions,
   handleCreateSuggestion,
+  handleUploadImage,
   handleUpvoteSuggestion,
   handleOpenModerationModal,
   handleDeleteSuggestion,
@@ -237,6 +240,8 @@ export const Community: React.FC<CommunityProps> = ({
   
   // Suggestion editing & form states
   const [showSuggForm, setShowSuggForm] = useState(false);
+  const [suggImageUrl, setSuggImageUrl] = useState<string | null>(null);
+  const [isUploadingSuggImage, setIsUploadingSuggImage] = useState(false);
   const [editingSuggId, setEditingSuggId] = useState<number | null>(null);
   const [editSuggTitle, setEditSuggTitle] = useState('');
   const [editSuggContent, setEditSuggContent] = useState('');
@@ -701,9 +706,10 @@ export const Community: React.FC<CommunityProps> = ({
   const submitSuggestion = (e: React.FormEvent) => {
     e.preventDefault();
     if (!suggTitle.trim() || !suggContent.trim()) return;
-    handleCreateSuggestion(suggTitle, suggContent);
+    handleCreateSuggestion(suggTitle, suggContent, suggImageUrl);
     setSuggTitle('');
     setSuggContent('');
+    setSuggImageUrl(null);
   };
 
   // Fast + smooth jump to the newest message: far away → snap close first,
@@ -1664,14 +1670,53 @@ export const Community: React.FC<CommunityProps> = ({
                           required
                           rows={2}
                         />
-                        <div className="flex items-center gap-2">
+                        {suggImageUrl && (
+                          <div className="relative inline-block self-start">
+                            <img
+                              src={suggImageUrl}
+                              alt="معاينة الصورة"
+                              className="max-h-36 rounded-xl border border-white/10 object-contain bg-black/40"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setSuggImageUrl(null)}
+                              className="absolute -top-2 -end-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg cursor-pointer hover:bg-red-600"
+                              aria-label="إزالة الصورة"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                        <div className="flex flex-wrap items-center gap-2">
                           <button 
                             type="submit" 
-                            className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-xs py-2 px-4 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow flex items-center gap-1.5"
+                            disabled={isUploadingSuggImage}
+                            className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-extrabold text-xs py-2 px-4 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow flex items-center gap-1.5 disabled:opacity-60"
                           >
                             <Zap className="w-3.5 h-3.5 fill-current" />
                             <span>إرسال الاقتراح (+{xpSettings.suggestion_create !== undefined ? xpSettings.suggestion_create : 50} XP)</span>
                           </button>
+                          {handleUploadImage && (
+                            <label className="text-xs font-bold text-zinc-300 hover:text-white px-3 py-2 rounded-xl border border-zinc-800 hover:bg-zinc-900 transition-colors cursor-pointer flex items-center gap-1.5">
+                              <ImagePlus className="w-3.5 h-3.5 text-brand-orange" />
+                              <span>{isUploadingSuggImage ? 'جاري الرفع…' : 'إرفاق صورة'}</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                disabled={isUploadingSuggImage}
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  setIsUploadingSuggImage(true);
+                                  const url = await handleUploadImage(file);
+                                  if (url) setSuggImageUrl(url);
+                                  setIsUploadingSuggImage(false);
+                                  e.target.value = '';
+                                }}
+                              />
+                            </label>
+                          )}
                           <button
                             type="button"
                             onClick={() => setShowSuggForm(false)}
@@ -1778,13 +1823,28 @@ export const Community: React.FC<CommunityProps> = ({
                                 By <bdi dir="ltr">@{s.username}</bdi> · {new Date(s.created_at).toLocaleString('ar-EG-u-nu-latn', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                               </span>
                             </div>
-                            <span className={`text-2xs font-black px-2.5 py-0.5 rounded-full uppercase border ${statusColor} ${statusBg}`}>
-                              {statusLabel}
-                            </span>
+                            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                              {s.is_implemented && (
+                                <span className="inline-flex items-center gap-1 text-2xs font-black px-2.5 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
+                                  <Check className="w-3 h-3" /> تم التنفيذ
+                                </span>
+                              )}
+                              <span className={`text-2xs font-black px-2.5 py-0.5 rounded-full uppercase border ${statusColor} ${statusBg}`}>
+                                {statusLabel}
+                              </span>
+                            </div>
                           </div>
                           <p dir="auto" className="text-xs text-zinc-400 font-medium leading-relaxed">
                             {s.content}
                           </p>
+                          {s.image_url && (
+                            <img
+                              src={s.image_url}
+                              alt="صورة توضيحية للاقتراح"
+                              loading="lazy"
+                              className="max-h-60 w-auto self-start rounded-xl border border-white/10 object-contain bg-black/40"
+                            />
+                          )}
                           
                           {s.status === 'rejected' && isAuthor && s.rejection_reason && (
                             <div className="p-2 border border-red-500/20 bg-red-500/5 text-red-400 rounded-lg text-2xs font-semibold">

@@ -727,13 +727,13 @@ function InnerApp() {
     }
   };
 
-  const handleCreateSuggestion = async (title: string, content: string) => {
+  const handleCreateSuggestion = async (title: string, content: string, imageUrl?: string | null) => {
     if (!token) {
       showToast('سجّل دخول عشان تقدّم اقتراح. 🔐');
       return;
     }
     try {
-      const res = await communityService.createSuggestion(title, content, token);
+      const res = await communityService.createSuggestion(title, content, token, imageUrl);
       const data = await res.json();
       if (res.ok) {
         showToast('شكرًا! الاقتراح وصل. 💡');

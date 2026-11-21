@@ -155,6 +155,39 @@ export const CHAT_DISCOVERY_TAGS: ChatTagItem[] = [
     target: 'nerve-path',
     aliases: ['#مسار_الاعصاب', '#مسار الأعصاب', '#نيرف', '#اعصاب', '#nerve_path']
   },
+  // مين المسؤول؟
+  {
+    tag: '#مين المسؤول',
+    label: 'مين المسؤول؟ (Kinesiology)',
+    description: 'حدد العضلة المسؤولة عن الحركة واربطها بالعصب والمنشأ والارتكاز',
+    category: 'ألعاب',
+    icon: '🩺',
+    kind: 'game',
+    target: 'whos-responsible',
+    aliases: ['#مين_المسؤول', '#whos_responsible']
+  },
+  // سودوكو التشريح
+  {
+    tag: '#سودوكو التشريح',
+    label: 'سودوكو التشريح (+500 XP)',
+    description: 'اكمل مربعات السودوكو واكشف حروف المصطلح الطبي السري',
+    category: 'ألعاب',
+    icon: '🧩',
+    kind: 'game',
+    target: 'sudoku',
+    aliases: ['#سودوكو', '#sudoku']
+  },
+  // أكمل الجملة الطبية
+  {
+    tag: '#اكمل الجملة',
+    label: 'أكمل الجملة الطبية (Wordle)',
+    description: 'خمّن الكلمة الطبية الناقصة في الجملة خلال 6 محاولات',
+    category: 'ألعاب',
+    icon: '🔤',
+    kind: 'game',
+    target: 'wordle',
+    aliases: ['#اكمل_الجملة', '#wordle']
+  },
   // المتصدرين
   {
     tag: '#المتصدرين',

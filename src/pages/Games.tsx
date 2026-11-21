@@ -37,6 +37,15 @@ const SpecialTestsBlitz = lazy(() =>
 const NervePathGame = lazy(() =>
   import('../components/games/NervePathGame').then((mod) => ({ default: mod.NervePathGame }))
 );
+const WhosResponsibleGame = lazy(() =>
+  import('../components/games/WhosResponsibleGame').then((mod) => ({ default: mod.WhosResponsibleGame }))
+);
+const AnatomySudokuGame = lazy(() =>
+  import('../components/games/AnatomySudokuGame').then((mod) => ({ default: mod.AnatomySudokuGame }))
+);
+const PhysioWordleGame = lazy(() =>
+  import('../components/games/PhysioWordleGame').then((mod) => ({ default: mod.PhysioWordleGame }))
+);
 
 type GameMode = 'anatomy' | 'clinical' | 'special_tests';
 
@@ -54,8 +63,8 @@ interface GamesProps {
   user: any;
   gameTab: 'single' | 'multiplayer';
   setGameTab: (tab: 'single' | 'multiplayer') => void;
-  activeGame: 'memory' | 'spin' | 'diagnosis' | 'special-tests' | 'nerve-path' | null;
-  setActiveGame: (game: 'memory' | 'spin' | 'diagnosis' | 'special-tests' | 'nerve-path' | null) => void;
+  activeGame: 'memory' | 'spin' | 'diagnosis' | 'special-tests' | 'nerve-path' | 'whos-responsible' | 'sudoku' | 'wordle' | null;
+  setActiveGame: (game: 'memory' | 'spin' | 'diagnosis' | 'special-tests' | 'nerve-path' | 'whos-responsible' | 'sudoku' | 'wordle' | null) => void;
   gameFinished: boolean;
   setGameFinished: (val: boolean) => void;
   memoryMoves: number;
@@ -178,6 +187,9 @@ export const Games: React.FC<GamesProps> = ({
   const oscePlays = dailyPlays?.[3] ?? 0;
   const memoryPlays = dailyPlays?.[1] ?? 0;
   const nervePlays = dailyPlays?.[4] ?? 0;
+  const responsiblePlays = dailyPlays?.[5] ?? 0;
+  const sudokuPlays = dailyPlays?.[6] ?? 0;
+  const wordlePlays = dailyPlays?.[7] ?? 0;
 
   useEffect(() => {
     setShowMultiplayerSetup(false);
@@ -401,6 +413,60 @@ export const Games: React.FC<GamesProps> = ({
                 </Suspense>
               )}
 
+              {activeGame === 'whos-responsible' && (
+                <Suspense
+                  fallback={
+                    <div className="py-12 flex items-center justify-center">
+                      <Loader2 className="w-7 h-7 animate-spin text-emerald-400" />
+                    </div>
+                  }
+                >
+                  <WhosResponsibleGame
+                    onBack={() => setActiveGame(null)}
+                    onWin={() => claimGameXP(5)}
+                    dailyPlaysCount={responsiblePlays}
+                    maxDailyPlays={3}
+                    xpReward={150}
+                  />
+                </Suspense>
+              )}
+
+              {activeGame === 'sudoku' && (
+                <Suspense
+                  fallback={
+                    <div className="py-12 flex items-center justify-center">
+                      <Loader2 className="w-7 h-7 animate-spin text-purple-400" />
+                    </div>
+                  }
+                >
+                  <AnatomySudokuGame
+                    onBack={() => setActiveGame(null)}
+                    onWin={() => claimGameXP(6)}
+                    dailyPlaysCount={sudokuPlays}
+                    maxDailyPlays={3}
+                    xpReward={500}
+                  />
+                </Suspense>
+              )}
+
+              {activeGame === 'wordle' && (
+                <Suspense
+                  fallback={
+                    <div className="py-12 flex items-center justify-center">
+                      <Loader2 className="w-7 h-7 animate-spin text-amber-400" />
+                    </div>
+                  }
+                >
+                  <PhysioWordleGame
+                    onBack={() => setActiveGame(null)}
+                    onWin={() => claimGameXP(7)}
+                    dailyPlaysCount={wordlePlays}
+                    maxDailyPlays={3}
+                    xpReward={150}
+                  />
+                </Suspense>
+              )}
+
               {activeGame === 'memory' && (
                 <div className="space-y-5">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -620,6 +686,144 @@ export const Games: React.FC<GamesProps> = ({
                     onClick={() => setActiveGame('special-tests')}
                   >
                     <Play className="w-3.5 h-3.5 fill-current" /> ابدأ السباق
+                  </button>
+                </div>
+              </m.div>
+
+              {/* Game 6: Who's Responsible */}
+              <m.div
+                whileHover={{ y: -4 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+                className="relative overflow-hidden rounded-3xl border border-emerald-500/25 bg-zinc-900/65 p-5 md:p-6 text-start flex flex-col justify-between min-h-[220px] hover:border-emerald-400/60 group shadow-lg"
+              >
+                <div className="absolute -top-12 -end-12 w-32 h-32 rounded-full bg-emerald-500/15 blur-2xl pointer-events-none" />
+                <div className="relative space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-2xs font-black tracking-wider bg-emerald-500/15 text-emerald-300 px-2.5 py-1 rounded-lg border border-emerald-500/25">
+                      جديد · كينيسيولوجي
+                    </span>
+                    <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-300">
+                      <Stethoscope className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-black text-white group-hover:text-emerald-300 transition-colors">
+                    مين المسؤول؟ Who&apos;s Responsible?
+                  </h3>
+                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
+                    اختار العضلة المسؤولة عن الحركة، واربطها بالـ Nerve والـ Origin والـ Insertion!
+                  </p>
+                </div>
+                <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-extrabold text-emerald-300 bg-emerald-500/10 px-2.5 py-1 rounded-full">
+                      +150 XP
+                    </span>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
+                      responsiblePlays >= 3 
+                        ? 'bg-zinc-800 text-zinc-400 border-zinc-700' 
+                        : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                    }`}>
+                      {responsiblePlays >= 3 ? 'استنفدت محاولات اليوم (3/3)' : `${3 - responsiblePlays}/3 محاولات XP`}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black text-xs py-2.5 px-5 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all flex items-center gap-1.5"
+                    onClick={() => setActiveGame('whos-responsible')}
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" /> العب
+                  </button>
+                </div>
+              </m.div>
+
+              {/* Game 7: Anatomy Sudoku */}
+              <m.div
+                whileHover={{ y: -4 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+                className="relative overflow-hidden rounded-3xl border border-purple-500/25 bg-zinc-900/65 p-5 md:p-6 text-start flex flex-col justify-between min-h-[220px] hover:border-purple-400/60 group shadow-lg"
+              >
+                <div className="absolute -top-12 -end-12 w-32 h-32 rounded-full bg-purple-500/15 blur-2xl pointer-events-none" />
+                <div className="relative space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-2xs font-black tracking-wider bg-purple-500/15 text-purple-300 px-2.5 py-1 rounded-lg border border-purple-500/25">
+                      جاكبوت · 500 XP
+                    </span>
+                    <div className="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/25 flex items-center justify-center text-purple-300">
+                      <Zap className="w-5 h-5 fill-current" />
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-black text-white group-hover:text-purple-300 transition-colors">
+                    سودوكو التشريح
+                  </h3>
+                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
+                    كل مربع يكمل بيكشف حروف، وفي الآخر جمّع المصطلح الطبي السري واكسب 500 XP!
+                  </p>
+                </div>
+                <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-extrabold text-purple-300 bg-purple-500/10 px-2.5 py-1 rounded-full">
+                      +500 XP
+                    </span>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
+                      sudokuPlays >= 3 
+                        ? 'bg-zinc-800 text-zinc-400 border-zinc-700' 
+                        : 'bg-purple-500/15 text-purple-300 border-purple-500/30'
+                    }`}>
+                      {sudokuPlays >= 3 ? 'استنفدت محاولات اليوم (3/3)' : `${3 - sudokuPlays}/3 محاولات XP`}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-black text-xs py-2.5 px-5 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all flex items-center gap-1.5"
+                    onClick={() => setActiveGame('sudoku')}
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" /> العب
+                  </button>
+                </div>
+              </m.div>
+
+              {/* Game 8: Physio Wordle */}
+              <m.div
+                whileHover={{ y: -4 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+                className="relative overflow-hidden rounded-3xl border border-amber-500/25 bg-zinc-900/65 p-5 md:p-6 text-start flex flex-col justify-between min-h-[220px] hover:border-amber-400/60 group shadow-lg"
+              >
+                <div className="absolute -top-12 -end-12 w-32 h-32 rounded-full bg-amber-500/15 blur-2xl pointer-events-none" />
+                <div className="relative space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-2xs font-black tracking-wider bg-amber-500/15 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-500/25">
+                      جديد · Wordle طبي
+                    </span>
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-300">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-black text-white group-hover:text-amber-300 transition-colors">
+                    أكمل الجملة الطبية (Wordle)
+                  </h3>
+                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
+                    خمّن الكلمة الطبية الناقصة في جملة مفيدة (زي Sartorius) خلال 6 محاولات!
+                  </p>
+                </div>
+                <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-extrabold text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-full">
+                      +150 XP
+                    </span>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
+                      wordlePlays >= 3 
+                        ? 'bg-zinc-800 text-zinc-400 border-zinc-700' 
+                        : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                    }`}>
+                      {wordlePlays >= 3 ? 'استنفدت محاولات اليوم (3/3)' : `${3 - wordlePlays}/3 محاولات XP`}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs py-2.5 px-5 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all flex items-center gap-1.5"
+                    onClick={() => setActiveGame('wordle')}
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" /> العب
                   </button>
                 </div>
               </m.div>

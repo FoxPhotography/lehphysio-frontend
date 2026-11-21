@@ -330,7 +330,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         break;
       }
       case 'suggestion_approved':
-      case 'suggestion_rejected': {
+      case 'suggestion_rejected':
+      case 'suggestion_implemented': {
         const suggestionId = Number(metadata?.suggestionId || target_id);
         setDeepLinkTarget({ type: 'suggestion', targetId: suggestionId, suggestionId });
         changePage('community');

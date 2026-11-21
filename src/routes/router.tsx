@@ -446,6 +446,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           handleBulkDeleteMessages={chatHook.handleBulkDeleteMessages}
           suggestions={suggestions}
           handleCreateSuggestion={handleCreateSuggestion}
+          handleUploadImage={handleUploadImage}
           handleUpvoteSuggestion={handleUpvoteSuggestion}
           handleOpenModerationModal={handleOpenModerationModal}
           handleDeleteSuggestion={handleDeleteSuggestion}

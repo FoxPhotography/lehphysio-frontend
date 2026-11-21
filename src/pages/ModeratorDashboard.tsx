@@ -506,7 +506,9 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
         body: JSON.stringify({ status, action, reason }),
       });
       if (res.ok) {
-        if (action === 'approve_revision') {
+        if (action === 'mark_implemented') {
+          setMessage('تم تعليم الاقتراح كمُنفذ وبعتنا إشعار شكر لصاحبه 🎉');
+        } else if (action === 'approve_revision') {
           setMessage('التعديل اتقبل!');
         } else if (action === 'reject_revision') {
           setMessage('التعديل اترفض.');
@@ -861,33 +863,59 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                         </div>
                       </div>
                     ) : (
-                      <p dir="auto" className="text-xs text-zinc-300 leading-relaxed">{s.content}</p>
+                      <div className="space-y-2.5">
+                        <p dir="auto" className="text-xs text-zinc-300 leading-relaxed">{s.content}</p>
+                        {s.image_url && (
+                          <img
+                            src={s.image_url}
+                            alt="مرفق الاقتراح"
+                            className="max-h-48 rounded-xl border border-white/10 object-contain bg-black/40"
+                          />
+                        )}
+                      </div>
                     )}
 
-                    <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                      <span className="flex items-center gap-1 text-xs text-orange-400 font-bold">
-                        <ThumbsUp className="w-3.5 h-3.5" /> {s.upvotes || 0} Upvotes
-                      </span>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-white/5">
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 text-xs text-orange-400 font-bold">
+                          <ThumbsUp className="w-3.5 h-3.5" /> {s.upvotes || 0} Upvotes
+                        </span>
+                        {s.is_implemented && (
+                          <span className="inline-flex items-center gap-1 text-2xs font-black px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
+                            <Check className="w-3 h-3" /> تم التنفيذ
+                          </span>
+                        )}
+                      </div>
 
-                      {s.status === 'pending' && !s.edit_draft && !s.delete_pending && (
-                        <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        {!s.is_implemented && s.status === 'approved' && !s.edit_draft && !s.delete_pending && (
                           <button
-                            onClick={() => handleSuggestionStatus(s.id, 'approved')}
-                            className="bg-emerald-500/15 border border-emerald-500/25 hover:bg-emerald-500/25 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            onClick={() => handleSuggestionStatus(s.id, 'approved', 'mark_implemented')}
+                            className="bg-cyan-500/15 border border-cyan-500/30 hover:bg-cyan-500/25 text-cyan-300 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
                           >
-                            <Check className="w-3 h-3" /> اقبل
+                            <Check className="w-3.5 h-3.5" /> تم التنفيذ + إشعار
                           </button>
-                          <button
-                            onClick={() => {
-                              const reason = prompt("Enter rejection reason (optional):");
-                              handleSuggestionStatus(s.id, 'rejected', undefined, reason || undefined);
-                            }}
-                            className="bg-red-500/15 border border-red-500/25 hover:bg-red-500/25 text-red-400 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
-                          >
-                            <XCircle className="w-3 h-3" /> ارفض
-                          </button>
-                        </div>
-                      )}
+                        )}
+                        {s.status === 'pending' && !s.edit_draft && !s.delete_pending && (
+                          <>
+                            <button
+                              onClick={() => handleSuggestionStatus(s.id, 'approved')}
+                              className="bg-emerald-500/15 border border-emerald-500/25 hover:bg-emerald-500/25 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            >
+                              <Check className="w-3 h-3" /> اقبل
+                            </button>
+                            <button
+                              onClick={() => {
+                                const reason = prompt("Enter rejection reason (optional):");
+                                handleSuggestionStatus(s.id, 'rejected', undefined, reason || undefined);
+                              }}
+                              className="bg-red-500/15 border border-red-500/25 hover:bg-red-500/25 text-red-400 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer flex items-center gap-1 transition-all"
+                            >
+                              <XCircle className="w-3 h-3" /> ارفض
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );

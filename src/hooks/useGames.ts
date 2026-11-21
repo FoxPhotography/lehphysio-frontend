@@ -23,7 +23,7 @@ export const useGames = () => {
   const [isMultiplayerExpanded, setIsMultiplayerExpanded] = useState(false);
 
   // Single-player Games States
-  const [activeGame, setActiveGame] = useState<'memory' | 'spin' | 'diagnosis' | 'special-tests' | 'nerve-path' | null>(null);
+  const [activeGame, setActiveGame] = useState<'memory' | 'spin' | 'diagnosis' | 'special-tests' | 'nerve-path' | 'whos-responsible' | 'sudoku' | 'wordle' | null>(null);
   const [gameQuestionIdx, setGameQuestionIdx] = useState(0);
   const [gameScore, setGameScore] = useState(0);
   const [gameFinished, setGameFinished] = useState(false);

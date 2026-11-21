@@ -103,10 +103,10 @@ export const communityService = {
     return res;
   },
 
-  async createSuggestion(title: string, content: string, token?: string) {
+  async createSuggestion(title: string, content: string, token?: string, imageUrl?: string | null) {
     const res = await apiFetch('/api/suggestions', {
       method: 'POST',
-      body: JSON.stringify({ title, content }),
+      body: JSON.stringify({ title, content, image_url: imageUrl || null }),
     }, token);
     return res;
   },
