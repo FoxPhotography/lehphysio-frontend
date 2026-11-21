@@ -737,9 +737,8 @@ function InnerApp() {
       const res = await communityService.createSuggestion(title, content, token, imageUrl);
       const data = await res.json();
       if (res.ok) {
-        showToast('شكرًا! الاقتراح وصل. 💡');
+        showToast('شكرًا! الاقتراح وصل وهتاخد الـ XP أول ما الإدارة توافق عليه ⏳💡');
         fetchPublicSuggestions();
-        triggerXpPopup(xpSettings.suggestion_create !== undefined ? xpSettings.suggestion_create : 50);
         fetchUserProfile();
       } else {
         showToast(data.error || 'معرفناش نبعت الاقتراح.');
