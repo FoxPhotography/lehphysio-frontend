@@ -51,6 +51,126 @@ const WORDLE_BANK: WordleQuestion[] = [
     answer: 'SOLEUS',
     arHint: 'العضلة الأساسية لثني الكاحل للأسفل والركبة مثنية',
   },
+  {
+    sentence: 'The rotator cuff muscle that initiates shoulder abduction (0°–15°) is ________',
+    answer: 'SUPRASPINATUS',
+    arHint: 'عضلة الكفة المدورة التي تبدأ إبعاد الكتف',
+  },
+  {
+    sentence: 'The only rotator cuff muscle that internally rotates the shoulder is ________',
+    answer: 'SUBSCAPULARIS',
+    arHint: 'عضلة الكفة المدورة المسؤولة عن اللف الداخلي للكتف',
+  },
+  {
+    sentence: 'The muscle that prevents winging of the scapula is Serratus ________',
+    answer: 'ANTERIOR',
+    arHint: 'تمنع بروز لوح الكتف (Scapular Winging)',
+  },
+  {
+    sentence: 'The nerve injured at the spiral groove causing wrist drop is ________',
+    answer: 'RADIAL',
+    arHint: 'العصب المسؤول عن سقوط الرسغ عند إصابته',
+  },
+  {
+    sentence: 'The nerve passing behind the medial epicondyle (funny bone) is ________',
+    answer: 'ULNAR',
+    arHint: 'العصب المار خلف اللقمة الإنسية للمرفق',
+  },
+  {
+    sentence: 'The primary elbow flexor regardless of forearm position is ________',
+    answer: 'BRACHIALIS',
+    arHint: 'العضلة الأساسية لثني الكوع في كل أوضاع الساعد',
+  },
+  {
+    sentence: 'The largest and strongest muscle of the buttocks is Gluteus ________',
+    answer: 'MAXIMUS',
+    arHint: 'أكبر وأقوى عضلة في منطقة الإلية',
+  },
+  {
+    sentence: 'Weakness of Gluteus ________ causes a positive Trendelenburg sign',
+    answer: 'MEDIUS',
+    arHint: 'ضعفها يسبب علامة ترندلنبرج أثناء المشي',
+  },
+  {
+    sentence: 'The muscle pierced by the sciatic nerve in some people is ________',
+    answer: 'PIRIFORMIS',
+    arHint: 'عضلة عميقة في الحوض قد تضغط على العصب الوركي',
+  },
+  {
+    sentence: 'The nerve responsible for knee extension is the ________ nerve',
+    answer: 'FEMORAL',
+    arHint: 'العصب المغذي لعضلات الفخذ الأمامية وفرد الركبة',
+  },
+  {
+    sentence: 'The nerve supplying the medial adductor compartment of the thigh is ________',
+    answer: 'OBTURATOR',
+    arHint: 'العصب المغذي لعضلات الفخذ الضامة',
+  },
+  {
+    sentence: 'The heel bone is anatomically called the ________',
+    answer: 'CALCANEUS',
+    arHint: 'الاسم التشريحي لعظمة الكعب',
+  },
+  {
+    sentence: 'The weight-bearing medial bone of the lower leg is the ________',
+    answer: 'TIBIA',
+    arHint: 'عظمة الساق الإنسية الحاملة لوزن الجسم',
+  },
+  {
+    sentence: 'The slender lateral bone of the lower leg is the ________',
+    answer: 'FIBULA',
+    arHint: 'عظمة الساق الجانبية الرفيعة (الشظية)',
+  },
+  {
+    sentence: 'The collarbone is anatomically known as the ________',
+    answer: 'CLAVICLE',
+    arHint: 'الاسم التشريحي لعظمة الترقوة',
+  },
+  {
+    sentence: 'The shoulder blade is anatomically called the ________',
+    answer: 'SCAPULA',
+    arHint: 'الاسم التشريحي لعظمة لوح الكتف',
+  },
+  {
+    sentence: 'The socket of the hip joint is called the ________',
+    answer: 'ACETABULUM',
+    arHint: 'التجويف الذي يستقبل رأس عظمة الفخذ',
+  },
+  {
+    sentence: 'The longest and strongest bone in the human body is the ________',
+    answer: 'FEMUR',
+    arHint: 'أطول وأقوى عظمة في جسم الإنسان',
+  },
+  {
+    sentence: 'The muscle that elevates the scapula and shrugs the shoulders is ________',
+    answer: 'TRAPEZIUS',
+    arHint: 'العضلة المسؤولة عن رفع الكتفين لأعلى',
+  },
+  {
+    sentence: 'The major extensor of the elbow joint is ________ Brachii',
+    answer: 'TRICEPS',
+    arHint: 'العضلة الرئيسية لفرد مفصل الكوع',
+  },
+  {
+    sentence: 'The tendon connecting the calf muscles to the heel is the ________ tendon',
+    answer: 'ACHILLES',
+    arHint: 'أقوى وتر في الجسم ويربط السمانة بالكعب',
+  },
+  {
+    sentence: 'The muscle that flexes and laterally rotates the neck to opposite side is ________',
+    answer: 'STERNOCLEIDOMASTOID',
+    arHint: 'العضلة البارزة في الرقبة (SCM)',
+  },
+  {
+    sentence: 'The prime mover for forearm pronation is ________ Teres',
+    answer: 'PRONATOR',
+    arHint: 'العضلة المسؤولة عن لف الساعد للداخل',
+  },
+  {
+    sentence: 'The prime mover for forearm supination with elbow extended is ________',
+    answer: 'SUPINATOR',
+    arHint: 'العضلة المسؤولة عن لف الساعد للخارج والمرفق مفرود',
+  },
 ];
 
 const KEYBOARD_ROWS = [

@@ -55,6 +55,160 @@ const PUZZLES: SudokuPuzzle[] = [
     ],
     givens: [1, 2, 4, 6, 9, 11, 12, 15, 16, 19, 21, 23, 24, 27, 29, 30, 32, 34],
   },
+  {
+    id: 'brachialis',
+    word: 'BRACHIALIS',
+    pearl: 'الـ Brachialis هي المحرك الأساسي لثني مفصل الكوع في جميع أوضاع الساعد (Pronation أو Supination) بعكس الـ Biceps.',
+    solution: [
+      4, 5, 6, 1, 2, 3,
+      1, 2, 3, 4, 5, 6,
+      5, 6, 1, 2, 3, 4,
+      2, 3, 4, 5, 6, 1,
+      6, 1, 2, 3, 4, 5,
+      3, 4, 5, 6, 1, 2,
+    ],
+    givens: [0, 3, 5, 7, 10, 12, 14, 17, 18, 20, 22, 25, 27, 29, 31, 33, 35],
+  },
+  {
+    id: 'trapezius',
+    word: 'TRAPEZIUS',
+    pearl: 'الـ Trapezius بتنقسم لـ 3 أجزاء (Upper, Middle, Lower) وبتتغذى بالعصب القحفي الحادي عشر (Spinal Accessory Nerve - CN XI).',
+    solution: [
+      6, 4, 2, 5, 3, 1,
+      5, 3, 1, 6, 4, 2,
+      4, 2, 6, 1, 5, 3,
+      1, 5, 3, 4, 2, 6,
+      2, 6, 4, 3, 1, 5,
+      3, 1, 5, 2, 6, 4,
+    ],
+    givens: [0, 2, 4, 6, 8, 11, 13, 15, 19, 21, 23, 24, 26, 28, 30, 33, 35],
+  },
+  {
+    id: 'popliteus',
+    word: 'POPLITEUS',
+    pearl: 'الـ Popliteus هي العضلة المسؤولة عن فتح قفل الركبة (Unlocking the Knee) عن طريق تدوير الـ Femur للخارج عند بداية الثني.',
+    solution: [
+      5, 1, 3, 6, 2, 4,
+      6, 2, 4, 5, 1, 3,
+      3, 5, 1, 4, 6, 2,
+      4, 6, 2, 3, 5, 1,
+      1, 3, 5, 2, 4, 6,
+      2, 4, 6, 1, 3, 5,
+    ],
+    givens: [1, 3, 5, 6, 9, 10, 12, 14, 17, 19, 21, 25, 27, 28, 30, 32, 34],
+  },
+  {
+    id: 'supinator',
+    word: 'SUPINATOR',
+    pearl: 'الـ Supinator بيلف الساعد للخارج والـ Elbow مفرود، وبيعدي خلاله الـ Posterior Interosseous Nerve في الـ Arcade of Frohse.',
+    solution: [
+      1, 3, 5, 2, 4, 6,
+      2, 4, 6, 1, 3, 5,
+      3, 5, 1, 4, 6, 2,
+      4, 6, 2, 3, 5, 1,
+      5, 1, 3, 6, 2, 4,
+      6, 2, 4, 5, 1, 3,
+    ],
+    givens: [0, 2, 5, 7, 9, 11, 13, 16, 18, 20, 22, 25, 27, 29, 31, 32, 34],
+  },
+  {
+    id: 'iliopsoas',
+    word: 'ILIOPSOAS',
+    pearl: 'الـ Iliopsoas هو أقوى Hip Flexor في الجسم خصوصاً فوق 90 درجة، وقِصَره الشديد بيزود الـ Lumbar Lordosis.',
+    solution: [
+      2, 6, 4, 3, 1, 5,
+      3, 1, 5, 2, 6, 4,
+      4, 2, 6, 5, 3, 1,
+      5, 3, 1, 6, 4, 2,
+      6, 4, 2, 1, 5, 3,
+      1, 5, 3, 4, 2, 6,
+    ],
+    givens: [0, 1, 4, 7, 9, 10, 14, 16, 18, 21, 23, 25, 26, 28, 30, 33, 35],
+  },
+  {
+    id: 'pectineus',
+    word: 'PECTINEUS',
+    pearl: 'الـ Pectineus عضلة هجينة في مقدمة الفخذ بتعمل Hip Flexion و Adduction، وغالباً بتتغذى بالـ Femoral Nerve وأحياناً الـ Obturator.',
+    solution: [
+      6, 1, 2, 3, 4, 5,
+      3, 4, 5, 6, 1, 2,
+      5, 6, 1, 2, 3, 4,
+      2, 3, 4, 5, 6, 1,
+      4, 5, 6, 1, 2, 3,
+      1, 2, 3, 4, 5, 6,
+    ],
+    givens: [0, 2, 4, 7, 9, 11, 12, 15, 17, 19, 20, 22, 24, 27, 29, 31, 33],
+  },
+  {
+    id: 'calcaneus',
+    word: 'CALCANEUS',
+    pearl: 'عظمة الـ Calcaneus هي أكبر عظمة في الـ Tarsal Bones، وبتنقل وزن الجسم للأرض وبيثبت فيها الـ Achilles Tendon.',
+    solution: [
+      5, 4, 3, 2, 1, 6,
+      2, 1, 6, 5, 4, 3,
+      4, 3, 2, 1, 6, 5,
+      1, 6, 5, 4, 3, 2,
+      3, 2, 1, 6, 5, 4,
+      6, 5, 4, 3, 2, 1,
+    ],
+    givens: [1, 3, 5, 6, 8, 10, 13, 15, 18, 20, 22, 25, 27, 29, 30, 32, 34],
+  },
+  {
+    id: 'quadriceps',
+    word: 'QUADRICEPS',
+    pearl: 'الـ Quadriceps بتتكون من 4 رؤوس (Rectus Femoris + 3 Vasti)، والـ Rectus Femoris هي الوحيدة اللي بتعدي على مفصلين (Hip & Knee).',
+    solution: [
+      4, 2, 6, 1, 5, 3,
+      1, 5, 3, 4, 2, 6,
+      6, 4, 2, 5, 3, 1,
+      5, 3, 1, 6, 4, 2,
+      2, 6, 4, 3, 1, 5,
+      3, 1, 5, 2, 6, 4,
+    ],
+    givens: [0, 3, 4, 7, 9, 11, 12, 14, 17, 19, 21, 24, 26, 28, 31, 33, 35],
+  },
+  {
+    id: 'deltoideus',
+    word: 'DELTOID',
+    pearl: 'عضلة الـ Deltoid بتتغذى بالـ Axillary Nerve؛ أليافها الأمامية بتعمل Flexion، الوسطى Abduction، والخلفية Extension.',
+    solution: [
+      3, 5, 1, 4, 6, 2,
+      4, 6, 2, 3, 5, 1,
+      1, 3, 5, 2, 4, 6,
+      2, 4, 6, 1, 3, 5,
+      5, 1, 3, 6, 2, 4,
+      6, 2, 4, 5, 1, 3,
+    ],
+    givens: [0, 2, 4, 6, 9, 11, 13, 15, 19, 20, 22, 25, 27, 29, 30, 32, 34],
+  },
+  {
+    id: 'masseter',
+    word: 'MASSETER',
+    pearl: 'الـ Masseter هي أقوى عضلة للمضغ (TMJ Elevation) نسبة لحجمها، وبتتغذى بالـ Mandibular Branch of Trigeminal Nerve (CN V3).',
+    solution: [
+      1, 6, 4, 2, 5, 3,
+      2, 5, 3, 1, 6, 4,
+      4, 1, 6, 5, 3, 2,
+      5, 3, 2, 4, 1, 6,
+      6, 4, 1, 3, 2, 5,
+      3, 2, 5, 6, 4, 1,
+    ],
+    givens: [1, 2, 4, 6, 8, 11, 13, 15, 18, 20, 22, 25, 27, 29, 31, 33, 35],
+  },
+  {
+    id: 'acromion',
+    word: 'ACROMION',
+    pearl: 'الـ Acromion هو الامتداد الجانبي لـ Spine of Scapula وبيعمل مفصل الـ Acromioclavicular (AC) مع عظمة الترقوة.',
+    solution: [
+      2, 1, 5, 6, 3, 4,
+      6, 3, 4, 2, 1, 5,
+      5, 2, 1, 3, 4, 6,
+      3, 4, 6, 5, 2, 1,
+      1, 5, 2, 4, 6, 3,
+      4, 6, 3, 1, 5, 2,
+    ],
+    givens: [0, 2, 5, 7, 9, 11, 12, 14, 17, 19, 21, 24, 26, 28, 30, 32, 35],
+  },
 ];
 
 function getBoxCells(boxIdx: number): number[] {
@@ -98,7 +252,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
   maxDailyPlays = 3,
   xpReward = 150,
 }) => {
-  const [puzzleIdx, setPuzzleIdx] = useState(0);
+  const [puzzleIdx, setPuzzleIdx] = useState(() => Math.floor(Math.random() * PUZZLES.length));
   const puzzle = PUZZLES[puzzleIdx];
 
   const [board, setBoard] = useState<(number | null)[]>(() =>
@@ -196,21 +350,22 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
             <Grid3X3 className="w-5 h-5 text-purple-400" />
             <h2 className="text-lg font-black text-white">سودوكو التشريح (+{xpReward} XP)</h2>
           </div>
-          <div className="flex gap-1.5">
-            {PUZZLES.map((p, i) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => loadPuzzle(i)}
-                className={`px-2.5 py-1 rounded-lg text-2xs font-black cursor-pointer border transition-all ${
-                  i === puzzleIdx
-                    ? 'bg-purple-500 text-white border-purple-400'
-                    : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white'
-                }`}
-              >
-                لغز {i + 1}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-1 rounded-lg text-2xs font-black bg-zinc-900 border border-zinc-800 text-zinc-300 tabular-nums">
+              لغز {puzzleIdx + 1} / {PUZZLES.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const candidates = PUZZLES.map((_, idx) => idx).filter((idx) => idx !== puzzleIdx);
+                const next = candidates[Math.floor(Math.random() * candidates.length)] ?? 0;
+                loadPuzzle(next);
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-2xs font-black cursor-pointer border bg-purple-500/15 text-purple-300 border-purple-500/30 hover:bg-purple-500/25 transition-all"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>لغز جديد</span>
+            </button>
           </div>
         </div>
 

@@ -1880,6 +1880,16 @@ export const Community: React.FC<CommunityProps> = ({
                               className="max-h-60 w-auto self-start rounded-xl border border-white/10 object-contain bg-black/40"
                             />
                           )}
+
+                          {isAuthor && s.edit_draft && (
+                            <div className="p-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 space-y-1">
+                              <span className="text-[10px] font-black text-amber-300 block">
+                                تعديلك المعلّق (في انتظار موافقة الإدارة — لو متوافقش عليه هيفضل الاقتراح الأصلي زي ما هو):
+                              </span>
+                              <p dir="auto" className="text-xs font-bold text-white">{s.edit_draft.title}</p>
+                              <p dir="auto" className="text-xs text-zinc-300 leading-relaxed">{s.edit_draft.content}</p>
+                            </div>
+                          )}
                           
                           {s.status === 'rejected' && isAuthor && s.rejection_reason && (
                             <div className="p-2 border border-red-500/20 bg-red-500/5 text-red-400 rounded-lg text-2xs font-semibold">
@@ -1935,8 +1945,8 @@ export const Community: React.FC<CommunityProps> = ({
                                   className="flex items-center gap-1 text-2xs font-bold text-brand-orange hover:text-brand-amber transition-colors cursor-pointer" 
                                   onClick={() => {
                                     setEditingSuggId(s.id);
-                                    setEditSuggTitle(s.title);
-                                    setEditSuggContent(s.content);
+                                    setEditSuggTitle(s.edit_draft?.title ?? s.title);
+                                    setEditSuggContent(s.edit_draft?.content ?? s.content);
                                   }}
                                 >
                                   <Edit2 className="w-3.5 h-3.5" /> 

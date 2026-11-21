@@ -28,6 +28,7 @@ import {
   Search,
   Calendar,
   Clock,
+  Flame,
 } from 'lucide-react';
 import { episodeLabel, episodeSeason, episodeNumber, groupBySeason } from '../utils/episode';
 import { setFramesCache } from '../utils/helpers';

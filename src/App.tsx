@@ -2119,7 +2119,12 @@ function InnerApp() {
           <BanScreen
             banExpiresAt={user.ban_expires_at}
             onExpired={fetchUserProfile}
-            onLogout={handleLogout}
+            onLogout={() => {
+              localStorage.removeItem('token');
+              setToken(null);
+              setUser(null);
+              changePage('login');
+            }}
           />
         )}
       </MainLayout>
