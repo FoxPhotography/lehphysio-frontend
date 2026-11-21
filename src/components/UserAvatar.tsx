@@ -79,12 +79,14 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
         : {})}
       className={`relative flex items-center justify-center shrink-0 rounded-full select-none ${className}`}
       onClick={onClick}
+      onContextMenu={(e) => e.preventDefault()}
       style={{
         width: sizePx,
         height: sizePx,
         cursor: onClick ? 'pointer' : 'default',
         boxShadow: '0 2px 10px rgba(0,0,0,0.4)',
         background: 'var(--color-bg-darker)',
+        WebkitTouchCallout: 'none',
         ...style,
       }}
     >
@@ -100,11 +102,12 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
             height={numericSize}
             loading={eager ? 'eager' : 'lazy'}
             decoding="async"
+            draggable={false}
             onError={(e) => {
               setImgFailed(true);
               (e.currentTarget as HTMLElement).style.display = 'none';
             }}
-            className="w-full h-full object-cover rounded-full"
+            className="w-full h-full object-cover rounded-full pointer-events-none select-none"
           />
         ) : (
           <span aria-hidden>{getInitials(username)}</span>
@@ -123,6 +126,7 @@ const UserAvatarImpl: React.FC<UserAvatarProps> = ({
           aria-hidden
           loading={eager ? 'eager' : 'lazy'}
           decoding="async"
+          draggable={false}
           className="absolute pointer-events-none z-10 select-none object-contain"
           style={{
             display: frameFailed ? 'none' : 'block',

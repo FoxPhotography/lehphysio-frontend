@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { StreakChip } from '../streak/Streak';
 import { RankMedal } from '../common/RankMedal';
-import { Trophy, ChevronLeft, Crown, Medal, Award, Flame, Users } from 'lucide-react';
+import { Trophy, ChevronLeft, Crown, Medal, Award, Flame, Users, Gift } from 'lucide-react';
 import { UserAvatar } from '../UserAvatar';
 import { gameService } from '../../services/gameService';
 import { useAuth } from '../../context/AuthContext';
 
-type PodiumTab = 'all-time' | 'weekly' | 'batch';
+type PodiumTab = 'all-time' | 'weekly' | 'batch' | 'invites';
 
 interface PodiumPreviewProps {
   leaderboard?: any[];
@@ -18,6 +18,7 @@ const PODIUM_TABS: { key: PodiumTab; label: string; icon: React.ReactNode }[] = 
   { key: 'all-time', label: 'العام', icon: <Trophy className="w-3.5 h-3.5" /> },
   { key: 'weekly', label: 'الأسبوعي', icon: <Flame className="w-3.5 h-3.5" /> },
   { key: 'batch', label: 'الدفعة', icon: <Users className="w-3.5 h-3.5" /> },
+  { key: 'invites', label: 'الدعوات', icon: <Gift className="w-3.5 h-3.5" /> },
 ];
 
 const SLIDE_INTERVAL_MS = 4500;
@@ -33,16 +34,19 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [weeklyBoard, setWeeklyBoard] = useState<any[]>([]);
   const [batchBoard, setBatchBoard] = useState<any[]>([]);
+  const [invitesBoard, setInvitesBoard] = useState<any[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     Promise.all([
       gameService.fetchLeaderboard('weekly').then((r) => (r.ok ? r.json() : [])).catch(() => []),
       gameService.fetchLeaderboard('batch', userBatch).then((r) => (r.ok ? r.json() : [])).catch(() => []),
-    ]).then(([wData, bData]) => {
+      gameService.fetchLeaderboard('invites').then((r) => (r.ok ? r.json() : [])).catch(() => []),
+    ]).then(([wData, bData, iData]) => {
       if (cancelled) return;
       if (Array.isArray(wData)) setWeeklyBoard(wData);
       if (Array.isArray(bData)) setBatchBoard(bData);
+      if (Array.isArray(iData)) setInvitesBoard(iData);
     });
     return () => {
       cancelled = true;
@@ -55,6 +59,7 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
       setActiveTab((prev) => {
         if (prev === 'all-time') return 'weekly';
         if (prev === 'weekly') return 'batch';
+        if (prev === 'batch') return 'invites';
         return 'all-time';
       });
     }, SLIDE_INTERVAL_MS);
@@ -66,7 +71,9 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
       ? weeklyBoard
       : activeTab === 'batch'
         ? batchBoard
-        : leaderboard;
+        : activeTab === 'invites'
+          ? invitesBoard
+          : leaderboard;
 
   const first = currentBoard[0];
   const second = currentBoard[1];
@@ -125,9 +132,25 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
         {person ? person.username : '—'}
       </span>
 
-      <span className="text-[11px] font-extrabold text-amber-200/80 bg-white/[0.05] border border-white/10 px-2 py-0.5 rounded-full tabular-nums" dir="ltr">
-        {person ? `${(person.xp || 0).toLocaleString('en-US')} XP` : '0 XP'}
-      </span>
+      {activeTab === 'invites' && person ? (() => {
+        const count = person.invites_count || 0;
+        const xp = person.xp || 0;
+        const compactXp = xp >= 1000 ? `${(xp / 1000).toFixed(xp % 1000 === 0 ? 0 : 1)}k` : xp.toLocaleString('en-US');
+        return (
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="text-[10px] font-black text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full tabular-nums">
+              {count} {count === 1 ? 'دعوة' : count === 2 ? 'دعوتين' : count <= 10 ? 'دعوات' : 'دعوة'}
+            </span>
+            <bdi dir="ltr" className="text-[10px] font-black text-emerald-400/95 tabular-nums">
+              +{compactXp} XP
+            </bdi>
+          </div>
+        );
+      })() : (
+        <span className="text-[11px] font-extrabold text-amber-200/80 bg-white/[0.05] border border-white/10 px-2 py-0.5 rounded-full tabular-nums" dir="ltr">
+          {person ? `${(person.xp || 0).toLocaleString('en-US')} XP` : '0 XP'}
+        </span>
+      )}
 
       {person && (person.streak_count || 0) > 0 && (
         <StreakChip days={person.streak_count} size="xs" className="mt-0.5" />
@@ -174,7 +197,7 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
 
         {/* Centered Tab Switcher */}
         <div className="relative z-10 flex flex-col items-center gap-2.5 mb-6">
-          <div className="inline-flex items-center p-1 rounded-2xl bg-black/55 border border-white/10 shadow-inner">
+          <div className="inline-flex items-center p-1 rounded-2xl bg-black/55 border border-white/10 shadow-inner max-w-full overflow-x-auto no-scrollbar">
             {PODIUM_TABS.map((tab) => {
               const active = activeTab === tab.key;
               return (
@@ -182,7 +205,7 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
                   key={tab.key}
                   type="button"
                   onClick={() => setActiveTab(tab.key)}
-                  className={`relative px-3.5 sm:px-4 py-1.5 rounded-xl text-2xs sm:text-xs font-black flex items-center gap-1.5 cursor-pointer transition-colors ${
+                  className={`relative px-2.5 sm:px-4 py-1.5 rounded-xl text-[10px] sm:text-xs font-black whitespace-nowrap flex items-center gap-1 sm:gap-1.5 cursor-pointer transition-colors ${
                     active ? 'text-black' : 'text-zinc-400 hover:text-white'
                   }`}
                 >

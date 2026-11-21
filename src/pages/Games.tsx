@@ -195,6 +195,30 @@ export const Games: React.FC<GamesProps> = ({
     setShowMultiplayerSetup(false);
   }, [gameTab]);
 
+  // Open specific game directly when navigated via #game mention (?play=...)
+  useEffect(() => {
+    const VALID_GAMES = new Set([
+      'memory', 'spin', 'diagnosis', 'special-tests',
+      'nerve-path', 'whos-responsible', 'sudoku', 'wordle',
+    ]);
+    const openByKey = (rawKey: string | null | undefined) => {
+      if (!rawKey || !VALID_GAMES.has(rawKey)) return;
+      setGameTab('single');
+      if (rawKey === 'memory') initMemoryGame();
+      setActiveGame(rawKey as any);
+    };
+
+    const playParam = new URLSearchParams(window.location.search).get('play');
+    if (playParam) openByKey(playParam);
+
+    const onOpenGame = (e: Event) => {
+      const gameKey = (e as CustomEvent)?.detail?.game;
+      openByKey(gameKey);
+    };
+    window.addEventListener('open_game', onOpenGame);
+    return () => window.removeEventListener('open_game', onOpenGame);
+  }, []);
+
   // Fire confetti once when Memory Match finishes
   useEffect(() => {
     if (activeGame === 'memory' && gameFinished && !memoryConfettiFiredRef.current) {

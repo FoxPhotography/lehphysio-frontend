@@ -883,7 +883,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       path = `/post/${postId}`;
     }
     else if (page === 'community') path = '/chat';
-    else if (page === 'games') path = '/games';
+    else if (page === 'games') {
+      path = params?.game ? `/games?play=${encodeURIComponent(params.game)}` : '/games';
+    }
     else if (page === 'play-game') {
       const code = params?.roomCode || '';
       path = `/game/${code}`;
@@ -909,6 +911,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     if (page !== currentPage) window.scrollTo({ top: 0 });
     _setCurrentPage(page);
+    if (page === 'games' && params?.game) {
+      window.dispatchEvent(new CustomEvent('open_game', { detail: { game: params.game } }));
+    }
   };
 
   const setCurrentPage = (page: string) => {

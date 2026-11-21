@@ -608,14 +608,26 @@ export const Community: React.FC<CommunityProps> = ({
         } else if (item.kind === 'page') {
           changePage(item.target);
         } else if (item.kind === 'game') {
-          changePage('games');
+          const GAME_MAP: Record<string, string> = {
+            anatomy: 'memory',
+            clinical: 'diagnosis',
+            special_tests: 'special-tests',
+          };
+          changePage('games', { game: GAME_MAP[item.target] || item.target });
         }
       },
       onChannelClick: () => {
         setActiveSubTab('suggestions');
         window.history.replaceState({}, '', '/chat?tab=suggestions');
       },
-      onGameClick: () => changePage('games'),
+      onGameClick: (gameTagTarget: string) => {
+        const GAME_MAP: Record<string, string> = {
+          anatomy: 'memory',
+          clinical: 'diagnosis',
+          special_tests: 'special-tests',
+        };
+        changePage('games', { game: GAME_MAP[gameTagTarget] || gameTagTarget });
+      },
     });
   };
 

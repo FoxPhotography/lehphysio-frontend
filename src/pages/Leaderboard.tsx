@@ -1,8 +1,8 @@
 import { useAuth } from '../context/AuthContext';
 import { rankName } from '../utils/ranks';
 import React from 'react';
-import { m } from 'framer-motion';
-import { Trophy, Crown, Medal, Star } from 'lucide-react';
+import { m, AnimatePresence } from 'framer-motion';
+import { Trophy, Crown, Medal, Star, Gift, Users, Sparkles } from 'lucide-react';
 import { UserAvatar } from '../components/UserAvatar';
 import { StreakNameplate, StreakName, StreakChip } from '../components/streak/Streak';
 import { RankMedal } from '../components/common/RankMedal';
@@ -28,7 +28,8 @@ const PodiumEntry: React.FC<{
   person: any;
   place: 1 | 2 | 3;
   delay?: number;
-}> = ({ person, place, delay = 0 }) => {
+  isInvitesTab?: boolean;
+}> = ({ person, place, delay = 0, isInvitesTab = false }) => {
   const configs = {
     1: {
       avatarSize: 68,
@@ -92,10 +93,21 @@ const PodiumEntry: React.FC<{
         {empty ? '—' : person.username}
       </span>
 
-      {/* XP */}
-      <span className="text-2xs text-zinc-500 font-medium">
-        {empty ? '0 XP' : `${person.xp.toLocaleString()} XP`}
-      </span>
+      {/* XP / Invites */}
+      {isInvitesTab && !empty ? (
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-[11px] font-black text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full tabular-nums">
+            {person.invites_count || 0} دعوة
+          </span>
+          <span className="text-2xs text-emerald-400/90 font-extrabold tabular-nums" dir="ltr">
+            +{(person.xp || 0).toLocaleString('en-US')} XP
+          </span>
+        </div>
+      ) : (
+        <span className="text-2xs text-zinc-500 font-medium">
+          {empty ? '0 XP' : `${person.xp.toLocaleString()} XP`}
+        </span>
+      )}
       {!empty && (person.streak_count || 0) > 0 && <StreakChip days={person.streak_count} size="xs" />}
 
       {/* Podium Bar */}
@@ -114,7 +126,7 @@ const TabPill: React.FC<{ label: string; active: boolean; onClick: () => void }>
     onClick={onClick}
     whileHover={{ scale: 1.03 }}
     whileTap={{ scale: 0.97 }}
-    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+    className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
       active
         ? 'bg-orange-500 text-black shadow-md shadow-orange-500/20'
         : 'bg-white/5 border border-white/8 text-zinc-400 hover:text-white hover:border-white/15'
@@ -132,7 +144,9 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   setLeaderboardTab,
 }) => {
   const [first, second, third] = leaderboard;
-  const { changePage } = useAuth();
+  const { changePage, xpSettings } = useAuth();
+  const isInvitesTab = leaderboardTab === 'invites';
+  const inviteBonus = Number(xpSettings?.app_invite_bonus ?? 1000).toLocaleString('en-US');
   const openProfile = (username: string) => changePage('public-profile', { username });
 
   return (
@@ -153,7 +167,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 flex-wrap mb-6">
+      <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar mb-6 pb-0.5">
         <TabPill label="الكل"    active={leaderboardTab === 'all-time'} onClick={() => setLeaderboardTab('all-time')} />
         <TabPill label="الأسبوع"      active={leaderboardTab === 'weekly'}   onClick={() => setLeaderboardTab('weekly')} />
         {user && (
@@ -163,16 +177,80 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
             onClick={() => setLeaderboardTab('batch')}
           />
         )}
+        <m.button
+          onClick={() => setLeaderboardTab('invites')}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black whitespace-nowrap shrink-0 transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer ${
+            isInvitesTab
+              ? 'bg-gradient-to-r from-emerald-400 to-teal-400 text-black shadow-lg shadow-emerald-500/25'
+              : 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 hover:bg-emerald-500/20'
+          }`}
+        >
+          <Gift className="w-3.5 h-3.5" />
+          <span>سفراء الدعوات</span>
+        </m.button>
       </div>
 
+      {/* Animated Ambassadors Hero Banner when Invites tab is active */}
+      <AnimatePresence mode="wait">
+        {isInvitesTab && (
+          <m.div
+            key="invites-banner"
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 360, damping: 28 }}
+            className="relative overflow-hidden rounded-2xl border border-emerald-500/35 bg-gradient-to-br from-emerald-500/15 via-zinc-900/90 to-teal-500/15 p-4 mb-5 flex flex-wrap items-center justify-between gap-3"
+          >
+            <div className="absolute -top-12 -end-12 w-36 h-36 bg-emerald-400/15 rounded-full blur-2xl pointer-events-none" />
+            <div className="flex items-center gap-3 relative z-10">
+              <m.div
+                animate={{ rotate: [0, -8, 8, 0] }}
+                transition={{ repeat: Infinity, duration: 3.5, ease: 'easeInOut' }}
+                className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0"
+              >
+                <Sparkles className="w-5 h-5" />
+              </m.div>
+              <div>
+                <h2 className="text-sm font-black text-white">أبطال دعوات ليه فيزيو</h2>
+                <p className="text-xs font-semibold text-zinc-300">
+                  كل صديق يسجل حساب حقيقي من رابطك بيديك <span className="text-emerald-300 font-black">+{inviteBonus} XP</span> فوراً!
+                </p>
+              </div>
+            </div>
+            {user && (
+              <button
+                type="button"
+                onClick={() => changePage('profile')}
+                className="relative z-10 px-3.5 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>شارك رابطك</span>
+              </button>
+            )}
+          </m.div>
+        )}
+      </AnimatePresence>
+
       {/* Podium */}
-      <div className="rounded-2xl border border-white/8 bg-zinc-900/60 p-6 mb-5">
+      <m.div
+        key={`podium-${leaderboardTab}`}
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.25 }}
+        className={`rounded-2xl border p-6 mb-5 ${
+          isInvitesTab
+            ? 'border-emerald-500/25 bg-gradient-to-b from-emerald-950/30 to-zinc-900/60'
+            : 'border-white/8 bg-zinc-900/60'
+        }`}
+      >
         <div className="flex items-end justify-center gap-4 sm:gap-6">
-          <div role="link" tabIndex={0} className="cursor-pointer" onClick={() => second && openProfile(second.username)}><PodiumEntry person={second} place={2} delay={0.1} /></div>
-          <div role="link" tabIndex={0} className="cursor-pointer" onClick={() => first && openProfile(first.username)}><PodiumEntry person={first} place={1} delay={0.0} /></div>
-          <div role="link" tabIndex={0} className="cursor-pointer" onClick={() => third && openProfile(third.username)}><PodiumEntry person={third} place={3} delay={0.2} /></div>
+          <div role="link" tabIndex={0} className="cursor-pointer" onClick={() => second && openProfile(second.username)}><PodiumEntry person={second} place={2} delay={0.1} isInvitesTab={isInvitesTab} /></div>
+          <div role="link" tabIndex={0} className="cursor-pointer" onClick={() => first && openProfile(first.username)}><PodiumEntry person={first} place={1} delay={0.0} isInvitesTab={isInvitesTab} /></div>
+          <div role="link" tabIndex={0} className="cursor-pointer" onClick={() => third && openProfile(third.username)}><PodiumEntry person={third} place={3} delay={0.2} isInvitesTab={isInvitesTab} /></div>
         </div>
-      </div>
+      </m.div>
 
       {/* Full Ranking List */}
       <div className="rounded-2xl border border-white/8 bg-zinc-900/60 overflow-hidden">
@@ -240,10 +318,21 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                     </div>
                   </div>
 
-                  {/* XP Badge */}
-                  <div className="px-2.5 py-1 rounded-lg bg-black/40 border border-orange-500/25 flex-shrink-0">
-                    <span className="text-xs font-black text-orange-400" dir="ltr">{u.xp.toLocaleString()} XP</span>
-                  </div>
+                  {/* XP / Invites Badge */}
+                  {isInvitesTab ? (
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <span className="px-2 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-2xs font-black text-emerald-300 tabular-nums">
+                        {u.invites_count || 0} دعوة
+                      </span>
+                      <div className="px-2.5 py-1 rounded-lg bg-black/40 border border-emerald-500/25">
+                        <span className="text-xs font-black text-emerald-400 tabular-nums" dir="ltr">+{u.xp.toLocaleString()} XP</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="px-2.5 py-1 rounded-lg bg-black/40 border border-orange-500/25 flex-shrink-0">
+                      <span className="text-xs font-black text-orange-400" dir="ltr">{u.xp.toLocaleString()} XP</span>
+                    </div>
+                  )}
                   </StreakNameplate>
                 </m.div>
               );
