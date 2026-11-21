@@ -507,7 +507,11 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     swipeMessageIdRef.current = null;
   };
 
-  const handleSendChatMessage = async (e: React.FormEvent, text?: string) => {
+  const handleSendChatMessage = async (
+    e: React.FormEvent,
+    text?: string,
+    media?: { image_url?: string | null; audio_url?: string | null; audio_duration?: number }
+  ) => {
     e.preventDefault();
     const rawMessageText = (text ?? chatInput).trim();
     const replyMention = replyingTo?.username && replyingTo.username !== user?.username
@@ -517,13 +521,14 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
       ? `@${replyingToSuggestion.username}`
       : '';
     let messageText = rawMessageText;
-    if (replyMention && !new RegExp(`@${replyingTo.username.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}(?=[\\s.,!?:;)]|$)`, 'i').test(messageText)) {
+    if (messageText && replyMention && !new RegExp(`@${replyingTo.username.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}(?=[\\s.,!?:;)]|$)`, 'i').test(messageText)) {
       messageText = `${replyMention} ${messageText}`.trim();
     }
-    if (suggMention && !new RegExp(`@${replyingToSuggestion.username.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}(?=[\\s.,!?:;)]|$)`, 'i').test(messageText)) {
+    if (messageText && suggMention && !new RegExp(`@${replyingToSuggestion.username.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}(?=[\\s.,!?:;)]|$)`, 'i').test(messageText)) {
       messageText = `${suggMention} ${messageText}`.trim();
     }
-    if (!messageText || !token) return;
+    const hasMedia = Boolean(media?.image_url || media?.audio_url);
+    if ((!messageText && !hasMedia) || !token) return;
 
     if (editingMessage) {
       handleEditMessage(editingMessage.id, messageText);
@@ -539,6 +544,9 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
       id: optimisticId,
       username: user?.username || 'أنا',
       message: messageText,
+      image_url: media?.image_url || null,
+      audio_url: media?.audio_url || null,
+      audio_duration: media?.audio_duration || 0,
       timestamp: new Date().toISOString(),
       avatar_url: user?.avatar_url || null,
       equipped_frame: user?.equipped_frame || 'none',
@@ -564,7 +572,13 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     setReplyingToSuggestion(null);
 
     try {
-      const res = await chatService.sendMessage(messageText, optimisticMsg.reply_to?.id, token, optimisticMsg.reply_to_suggestion?.id);
+      const res = await chatService.sendMessage(
+        messageText,
+        optimisticMsg.reply_to?.id,
+        token,
+        optimisticMsg.reply_to_suggestion?.id,
+        media
+      );
       const data = await res.json();
       if (res.ok) {
         playChatSound('send');

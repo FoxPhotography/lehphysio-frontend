@@ -8,14 +8,33 @@ export const chatService = {
     return res;
   },
 
-  async sendMessage(message: string, replyToId?: number | null, token?: string, replyToSuggestionId?: number | null) {
+  async sendMessage(
+    message: string,
+    replyToId?: number | null,
+    token?: string,
+    replyToSuggestionId?: number | null,
+    media?: { image_url?: string | null; audio_url?: string | null; audio_duration?: number }
+  ) {
     const res = await apiFetch('/api/chat', {
       method: 'POST',
       body: JSON.stringify({
         message,
         reply_to: replyToId || null,
-        reply_to_suggestion_id: replyToSuggestionId || null
+        reply_to_suggestion_id: replyToSuggestionId || null,
+        image_url: media?.image_url || null,
+        audio_url: media?.audio_url || null,
+        audio_duration: media?.audio_duration || 0,
       }),
+    }, token);
+    return res;
+  },
+
+  async uploadAudio(blob: Blob, filename: string, token?: string) {
+    const formData = new FormData();
+    formData.append('audio', blob, filename);
+    const res = await apiFetch('/api/upload/audio', {
+      method: 'POST',
+      body: formData,
     }, token);
     return res;
   },

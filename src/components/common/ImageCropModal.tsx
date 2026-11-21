@@ -5,15 +5,17 @@ import { Check, Loader2, RotateCcw, X } from 'lucide-react';
 import { getCroppedImageFile } from '../../utils/cropImage';
 
 const ASPECTS = [
+  { label: 'أصلي', value: 'original' as const },
   { label: '1:1', value: 1 },
-  { label: '16:9', value: 16 / 9 },
-  { label: '5:4', value: 5 / 4 },
   { label: '4:5', value: 4 / 5 },
+  { label: '16:9', value: 16 / 9 },
+  { label: '9:16', value: 9 / 16 },
 ] as const;
 
 interface ImageCropModalProps {
   imageSrc: string | null;
   fileName?: string;
+  defaultOriginal?: boolean;
   onCancel: () => void;
   onComplete: (file: File) => void | Promise<void>;
   onError?: (message: string) => void;
@@ -22,23 +24,27 @@ interface ImageCropModalProps {
 export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   imageSrc,
   fileName,
+  defaultOriginal = false,
   onCancel,
   onComplete,
   onError,
 }) => {
-  const [aspect, setAspect] = useState(1);
+  const [selectedAspectKey, setSelectedAspectKey] = useState<'original' | number>(defaultOriginal ? 'original' : 1);
+  const [naturalAspect, setNaturalAspect] = useState(1);
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  const aspect = selectedAspectKey === 'original' ? naturalAspect : selectedAspectKey;
+
   useEffect(() => {
     if (!imageSrc) return;
-    setAspect(1);
+    setSelectedAspectKey(defaultOriginal ? 'original' : 1);
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setCroppedAreaPixels(null);
-  }, [imageSrc]);
+  }, [imageSrc, defaultOriginal]);
 
   if (!imageSrc) return null;
 
@@ -81,6 +87,11 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
             zoom={zoom}
             aspect={aspect}
             objectFit="contain"
+            onMediaLoaded={(media) => {
+              if (media.naturalWidth && media.naturalHeight) {
+                setNaturalAspect(media.naturalWidth / media.naturalHeight);
+              }
+            }}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)}
@@ -94,11 +105,11 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                 key={option.label}
                 type="button"
                 onClick={() => {
-                  setAspect(option.value);
+                  setSelectedAspectKey(option.value);
                   setCrop({ x: 0, y: 0 });
                 }}
-                className={`rounded-xl border px-4 py-2 text-xs font-black transition-colors ${
-                  aspect === option.value
+                className={`rounded-xl border px-3.5 py-2 text-xs font-black transition-colors cursor-pointer ${
+                  selectedAspectKey === option.value
                     ? 'border-brand-orange bg-brand-orange/15 text-brand-orange'
                     : 'border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-white'
                 }`}

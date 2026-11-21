@@ -97,6 +97,9 @@ export interface ChatMessage {
   avatar_url: string | null;
   equipped_frame: string;
   message: string;
+  image_url?: string | null;
+  audio_url?: string | null;
+  audio_duration?: number;
   timestamp: string;
   reply_to?: {
     id: number;

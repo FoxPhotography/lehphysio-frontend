@@ -34,10 +34,16 @@ import {
   SmilePlus,
   Lock,
   ImagePlus,
+  Mic,
   VolumeX
 } from 'lucide-react';
 import { useCountdown } from '../utils/countdown';
 import { EmojiPickerPopover } from '../components/common/EmojiPickerPopover';
+import { ImageCropModal } from '../components/common/ImageCropModal';
+import { VoiceNoteRecorder } from '../components/chat/VoiceNoteRecorder';
+import { VoiceNotePlayer } from '../components/chat/VoiceNotePlayer';
+import { chatService } from '../services/chatService';
+import { API_BASE } from '../services/api';
 import { ReactionSummary, ReactionBurst, MessageActionOverlay, ReactionDetailsSheet, type MessageAction } from '../components/chat/ChatReactions';
 import { StreakBubbleLayers, StreakName, StreakFlame } from '../components/streak/Streak';
 import { getStreakTheme, streakVars } from '../utils/streakTheme';
@@ -68,7 +74,11 @@ interface CommunityProps {
   setEditingMessage: (val: any) => void;
   chatInput: string;
   setChatInput: (val: string | ((prev: string) => string)) => void;
-  handleSendChatMessage: (e: React.FormEvent, text?: string) => void;
+  handleSendChatMessage: (
+    e: React.FormEvent,
+    text?: string,
+    media?: { image_url?: string | null; audio_url?: string | null; audio_duration?: number }
+  ) => void;
   setCurrentPage: (page: string) => void;
   activeContextMenu: any;
   setActiveContextMenu: (val: any) => void;
@@ -263,8 +273,17 @@ export const Community: React.FC<CommunityProps> = ({
   // Emoji picker states
   const [reactionPickerMsgId, setReactionPickerMsgId] = useState<number | null>(null);
 
+  // Chat media states (Voice Note + Image Crop/Compress + Lightbox)
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [chatCropSrc, setChatCropSrc] = useState<string | null>(null);
+  const [chatCropFileName, setChatCropFileName] = useState<string>('chat-image.jpg');
+  const [pendingChatImage, setPendingChatImage] = useState<string | null>(null);
+  const [isUploadingChatImage, setIsUploadingChatImage] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const chatImageInputRef = useRef<HTMLInputElement | null>(null);
+
   // Reactions UX: double-tap ❤️, floating burst, "who reacted" sheet
-  const { showToast, changePage, fetchUserProfile } = useAuth();
+  const { showToast, changePage, fetchUserProfile, token } = useAuth();
   const isMuted = user?.is_muted === 1;
   const muteCountdown = useCountdown(isMuted ? user?.mute_expires_at : null, fetchUserProfile);
 
@@ -1212,14 +1231,49 @@ export const Community: React.FC<CommunityProps> = ({
                             </div>
                           )}
 
-                          <div className="relative z-10 flex flex-wrap items-end justify-between gap-x-3 gap-y-1 w-full min-w-0">
-                            {(() => {
-                              const inviteCode = parseGameInvite(msg.message);
-                              if (!inviteCode) return (
-                                <p dir={textDir(msg.message)} className="whitespace-pre-wrap break-words [word-break:break-word] [overflow-wrap:anywhere] leading-relaxed min-w-0 max-w-full">
-                                  {renderTextWithMentions(msg.message)}
-                                </p>
-                              );
+                          <div className="relative z-10 flex flex-col gap-2 w-full min-w-0">
+                            {msg.image_url && (
+                              <m.button
+                                type="button"
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.985 }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const raw = msg.image_url as string;
+                                  const src = raw.startsWith('http') || raw.startsWith('blob:') ? raw : `${API_BASE}${raw.startsWith('/') ? '' : '/'}${raw}`;
+                                  setLightboxImage(src);
+                                }}
+                                className="block relative overflow-hidden rounded-xl border border-black/15 max-w-[min(280px,72vw)] max-h-[320px] bg-black/20 cursor-zoom-in group/img"
+                              >
+                                <img
+                                  src={
+                                    msg.image_url.startsWith('http') || msg.image_url.startsWith('blob:')
+                                      ? msg.image_url
+                                      : `${API_BASE}${msg.image_url.startsWith('/') ? '' : '/'}${msg.image_url}`
+                                  }
+                                  alt="صورة في الدردشة"
+                                  loading="lazy"
+                                  className="w-full h-auto max-h-[320px] object-cover transition-transform duration-300 group-hover/img:scale-[1.02]"
+                                />
+                              </m.button>
+                            )}
+                            {msg.audio_url && (
+                              <VoiceNotePlayer
+                                src={msg.audio_url}
+                                durationHint={msg.audio_duration || 0}
+                                isMine={isMyMsg}
+                                fancyBubble={!!fancyBubble}
+                              />
+                            )}
+                            {msg.message && msg.message.trim().length > 0 && (
+                              <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1 w-full min-w-0">
+                                {(() => {
+                                  const inviteCode = parseGameInvite(msg.message);
+                                  if (!inviteCode) return (
+                                    <p dir={textDir(msg.message)} className="whitespace-pre-wrap break-words [word-break:break-word] [overflow-wrap:anywhere] leading-relaxed min-w-0 max-w-full">
+                                      {renderTextWithMentions(msg.message)}
+                                    </p>
+                                  );
                               const isClosed = !!closedRooms[inviteCode];
                               // Online challenge invite → a card you can join from directly
                               return (
@@ -1265,6 +1319,8 @@ export const Community: React.FC<CommunityProps> = ({
                                 </div>
                               );
                             })()}
+                            </div>
+                            )}
                             
                             <div className="flex items-center gap-1 shrink-0 text-2xs opacity-75 select-none pb-0.5 ms-auto self-end">
                               {!!msg.is_edited && <span>(متعدّلة)</span>}
@@ -1510,92 +1566,246 @@ export const Community: React.FC<CommunityProps> = ({
                     )}
                   </div>
                 ) : (
-                <form
-                  onSubmit={(e) => {
-                    handleSendChatMessage(e, draft);
-                    setDraft('');
-                    const el = document.getElementById('community-chat-input');
-                    if (el) el.style.height = 'auto';
-                  }}
-                  autoComplete="off"
-                  data-lpignore="true"
-                  data-form-type="other"
-                  className="flex gap-2.5 items-end py-2"
-                >
-                  <div className="flex-1 relative flex items-center bg-zinc-900/40 border border-zinc-800/80 focus-within:border-brand-orange/60 focus-within:ring-1 focus-within:ring-brand-orange/20 rounded-2xl transition-all duration-200 px-3.5 gap-2">
-                    <textarea
-                      id="community-chat-input"
-                      name="chatMessage"
-                      dir="auto"
-                      autoComplete="off"
-                      autoCorrect="on"
-                      autoCapitalize="sentences"
-                      spellCheck="true"
-                      inputMode="text"
-                      enterKeyHint="send"
-                      data-lpignore="true"
-                      data-1p-ignore="true"
-                      data-bwignore="true"
-                      data-form-type="other"
-                      className="w-full bg-transparent text-white py-2.5 text-xs md:text-sm font-semibold placeholder-zinc-500 outline-none resize-none min-h-[40px] max-h-[140px] leading-relaxed"
-                      placeholder={editingMessage ? "عدّل رسالتك هنا…" : "اكتب رسالة…"}
-                      value={draft}
-                      onChange={handleInputChange}
-                      onFocus={() => {
-                        setIsInputFocused(true);
-                      }}
-                      onBlur={() => setIsInputFocused(false)}
-                      onKeyDown={(e) => {
-                        const filteredMentions = getMentionSuggestions();
-                        const filteredTags = filterChatTags(hashSearch);
+                <AnimatePresence mode="wait">
+                  {isRecordingVoice ? (
+                    <m.div
+                      key="voice-recorder"
+                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                      className="py-2"
+                    >
+                      <VoiceNoteRecorder
+                        onCancel={() => setIsRecordingVoice(false)}
+                        onError={(msg) => {
+                          showToast(msg);
+                          setIsRecordingVoice(false);
+                        }}
+                        onSend={async (audioBlob, durationSec, mimeType) => {
+                          if (!token) {
+                            showToast('سجّل دخول عشان تبعت فويس نوت 🔐');
+                            return;
+                          }
+                          const ext = mimeType.includes('mp4') ? 'm4a' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+                          const uploadedUrl = await chatService.uploadAudio(audioBlob, `voice-${Date.now()}.${ext}`, token);
+                          const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+                          handleSendChatMessage(syntheticEvent, '', {
+                            audio_url: uploadedUrl,
+                            audio_duration: durationSec,
+                          });
+                          setIsRecordingVoice(false);
+                        }}
+                      />
+                    </m.div>
+                  ) : (
+                    <m.div
+                      key="text-composer"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 6 }}
+                      transition={{ duration: 0.16 }}
+                    >
+                      {(pendingChatImage || isUploadingChatImage) && (
+                        <m.div
+                          initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                          className="pt-2 pb-1 flex items-center gap-2.5"
+                        >
+                          <div className="relative inline-flex items-center gap-2.5 p-1.5 pr-2.5 rounded-2xl bg-zinc-900/90 border border-zinc-800 shadow-lg">
+                            {isUploadingChatImage ? (
+                              <div className="w-14 h-14 rounded-xl bg-zinc-800 flex items-center justify-center text-brand-orange text-[10px] font-black text-center px-1">
+                                جاري الضغط...
+                              </div>
+                            ) : (
+                              <img
+                                src={
+                                  pendingChatImage?.startsWith('http') || pendingChatImage?.startsWith('blob:')
+                                    ? pendingChatImage
+                                    : `${API_BASE}${pendingChatImage?.startsWith('/') ? '' : '/'}${pendingChatImage}`
+                                }
+                                alt="معاينة الصورة"
+                                className="w-14 h-14 rounded-xl object-cover border border-white/10"
+                              />
+                            )}
+                            <span className="text-[11px] font-bold text-zinc-300 max-w-[140px] truncate">
+                              {isUploadingChatImage ? 'بنجهّز الصورة…' : 'صورة جاهزة للإرسال'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setPendingChatImage(null)}
+                              className="w-6 h-6 rounded-full bg-zinc-800 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer"
+                              aria-label="إزالة الصورة"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </m.div>
+                      )}
 
-                        if (showHashSuggestions && filteredTags.length > 0) {
-                          if (e.key === 'ArrowDown') {
-                            e.preventDefault();
-                            setActiveHashIdx(prev => (prev + 1) % filteredTags.length);
-                          } else if (e.key === 'ArrowUp') {
-                            e.preventDefault();
-                            setActiveHashIdx(prev => (prev - 1 + filteredTags.length) % filteredTags.length);
-                          } else if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleSelectHashTag(filteredTags[activeHashIdx].tag);
-                          } else if (e.key === 'Escape') {
-                            e.preventDefault();
-                            setShowHashSuggestions(false);
-                          }
-                        } else if (showMentionSuggestions && filteredMentions.length > 0) {
-                          if (e.key === 'ArrowDown') {
-                            e.preventDefault();
-                            setActiveSuggestionIdx(prev => (prev + 1) % filteredMentions.length);
-                          } else if (e.key === 'ArrowUp') {
-                            e.preventDefault();
-                            setActiveSuggestionIdx(prev => (prev - 1 + filteredMentions.length) % filteredMentions.length);
-                          } else if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleSelectMention(filteredMentions[activeSuggestionIdx].username);
-                          } else if (e.key === 'Escape') {
-                            e.preventDefault();
-                            setShowMentionSuggestions(false);
-                          }
-                        } else {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            const form = e.currentTarget.form;
-                            if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-                          }
-                        }
-                      }}
-                      rows={1}
-                    />
-                  </div>
-                  <button 
-                    type="submit" 
-                    className="w-10 h-10 rounded-2xl bg-gradient-to-r from-brand-orange to-brand-amber text-black flex items-center justify-center hover:scale-105 active:scale-95 cursor-pointer shadow-md hover:shadow-brand-orange/20 shrink-0 transition-all duration-200"
-                    onMouseDown={(e) => e.preventDefault()}
-                  >
-                    {editingMessage ? <Check className="w-5 h-5 stroke-[2.5]" /> : <Send className="rtl:-scale-x-100 w-4.5 h-4.5 stroke-[2.5] translate-x-0.5" />}
-                  </button>
-                </form>
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (isUploadingChatImage) return;
+                          if (!draft.trim() && !pendingChatImage && !editingMessage) return;
+                          handleSendChatMessage(
+                            e,
+                            draft,
+                            pendingChatImage ? { image_url: pendingChatImage } : undefined
+                          );
+                          setDraft('');
+                          setPendingChatImage(null);
+                          const el = document.getElementById('community-chat-input');
+                          if (el) el.style.height = 'auto';
+                        }}
+                        autoComplete="off"
+                        data-lpignore="true"
+                        data-form-type="other"
+                        className="flex gap-2.5 items-end py-2"
+                      >
+                        <input
+                          ref={chatImageInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            e.target.value = '';
+                            if (!file) return;
+                            setChatCropFileName(file.name || 'chat-image.jpg');
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              if (typeof reader.result === 'string') {
+                                setChatCropSrc(reader.result);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+
+                        <div className="flex-1 relative flex items-end bg-zinc-900/50 border border-zinc-800/80 focus-within:border-brand-orange/60 focus-within:ring-1 focus-within:ring-brand-orange/20 rounded-2xl transition-all duration-200 px-2.5 gap-1.5">
+                          {!editingMessage && (
+                            <m.button
+                              type="button"
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => chatImageInputRef.current?.click()}
+                              disabled={isUploadingChatImage}
+                              title="إرسال صورة"
+                              aria-label="إرسال صورة"
+                              className="w-9 h-9 mb-0.5 rounded-xl text-zinc-400 hover:text-brand-orange hover:bg-brand-orange/10 flex items-center justify-center shrink-0 transition-colors cursor-pointer disabled:opacity-40"
+                            >
+                              <ImagePlus className="w-4.5 h-4.5" />
+                            </m.button>
+                          )}
+                          <textarea
+                            id="community-chat-input"
+                            name="chatMessage"
+                            dir="auto"
+                            autoComplete="off"
+                            autoCorrect="on"
+                            autoCapitalize="sentences"
+                            spellCheck="true"
+                            inputMode="text"
+                            enterKeyHint="enter"
+                            data-lpignore="true"
+                            data-1p-ignore="true"
+                            data-bwignore="true"
+                            data-form-type="other"
+                            className="w-full bg-transparent text-white py-2.5 text-xs md:text-sm font-semibold placeholder-zinc-500 outline-none resize-none min-h-[40px] max-h-[140px] leading-relaxed"
+                            placeholder={editingMessage ? "عدّل رسالتك هنا…" : "اكتب رسالة…"}
+                            value={draft}
+                            onChange={handleInputChange}
+                            onFocus={() => {
+                              setIsInputFocused(true);
+                            }}
+                            onBlur={() => setIsInputFocused(false)}
+                            onKeyDown={(e) => {
+                              const filteredMentions = getMentionSuggestions();
+                              const filteredTags = filterChatTags(hashSearch);
+
+                              if (showHashSuggestions && filteredTags.length > 0) {
+                                if (e.key === 'ArrowDown') {
+                                  e.preventDefault();
+                                  setActiveHashIdx(prev => (prev + 1) % filteredTags.length);
+                                } else if (e.key === 'ArrowUp') {
+                                  e.preventDefault();
+                                  setActiveHashIdx(prev => (prev - 1 + filteredTags.length) % filteredTags.length);
+                                } else if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSelectHashTag(filteredTags[activeHashIdx].tag);
+                                } else if (e.key === 'Escape') {
+                                  e.preventDefault();
+                                  setShowHashSuggestions(false);
+                                }
+                              } else if (showMentionSuggestions && filteredMentions.length > 0) {
+                                if (e.key === 'ArrowDown') {
+                                  e.preventDefault();
+                                  setActiveSuggestionIdx(prev => (prev + 1) % filteredMentions.length);
+                                } else if (e.key === 'ArrowUp') {
+                                  e.preventDefault();
+                                  setActiveSuggestionIdx(prev => (prev - 1 + filteredMentions.length) % filteredMentions.length);
+                                } else if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSelectMention(filteredMentions[activeSuggestionIdx].username);
+                                } else if (e.key === 'Escape') {
+                                  e.preventDefault();
+                                  setShowMentionSuggestions(false);
+                                }
+                              } else {
+                                const isTouchDevice =
+                                  typeof window !== 'undefined' &&
+                                  window.matchMedia?.('(pointer: coarse)').matches;
+                                if (e.key === 'Enter' && !e.shiftKey && !isTouchDevice) {
+                                  e.preventDefault();
+                                  const form = e.currentTarget.form;
+                                  if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                                }
+                              }
+                            }}
+                            rows={1}
+                          />
+                        </div>
+
+                        {!draft.trim() && !pendingChatImage && !editingMessage ? (
+                          <m.button
+                            key="mic-btn"
+                            type="button"
+                            initial={{ scale: 0.85, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.85, opacity: 0 }}
+                            whileHover={{ scale: 1.06 }}
+                            whileTap={{ scale: 0.92 }}
+                            transition={{ type: 'spring', stiffness: 460, damping: 26 }}
+                            onClick={() => setIsRecordingVoice(true)}
+                            onMouseDown={(e) => e.preventDefault()}
+                            title="تسجيل رسالة صوتية"
+                            aria-label="تسجيل رسالة صوتية"
+                            className="w-10 h-10 rounded-2xl bg-zinc-900 border border-brand-orange/40 text-brand-orange hover:bg-brand-orange/15 flex items-center justify-center cursor-pointer shadow-md shrink-0 transition-colors"
+                          >
+                            <Mic className="w-4.5 h-4.5 stroke-[2.3]" />
+                          </m.button>
+                        ) : (
+                          <m.button
+                            key="send-btn"
+                            type="submit"
+                            initial={{ scale: 0.85, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.85, opacity: 0 }}
+                            whileHover={{ scale: 1.06 }}
+                            whileTap={{ scale: 0.92 }}
+                            transition={{ type: 'spring', stiffness: 460, damping: 26 }}
+                            disabled={isUploadingChatImage}
+                            className="w-10 h-10 rounded-2xl bg-gradient-to-r from-brand-orange to-brand-amber text-black flex items-center justify-center cursor-pointer shadow-md hover:shadow-brand-orange/25 shrink-0 transition-shadow disabled:opacity-50"
+                            onMouseDown={(e) => e.preventDefault()}
+                          >
+                            {editingMessage ? <Check className="w-5 h-5 stroke-[2.5]" /> : <Send className="rtl:-scale-x-100 w-4.5 h-4.5 stroke-[2.5] translate-x-0.5" />}
+                          </m.button>
+                        )}
+                      </form>
+                    </m.div>
+                  )}
+                </AnimatePresence>
                 )
               ) : (
                 <div className="text-zinc-500 text-xs font-bold text-center py-2 uppercase tracking-wide">
@@ -2065,6 +2275,67 @@ export const Community: React.FC<CommunityProps> = ({
         }}
         position="centered"
       />
+
+      {/* Chat Image Cropper (with compression + any aspect ratio) */}
+      <ImageCropModal
+        imageSrc={chatCropSrc}
+        fileName={chatCropFileName}
+        defaultOriginal={true}
+        onCancel={() => setChatCropSrc(null)}
+        onError={(errMsg) => showToast(errMsg)}
+        onComplete={async (croppedFile) => {
+          setChatCropSrc(null);
+          if (!handleUploadImage) {
+            showToast('رفع الصور مش متاح دلوقتي');
+            return;
+          }
+          setIsUploadingChatImage(true);
+          try {
+            const url = await handleUploadImage(croppedFile);
+            if (url) {
+              setPendingChatImage(url);
+            } else {
+              showToast('معرفناش نرفع الصورة، جرب تاني');
+            }
+          } catch {
+            showToast('حصلت مشكلة أثناء ضغط ورفع الصورة');
+          } finally {
+            setIsUploadingChatImage(false);
+          }
+        }}
+      />
+
+      {/* Chat Image Lightbox */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <m.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+            className="fixed inset-0 z-[130] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out"
+          >
+            <button
+              type="button"
+              onClick={() => setLightboxImage(null)}
+              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-zinc-900/80 border border-white/10 text-white flex items-center justify-center hover:bg-zinc-800 transition-colors cursor-pointer"
+              aria-label="إغلاق الصورة"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <m.img
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 360, damping: 28 }}
+              src={lightboxImage}
+              alt="عرض الصورة"
+              onClick={(e) => e.stopPropagation()}
+              className="max-w-full max-h-[88vh] rounded-2xl object-contain shadow-2xl border border-white/10 cursor-default"
+            />
+          </m.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
