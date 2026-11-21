@@ -10,7 +10,6 @@ interface SudokuPuzzle {
   pearl: string;
   solution: number[]; // 36 cells (6x6)
   givens: number[];   // indices prefilled
-  boxLetters: string[]; // 6 strings corresponding to the 6 (2x3) boxes
 }
 
 const PUZZLES: SudokuPuzzle[] = [
@@ -27,7 +26,6 @@ const PUZZLES: SudokuPuzzle[] = [
       6, 1, 2, 3, 4, 5,
     ],
     givens: [0, 2, 4, 7, 9, 11, 13, 15, 18, 20, 22, 25, 27, 29, 30, 32, 34, 35],
-    boxLetters: ['OB', 'TU', 'RA', 'T', 'O', 'R'],
   },
   {
     id: 'sartorius',
@@ -42,7 +40,6 @@ const PUZZLES: SudokuPuzzle[] = [
       5, 1, 3, 6, 2, 4,
     ],
     givens: [0, 3, 5, 6, 8, 10, 13, 14, 17, 19, 21, 24, 26, 28, 31, 33, 35],
-    boxLetters: ['SA', 'RT', 'OR', 'I', 'U', 'S'],
   },
   {
     id: 'piriformis',
@@ -57,17 +54,9 @@ const PUZZLES: SudokuPuzzle[] = [
       6, 4, 2, 5, 3, 1,
     ],
     givens: [1, 2, 4, 6, 9, 11, 12, 15, 16, 19, 21, 23, 24, 27, 29, 30, 32, 34],
-    boxLetters: ['PI', 'RI', 'FO', 'RM', 'I', 'S'],
   },
 ];
 
-// 6x6 has 6 boxes of 2 rows x 3 cols:
-// box 0: rows 0-1, cols 0-2
-// box 1: rows 0-1, cols 3-5
-// box 2: rows 2-3, cols 0-2
-// box 3: rows 2-3, cols 3-5
-// box 4: rows 4-5, cols 0-2
-// box 5: rows 4-5, cols 3-5
 function getBoxCells(boxIdx: number): number[] {
   const boxRow = Math.floor(boxIdx / 2) * 2;
   const boxCol = (boxIdx % 2) * 3;
@@ -78,6 +67,20 @@ function getBoxCells(boxIdx: number): number[] {
     }
   }
   return indices;
+}
+
+// Randomly distributes & scrambles the letters of `word` across 6 boxes so the player must unscramble them
+function buildScrambledBoxLetters(word: string): string[] {
+  const chars = word.split('');
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  const boxes = ['', '', '', '', '', ''];
+  chars.forEach((ch, idx) => {
+    boxes[idx % 6] += ch;
+  });
+  return boxes;
 }
 
 interface AnatomySudokuGameProps {
@@ -93,7 +96,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
   onWin,
   dailyPlaysCount,
   maxDailyPlays = 3,
-  xpReward = 500,
+  xpReward = 150,
 }) => {
   const [puzzleIdx, setPuzzleIdx] = useState(0);
   const puzzle = PUZZLES[puzzleIdx];
@@ -101,6 +104,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
   const [board, setBoard] = useState<(number | null)[]>(() =>
     puzzle.solution.map((val, idx) => (puzzle.givens.includes(idx) ? val : null))
   );
+  const [boxLetters, setBoxLetters] = useState<string[]>(() => buildScrambledBoxLetters(puzzle.word));
   const [selectedCell, setSelectedCell] = useState<number | null>(null);
   const [wordGuess, setWordGuess] = useState('');
   const [wordError, setWordError] = useState('');
@@ -110,13 +114,13 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
     const p = PUZZLES[idx];
     setPuzzleIdx(idx);
     setBoard(p.solution.map((val, i) => (p.givens.includes(i) ? val : null)));
+    setBoxLetters(buildScrambledBoxLetters(p.word));
     setSelectedCell(null);
     setWordGuess('');
     setWordError('');
     setHasWon(false);
   };
 
-  // Check which of the 6 boxes are completely and correctly solved
   const solvedBoxes = useMemo(() => {
     return [0, 1, 2, 3, 4, 5].map((bIdx) => {
       const cells = getBoxCells(bIdx);
@@ -133,6 +137,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
     setBoard(next);
     if (num === puzzle.solution[selectedCell]) {
       playChatSound('success');
+      setSelectedCell(null);
     } else {
       playChatSound('error');
     }
@@ -147,7 +152,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
     const next = [...board];
     next[pick] = puzzle.solution[pick];
     setBoard(next);
-    setSelectedCell(pick);
+    setSelectedCell(null);
     playChatSound('success');
   };
 
@@ -162,7 +167,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
       onWin();
     } else {
       playChatSound('error');
-      setWordError('الكلمة مش مظبوطة! رتب الحروف اللي ظهرت من المربعات كويس.');
+      setWordError('الكلمة مش مظبوطة! رتب الحروف العشوائية كويس واكتب المصطلح الصح.');
     }
   };
 
@@ -209,20 +214,20 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
           </div>
         </div>
 
-        {/* Unlocked Box Letters Bar */}
+        {/* Scrambled Box Letters Bar */}
         <div className="mb-4 p-3 rounded-2xl bg-black/40 border border-white/10">
           <span className="text-[11px] font-bold text-zinc-400 block mb-2 text-center">
-            كل مربع (2×3) يكمل بيكشفلك حروف من المصطلح السري:
+            كل مربع (2×3) يكمل بيكشفلك حروف عشوائية من المصطلح السري ({puzzle.word.length} حروف):
           </span>
           <div className="grid grid-cols-6 gap-1.5" dir="ltr">
-            {puzzle.boxLetters.map((letters, bIdx) => {
+            {boxLetters.map((letters, bIdx) => {
               const unlocked = solvedBoxes[bIdx];
               return (
                 <div
                   key={bIdx}
-                  className={`py-2 rounded-xl border text-center font-black text-xs transition-all ${
+                  className={`py-2 rounded-xl border text-center font-black text-xs tracking-wider transition-all ${
                     unlocked
-                      ? 'bg-purple-500/25 border-purple-400 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.3)]'
+                      ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-200 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
                       : 'bg-zinc-900/80 border-zinc-800 text-zinc-600'
                   }`}
                 >
@@ -233,40 +238,51 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
           </div>
         </div>
 
-        {/* 6x6 Sudoku Grid */}
+        {/* 6x6 Sudoku Grid rendered as 6 equal 2x3 boxes */}
         <div className="flex justify-center mb-4" dir="ltr">
-          <div className="grid grid-cols-6 gap-1 p-2 rounded-2xl bg-zinc-950 border border-white/10 w-full max-w-[330px]">
-            {board.map((val, idx) => {
-              const r = Math.floor(idx / 6);
-              const c = idx % 6;
-              const isGiven = puzzle.givens.includes(idx);
-              const isSelected = selectedCell === idx;
-              const isCorrect = val !== null && val === puzzle.solution[idx];
-              const isWrong = val !== null && val !== puzzle.solution[idx];
-
-              const borderRight = c === 2 ? 'me-1.5' : '';
-              const borderBottom = r === 1 || r === 3 ? 'mb-1.5' : '';
-
+          <div className="grid grid-cols-2 gap-2 p-2.5 rounded-2xl bg-zinc-950 border border-white/10 w-full max-w-[340px]">
+            {[0, 1, 2, 3, 4, 5].map((bIdx) => {
+              const cells = getBoxCells(bIdx);
+              const boxSolved = solvedBoxes[bIdx];
               return (
-                <button
-                  key={idx}
-                  type="button"
-                  disabled={isGiven || hasWon}
-                  onClick={() => setSelectedCell(idx)}
-                  className={`aspect-square rounded-lg font-black text-sm flex items-center justify-center border transition-all ${borderRight} ${borderBottom} ${
-                    isGiven
-                      ? 'bg-zinc-800/80 border-zinc-700 text-zinc-300 cursor-default'
-                      : isSelected
-                        ? 'bg-purple-500/30 border-purple-400 text-white ring-2 ring-purple-400/50 cursor-pointer'
-                        : isWrong
-                          ? 'bg-red-500/20 border-red-500/60 text-red-300 cursor-pointer'
-                          : isCorrect
-                            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 cursor-pointer'
-                            : 'bg-zinc-900/90 border-zinc-800 text-white hover:border-zinc-600 cursor-pointer'
+                <div
+                  key={bIdx}
+                  className={`grid grid-cols-3 gap-1 p-1.5 rounded-xl border transition-colors ${
+                    boxSolved
+                      ? 'bg-emerald-500/10 border-emerald-500/35'
+                      : 'bg-zinc-900/40 border-white/5'
                   }`}
                 >
-                  {val ?? ''}
-                </button>
+                  {cells.map((idx) => {
+                    const val = board[idx];
+                    const isGiven = puzzle.givens.includes(idx);
+                    const isSelected = selectedCell === idx;
+                    const isCorrect = val !== null && val === puzzle.solution[idx];
+                    const isWrong = val !== null && val !== puzzle.solution[idx];
+
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        disabled={isGiven || hasWon}
+                        onClick={() => setSelectedCell(idx)}
+                        className={`aspect-square w-full rounded-lg font-black text-sm flex items-center justify-center border transition-all ${
+                          isGiven
+                            ? 'bg-zinc-800/85 border-zinc-700 text-zinc-300 cursor-default'
+                            : isCorrect
+                              ? `bg-emerald-500/20 border-emerald-400/70 text-emerald-300 cursor-pointer ${isSelected ? 'ring-2 ring-white/70' : ''}`
+                              : isWrong
+                                ? `bg-red-500/20 border-red-500/70 text-red-300 cursor-pointer ${isSelected ? 'ring-2 ring-red-400' : ''}`
+                                : isSelected
+                                  ? 'bg-purple-500/30 border-purple-400 text-white ring-2 ring-purple-400/60 cursor-pointer'
+                                  : 'bg-zinc-900/90 border-zinc-800 text-white hover:border-zinc-600 cursor-pointer'
+                        }`}
+                      >
+                        {val ?? ''}
+                      </button>
+                    );
+                  })}
+                </div>
               );
             })}
           </div>
@@ -274,7 +290,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
 
         {/* Number Pad + Hint */}
         {!allBoxesSolved && (
-          <div className="space-y-2.5 max-w-[330px] mx-auto">
+          <div className="space-y-2.5 max-w-[340px] mx-auto">
             <div className="grid grid-cols-6 gap-1.5" dir="ltr">
               {[1, 2, 3, 4, 5, 6].map((n) => (
                 <button
@@ -312,10 +328,10 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             onSubmit={handleSubmitWord}
-            className="mt-4 p-4 rounded-2xl bg-purple-500/10 border border-purple-400/40 space-y-3"
+            className="mt-4 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-400/40 space-y-3"
           >
-            <p className="text-xs font-black text-purple-200 text-center">
-              🎉 كملت السودوكو! جمّع الحروف واكتب المصطلح الطبي:
+            <p className="text-xs font-black text-emerald-200 text-center">
+              🎉 كملت السودوكو! رتّب الحروف العشوائية واكتب المصطلح الطبي:
             </p>
             <input
               type="text"
@@ -323,13 +339,13 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
               value={wordGuess}
               onChange={(e) => setWordGuess(e.target.value)}
               placeholder="اكتب الكلمة بالإنجليزي..."
-              className="w-full bg-zinc-950 border border-purple-400/50 rounded-xl px-4 py-2.5 text-center font-black text-sm text-white uppercase tracking-widest outline-none focus:ring-2 focus:ring-purple-400/40"
+              className="w-full bg-zinc-950 border border-emerald-400/50 rounded-xl px-4 py-2.5 text-center font-black text-sm text-white uppercase tracking-widest outline-none focus:ring-2 focus:ring-emerald-400/40"
               required
             />
             {wordError && <p className="text-xs font-bold text-red-400 text-center">{wordError}</p>}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-black text-xs py-2.5 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all"
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black text-xs py-2.5 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all"
             >
               تأكيد الكلمة واكسب +{xpReward} XP ⚡
             </button>

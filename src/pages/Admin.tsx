@@ -1731,20 +1731,38 @@ export const Admin: React.FC<AdminProps> = ({
 
 // ─── XP Settings Manager Sub-Component ────────────────────────────────────────
 const XP_SETTING_METADATA: Record<string, { label: string; desc: string; icon: React.ReactNode }> = {
-  like:          { label: 'Episode / Post Like',  desc: 'XP awarded for liking an episode or community post.',           icon: <ThumbsUp  className="w-4 h-4" /> },
-  comment:       { label: 'Comment Made',         desc: 'XP awarded for adding a comment on an episode or post.',        icon: <Settings  className="w-4 h-4" /> },
-  share:         { label: 'Share Link Created',   desc: 'XP awarded to user when they generate a share link.',           icon: <Settings  className="w-4 h-4" /> },
-  comment_like:  { label: 'Comment Liked',        desc: 'XP awarded for liking someone else\'s comment.',               icon: <ThumbsUp  className="w-4 h-4" /> },
-  daily_login:   { label: 'Daily Login Reward',   desc: 'XP awarded for logging in each day.',                          icon: <CheckCircle className="w-4 h-4" /> },
-  streak_bonus:  { label: '7-Day Streak Bonus',   desc: 'Extra XP awarded when user reaches a 7-day login streak.',     icon: <Settings  className="w-4 h-4" /> },
-  game_play:     { label: 'Memory Game Play',     desc: 'XP awarded for completing the single-player match game (Limit: 3 daily rewarded wins).',       icon: <Settings  className="w-4 h-4" /> },
-  referral:      { label: 'Shared Link Visit',    desc: 'XP awarded when a visitor visits user\'s shared link.',        icon: <Users     className="w-4 h-4" /> },
-  surprise_box:  { label: 'Surprise Box Claim',   desc: 'XP awarded when opening the daily surprise box.',              icon: <Settings  className="w-4 h-4" /> },
-  poll_vote:     { label: 'Daily Poll Vote',      desc: 'XP awarded for voting in the daily dashboard poll.',            icon: <CheckCircle className="w-4 h-4" /> },
-  quiz_solve:    { label: 'Quiz Solved',          desc: 'Fallback XP for solving an episode quiz.',                     icon: <CheckCircle className="w-4 h-4" /> },
-  question_of_the_day_correct: { label: 'Question Of The Day Correct', desc: 'XP awarded for answering the daily question correctly.', icon: <CheckCircle className="w-4 h-4" /> },
-  question_of_the_day_wrong:   { label: 'Question Of The Day Wrong',   desc: 'XP awarded for answering the daily question incorrectly.', icon: <XCircle className="w-4 h-4" /> },
-  suggestion_create:           { label: 'Suggestion Submitted',        desc: 'XP awarded for submitting a new suggestion or feedback.',   icon: <Lightbulb className="w-4 h-4" /> },
+  // التفاعل والمجتمع
+  like:                        { label: 'إعجاب بحلقة أو بوست',            desc: 'النقاط المضافة عند الضغط على إعجاب.',                          icon: <ThumbsUp className="w-4 h-4" /> },
+  comment:                     { label: 'كتابة تعليق',                    desc: 'النقاط المضافة عند إضافة تعليق جديد.',                         icon: <Settings className="w-4 h-4" /> },
+  share:                       { label: 'إنشاء رابط مشاركة',              desc: 'النقاط المضافة عند نسخ رابط مشاركة حلقة أو بوست.',             icon: <Settings className="w-4 h-4" /> },
+  comment_like:                { label: 'إعجاب بتعليق',                  desc: 'النقاط المضافة عند الإعجاب بتعليق زميل.',                      icon: <ThumbsUp className="w-4 h-4" /> },
+  referral:                    { label: 'زيارة رابط مشاركة',              desc: 'النقاط المضافة لصاحب الرابط عند دخول زائر من خلاله.',           icon: <Users className="w-4 h-4" /> },
+  suggestion_create:           { label: 'تقديم اقتراح جديد',              desc: 'النقاط المضافة عند إرسال فكرة أو اقتراح في المجتمع.',           icon: <Lightbulb className="w-4 h-4" /> },
+
+  // الحلقات والأسئلة اليومية
+  quiz_solve:                  { label: 'حل كويز الحلقة (افتراضي)',       desc: 'القيمة الافتراضية عند حل كويز حلقة بنجاح.',                    icon: <CheckCircle className="w-4 h-4" /> },
+  question_of_the_day_correct: { label: 'سؤال اليوم (إجابة صحيحة)',       desc: 'النقاط المضافة عند الإجابة الصحيحة على سؤال اليوم.',            icon: <CheckCircle className="w-4 h-4" /> },
+  question_of_the_day_wrong:   { label: 'سؤال اليوم (مشاركة خاطئة)',      desc: 'نقاط تشجيعية عند محاولة حل سؤال اليوم.',                        icon: <XCircle className="w-4 h-4" /> },
+  poll_vote:                   { label: 'التصويت في الاستطلاع اليومي',     desc: 'النقاط المضافة عند التصويت في استطلاع الرأي اليومي.',           icon: <CheckCircle className="w-4 h-4" /> },
+
+  // الدخول والستريك والصندوق العشوائي
+  daily_login:                 { label: 'الدخول اليومي (شرارة - يوم 1+)',  desc: 'النقاط اليومية الأساسية عند فتح التطبيق.',                     icon: <CheckCircle className="w-4 h-4" /> },
+  streak_bonus_3:              { label: 'بونص ستريك 3 أيام (اون فاير)',   desc: 'مكافأة إضافية عند الوصول لـ 3 أيام متواصلة.',                 icon: <Flame className="w-4 h-4" /> },
+  streak_bonus:                { label: 'بونص ستريك 7 أيام (بلازما)',     desc: 'مكافأة إضافية عند إتمام 7 أيام (ومضاعفاتها).',                icon: <Flame className="w-4 h-4" /> },
+  streak_bonus_15:             { label: 'بونص ستريك 15 يوم (سوبرنوفا)',   desc: 'مكافأة ضخمة عند الوصول لـ 15 يوم متواصل (ومضاعفاتها).',       icon: <Flame className="w-4 h-4" /> },
+  surprise_box_min:            { label: 'الصندوق اليومي — الحد الأدنى',    desc: 'أقل قيمة XP عشوائية تطلع من الصندوق اليومي.',                  icon: <Settings className="w-4 h-4" /> },
+  surprise_box_max:            { label: 'الصندوق اليومي — الحد الأقصى',    desc: 'أعلى قيمة XP عشوائية تطلع من الصندوق اليومي.',                 icon: <Settings className="w-4 h-4" /> },
+
+  // الألعاب الفردية
+  game_play:                   { label: 'لعبة توصيل التشريح (Memory)',     desc: 'مكافأة الفوز في لعبة الذاكرة (3 محاولات يومياً).',             icon: <Settings className="w-4 h-4" /> },
+  game_clinical:               { label: 'لعبة شخّص الحالة (Detective)',    desc: 'مكافأة الفوز في لعبة المحقق الإكلينيكي (3 محاولات يومياً).',   icon: <Settings className="w-4 h-4" /> },
+  game_osce:                   { label: 'سباق الـ Special Tests (OSCE)',   desc: 'مكافأة الفوز في تحدي الاختبارات الخاصة (3 محاولات يومياً).',   icon: <Settings className="w-4 h-4" /> },
+  game_nerve_path:             { label: 'لعبة مسار الأعصاب (Nerve Path)', desc: 'مكافأة توصيل المسار العصبي بنجاح (3 محاولات يومياً).',          icon: <Settings className="w-4 h-4" /> },
+  game_whos_responsible:       { label: 'لعبة مين المسؤول؟ (Kinesiology)', desc: 'مكافأة ربط الحركة بالعضلة والعصب (3 محاولات يومياً).',          icon: <Settings className="w-4 h-4" /> },
+  game_sudoku_1:               { label: 'سودوكو التشريح — المحاولة 1',    desc: 'مكافأة أول فوز يومي في سودوكو التشريح.',                       icon: <Settings className="w-4 h-4" /> },
+  game_sudoku_2:               { label: 'سودوكو التشريح — المحاولة 2',    desc: 'مكافأة ثاني فوز يومي في سودوكو التشريح.',                      icon: <Settings className="w-4 h-4" /> },
+  game_sudoku_3:               { label: 'سودوكو التشريح — المحاولة 3',    desc: 'مكافأة ثالث فوز يومي في سودوكو التشريح.',                      icon: <Settings className="w-4 h-4" /> },
+  game_wordle:                 { label: 'أكمل الجملة الطبية (Wordle)',     desc: 'مكافأة حل الجملة الطبية خلال 6 محاولات (3 محاولات يومياً).',    icon: <Settings className="w-4 h-4" /> },
 };
 
 const XpSettingsManager: React.FC<{
@@ -1754,12 +1772,13 @@ const XpSettingsManager: React.FC<{
   setAdminMessage: (msg: string) => void;
 }> = ({ token, apiBase, fetchXpSettings, setAdminMessage }) => {
   const [localSettings, setLocalSettings] = useState<any>({
-    like: 5, comment: 15, share: 25, comment_like: 2, daily_login: 10,
-    streak_bonus: 70, game_play: 50, referral: 25, surprise_box: 50,
-    poll_vote: 30, quiz_solve: 150,
-    question_of_the_day_correct: 50,
-    question_of_the_day_wrong: 10,
-    suggestion_create: 50,
+    like: 5, comment: 15, share: 25, comment_like: 2, referral: 25, suggestion_create: 50,
+    quiz_solve: 150, question_of_the_day_correct: 50, question_of_the_day_wrong: 10, poll_vote: 30,
+    daily_login: 10, streak_bonus_3: 30, streak_bonus: 70, streak_bonus_15: 200,
+    surprise_box_min: 50, surprise_box_max: 500,
+    game_play: 20, game_clinical: 100, game_osce: 200, game_nerve_path: 120,
+    game_whos_responsible: 150, game_sudoku_1: 150, game_sudoku_2: 300, game_sudoku_3: 500,
+    game_wordle: 150,
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);

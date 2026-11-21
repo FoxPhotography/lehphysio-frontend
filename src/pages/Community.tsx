@@ -1769,7 +1769,15 @@ export const Community: React.FC<CommunityProps> = ({
                   }
 
                   return (
-                    <div key={s.id} id={`suggestion-${s.id}`} className="glass-card p-4 border border-zinc-900/60 flex flex-col gap-2.5 text-start">
+                    <div
+                      key={s.id}
+                      id={`suggestion-${s.id}`}
+                      className={`glass-card p-4 flex flex-col gap-2.5 text-start transition-all ${
+                        s.is_implemented
+                          ? 'border-emerald-500/45 bg-emerald-500/[0.06] shadow-[0_0_24px_rgba(16,185,129,0.08)]'
+                          : 'border-zinc-900/60'
+                      }`}
+                    >
                       {isEditing ? (
                         <div className="flex flex-col gap-3">
                           <div>
@@ -1825,7 +1833,7 @@ export const Community: React.FC<CommunityProps> = ({
                             </div>
                             <div className="flex items-center gap-1.5 flex-wrap justify-end">
                               {s.is_implemented && (
-                                <span className="inline-flex items-center gap-1 text-2xs font-black px-2.5 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
+                                <span className="inline-flex items-center gap-1 text-2xs font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300">
                                   <Check className="w-3 h-3" /> تم التنفيذ
                                 </span>
                               )}

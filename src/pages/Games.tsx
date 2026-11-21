@@ -276,23 +276,23 @@ export const Games: React.FC<GamesProps> = ({
                   </span>
                 </div>
                 <div
-                  className="px-3.5 py-1.5 rounded-2xl border text-center flex items-center gap-2 transition-all"
+                  className="px-3.5 py-2 rounded-2xl border flex items-center gap-2.5 transition-all"
                   style={{
-                    backgroundColor: hasStreak ? `rgb(${st.glow} / 0.10)` : 'rgba(9, 9, 11, 0.8)',
+                    backgroundColor: hasStreak ? `rgb(${st.glow} / 0.12)` : 'rgba(9, 9, 11, 0.8)',
                     borderColor: hasStreak ? `rgb(${st.glow} / 0.38)` : 'rgba(255, 255, 255, 0.1)',
-                    boxShadow: hasStreak ? `0 0 18px rgb(${st.glow} / 0.18)` : undefined,
+                    boxShadow: hasStreak ? `0 0 18px rgb(${st.glow} / 0.16)` : undefined,
                   }}
                 >
-                  <StreakFlame days={streakDays} size={24} />
-                  <div className="text-start">
-                    <span className="block text-[10px] font-bold text-zinc-400 leading-tight">
-                      {hasStreak ? st.name : 'الستريك'}
+                  <StreakFlame days={streakDays} size={22} />
+                  <div className="text-start leading-tight">
+                    <span className="block text-[10px] font-bold text-zinc-400 whitespace-nowrap">
+                      الستريك{hasStreak ? ` · ${st.name}` : ''}
                     </span>
                     <span
-                      className="text-sm font-black font-mono tabular-nums leading-tight"
+                      className="block text-sm font-black whitespace-nowrap mt-0.5"
                       style={{ color: hasStreak ? st.text : '#a1a1aa' }}
                     >
-                      {streakDays}
+                      {streakDays > 0 ? (streakDays === 1 ? 'يوم واحد' : streakDays === 2 ? 'يومين' : streakDays > 10 ? `${streakDays} يوم` : `${streakDays} أيام`) : '0 أيام'}
                     </span>
                   </div>
                 </div>
@@ -444,7 +444,7 @@ export const Games: React.FC<GamesProps> = ({
                     onWin={() => claimGameXP(6)}
                     dailyPlaysCount={sudokuPlays}
                     maxDailyPlays={3}
-                    xpReward={500}
+                    xpReward={[150, 300, 500][Math.min(sudokuPlays, 2)]}
                   />
                 </Suspense>
               )}
@@ -746,7 +746,7 @@ export const Games: React.FC<GamesProps> = ({
                 <div className="relative space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-2xs font-black tracking-wider bg-purple-500/15 text-purple-300 px-2.5 py-1 rounded-lg border border-purple-500/25">
-                      جاكبوت · 500 XP
+                      تصاعدي · 150 → 300 → 500 XP
                     </span>
                     <div className="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/25 flex items-center justify-center text-purple-300">
                       <Zap className="w-5 h-5 fill-current" />
@@ -762,7 +762,7 @@ export const Games: React.FC<GamesProps> = ({
                 <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-extrabold text-purple-300 bg-purple-500/10 px-2.5 py-1 rounded-full">
-                      +500 XP
+                      +{[150, 300, 500][Math.min(sudokuPlays, 2)]} XP
                     </span>
                     <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
                       sudokuPlays >= 3 
