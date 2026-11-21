@@ -716,7 +716,7 @@ export const Games: React.FC<GamesProps> = ({
                 <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-extrabold text-emerald-300 bg-emerald-500/10 px-2.5 py-1 rounded-full">
-                      +150 XP
+                      +{xpSettings?.game_whos_responsible ?? 150} XP
                     </span>
                     <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
                       responsiblePlays >= 3 
@@ -746,7 +746,7 @@ export const Games: React.FC<GamesProps> = ({
                 <div className="relative space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-2xs font-black tracking-wider bg-purple-500/15 text-purple-300 px-2.5 py-1 rounded-lg border border-purple-500/25">
-                      تصاعدي · 150 → 300 → 500 XP
+                      تصاعدي · {xpSettings?.game_sudoku_1 ?? 150} → {xpSettings?.game_sudoku_2 ?? 300} → {xpSettings?.game_sudoku_3 ?? 500} XP
                     </span>
                     <div className="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/25 flex items-center justify-center text-purple-300">
                       <Zap className="w-5 h-5 fill-current" />
@@ -756,13 +756,13 @@ export const Games: React.FC<GamesProps> = ({
                     سودوكو التشريح
                   </h3>
                   <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                    كل مربع يكمل بيكشف حروف، وفي الآخر جمّع المصطلح الطبي السري واكسب 500 XP!
+                    كل مربع يكمل بيكشف حروف، وفي الآخر جمّع المصطلح الطبي السري واكسب لحد {xpSettings?.game_sudoku_3 ?? 500} XP!
                   </p>
                 </div>
                 <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-extrabold text-purple-300 bg-purple-500/10 px-2.5 py-1 rounded-full">
-                      +{[150, 300, 500][Math.min(sudokuPlays, 2)]} XP
+                      +{[xpSettings?.game_sudoku_1 ?? 150, xpSettings?.game_sudoku_2 ?? 300, xpSettings?.game_sudoku_3 ?? 500][Math.min(sudokuPlays, 2)]} XP
                     </span>
                     <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
                       sudokuPlays >= 3 
@@ -808,7 +808,7 @@ export const Games: React.FC<GamesProps> = ({
                 <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-extrabold text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-full">
-                      +150 XP
+                      +{xpSettings?.game_wordle ?? 150} XP
                     </span>
                     <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
                       wordlePlays >= 3 

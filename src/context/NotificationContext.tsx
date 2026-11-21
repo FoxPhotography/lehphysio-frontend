@@ -47,7 +47,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
 };
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, user, changePage, fetchUserProfile, showToast } = useAuth();
+  const { token, user, changePage, fetchUserProfile, showToast, setXpSettings } = useAuth();
   const socket = useSocket();
   const presenceCtx = usePresenceOptional();
   const myStatusRef = useRef(presenceCtx?.myStatus ?? 'online');
@@ -550,6 +550,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
     };
 
+    const handleXpSettingsUpdated = (newSettings: any) => {
+      if (newSettings && typeof newSettings === 'object') {
+        setXpSettings((prev) => ({ ...prev, ...newSettings }));
+      }
+    };
+
     socket.on('new_notification', handleNewNotification);
     socket.on('notification_created', handleNewNotification);
     socket.on('notification_removed', handleRemoved);
@@ -558,6 +564,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     socket.on('notification_read', handleNotificationRead);
     socket.on('notifications_all_read', handleAllRead);
     socket.on('user_moderation_updated', handleModUpdated);
+    socket.on('xp_settings_updated', handleXpSettingsUpdated);
 
     return () => {
       socket.off('new_notification', handleNewNotification);
@@ -568,6 +575,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       socket.off('notification_read', handleNotificationRead);
       socket.off('notifications_all_read', handleAllRead);
       socket.off('user_moderation_updated', handleModUpdated);
+      socket.off('xp_settings_updated', handleXpSettingsUpdated);
     };
   }, [socket, user?.id, activeFilter, unreadCount]);
 

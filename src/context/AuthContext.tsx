@@ -41,6 +41,7 @@ interface AuthContextType {
   xpPopups: any[];
   triggerXpPopup: (amount: number, fromSocket?: boolean) => void;
   xpSettings: XpSettings;
+  setXpSettings: React.Dispatch<React.SetStateAction<XpSettings>>;
 
   // User directory / profiles
   usernamesDirectory: any[];
@@ -924,7 +925,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currentPage, setCurrentPage, changePage, setPageFromUrl,
       customModal, setCustomModal, showAlert, showConfirm,
       toastMessage, showToast,
-      xpPopups, triggerXpPopup, xpSettings,
+      xpPopups, triggerXpPopup, xpSettings, setXpSettings,
       usernamesDirectory, fetchUserProfile, fetchUsernamesDirectory, handleUpdateProfile, handleUploadImage,
       equippedFrame, setEquippedFrame, equippedTitle, setEquippedTitle, unlockedCosmetics, setUnlockedCosmetics,
       deferredPrompt, showInstallBanner, setShowInstallBanner,

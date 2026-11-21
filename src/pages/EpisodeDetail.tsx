@@ -100,7 +100,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
   handleOpenReportModal,
   onOpenComments
 }) => {
-  const { changePage } = useAuth();
+  const { changePage, xpSettings } = useAuth();
   const [mentionSearchText, setMentionSearchText] = useState<string | null>(null);
   const [commentsExpanded, setCommentsExpanded] = useState(true);
   const [seekTo, setSeekTo] = useState<number | null>(null);
@@ -290,7 +290,7 @@ export const EpisodeDetail: React.FC<EpisodeDetailProps> = ({
           <div>
             <h3 className="text-sm font-black text-white flex items-center gap-2">
               <Brain className="w-4 h-4 text-brand-orange" />
-              <span>كويز الحلقة (+150 XP)</span>
+              <span>كويز الحلقة (+{xpSettings?.quiz_solve ?? 150} XP)</span>
             </h3>
           </div>
 

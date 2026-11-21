@@ -141,7 +141,9 @@ export const Profile: React.FC<ProfileProps> = ({
 }) => {
   if (!user) return null;
 
-  const { getFlameTier, changePage, deferredPrompt, handleInstallPWA, isStandalone, setShowIOSInstall, showToast: showToastCtx, token, showConfirm, fetchUserProfile } = useAuth();
+  const { getFlameTier, changePage, deferredPrompt, handleInstallPWA, isStandalone, setShowIOSInstall, showToast: showToastCtx, token, showConfirm, fetchUserProfile, xpSettings } = useAuth();
+  const inviteBonusXp = xpSettings?.app_invite_bonus ?? 1000;
+  const inviteBonusText = Number(inviteBonusXp).toLocaleString('en-US');
   const presenceCtx = usePresenceOptional();
   const myPresence = presenceCtx?.getUserPresence(user?.username);
   const [sharingCard, setSharingCard] = useState(false);
@@ -662,9 +664,9 @@ export const Profile: React.FC<ProfileProps> = ({
                 <Gift className="w-4.5 h-4.5" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-black text-white">ادعي صحابك للتطبيق (+1,000 XP)</p>
+                <p className="text-xs font-black text-white">ادعي صحابك للتطبيق (+{inviteBonusText} XP)</p>
                 <p className="text-[11px] font-semibold text-zinc-400">
-                  كل صديق يسجل حساب حقيقي من رابطك بتاخد عليه <span className="text-emerald-300 font-black">1,000 XP</span> فوراً!
+                  كل صديق يسجل حساب حقيقي من رابطك بتاخد عليه <span className="text-emerald-300 font-black">{inviteBonusText} XP</span> فوراً!
                 </p>
               </div>
             </div>
@@ -672,40 +674,23 @@ export const Profile: React.FC<ProfileProps> = ({
               {user.invites_count || 0} دعوة
             </span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex">
             <button
               type="button"
               onClick={async () => {
                 const url = `${window.location.origin}/?ref=${encodeURIComponent(user.username)}`;
                 try {
                   await copyToClipboard(url);
-                  showToastCtx('اتنسخ رابط دعوتك! ابعته لصحابك واكسب +1,000 XP لكل واحد 🎁');
+                  showToastCtx(`اتنسخ رابط دعوتك! ابعته لصحابك واكسب +${inviteBonusText} XP لكل واحد 🎁`);
                 } catch {
                   showToastCtx('معرفناش ننسخ الرابط');
                 }
               }}
               className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs cursor-pointer active:scale-95 transition-all"
             >
-              <Copy className="w-3.5 h-3.5" />
-              <span>نسخ رابط الدعوة</span>
+              <Share2 className="w-3.5 h-3.5" />
+              <span>مشاركة</span>
             </button>
-            {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
-              <button
-                type="button"
-                onClick={() => {
-                  const url = `${window.location.origin}/?ref=${encodeURIComponent(user.username)}`;
-                  navigator.share({
-                    title: 'تعالى جرب تطبيق ليه فيزيو!',
-                    text: 'منصة فيزيو ممتعة جداً — حلقات، تحديات، وألعاب طبية! سجّل من الرابط ده:',
-                    url,
-                  }).catch(() => {});
-                }}
-                className="px-4 py-2.5 rounded-xl bg-zinc-900 border border-emerald-500/30 text-emerald-300 font-black text-xs cursor-pointer hover:bg-emerald-500/10 active:scale-95 transition-all flex items-center gap-1.5"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-                <span>مشاركة</span>
-              </button>
-            )}
           </div>
         </div>
 

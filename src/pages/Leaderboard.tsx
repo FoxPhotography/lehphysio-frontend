@@ -5,6 +5,7 @@ import { m } from 'framer-motion';
 import { Trophy, Crown, Medal, Star } from 'lucide-react';
 import { UserAvatar } from '../components/UserAvatar';
 import { StreakNameplate, StreakName, StreakChip } from '../components/streak/Streak';
+import { RankMedal } from '../components/common/RankMedal';
 import { cosmeticVisual } from '../utils/cosmetics';
 
 // Helper: strip emojis from DB fields
@@ -204,15 +205,14 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                 >
                   {/* Nameplate in the person's current streak colours */}
                   <StreakNameplate days={u.streak_count || 0} override={cosmeticVisual((isMe ? user?.cosmetics : null)?.nameplate || u.cosmetics?.nameplate)} className="flex items-center gap-3 px-4 py-3">
-                  {/* Rank Number */}
-                  <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black flex-shrink-0 ${
-                    idx === 0 ? 'bg-amber-500 text-black' :
-                    idx === 1 ? 'bg-zinc-400 text-black' :
-                    idx === 2 ? 'bg-amber-700 text-white' :
-                    'bg-white/8 text-zinc-400'
-                  }`}>
-                    {idx === 0 ? <Crown className="w-3.5 h-3.5" /> : u.rank_num}
-                  </span>
+                  {/* Rank Number / Medal */}
+                  {idx < 3 ? (
+                    <RankMedal rank={(idx + 1) as 1 | 2 | 3} size={32} />
+                  ) : (
+                    <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black flex-shrink-0 bg-white/8 text-zinc-400">
+                      {u.rank_num}
+                    </span>
+                  )}
 
                   {/* Avatar */}
                   <UserAvatar

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { StreakChip } from '../streak/Streak';
+import { RankMedal } from '../common/RankMedal';
 import { Trophy, ChevronLeft, Crown, Medal, Award, Flame, Users } from 'lucide-react';
 import { UserAvatar } from '../UserAvatar';
 import { gameService } from '../../services/gameService';
@@ -115,12 +116,12 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
             size={opts.avatarSize}
           />
         </div>
-        <span className={`absolute -bottom-1 -end-1 w-6 h-6 rounded-full ${opts.badgeBg} flex items-center justify-center shadow-lg z-20 ring-2 ring-zinc-950`}>
-          {opts.badgeIcon}
+        <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+          <RankMedal rank={place} size={place === 1 ? 38 : 32} />
         </span>
       </div>
 
-      <span className="text-xs sm:text-[13px] font-black text-white group-hover:text-brand-amber transition-colors text-center max-w-[94px] sm:max-w-[128px] truncate leading-tight mt-1">
+      <span className="text-xs sm:text-[13px] font-black text-white group-hover:text-brand-amber transition-colors text-center max-w-[94px] sm:max-w-[128px] truncate leading-tight mt-3">
         {person ? person.username : '—'}
       </span>
 
