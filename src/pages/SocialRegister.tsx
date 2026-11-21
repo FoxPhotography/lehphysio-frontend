@@ -12,6 +12,7 @@ import {
 } from '../components/AuthComponents';
 import { authService } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
+import { getOrCreateDeviceId } from '../utils/countdown';
 
 const BATCHES = [
   { value: 'PT 9',  label: 'PT 9 (سنة سادسة)' },
@@ -87,11 +88,15 @@ export const SocialRegister: React.FC = () => {
 
     setLoading(true);
     try {
+      const invited_by = localStorage.getItem('lehphysio_invited_by') || null;
+      const device_id = getOrCreateDeviceId();
       const res = await authService.completeGoogleRegistration({
         regToken,
         username: cleanUser,
         batch,
         password,
+        invited_by,
+        device_id,
       });
 
       const data = await res.json();

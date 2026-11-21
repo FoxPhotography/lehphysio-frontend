@@ -30,6 +30,7 @@ import { AppRouter, prefetchCorePages } from './routes/router';
 import { useStableProps } from './hooks/useStableProps';
 import { CommentsSlideUpPanel } from './components/home/CommentsSlideUpPanel';
 import { LaunchNoticeModal } from './components/LaunchNoticeModal';
+import { BanScreen } from './components/BanScreen';
 
 const getUserId = (user: any, token: string): string | null => {
   if (user?.id) return String(user.id);
@@ -2114,6 +2115,13 @@ function InnerApp() {
         {renderModerationModal()}
         {renderReportModal()}
         <LaunchNoticeModal />
+        {user?.is_banned === 1 && (
+          <BanScreen
+            banExpiresAt={user.ban_expires_at}
+            onExpired={fetchUserProfile}
+            onLogout={handleLogout}
+          />
+        )}
       </MainLayout>
   );
 }

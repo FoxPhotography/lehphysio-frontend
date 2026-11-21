@@ -47,7 +47,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
 };
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, user, changePage } = useAuth();
+  const { token, user, changePage, fetchUserProfile, showToast } = useAuth();
   const socket = useSocket();
   const presenceCtx = usePresenceOptional();
   const myStatusRef = useRef(presenceCtx?.myStatus ?? 'online');

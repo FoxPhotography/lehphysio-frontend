@@ -1,4 +1,5 @@
 import { authService } from '../services/authService';
+import { getOrCreateDeviceId } from '../utils/countdown';
 
 interface UseAppAuthProps {
   token: string | null;
@@ -95,7 +96,9 @@ export const useAppAuth = ({
     setAuthError('');
     setAuthSuccess('');
     try {
-      const res = await authService.register(registerForm);
+      const invited_by = localStorage.getItem('lehphysio_invited_by') || null;
+      const device_id = getOrCreateDeviceId();
+      const res = await authService.register({ ...registerForm, invited_by, device_id });
       const data = await res.json();
       if (res.ok) {
         setAuthError('');

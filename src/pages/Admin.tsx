@@ -1737,6 +1737,7 @@ const XP_SETTING_METADATA: Record<string, { label: string; desc: string; icon: R
   share:                       { label: 'إنشاء رابط مشاركة',              desc: 'النقاط المضافة عند نسخ رابط مشاركة حلقة أو بوست.',             icon: <Settings className="w-4 h-4" /> },
   comment_like:                { label: 'إعجاب بتعليق',                  desc: 'النقاط المضافة عند الإعجاب بتعليق زميل.',                      icon: <ThumbsUp className="w-4 h-4" /> },
   referral:                    { label: 'زيارة رابط مشاركة',              desc: 'النقاط المضافة لصاحب الرابط عند دخول زائر من خلاله.',           icon: <Users className="w-4 h-4" /> },
+  app_invite_bonus:            { label: 'دعوة صديق للتطبيق',             desc: 'النقاط المضافة عند تسجيل صديق جديد عبر رابط الدعوة (Anti-Alt).', icon: <Users className="w-4 h-4" /> },
   suggestion_create:           { label: 'تقديم اقتراح جديد',              desc: 'النقاط المضافة عند إرسال فكرة أو اقتراح في المجتمع.',           icon: <Lightbulb className="w-4 h-4" /> },
 
   // الحلقات والأسئلة اليومية
@@ -1772,7 +1773,7 @@ const XpSettingsManager: React.FC<{
   setAdminMessage: (msg: string) => void;
 }> = ({ token, apiBase, fetchXpSettings, setAdminMessage }) => {
   const [localSettings, setLocalSettings] = useState<any>({
-    like: 5, comment: 15, share: 25, comment_like: 2, referral: 25, suggestion_create: 50,
+    like: 5, comment: 15, share: 25, comment_like: 2, referral: 25, app_invite_bonus: 1000, suggestion_create: 50,
     quiz_solve: 150, question_of_the_day_correct: 50, question_of_the_day_wrong: 10, poll_vote: 30,
     daily_login: 10, streak_bonus_3: 30, streak_bonus: 70, streak_bonus_15: 200,
     surprise_box_min: 50, surprise_box_max: 500,
