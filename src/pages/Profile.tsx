@@ -679,11 +679,24 @@ export const Profile: React.FC<ProfileProps> = ({
               type="button"
               onClick={async () => {
                 const url = `${window.location.origin}/?ref=${encodeURIComponent(user.username)}`;
+                const shareData = {
+                  title: 'تعالى جرب تطبيق ليه فيزيو!',
+                  text: 'منصة فيزيو ممتعة جداً — حلقات، تحديات، وألعاب طبية! سجّل من الرابط ده:',
+                  url,
+                };
+                if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+                  try {
+                    await navigator.share(shareData);
+                    return;
+                  } catch (err: any) {
+                    if (err?.name === 'AbortError') return;
+                  }
+                }
                 try {
                   await copyToClipboard(url);
                   showToastCtx(`اتنسخ رابط دعوتك! ابعته لصحابك واكسب +${inviteBonusText} XP لكل واحد 🎁`);
                 } catch {
-                  showToastCtx('معرفناش ننسخ الرابط');
+                  showToastCtx('معرفناش نشارك الرابط');
                 }
               }}
               className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs cursor-pointer active:scale-95 transition-all"

@@ -460,6 +460,7 @@ export const AppRouter: React.FC<AppRouterProps> = ({
           hasMoreChat={chatHook.hasMoreChat}
           isRefreshingChat={chatHook.isRefreshingChat}
           handleOpenReportModal={handleOpenReportModal}
+          xpSettings={xpSettings}
         />
       );
     case 'games':

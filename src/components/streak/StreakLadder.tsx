@@ -13,8 +13,7 @@ export const StreakLadderModal: React.FC<{ open: boolean; onClose: () => void; d
   const d = Math.max(0, Number(days) || 0);
   const theme = getStreakTheme(d);
   const next = STREAK_LADDER.find(t => t.min > d) || null;
-  const prevMin = [...STREAK_LADDER].reverse().find(t => t.min <= d)?.min ?? 0;
-  const pct = next ? Math.min(100, Math.max(4, ((d - prevMin) / (next.min - prevMin)) * 100)) : 100;
+  const pct = next ? Math.min(100, Math.max(d > 0 ? 4 : 0, (d / next.min) * 100)) : 100;
 
   useEffect(() => {
     if (!open) return undefined;

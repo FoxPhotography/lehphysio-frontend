@@ -116,12 +116,12 @@ export const PodiumPreview: React.FC<PodiumPreviewProps> = ({
             size={opts.avatarSize}
           />
         </div>
-        <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-          <RankMedal rank={place} size={place === 1 ? 38 : 32} />
+        <span className="absolute top-[calc(100%-6px)] left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+          <RankMedal rank={place} size={place === 1 ? 44 : 36} />
         </span>
       </div>
 
-      <span className="text-xs sm:text-[13px] font-black text-white group-hover:text-brand-amber transition-colors text-center max-w-[94px] sm:max-w-[128px] truncate leading-tight mt-3">
+      <span className="text-xs sm:text-[13px] font-black text-white group-hover:text-brand-amber transition-colors text-center max-w-[94px] sm:max-w-[128px] truncate leading-tight mt-9">
         {person ? person.username : '—'}
       </span>
 
