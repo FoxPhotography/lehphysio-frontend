@@ -22,10 +22,15 @@ interface SidebarProps {
   setCurrentPage: (page: string) => void;
   setCommunityTab: (tab: 'feed' | 'chat') => void;
   unseenCount: number;
+  unseenPostsCount?: number;
+  unseenEpisodesCount?: number;
+  availableGamesCount?: number;
   user: any;
   equippedTitle: string;
   getAvatarFrameClass: () => string;
 }
+
+const formatBadge = (n: number) => (n > 9 ? '9+' : String(n));
 
 // Helper to strip any emojis from text
 const stripEmojis = (str: string) => {
@@ -38,6 +43,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setCurrentPage,
   setCommunityTab,
   unseenCount,
+  unseenPostsCount = 0,
+  unseenEpisodesCount = 0,
+  availableGamesCount = 0,
   user,
   equippedTitle,
   getAvatarFrameClass
@@ -55,16 +63,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const navItems = [
-    { page: 'home', label: 'الرئيسية', icon: Home },
-    { page: 'episodes', label: 'الحلقات', icon: Tv },
+    { page: 'home', label: 'الرئيسية', icon: Home, badge: unseenPostsCount > 0 ? formatBadge(unseenPostsCount) : null, badgeClass: 'bg-brand-orange text-black' },
+    { page: 'episodes', label: 'الحلقات', icon: Tv, badge: unseenEpisodesCount > 0 ? formatBadge(unseenEpisodesCount) : null, badgeClass: 'bg-sky-400 text-black' },
     { 
       page: 'community', 
       label: 'الشات', 
       icon: MessageSquare, 
       onClick: () => { setCurrentPage('community'); setCommunityTab('chat'); },
-      badge: unseenCount > 0 ? unseenCount : null
+      badge: unseenCount > 0 ? formatBadge(unseenCount) : null,
+      badgeClass: 'bg-red-500 text-white'
     },
-    { page: 'games', label: 'الألعاب', icon: Gamepad2 },
+    { page: 'games', label: 'الألعاب', icon: Gamepad2, badge: availableGamesCount > 0 ? formatBadge(availableGamesCount) : null, badgeClass: 'bg-emerald-400 text-black' },
     { page: 'leaderboard', label: 'الترتيب', icon: Trophy },
     { page: 'rewards', label: 'المتجر', icon: Store },
   ];
@@ -121,7 +130,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <span>{item.label}</span>
                   </span>
                   {item.badge && (
-                    <span className="bg-red-500 text-white text-2xs font-extrabold px-2 py-0.5 rounded-full shadow-md">
+                    <span className={`${(item as any).badgeClass || 'bg-red-500 text-white'} text-2xs font-black px-2 py-0.5 rounded-full shadow-md tabular-nums`}>
                       {item.badge}
                     </span>
                   )}

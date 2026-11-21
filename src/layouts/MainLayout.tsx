@@ -15,10 +15,20 @@ import { useNotifications } from '../context/NotificationContext';
 interface MainLayoutProps {
   children: React.ReactNode;
   unseenCount: number;
+  unseenPostsCount?: number;
+  unseenEpisodesCount?: number;
+  availableGamesCount?: number;
   setCommunityTab: (tab: 'feed' | 'chat') => void;
 }
 
-export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, setCommunityTab }) => {
+export const MainLayout: React.FC<MainLayoutProps> = ({
+  children,
+  unseenCount,
+  unseenPostsCount = 0,
+  unseenEpisodesCount = 0,
+  availableGamesCount = 0,
+  setCommunityTab,
+}) => {
   const {
     currentPage,
     setCurrentPage,
@@ -67,6 +77,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
         setCurrentPage={setCurrentPage}
         setCommunityTab={setCommunityTab}
         unseenCount={unseenCount}
+        unseenPostsCount={unseenPostsCount}
+        unseenEpisodesCount={unseenEpisodesCount}
+        availableGamesCount={availableGamesCount}
         user={user}
         equippedTitle={equippedTitle}
         getAvatarFrameClass={getAvatarFrameClass}
@@ -108,6 +121,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, unseenCount, s
           setCurrentPage={setCurrentPage}
           setCommunityTab={setCommunityTab}
           unseenCount={unseenCount}
+          unseenPostsCount={unseenPostsCount}
+          unseenEpisodesCount={unseenEpisodesCount}
+          availableGamesCount={availableGamesCount}
           user={user}
         />
       </div>

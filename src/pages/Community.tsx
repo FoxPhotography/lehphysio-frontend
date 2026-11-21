@@ -608,12 +608,7 @@ export const Community: React.FC<CommunityProps> = ({
         } else if (item.kind === 'page') {
           changePage(item.target);
         } else if (item.kind === 'game') {
-          const GAME_MAP: Record<string, string> = {
-            anatomy: 'memory',
-            clinical: 'diagnosis',
-            special_tests: 'special-tests',
-          };
-          changePage('games', { game: GAME_MAP[item.target] || item.target });
+          changePage('games', { game: item.target });
         }
       },
       onChannelClick: () => {
@@ -621,12 +616,7 @@ export const Community: React.FC<CommunityProps> = ({
         window.history.replaceState({}, '', '/chat?tab=suggestions');
       },
       onGameClick: (gameTagTarget: string) => {
-        const GAME_MAP: Record<string, string> = {
-          anatomy: 'memory',
-          clinical: 'diagnosis',
-          special_tests: 'special-tests',
-        };
-        changePage('games', { game: GAME_MAP[gameTagTarget] || gameTagTarget });
+        changePage('games', { game: gameTagTarget });
       },
     });
   };

@@ -191,18 +191,34 @@ export const Games: React.FC<GamesProps> = ({
   const sudokuPlays = dailyPlays?.[6] ?? 0;
   const wordlePlays = dailyPlays?.[7] ?? 0;
 
+  const skipSetupResetRef = useRef(false);
+
   useEffect(() => {
+    if (skipSetupResetRef.current) {
+      skipSetupResetRef.current = false;
+      return;
+    }
     setShowMultiplayerSetup(false);
   }, [gameTab]);
 
   // Open specific game directly when navigated via #game mention (?play=...)
   useEffect(() => {
-    const VALID_GAMES = new Set([
+    const MULTIPLAYER_MODES = new Set(['anatomy', 'clinical', 'special_tests']);
+    const SINGLE_GAMES = new Set([
       'memory', 'spin', 'diagnosis', 'special-tests',
       'nerve-path', 'whos-responsible', 'sudoku', 'wordle',
     ]);
     const openByKey = (rawKey: string | null | undefined) => {
-      if (!rawKey || !VALID_GAMES.has(rawKey)) return;
+      if (!rawKey) return;
+      if (MULTIPLAYER_MODES.has(rawKey)) {
+        skipSetupResetRef.current = true;
+        setActiveGame(null);
+        setGameTab('multiplayer');
+        setCreateGameMode(rawKey as GameMode);
+        setShowMultiplayerSetup(true);
+        return;
+      }
+      if (!SINGLE_GAMES.has(rawKey)) return;
       setGameTab('single');
       if (rawKey === 'memory') initMemoryGame();
       setActiveGame(rawKey as any);
@@ -1114,6 +1130,11 @@ export const Games: React.FC<GamesProps> = ({
                                   <span className={`text-[10px] font-black px-1.5 py-0.5 rounded bg-white/5 ${meta.accentText}`}>
                                     {meta.title}
                                   </span>
+                                  {(r as any).status && (r as any).status !== 'waiting' && (
+                                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
+                                      شغالة · جولة {(r as any).currentRound || 1}/{r.rounds}
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-2 text-2xs text-zinc-500 font-bold mt-0.5">
                                   <span className="font-mono text-brand-amber">#{r.code}</span>

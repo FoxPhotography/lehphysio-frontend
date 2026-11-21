@@ -1970,11 +1970,67 @@ function InnerApp() {
     );
   };
 
+  const [lastSeenPostId, setLastSeenPostId] = useState<number | null>(() => {
+    const raw = localStorage.getItem('lehphysio_last_seen_post_id');
+    return raw ? Number(raw) : null;
+  });
+  const [lastSeenEpisodeId, setLastSeenEpisodeId] = useState<number | null>(() => {
+    const raw = localStorage.getItem('lehphysio_last_seen_episode_id');
+    return raw ? Number(raw) : null;
+  });
+
+  useEffect(() => {
+    if (!communityPosts.length) return;
+    const maxId = Math.max(...communityPosts.map((p: any) => Number(p.id || 0)));
+    if (lastSeenPostId === null || currentPage === 'home') {
+      if (maxId > (lastSeenPostId || 0)) {
+        setLastSeenPostId(maxId);
+        localStorage.setItem('lehphysio_last_seen_post_id', String(maxId));
+      }
+    }
+  }, [communityPosts, currentPage, lastSeenPostId]);
+
+  useEffect(() => {
+    if (!episodes.length) return;
+    const maxId = Math.max(...episodes.map((ep: any) => Number(ep.id || 0)));
+    if (lastSeenEpisodeId === null || currentPage === 'episodes' || currentPage === 'episode-detail') {
+      if (maxId > (lastSeenEpisodeId || 0)) {
+        setLastSeenEpisodeId(maxId);
+        localStorage.setItem('lehphysio_last_seen_episode_id', String(maxId));
+      }
+    }
+  }, [episodes, currentPage, lastSeenEpisodeId]);
+
+  const lastDateRef = useRef<string>(new Date().toDateString());
+  useEffect(() => {
+    if (!token) return undefined;
+    const timer = setInterval(() => {
+      const today = new Date().toDateString();
+      if (today !== lastDateRef.current) {
+        lastDateRef.current = today;
+        gamesHook.fetchDailyPlays?.();
+      }
+    }, 60000);
+    return () => clearInterval(timer);
+  }, [token]);
+
   const unseenCount = currentPage === 'community' ? 0 : chatHook.chatMessages.filter((msg: any) => Number(msg.id || 0) > chatHook.lastSeenMessageId).length;
+  const unseenPostsCount = currentPage === 'home' || lastSeenPostId === null
+    ? 0
+    : communityPosts.filter((p: any) => Number(p.id || 0) > lastSeenPostId).length;
+  const unseenEpisodesCount = currentPage === 'episodes' || currentPage === 'episode-detail' || lastSeenEpisodeId === null
+    ? 0
+    : episodes.filter((ep: any) => Number(ep.id || 0) > lastSeenEpisodeId).length;
+  const availableGamesCount = user
+    ? [1, 2, 3, 4, 5, 6, 7].filter((id) => (gamesHook.dailyPlays?.[id] ?? 0) < 3).length
+    : 0;
 
   return (
       <MainLayout
         unseenCount={unseenCount}
+        unseenPostsCount={unseenPostsCount}
+        unseenEpisodesCount={unseenEpisodesCount}
+        availableGamesCount={availableGamesCount}
         setCommunityTab={setCommunityTab}
       >
       <StableAppRouter
