@@ -347,19 +347,21 @@ export const Games: React.FC<GamesProps> = ({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="glass-card p-5 md:p-7 space-y-6 border border-white/10"
+              className="sm:glass-card sm:p-6 md:p-7 space-y-4 sm:space-y-6 sm:border sm:border-white/10"
             >
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/60 text-zinc-300 font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer active:scale-95 transition-all"
-                onClick={() => {
-                  setActiveGame(null);
-                  setGameFinished(false);
-                }}
-              >
-                <ArrowLeft className="rtl:-scale-x-100 w-4 h-4" />
-                <span>رجوع للألعاب</span>
-              </button>
+              {!['nerve-path', 'whos-responsible', 'sudoku', 'wordle'].includes(activeGame) && (
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/60 text-zinc-300 font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer active:scale-95 transition-all"
+                  onClick={() => {
+                    setActiveGame(null);
+                    setGameFinished(false);
+                  }}
+                >
+                  <ArrowLeft className="rtl:-scale-x-100 w-4 h-4" />
+                  <span>رجوع للألعاب</span>
+                </button>
+              )}
 
               {activeGame === 'diagnosis' && (
                 <Suspense

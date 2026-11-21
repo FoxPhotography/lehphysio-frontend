@@ -260,6 +260,8 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
   );
   const [boxLetters, setBoxLetters] = useState<string[]>(() => buildScrambledBoxLetters(puzzle.word));
   const [selectedCell, setSelectedCell] = useState<number | null>(null);
+  const MAX_HINTS = 2;
+  const [hintsUsed, setHintsUsed] = useState(0);
   const [wordGuess, setWordGuess] = useState('');
   const [wordError, setWordError] = useState('');
   const [hasWon, setHasWon] = useState(false);
@@ -270,6 +272,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
     setBoard(p.solution.map((val, i) => (p.givens.includes(i) ? val : null)));
     setBoxLetters(buildScrambledBoxLetters(p.word));
     setSelectedCell(null);
+    setHintsUsed(0);
     setWordGuess('');
     setWordError('');
     setHasWon(false);
@@ -298,6 +301,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
   };
 
   const handleHint = () => {
+    if (hintsUsed >= MAX_HINTS || hasWon) return;
     const emptyIncorrect = board
       .map((val, idx) => (val !== puzzle.solution[idx] ? idx : -1))
       .filter((idx) => idx !== -1);
@@ -306,6 +310,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
     const next = [...board];
     next[pick] = puzzle.solution[pick];
     setBoard(next);
+    setHintsUsed((h) => h + 1);
     setSelectedCell(null);
     playChatSound('success');
   };
@@ -328,23 +333,23 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
   const remainingXpPlays = Math.max(0, maxDailyPlays - dailyPlaysCount);
 
   return (
-    <div className="space-y-5 xl:pt-4 max-w-2xl mx-auto px-3 sm:px-4 pb-10 text-start">
+    <div className="space-y-4 max-w-2xl mx-auto px-0 sm:px-2 pb-10 text-start">
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs font-black text-zinc-400 hover:text-white bg-zinc-900/70 border border-zinc-800 px-3 py-2 rounded-xl cursor-pointer transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-black text-zinc-300 hover:text-white bg-zinc-900 border border-zinc-800 px-3.5 py-2 rounded-xl cursor-pointer active:scale-95 transition-all"
         >
           <ArrowRight className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />
           <span>رجوع للألعاب</span>
         </button>
 
-        <span className="text-2xs font-black px-2.5 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 tabular-nums">
+        <span className="text-2xs font-black px-3 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 tabular-nums">
           محاولات XP: {remainingXpPlays}/{maxDailyPlays} · +{xpReward} XP
         </span>
       </div>
 
-      <div className="glass-card p-4 sm:p-6 border border-purple-500/25 relative overflow-hidden">
+      <div className="sm:glass-card sm:p-5 sm:border sm:border-purple-500/25 relative overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
             <Grid3X3 className="w-5 h-5 text-purple-400" />
@@ -395,7 +400,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
 
         {/* 6x6 Sudoku Grid rendered as 6 equal 2x3 boxes */}
         <div className="flex justify-center mb-4" dir="ltr">
-          <div className="grid grid-cols-2 gap-2 p-2.5 rounded-2xl bg-zinc-950 border border-white/10 w-full max-w-[340px]">
+          <div className="grid grid-cols-2 gap-2 p-2 rounded-2xl bg-zinc-950 border border-white/10 w-full max-w-[400px]">
             {[0, 1, 2, 3, 4, 5].map((bIdx) => {
               const cells = getBoxCells(bIdx);
               const boxSolved = solvedBoxes[bIdx];
@@ -421,7 +426,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
                         type="button"
                         disabled={isGiven || hasWon}
                         onClick={() => setSelectedCell(idx)}
-                        className={`aspect-square w-full rounded-lg font-black text-sm flex items-center justify-center border transition-all ${
+                        className={`aspect-square w-full rounded-lg font-black text-base flex items-center justify-center border transition-all ${
                           isGiven
                             ? 'bg-zinc-800/85 border-zinc-700 text-zinc-300 cursor-default'
                             : isCorrect
@@ -445,14 +450,14 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
 
         {/* Number Pad + Hint */}
         {!allBoxesSolved && (
-          <div className="space-y-2.5 max-w-[340px] mx-auto">
+          <div className="space-y-2.5 w-full max-w-[400px] mx-auto">
             <div className="grid grid-cols-6 gap-1.5" dir="ltr">
               {[1, 2, 3, 4, 5, 6].map((n) => (
                 <button
                   key={n}
                   type="button"
                   onClick={() => handleNumberInput(n)}
-                  className="py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 hover:border-purple-400 text-white font-black text-sm cursor-pointer active:scale-95 transition-all"
+                  className="py-3.5 rounded-xl bg-zinc-900 border border-zinc-700 hover:border-purple-400 text-white font-black text-base cursor-pointer active:scale-95 transition-all shadow-sm"
                 >
                   {n}
                 </button>
@@ -461,17 +466,22 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
             <div className="flex gap-2">
               <button
                 type="button"
+                disabled={hintsUsed >= MAX_HINTS}
                 onClick={handleHint}
-                className="flex-1 py-2 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-300 text-xs font-black cursor-pointer hover:bg-purple-500/25 flex items-center justify-center gap-1.5"
+                className={`flex-1 py-3 rounded-xl border text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                  hintsUsed >= MAX_HINTS
+                    ? 'bg-zinc-900/60 border-zinc-800 text-zinc-500 opacity-50 cursor-not-allowed'
+                    : 'bg-purple-500/15 border-purple-500/30 text-purple-300 cursor-pointer hover:bg-purple-500/25 active:scale-95'
+                }`}
               >
-                <Lightbulb className="w-3.5 h-3.5" /> تلميح رقم
+                <Lightbulb className="w-4 h-4" /> تلميح رقم ({MAX_HINTS - hintsUsed}/{MAX_HINTS})
               </button>
               <button
                 type="button"
                 onClick={() => loadPuzzle(puzzleIdx)}
-                className="py-2 px-4 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white text-xs font-bold cursor-pointer flex items-center gap-1"
+                className="py-3 px-4 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-black cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
               >
-                <RotateCcw className="w-3.5 h-3.5" /> إعادة
+                <RotateCcw className="w-4 h-4" /> إعادة
               </button>
             </div>
           </div>

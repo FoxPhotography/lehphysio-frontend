@@ -297,23 +297,23 @@ export const PhysioWordleGame: React.FC<PhysioWordleGameProps> = ({
   const remainingXpPlays = Math.max(0, maxDailyPlays - dailyPlaysCount);
 
   return (
-    <div className="space-y-4 xl:pt-4 max-w-2xl mx-auto px-2.5 sm:px-4 pb-10 text-start">
+    <div className="space-y-4 max-w-2xl mx-auto px-0 sm:px-2 pb-10 text-start">
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs font-black text-zinc-400 hover:text-white bg-zinc-900/70 border border-zinc-800 px-3 py-2 rounded-xl cursor-pointer transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-black text-zinc-300 hover:text-white bg-zinc-900 border border-zinc-800 px-3.5 py-2 rounded-xl cursor-pointer active:scale-95 transition-all"
         >
           <ArrowRight className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />
           <span>رجوع للألعاب</span>
         </button>
 
-        <span className="text-2xs font-black px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 tabular-nums">
+        <span className="text-2xs font-black px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 tabular-nums">
           محاولات XP: {remainingXpPlays}/{maxDailyPlays}
         </span>
       </div>
 
-      <div className="glass-card p-3.5 sm:p-6 border border-amber-500/25 relative overflow-hidden">
+      <div className="sm:glass-card sm:p-5 sm:border sm:border-amber-500/25 relative overflow-hidden">
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
             <Type className="w-5 h-5 text-amber-400" />

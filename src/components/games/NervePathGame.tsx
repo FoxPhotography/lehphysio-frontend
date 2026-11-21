@@ -511,27 +511,27 @@ export const NervePathGame: React.FC<NervePathGameProps> = ({
   const remainingXpPlays = Math.max(0, maxDailyPlays - dailyPlaysCount);
 
   return (
-    <div className="space-y-5 xl:pt-4 max-w-2xl mx-auto px-3 sm:px-4 pb-10 text-start">
+    <div className="space-y-4 max-w-2xl mx-auto px-0 sm:px-2 pb-10 text-start">
       {/* Top Bar */}
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs font-black text-zinc-400 hover:text-white bg-zinc-900/70 border border-zinc-800 px-3 py-2 rounded-xl cursor-pointer transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-black text-zinc-300 hover:text-white bg-zinc-900 border border-zinc-800 px-3.5 py-2 rounded-xl cursor-pointer active:scale-95 transition-all"
         >
           <ArrowRight className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />
           <span>رجوع للألعاب</span>
         </button>
 
         <div className="flex items-center gap-2">
-          <span className="text-2xs font-black px-2.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 tabular-nums">
+          <span className="text-2xs font-black px-3 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 tabular-nums">
             محاولات XP: {remainingXpPlays}/{maxDailyPlays}
           </span>
         </div>
       </div>
 
       {/* Main Card */}
-      <div className="glass-card p-4 sm:p-6 border border-cyan-500/20 relative overflow-hidden">
+      <div className="sm:glass-card sm:p-5 sm:border sm:border-cyan-500/20 relative overflow-hidden">
         <div className="absolute -top-24 -end-24 w-56 h-56 bg-cyan-500/10 blur-3xl rounded-full pointer-events-none" />
 
         {/* Header */}
