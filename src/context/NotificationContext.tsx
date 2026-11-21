@@ -486,6 +486,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (myStatusRef.current !== 'dnd') {
         playChatSound('success');
       }
+      if (['user_muted', 'user_unmuted', 'user_banned', 'user_unbanned', 'user_role_updated'].includes(notif.type)) {
+        fetchUserProfile();
+        showToast(notif.title);
+      }
     };
 
     const handleCountUpdate = (data: { unreadCount: number }) => {
@@ -540,6 +544,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setNotifications(prev => [notif, ...prev.filter(n => n._id !== notif._id)]);
     };
 
+    const handleModUpdated = (data: { userId: number }) => {
+      if (user?.id && Number(data?.userId) === Number(user.id)) {
+        fetchUserProfile();
+      }
+    };
+
     socket.on('new_notification', handleNewNotification);
     socket.on('notification_created', handleNewNotification);
     socket.on('notification_removed', handleRemoved);
@@ -547,6 +557,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     socket.on('notification_count_update', handleCountUpdate);
     socket.on('notification_read', handleNotificationRead);
     socket.on('notifications_all_read', handleAllRead);
+    socket.on('user_moderation_updated', handleModUpdated);
 
     return () => {
       socket.off('new_notification', handleNewNotification);
@@ -556,6 +567,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       socket.off('notification_count_update', handleCountUpdate);
       socket.off('notification_read', handleNotificationRead);
       socket.off('notifications_all_read', handleAllRead);
+      socket.off('user_moderation_updated', handleModUpdated);
     };
   }, [socket, user?.id, activeFilter, unreadCount]);
 

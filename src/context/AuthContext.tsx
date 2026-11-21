@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { authService } from '../services/authService';
 import { feedCacheService } from '../services/feedCacheService';
+import { getOrCreateDeviceId } from '../utils/countdown';
 import { playChatSound, setFramesCache } from '../utils/helpers';
 import { User, XpSettings } from '../types';
 
@@ -338,6 +339,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await authService.fetchUserProfile(token);
       const data = await res.json();
+      if (res.status === 403 && data?.is_banned) {
+        setUser((prev: any) => ({
+          ...(prev || {}),
+          is_banned: 1,
+          ban_expires_at: data.ban_expires_at || null,
+        }));
+        return;
+      }
       if (res.ok) {
         const userId = data.user.id || data.user._id;
         setUser(prev => {
@@ -847,6 +856,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error(e);
       }
     };
+    // Capture ?ref=inviter for App Invite (+1000 XP) & ensure device fingerprint ID
+    getOrCreateDeviceId();
+    try {
+      const refParam = new URLSearchParams(window.location.search).get('ref');
+      if (refParam && refParam.trim()) {
+        localStorage.setItem('lehphysio_invited_by', refParam.trim());
+      }
+    } catch {
+      // ignore URL parse error
+    }
     fetchFramesCache();
   }, []);
 

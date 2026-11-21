@@ -33,8 +33,10 @@ import {
   Copy,
   SmilePlus,
   Lock,
-  ImagePlus
+  ImagePlus,
+  VolumeX
 } from 'lucide-react';
+import { useCountdown } from '../utils/countdown';
 import { EmojiPickerPopover } from '../components/common/EmojiPickerPopover';
 import { ReactionSummary, ReactionBurst, MessageActionOverlay, ReactionDetailsSheet, type MessageAction } from '../components/chat/ChatReactions';
 import { StreakBubbleLayers, StreakName, StreakFlame } from '../components/streak/Streak';
@@ -262,7 +264,9 @@ export const Community: React.FC<CommunityProps> = ({
   const [reactionPickerMsgId, setReactionPickerMsgId] = useState<number | null>(null);
 
   // Reactions UX: double-tap ❤️, floating burst, "who reacted" sheet
-  const { showToast, changePage } = useAuth();
+  const { showToast, changePage, fetchUserProfile } = useAuth();
+  const isMuted = user?.is_muted === 1;
+  const muteCountdown = useCountdown(isMuted ? user?.mute_expires_at : null, fetchUserProfile);
 
   // Mention suggestions; owners / admins also get "@all" (notifies everyone)
   const canMentionAll = user?.role === 'owner' || user?.role === 'admin';
@@ -1484,6 +1488,26 @@ export const Community: React.FC<CommunityProps> = ({
 
               {/* Input field compose form */}
               {user ? (
+                isMuted ? (
+                  <div className="my-2 rounded-2xl border border-orange-500/30 bg-orange-500/10 px-4 py-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center text-orange-400 shrink-0">
+                        <VolumeX className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-black text-white truncate">تم كتمك عن الكتابة في الشات 🔇</p>
+                        <p className="text-[11px] font-bold text-orange-300/90 truncate">
+                          {user?.mute_expires_at ? 'هيتفك الكتم تلقائياً بعد انتهاء الوقت' : 'كتم دائم من الإدارة'}
+                        </p>
+                      </div>
+                    </div>
+                    {user?.mute_expires_at && (
+                      <div className="px-3 py-1.5 rounded-xl bg-black/50 border border-orange-500/30 text-xs font-black text-white font-mono tabular-nums shrink-0" dir="ltr">
+                        {muteCountdown.formatted || '00:00:00'}
+                      </div>
+                    )}
+                  </div>
+                ) : (
                 <form
                   onSubmit={(e) => {
                     handleSendChatMessage(e, draft);
@@ -1570,6 +1594,7 @@ export const Community: React.FC<CommunityProps> = ({
                     {editingMessage ? <Check className="w-5 h-5 stroke-[2.5]" /> : <Send className="rtl:-scale-x-100 w-4.5 h-4.5 stroke-[2.5] translate-x-0.5" />}
                   </button>
                 </form>
+                )
               ) : (
                 <div className="text-zinc-500 text-xs font-bold text-center py-2 uppercase tracking-wide">
                   من فضلك <button onClick={() => setCurrentPage('login')} className="text-brand-orange hover:text-brand-amber font-black cursor-pointer underline">سجّل دخول</button> عشان تشارك في الشات.
@@ -1837,9 +1862,11 @@ export const Community: React.FC<CommunityProps> = ({
                                   <Check className="w-3 h-3" /> تم التنفيذ
                                 </span>
                               )}
-                              <span className={`text-2xs font-black px-2.5 py-0.5 rounded-full uppercase border ${statusColor} ${statusBg}`}>
-                                {statusLabel}
-                              </span>
+                              {(s.status !== 'approved' || s.delete_pending || s.edit_draft) && (
+                                <span className={`text-2xs font-black px-2.5 py-0.5 rounded-full uppercase border ${statusColor} ${statusBg}`}>
+                                  {statusLabel}
+                                </span>
+                              )}
                             </div>
                           </div>
                           <p dir="auto" className="text-xs text-zinc-400 font-medium leading-relaxed">
