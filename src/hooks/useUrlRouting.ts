@@ -41,6 +41,13 @@ export const useUrlRouting = ({
 
     // Handle referral track
     if (refUsername) {
+      try {
+        if (refUsername.trim()) {
+          localStorage.setItem('lehphysio_invited_by', refUsername.trim());
+        }
+      } catch {
+        // ignore storage errors
+      }
       const activeToken = localStorage.getItem('token') || token;
       let contentType: string | null = null;
       let contentId: number | null = null;
