@@ -21,7 +21,9 @@ if ('serviceWorker' in navigator) {
     const updateSW = registerSW({
       immediate: true,
       onNeedRefresh() {
-        window.dispatchEvent(new CustomEvent('pwa:need-refresh', { detail: () => updateSW(true) }));
+        const runUpdate = () => updateSW(true);
+        (window as any).__pwaUpdateSW = runUpdate;
+        window.dispatchEvent(new CustomEvent('pwa:need-refresh', { detail: runUpdate }));
       },
       onRegisteredSW(_url, reg) {
         if (!reg) return;

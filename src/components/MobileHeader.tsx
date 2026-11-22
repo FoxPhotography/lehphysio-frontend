@@ -4,7 +4,6 @@ import { Store, LogIn } from 'lucide-react';
 import logo from '../assets/logo-wordmark.webp';
 import { NotificationBell } from './notifications/NotificationBell';
 import { PresenceMenu } from './PresenceMenu';
-import { SoundSettingsButton } from './common/SoundSettings';
 import { playSound } from '../utils/soundEngine';
 import { haptic } from './games/ui/feedback';
 
@@ -49,8 +48,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ setCurrentPage, user
         </button>
 
         <div className="flex items-center gap-2">
-          <SoundSettingsButton />
-
           <button
             className={iconBtn}
             onClick={() => {

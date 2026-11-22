@@ -32,7 +32,6 @@ import {
 import { PlayerProgressCard } from '../components/games/ui/PlayerProgressCard';
 import { GameTile } from '../components/games/ui/GameTile';
 import { Mascot } from '../components/games/ui/Mascot';
-import { SoundSettingsButton } from '../components/common/SoundSettings';
 import { playSound } from '../utils/soundEngine';
 import { haptic } from '../components/games/ui/feedback';
 import {
@@ -433,54 +432,50 @@ export const Games: React.FC<GamesProps> = ({
         onLoginClick={() => changePage('login')}
       />
 
-      {/* ── Segmented Mode Switcher + Audio Controls ──────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="relative flex flex-1 min-w-[260px] gap-1 p-1 bg-[#111113] border border-white/[0.08] rounded-2xl max-w-md">
-          {[
-            { id: 'single' as const, label: 'لعب فردي وتدريب', icon: <Gamepad2 className="w-4 h-4" /> },
-            { id: 'multiplayer' as const, label: 'أونلاين مع صحابك', icon: <Users className="w-4 h-4" /> },
-          ].map((tab) => {
-            const active = gameTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  playSound('tap');
-                  haptic('tap');
-                  setGameTab(tab.id);
-                }}
-                className={`relative flex-1 min-h-[44px] py-2 px-3 rounded-xl font-black text-xs cursor-pointer transition-colors flex items-center justify-center gap-2 z-10 ${
-                  active ? 'text-black' : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                {active && (
-                  <m.span
-                    layoutId="gamesTabPill"
-                    transition={{ type: 'spring', stiffness: 440, damping: 32 }}
-                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber shadow-sm -z-10"
-                  />
-                )}
-                {tab.icon}
-                <span>{tab.label}</span>
-                {tab.id === 'multiplayer' && openRooms.length > 0 && (
-                  <span
-                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-black tabular-nums ${
-                      active
-                        ? 'bg-black/20 text-black'
-                        : 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
-                    }`}
-                  >
-                    <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${active ? 'bg-black' : 'bg-emerald-400'}`} />
-                    {openRooms.length}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        <SoundSettingsButton />
+      {/* ── Segmented Mode Switcher ────────────────────────────────────────────── */}
+      <div className="relative flex gap-1 p-1 bg-[#111113] border border-white/[0.08] rounded-2xl max-w-md">
+        {[
+          { id: 'single' as const, label: 'لعب فردي وتدريب', icon: <Gamepad2 className="w-4 h-4" /> },
+          { id: 'multiplayer' as const, label: 'أونلاين مع صحابك', icon: <Users className="w-4 h-4" /> },
+        ].map((tab) => {
+          const active = gameTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => {
+                playSound('tap');
+                haptic('tap');
+                setGameTab(tab.id);
+              }}
+              className={`relative flex-1 min-h-[44px] py-2 px-3 rounded-xl font-black text-xs cursor-pointer transition-colors flex items-center justify-center gap-2 z-10 ${
+                active ? 'text-black' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              {active && (
+                <m.span
+                  layoutId="gamesTabPill"
+                  transition={{ type: 'spring', stiffness: 440, damping: 32 }}
+                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber shadow-sm -z-10"
+                />
+              )}
+              {tab.icon}
+              <span>{tab.label}</span>
+              {tab.id === 'multiplayer' && openRooms.length > 0 && (
+                <span
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-black tabular-nums ${
+                    active
+                      ? 'bg-black/20 text-black'
+                      : 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${active ? 'bg-black' : 'bg-emerald-400'}`} />
+                  {openRooms.length}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── Single Player Area ───────────────────────────────────────────────── */}

@@ -4,7 +4,6 @@ import { UserAvatar } from './UserAvatar';
 import { PresenceMenu } from './PresenceMenu';
 import logo from '../assets/logo-wordmark.webp';
 import { NotificationBell } from './notifications/NotificationBell';
-import { SoundSettingsButton } from './common/SoundSettings';
 import { playSound } from '../utils/soundEngine';
 import { haptic } from './games/ui/feedback';
 import { 
@@ -103,17 +102,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       </button>
 
-      <div className="flex items-center justify-between gap-2 mb-6 px-3 py-1.5 bg-zinc-900/20 rounded-xl border border-zinc-900/40 shrink-0">
-        {user ? (
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-            <span className="text-xs font-bold text-zinc-400">الإشعارات</span>
-          </div>
-        ) : (
-          <span className="text-xs font-bold text-zinc-400">الصوت والمؤثرات</span>
-        )}
-        <SoundSettingsButton className="w-8 h-8" />
-      </div>
+      {user && (
+        <div className="flex items-center justify-between mb-6 px-3.5 py-1.5 bg-zinc-900/20 rounded-xl border border-zinc-900/40 shrink-0">
+          <span className="text-xs font-bold text-zinc-400">الإشعارات</span>
+          <NotificationBell />
+        </div>
+      )}
 
       {/* Navigation List */}
       <nav className="flex-1">

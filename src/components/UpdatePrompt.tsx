@@ -7,35 +7,48 @@ const SNOOZE_MS = 30 * 60 * 1000;
 
 /** Shows a native-feeling bar when a new version of the app has been downloaded in the background. */
 export const UpdatePrompt: React.FC = () => {
-  const [pending, setPending] = useState<null | (() => void | Promise<void>)>(null);
+  const updateFnRef = useRef<null | (() => void | Promise<void>)>(null);
+  const [hasUpdate, setHasUpdate] = useState(false);
   const [visible, setVisible] = useState(false);
   const [updating, setUpdating] = useState(false);
   const snoozeTimerRef = useRef<number | null>(null);
+  const reloadFallbackRef = useRef<number | null>(null);
 
   const canShowNow = () => {
     if (document.documentElement.dataset.gameActive === '1') return false;
-    const snoozedAt = Number(sessionStorage.getItem(SNOOZE_KEY) || '0');
-    if (snoozedAt && Date.now() - snoozedAt < SNOOZE_MS) return false;
+    try {
+      const snoozedAt = Number(sessionStorage.getItem(SNOOZE_KEY) || '0');
+      if (snoozedAt && Date.now() - snoozedAt < SNOOZE_MS) return false;
+    } catch {
+      // ignore storage errors
+    }
     return true;
   };
 
   useEffect(() => {
-    const onNeedRefresh = (e: Event) => {
-      const fn = (e as CustomEvent<() => void | Promise<void>>).detail;
-      if (typeof fn !== 'function') return;
-      setPending((prev) => prev || (() => fn));
+    const registerUpdate = (fn: () => void | Promise<void>) => {
+      updateFnRef.current = fn;
+      setHasUpdate(true);
       if (canShowNow()) {
         setVisible(true);
       }
     };
 
+    const existing = (window as any).__pwaUpdateSW;
+    if (typeof existing === 'function') {
+      registerUpdate(existing);
+    }
+
+    const onNeedRefresh = (e: Event) => {
+      const fn = (e as CustomEvent<() => void | Promise<void>>).detail;
+      if (typeof fn !== 'function') return;
+      registerUpdate(fn);
+    };
+
     const onGameActiveChange = () => {
-      setPending((currentPending) => {
-        if (currentPending && canShowNow()) {
-          setVisible(true);
-        }
-        return currentPending;
-      });
+      if (updateFnRef.current && canShowNow()) {
+        setVisible(true);
+      }
     };
 
     window.addEventListener('pwa:need-refresh', onNeedRefresh);
@@ -44,16 +57,46 @@ export const UpdatePrompt: React.FC = () => {
       window.removeEventListener('pwa:need-refresh', onNeedRefresh);
       window.removeEventListener('lp:game-active-change', onGameActiveChange);
       if (snoozeTimerRef.current) clearTimeout(snoozeTimerRef.current);
+      if (reloadFallbackRef.current) clearTimeout(reloadFallbackRef.current);
     };
   }, []);
 
   const handleUpdateNow = async () => {
-    if (!pending || updating) return;
+    if (!updateFnRef.current || updating) return;
     setUpdating(true);
     try {
-      await pending();
+      sessionStorage.removeItem(SNOOZE_KEY);
     } catch {
-      setUpdating(false);
+      // ignore storage errors
+    }
+    (window as any).__pwaUpdateSW = null;
+
+    let reloaded = false;
+    const doReload = () => {
+      if (reloaded) return;
+      reloaded = true;
+      if (reloadFallbackRef.current) {
+        clearTimeout(reloadFallbackRef.current);
+        reloadFallbackRef.current = null;
+      }
+      window.location.reload();
+    };
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', doReload, { once: true });
+      navigator.serviceWorker
+        .getRegistration()
+        .then((reg) => {
+          reg?.waiting?.postMessage({ type: 'SKIP_WAITING' });
+        })
+        .catch(() => {});
+    }
+    reloadFallbackRef.current = window.setTimeout(doReload, 2500);
+
+    try {
+      await updateFnRef.current();
+    } catch {
+      doReload();
     }
   };
 
@@ -74,7 +117,7 @@ export const UpdatePrompt: React.FC = () => {
 
   return (
     <AnimatePresence>
-      {pending && visible && (
+      {hasUpdate && visible && (
         <div className="fixed inset-x-0 bottom-[calc(76px+env(safe-area-inset-bottom,0px))] xl:bottom-6 z-[160] flex justify-center px-4 pointer-events-none">
           <m.div
             initial={{ y: 24, opacity: 0 }}
