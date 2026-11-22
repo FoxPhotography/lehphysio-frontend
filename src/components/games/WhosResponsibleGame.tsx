@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { ArrowRight, CheckCircle2, Sparkles, Zap, RotateCcw, Stethoscope, AlertCircle } from 'lucide-react';
-import { fireWinConfetti } from '../../utils/confetti';
+import { ArrowRight, Sparkles, Stethoscope, AlertCircle } from 'lucide-react';
 import { playChatSound } from '../../utils/helpers';
+import { GameResultScreen } from './ui/GameResultScreen';
+import { haptic } from './ui/feedback';
 
 interface KinesiologyCase {
   id: string;
@@ -378,6 +379,8 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
   const [roundIdx, setRoundIdx] = useState(0);
   const [step, setStep] = useState<1 | 2>(1);
   const [wrongMsg, setWrongMsg] = useState('');
+  const [wrongOpt, setWrongOpt] = useState<string | null>(null);
+  const [wrongKey, setWrongKey] = useState(0);
   const [selectedNerve, setSelectedNerve] = useState<string | null>(null);
   const [selectedOrigin, setSelectedOrigin] = useState<string | null>(null);
   const [selectedInsertion, setSelectedInsertion] = useState<string | null>(null);
@@ -406,10 +409,15 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
   const handlePickMuscle = (mName: string) => {
     if (mName === current.muscle) {
       playChatSound('success');
+      haptic('success');
       setWrongMsg('');
+      setWrongOpt(null);
       setStep(2);
     } else {
       playChatSound('error');
+      haptic('error');
+      setWrongOpt(mName);
+      setWrongKey((k) => k + 1);
       setWrongMsg(`مش ${mName} — ركز في الحركة وجرب تاني!`);
     }
   };
@@ -417,10 +425,10 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
   const checkPhase2Complete = (n: string | null, o: string | null, i: string | null) => {
     if (n === current.nerve && o === current.origin && i === current.insertion) {
       playChatSound('success');
+      haptic('success');
       setRoundCleared(true);
       if (roundIdx + 1 >= ROUNDS_PER_SESSION) {
         setFinished(true);
-        fireWinConfetti();
         onWin();
       }
     }
@@ -430,6 +438,7 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
     setRoundIdx((r) => r + 1);
     setStep(1);
     setWrongMsg('');
+    setWrongOpt(null);
     setSelectedNerve(null);
     setSelectedOrigin(null);
     setSelectedInsertion(null);
@@ -441,6 +450,7 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
     setRoundIdx(0);
     setStep(1);
     setWrongMsg('');
+    setWrongOpt(null);
     setSelectedNerve(null);
     setSelectedOrigin(null);
     setSelectedInsertion(null);
@@ -509,10 +519,14 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5" dir="ltr">
                 {muscleOptions.map((opt) => (
                   <button
-                    key={opt}
+                    key={wrongOpt === opt ? `${opt}-${wrongKey}` : opt}
                     type="button"
                     onClick={() => handlePickMuscle(opt)}
-                    className="p-3.5 rounded-xl border border-zinc-800 bg-zinc-900/80 hover:border-emerald-400/50 hover:bg-emerald-500/10 text-white font-black text-xs text-center cursor-pointer transition-all active:scale-95"
+                    className={`lp-press min-h-[44px] p-3.5 rounded-xl border font-black text-xs text-center cursor-pointer transition-colors ${
+                      wrongOpt === opt
+                        ? 'lp-wrong bg-red-500/15 border-red-500/50 text-red-300'
+                        : 'border-zinc-800 bg-zinc-900/80 hover:border-emerald-400/50 hover:bg-emerald-500/10 text-white'
+                    }`}
                   >
                     {opt}
                   </button>
@@ -547,17 +561,19 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
                           setSelectedNerve(opt);
                           if (isRight) {
                             setWrongMsg('');
+                            haptic('success');
                             checkPhase2Complete(opt, selectedOrigin, selectedInsertion);
                           } else {
                             playChatSound('error');
+                            haptic('error');
                             setWrongMsg('تأكد من العصب المغذي للعضلة!');
                           }
                         }}
-                        className={`p-2.5 rounded-xl border text-xs font-bold text-start cursor-pointer transition-all ${
+                        className={`lp-press min-h-[44px] p-2.5 rounded-xl border text-xs font-bold text-start cursor-pointer transition-colors ${
                           isPicked && isRight
-                            ? 'bg-emerald-500/20 border-emerald-400 text-emerald-200'
+                            ? 'lp-correct bg-emerald-500/20 border-emerald-400 text-emerald-200'
                             : isPicked && !isRight
-                              ? 'bg-red-500/15 border-red-500/50 text-red-300'
+                              ? 'lp-wrong bg-red-500/15 border-red-500/50 text-red-300'
                               : 'bg-zinc-900/70 border-zinc-800 text-zinc-200 hover:border-zinc-600'
                         }`}
                       >
@@ -584,17 +600,19 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
                           setSelectedOrigin(opt);
                           if (isRight) {
                             setWrongMsg('');
+                            haptic('success');
                             checkPhase2Complete(selectedNerve, opt, selectedInsertion);
                           } else {
                             playChatSound('error');
+                            haptic('error');
                             setWrongMsg('الـ Origin مش مظبوط، جرب اختيار تاني!');
                           }
                         }}
-                        className={`p-2.5 rounded-xl border text-xs font-bold text-start cursor-pointer transition-all ${
+                        className={`lp-press min-h-[44px] p-2.5 rounded-xl border text-xs font-bold text-start cursor-pointer transition-colors ${
                           isPicked && isRight
-                            ? 'bg-emerald-500/20 border-emerald-400 text-emerald-200'
+                            ? 'lp-correct bg-emerald-500/20 border-emerald-400 text-emerald-200'
                             : isPicked && !isRight
-                              ? 'bg-red-500/15 border-red-500/50 text-red-300'
+                              ? 'lp-wrong bg-red-500/15 border-red-500/50 text-red-300'
                               : 'bg-zinc-900/70 border-zinc-800 text-zinc-200 hover:border-zinc-600'
                         }`}
                       >
@@ -621,17 +639,19 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
                           setSelectedInsertion(opt);
                           if (isRight) {
                             setWrongMsg('');
+                            haptic('success');
                             checkPhase2Complete(selectedNerve, selectedOrigin, opt);
                           } else {
                             playChatSound('error');
+                            haptic('error');
                             setWrongMsg('الـ Insertion مش مظبوط، راجع مكان الارتكاز!');
                           }
                         }}
-                        className={`p-2.5 rounded-xl border text-xs font-bold text-start cursor-pointer transition-all ${
+                        className={`lp-press min-h-[44px] p-2.5 rounded-xl border text-xs font-bold text-start cursor-pointer transition-colors ${
                           isPicked && isRight
-                            ? 'bg-emerald-500/20 border-emerald-400 text-emerald-200'
+                            ? 'lp-correct bg-emerald-500/20 border-emerald-400 text-emerald-200'
                             : isPicked && !isRight
-                              ? 'bg-red-500/15 border-red-500/50 text-red-300'
+                              ? 'lp-wrong bg-red-500/15 border-red-500/50 text-red-300'
                               : 'bg-zinc-900/70 border-zinc-800 text-zinc-200 hover:border-zinc-600'
                         }`}
                       >
@@ -646,7 +666,7 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
                 <button
                   type="button"
                   onClick={handleNextRound}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black text-xs py-3 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                  className="lp-pop lp-press min-h-[44px] w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black text-xs py-3 rounded-xl cursor-pointer hover:opacity-95 flex items-center justify-center gap-1.5"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>الحالة اللي بعدها</span>
@@ -654,26 +674,17 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
               )}
 
               {finished && (
-                <div className="mt-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-2 text-emerald-300 font-black text-sm">
-                      <CheckCircle2 className="w-5 h-5" />
-                      <span>ممتاز! ربطت الحركة بالعضلة والعصب صح 💪</span>
-                    </span>
-                    {remainingXpPlays > 0 && (
-                      <span className="text-xs font-black text-brand-amber flex items-center gap-1" dir="ltr">
-                        <Zap className="w-3.5 h-3.5 fill-current" />+{xpReward} XP
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleRestart}
-                    className="w-full bg-zinc-900 border border-zinc-700 text-white font-black text-xs py-2.5 rounded-xl cursor-pointer hover:bg-zinc-800 flex items-center justify-center gap-1.5"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span>العب حالات جديدة</span>
-                  </button>
+                <div className="mt-4">
+                  <GameResultScreen
+                    status="won"
+                    accent="green"
+                    title="ممتاز! ربطت الحركة بالعضلة والعصب صح 💪"
+                    xp={remainingXpPlays > 0 ? xpReward : 0}
+                    stats={[{ label: 'الحالات', value: `${ROUNDS_PER_SESSION}/${ROUNDS_PER_SESSION}` }]}
+                    onReplay={handleRestart}
+                    replayLabel="العب حالات جديدة"
+                    onBack={onBack}
+                  />
                 </div>
               )}
             </m.div>

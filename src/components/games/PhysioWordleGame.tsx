@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { m } from 'framer-motion';
-import { ArrowRight, CheckCircle2, Sparkles, Zap, RotateCcw, Delete, Type } from 'lucide-react';
-import { fireWinConfetti } from '../../utils/confetti';
+import { ArrowRight, Delete, Type } from 'lucide-react';
 import { playChatSound } from '../../utils/helpers';
+import { GameResultScreen } from './ui/GameResultScreen';
+import { haptic } from './ui/feedback';
 
 interface WordleQuestion {
   sentence: string;
@@ -228,30 +228,43 @@ export const PhysioWordleGame: React.FC<PhysioWordleGameProps> = ({
   const [guesses, setGuesses] = useState<string[]>([]);
   const [currentGuess, setCurrentGuess] = useState('');
   const [status, setStatus] = useState<'playing' | 'won' | 'lost'>('playing');
+  const [lastRevealRow, setLastRevealRow] = useState<number | null>(null);
+  const [shakeKey, setShakeKey] = useState(0);
 
   const resetWithIndex = useCallback((nextIdx: number) => {
     setQIdx(nextIdx);
     setGuesses([]);
     setCurrentGuess('');
     setStatus('playing');
+    setLastRevealRow(null);
+    setShakeKey(0);
   }, []);
 
   const submitGuess = useCallback(() => {
-    if (status !== 'playing' || currentGuess.length !== wordLen) return;
+    if (status !== 'playing') return;
+    if (currentGuess.length !== wordLen) {
+      setShakeKey((k) => k + 1);
+      haptic('error');
+      return;
+    }
+    const rowIndex = guesses.length;
     const nextGuesses = [...guesses, currentGuess];
+    setLastRevealRow(rowIndex);
     setGuesses(nextGuesses);
     setCurrentGuess('');
 
     if (currentGuess === question.answer) {
       setStatus('won');
       playChatSound('success');
-      fireWinConfetti();
+      haptic('success');
       onWin();
     } else if (nextGuesses.length >= MAX_ATTEMPTS) {
       setStatus('lost');
       playChatSound('error');
+      haptic('error');
     } else {
       playChatSound('send');
+      haptic('tap');
     }
   }, [currentGuess, guesses, onWin, question.answer, status, wordLen]);
 
@@ -342,13 +355,17 @@ export const PhysioWordleGame: React.FC<PhysioWordleGameProps> = ({
 
             return (
               <div
-                key={rowIdx}
-                className="grid gap-1 sm:gap-1.5 w-full max-w-[360px]"
+                key={isCurrent ? `row-${rowIdx}-${shakeKey}` : `row-${rowIdx}`}
+                className={`grid gap-1 sm:gap-1.5 w-full max-w-[360px] ${
+                  isCurrent && shakeKey > 0 ? 'lp-shake' : ''
+                }`}
                 style={{ gridTemplateColumns: `repeat(${wordLen}, minmax(0, 1fr))` }}
               >
                 {Array.from({ length: wordLen }).map((__, colIdx) => {
                   const char = rowWord[colIdx] || '';
                   const cellState: LetterState = isSubmitted ? evals[colIdx] : 'empty';
+                  const isNewlyTyped = isCurrent && char && colIdx === currentGuess.length - 1;
+                  const isRevealing = isSubmitted && rowIdx === lastRevealRow;
 
                   const cls =
                     cellState === 'correct'
@@ -363,8 +380,11 @@ export const PhysioWordleGame: React.FC<PhysioWordleGameProps> = ({
 
                   return (
                     <div
-                      key={colIdx}
-                      className={`aspect-square rounded-lg border-2 font-black text-xs sm:text-sm flex items-center justify-center transition-all ${cls}`}
+                      key={isNewlyTyped ? `${colIdx}-pop-${char}` : colIdx}
+                      className={`aspect-square rounded-lg border-2 font-black text-xs sm:text-sm flex items-center justify-center transition-colors ${cls} ${
+                        isNewlyTyped ? 'lp-pop' : ''
+                      } ${isRevealing ? 'lp-flip' : ''}`}
+                      style={isRevealing ? { animationDelay: `${colIdx * 90}ms` } : undefined}
                     >
                       {char}
                     </div>
@@ -375,46 +395,38 @@ export const PhysioWordleGame: React.FC<PhysioWordleGameProps> = ({
           })}
         </div>
 
-        {/* Status Banners */}
+        {/* Status Screens */}
         {status === 'won' && (
-          <m.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-3.5 flex flex-wrap items-center justify-between gap-2"
-          >
-            <div className="flex items-center gap-2 text-emerald-300 font-black text-xs sm:text-sm">
-              <CheckCircle2 className="w-5 h-5" />
-              <span>برافو! الجملة اكتملت: {question.answer} 🎉</span>
-            </div>
-            {remainingXpPlays > 0 && (
-              <span className="text-xs font-black text-brand-amber flex items-center gap-1" dir="ltr">
-                <Zap className="w-3.5 h-3.5 fill-current" />+{xpReward} XP
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={() => resetWithIndex((qIdx + 1) % WORDLE_BANK.length)}
-              className="w-full mt-1 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs py-2.5 rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>جملة جديدة</span>
-            </button>
-          </m.div>
+          <div className="mb-4">
+            <GameResultScreen
+              status="won"
+              accent="gold"
+              title={`برافو! الجملة اكتملت: ${question.answer}`}
+              subtitle={question.arHint}
+              xp={remainingXpPlays > 0 ? xpReward : 0}
+              stats={[
+                { label: 'المحاولات', value: `${guesses.length}/${MAX_ATTEMPTS}` },
+                { label: 'الكلمة', value: question.answer },
+              ]}
+              onReplay={() => resetWithIndex((qIdx + 1) % WORDLE_BANK.length)}
+              replayLabel="جملة جديدة"
+              onBack={onBack}
+            />
+          </div>
         )}
 
         {status === 'lost' && (
-          <div className="mb-4 rounded-2xl border border-red-500/40 bg-red-500/10 p-3.5 text-center space-y-2.5">
-            <p className="text-xs font-black text-red-300">
-              انتهت المحاولات! الإجابة الصح هي: <span className="text-white" dir="ltr">{question.answer}</span>
-            </p>
-            <button
-              type="button"
-              onClick={() => resetWithIndex((qIdx + 1) % WORDLE_BANK.length)}
-              className="w-full bg-zinc-900 border border-zinc-700 text-white font-black text-xs py-2.5 rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>جرب جملة تانية</span>
-            </button>
+          <div className="mb-4">
+            <GameResultScreen
+              status="lost"
+              accent="gold"
+              title={`انتهت المحاولات! الإجابة الصح: ${question.answer}`}
+              subtitle={question.arHint}
+              stats={[{ label: 'الإجابة', value: question.answer }]}
+              onReplay={() => resetWithIndex((qIdx + 1) % WORDLE_BANK.length)}
+              replayLabel="جرب جملة تانية"
+              onBack={onBack}
+            />
           </div>
         )}
 

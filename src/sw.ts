@@ -14,9 +14,6 @@ declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: Array<{ url: str
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 clientsClaim();
-self.addEventListener('install', () => {
-  self.skipWaiting();
-});
 
 // SPA navigations: try the network (fresh HTML after a deploy), fall back to the cached shell.
 const shell = createHandlerBoundToURL('/index.html');
@@ -47,6 +44,32 @@ registerRoute(
   new StaleWhileRevalidate({
     cacheName: 'yt-posters',
     plugins: [new ExpirationPlugin({ maxEntries: 40, maxAgeSeconds: 7 * 24 * 60 * 60 })],
+  })
+);
+registerRoute(
+  ({ url, request }) =>
+    url.origin === self.location.origin &&
+    url.pathname.startsWith('/uploads/') &&
+    request.destination === 'image',
+  new CacheFirst({
+    cacheName: 'uploads',
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [200] }),
+      new ExpirationPlugin({ maxEntries: 400, maxAgeSeconds: 30 * 24 * 60 * 60, purgeOnQuotaError: true }),
+    ],
+  })
+);
+registerRoute(
+  ({ url, request }) =>
+    url.origin === self.location.origin &&
+    url.pathname.startsWith('/assets/') &&
+    request.destination === 'image',
+  new CacheFirst({
+    cacheName: 'static-images',
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [200] }),
+      new ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: 60 * 24 * 60 * 60, purgeOnQuotaError: true }),
+    ],
   })
 );
 

@@ -18,9 +18,36 @@ const loadMotionFeatures = () => import('./motionFeatures').then((mod) => mod.de
 // Service worker (precache + offline + push). A new version waits until the user taps "update".
 if ('serviceWorker' in navigator) {
   import('virtual:pwa-register').then(({ registerSW }) => {
-    registerSW({ immediate: true });
+    const updateSW = registerSW({
+      immediate: true,
+      onNeedRefresh() {
+        window.dispatchEvent(new CustomEvent('pwa:need-refresh', { detail: () => updateSW(true) }));
+      },
+      onRegisteredSW(_url, reg) {
+        if (!reg) return;
+        setInterval(() => {
+          reg.update().catch(() => {});
+        }, 30 * 60 * 1000);
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            reg.update().catch(() => {});
+          }
+        });
+      },
+    });
   });
 }
+
+window.addEventListener('vite:preloadError', (e) => {
+  if (sessionStorage.getItem('lp:chunk-reload')) return;
+  sessionStorage.setItem('lp:chunk-reload', '1');
+  e.preventDefault();
+  window.location.reload();
+});
+
+setTimeout(() => {
+  sessionStorage.removeItem('lp:chunk-reload');
+}, 10000);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

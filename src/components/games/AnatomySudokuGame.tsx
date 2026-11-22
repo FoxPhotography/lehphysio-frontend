@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { m } from 'framer-motion';
-import { ArrowRight, CheckCircle2, Sparkles, Zap, RotateCcw, Grid3X3, Lightbulb } from 'lucide-react';
-import { fireWinConfetti } from '../../utils/confetti';
+import { ArrowRight, RotateCcw, Grid3X3, Lightbulb } from 'lucide-react';
 import { playChatSound } from '../../utils/helpers';
+import { GameResultScreen } from './ui/GameResultScreen';
+import { haptic } from './ui/feedback';
 
 interface SudokuPuzzle {
   id: string;
@@ -264,6 +265,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
   const [hintsUsed, setHintsUsed] = useState(0);
   const [wordGuess, setWordGuess] = useState('');
   const [wordError, setWordError] = useState('');
+  const [wordShakeKey, setWordShakeKey] = useState(0);
   const [hasWon, setHasWon] = useState(false);
 
   const loadPuzzle = (idx: number) => {
@@ -275,6 +277,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
     setHintsUsed(0);
     setWordGuess('');
     setWordError('');
+    setWordShakeKey(0);
     setHasWon(false);
   };
 
@@ -294,9 +297,11 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
     setBoard(next);
     if (num === puzzle.solution[selectedCell]) {
       playChatSound('success');
+      haptic('success');
       setSelectedCell(null);
     } else {
       playChatSound('error');
+      haptic('error');
     }
   };
 
@@ -313,6 +318,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
     setHintsUsed((h) => h + 1);
     setSelectedCell(null);
     playChatSound('success');
+    haptic('tap');
   };
 
   const handleSubmitWord = (e: React.FormEvent) => {
@@ -322,10 +328,12 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
       setWordError('');
       setHasWon(true);
       playChatSound('success');
-      fireWinConfetti();
+      haptic('success');
       onWin();
     } else {
       playChatSound('error');
+      haptic('error');
+      setWordShakeKey((k) => k + 1);
       setWordError('الكلمة مش مظبوطة! رتب الحروف العشوائية كويس واكتب المصطلح الصح.');
     }
   };
@@ -406,10 +414,10 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
               const boxSolved = solvedBoxes[bIdx];
               return (
                 <div
-                  key={bIdx}
+                  key={`box-${bIdx}-${boxSolved ? 'ok' : 'open'}`}
                   className={`grid grid-cols-3 gap-1 p-1.5 rounded-xl border transition-colors ${
                     boxSolved
-                      ? 'bg-emerald-500/10 border-emerald-500/35'
+                      ? 'bg-emerald-500/10 border-emerald-500/35 lp-correct'
                       : 'bg-zinc-900/40 border-white/5'
                   }`}
                 >
@@ -422,11 +430,13 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
 
                     return (
                       <button
-                        key={idx}
+                        key={`${idx}-${val ?? 'empty'}`}
                         type="button"
                         disabled={isGiven || hasWon}
                         onClick={() => setSelectedCell(idx)}
-                        className={`aspect-square w-full rounded-lg font-black text-base flex items-center justify-center border transition-all ${
+                        className={`aspect-square w-full rounded-lg font-black text-base flex items-center justify-center border transition-colors ${
+                          !isGiven && val !== null ? 'lp-pop' : ''
+                        } ${
                           isGiven
                             ? 'bg-zinc-800/85 border-zinc-700 text-zinc-300 cursor-default'
                             : isCorrect
@@ -499,18 +509,21 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
               🎉 كملت السودوكو! رتّب الحروف العشوائية واكتب المصطلح الطبي:
             </p>
             <input
+              key={`word-input-${wordShakeKey}`}
               type="text"
               dir="ltr"
               value={wordGuess}
               onChange={(e) => setWordGuess(e.target.value)}
               placeholder="اكتب الكلمة بالإنجليزي..."
-              className="w-full bg-zinc-950 border border-emerald-400/50 rounded-xl px-4 py-2.5 text-center font-black text-sm text-white uppercase tracking-widest outline-none focus:ring-2 focus:ring-emerald-400/40"
+              className={`w-full min-h-[44px] bg-zinc-950 border border-emerald-400/50 rounded-xl px-4 py-2.5 text-center font-black text-sm text-white uppercase tracking-widest outline-none focus:ring-2 focus:ring-emerald-400/40 ${
+                wordShakeKey > 0 ? 'lp-shake' : ''
+              }`}
               required
             />
             {wordError && <p className="text-xs font-bold text-red-400 text-center">{wordError}</p>}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black text-xs py-2.5 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all"
+              className="lp-press min-h-[44px] w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black text-xs py-2.5 rounded-xl cursor-pointer hover:opacity-95"
             >
               تأكيد الكلمة واكسب +{xpReward} XP ⚡
             </button>
@@ -519,34 +532,19 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
 
         {/* Win Celebration + Pearl */}
         {hasWon && (
-          <m.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mt-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 space-y-3"
-          >
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-emerald-300 font-black text-sm">
-                <CheckCircle2 className="w-5 h-5" />
-                <span>أحسنت! الكلمة هي {puzzle.word}</span>
-              </span>
-              {remainingXpPlays > 0 && (
-                <span className="text-xs font-black text-brand-amber flex items-center gap-1" dir="ltr">
-                  <Zap className="w-3.5 h-3.5 fill-current" />+{xpReward} XP
-                </span>
-              )}
-            </div>
-            <p className="text-xs font-semibold text-zinc-200 leading-relaxed bg-black/35 p-3 rounded-xl border border-white/5">
-              💡 {puzzle.pearl}
-            </p>
-            <button
-              type="button"
-              onClick={() => loadPuzzle((puzzleIdx + 1) % PUZZLES.length)}
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-black text-xs py-2.5 rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>اللغز اللي بعده</span>
-            </button>
-          </m.div>
+          <div className="mt-4">
+            <GameResultScreen
+              status="won"
+              accent="purple"
+              title={`أحسنت! الكلمة هي ${puzzle.word}`}
+              subtitle={`💡 ${puzzle.pearl}`}
+              xp={remainingXpPlays > 0 ? xpReward : 0}
+              stats={[{ label: 'التلميحات', value: `${hintsUsed}/${MAX_HINTS}` }]}
+              onReplay={() => loadPuzzle((puzzleIdx + 1) % PUZZLES.length)}
+              replayLabel="اللغز اللي بعده"
+              onBack={onBack}
+            />
+          </div>
         )}
       </div>
     </div>

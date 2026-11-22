@@ -5,14 +5,14 @@ import {
   Lightbulb,
   CheckCircle,
   XCircle,
-  Trophy,
   Flame,
   ArrowRight,
-  RefreshCw,
   AlertTriangle,
 } from 'lucide-react';
 import { playChatSound } from '../../utils/helpers';
-import { fireWinConfetti, fireStreakBurst } from '../../utils/confetti';
+import { fireStreakBurst } from '../../utils/confetti';
+import { GameResultScreen } from './ui/GameResultScreen';
+import { haptic } from './ui/feedback';
 
 interface ClinicalDetectiveGameProps {
   onClaimXp: () => void;
@@ -1249,10 +1249,12 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
       setCorrectCount((c) => c + 1);
       setStreak(nextStreak);
       playChatSound('success');
+      haptic('success');
       if (nextStreak >= 2) fireStreakBurst();
     } else {
       setStreak(0);
       playChatSound('error');
+      haptic('error');
     }
   };
 
@@ -1261,7 +1263,6 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
       setFinished(true);
       if (correctCount >= 3) {
         playChatSound('win');
-        fireWinConfetti();
         onClaimXp();
       }
       return;
@@ -1284,54 +1285,25 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
 
   if (finished) {
     return (
-      <m.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-col items-center text-center p-6 md:p-8 rounded-2xl border border-zinc-800 bg-zinc-900/50 space-y-4"
-      >
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-brand-orange/20 border border-emerald-500/30 flex items-center justify-center">
-          <Trophy className="w-8 h-8 text-brand-amber" />
-        </div>
-        <div className="space-y-1">
-          <span className={`inline-block text-2xs font-black px-3 py-1 rounded-full border ${rankBadge.cls}`}>
-            {rankBadge.title}
-          </span>
-          <h3 className="text-xl font-black text-white pt-1">خلصت الشيفت الإكلينيكي!</h3>
-          <p className="text-xs text-zinc-400 font-semibold">
-            شخّصت <span className="text-emerald-400 font-black">{correctCount}</span> من 5 حالات صح • مجموع النقاط:{' '}
-            <span className="text-brand-orange font-black font-mono">{score}</span>
-          </p>
-        </div>
-
-        {correctCount >= 3 ? (
-          gamePlaySuccess ? (
-            <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2.5 rounded-xl">
-              {gamePlaySuccess}
-            </div>
-          ) : gamePlayError ? (
-            <div className="text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 px-4 py-2.5 rounded-xl">
-              {gamePlayError}
-            </div>
-          ) : (
-            <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2.5 rounded-xl">
-              عاش! كسبت +{xpReward} XP لتشخيص 3 حالات أو أكتر صح.
-            </div>
-          )
-        ) : (
-          <div className="text-xs font-bold text-zinc-400 bg-zinc-800/70 border border-zinc-700 px-4 py-2.5 rounded-xl">
-            شخّص 3 حالات صح على الأقل عشان تاخد مكافأة الـ XP!
-          </div>
-        )}
-
-        <button
-          type="button"
-          onClick={handleRestart}
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs py-3 px-6 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all"
-        >
-          <RefreshCw className="w-4 h-4" />
-          <span>حالات جديدة</span>
-        </button>
-      </m.div>
+      <GameResultScreen
+        status={correctCount >= 3 ? 'won' : 'lost'}
+        accent="teal"
+        title="خلصت الشيفت الإكلينيكي!"
+        subtitle={`${rankBadge.title} — شخّصت ${correctCount} من 5 حالات صح`}
+        xp={correctCount >= 3 ? xpReward : 0}
+        stats={[
+          { label: 'التشخيص الصح', value: `${correctCount}/5` },
+          { label: 'النقاط', value: String(score) },
+        ]}
+        successMsg={correctCount >= 3 ? gamePlaySuccess || undefined : undefined}
+        errorMsg={
+          correctCount >= 3
+            ? gamePlayError || undefined
+            : 'شخّص 3 حالات صح على الأقل عشان تاخد مكافأة الـ XP!'
+        }
+        onReplay={handleRestart}
+        replayLabel="حالات جديدة"
+      />
     );
   }
 
@@ -1370,7 +1342,7 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
       </div>
 
       {/* Case Card */}
-      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-4 md:p-5 space-y-4">
+      <div key={caseIdx} className="lp-rise rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-4 md:p-5 space-y-4">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <span className={`px-2.5 py-0.5 rounded-md text-2xs font-black border ${
@@ -1425,9 +1397,9 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
               'bg-zinc-950/80 border-zinc-800 text-zinc-200 hover:border-brand-orange/50 hover:bg-zinc-900 cursor-pointer';
             if (isAnswered) {
               if (isThisCorrect) {
-                btnStyle = 'bg-emerald-500/15 border-emerald-500/60 text-emerald-300';
+                btnStyle = `bg-emerald-500/15 border-emerald-500/60 text-emerald-300 ${isThisSelected ? 'lp-correct' : ''}`;
               } else if (isThisSelected) {
-                btnStyle = 'bg-red-500/15 border-red-500/60 text-red-300';
+                btnStyle = 'lp-wrong bg-red-500/15 border-red-500/60 text-red-300';
               } else {
                 btnStyle = 'bg-zinc-950/40 border-zinc-800/50 text-zinc-500 opacity-60';
               }

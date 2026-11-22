@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { m, AnimatePresence } from 'framer-motion';
-import { ArrowRight, RotateCcw, Zap, Brain, CheckCircle2, Sparkles, RefreshCw } from 'lucide-react';
-import { fireWinConfetti } from '../../utils/confetti';
+import { ArrowRight, RotateCcw, Zap, Brain, RefreshCw } from 'lucide-react';
 import { playChatSound } from '../../utils/helpers';
+import { GameResultScreen } from './ui/GameResultScreen';
+import { haptic } from './ui/feedback';
 
 type Port = 'T' | 'R' | 'B' | 'L';
 
@@ -483,7 +483,7 @@ export const NervePathGame: React.FC<NervePathGameProps> = ({
     if (won && !hasWon) {
       setHasWon(true);
       playChatSound('success');
-      fireWinConfetti();
+      haptic('success');
       onWin();
     }
   }, [won, hasWon, onWin]);
@@ -495,6 +495,7 @@ export const NervePathGame: React.FC<NervePathGameProps> = ({
     const adj = getAdjacentIndices(emptyIdx);
     if (!adj.includes(idx)) return;
 
+    haptic('tap');
     const next = [...grid];
     next[emptyIdx] = next[idx];
     next[idx] = null;
@@ -696,52 +697,27 @@ export const NervePathGame: React.FC<NervePathGameProps> = ({
           </div>
         </div>
 
-        {/* Instructions or Win Banner */}
-        <AnimatePresence mode="wait">
-          {hasWon ? (
-            <m.div
-              key="win-banner"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-5 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 space-y-3"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-emerald-300 font-black text-sm">
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span>عاش! وصلت الإشارة العصبية بنجاح ⚡</span>
-                </div>
-                {remainingXpPlays > 0 && (
-                  <span className="text-xs font-black text-brand-amber flex items-center gap-1" dir="ltr">
-                    <Zap className="w-3.5 h-3.5 fill-current" />+{xpReward} XP
-                  </span>
-                )}
-              </div>
-
-              <p className="text-xs font-semibold text-zinc-200 leading-relaxed bg-black/30 p-3 rounded-xl border border-white/5">
-                <strong className="text-cyan-300">💡 معلومة كلينيكية:</strong> {level.clinicalTip}
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => startLevel((levelIdx + 1) % LEVELS.length)}
-                  className="bg-gradient-to-r from-cyan-500 to-emerald-400 text-black font-black text-xs px-4 py-2.5 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all flex items-center gap-1.5"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>العصب اللي بعده</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => startLevel(levelIdx)}
-                  className="bg-zinc-900 border border-zinc-700 text-zinc-200 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer hover:bg-zinc-800 transition-all flex items-center gap-1.5"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>العب تاني</span>
-                </button>
-              </div>
-            </m.div>
-          ) : (
-            <div className="mt-4 flex flex-col gap-3 pt-3.5 border-t border-white/5">
+        {/* Instructions or Win Screen */}
+        {hasWon ? (
+          <div className="mt-5">
+            <GameResultScreen
+              status="won"
+              accent="cyan"
+              title="عاش! وصلت الإشارة العصبية بنجاح ⚡"
+              subtitle={`💡 معلومة كلينيكية: ${level.clinicalTip}`}
+              xp={remainingXpPlays > 0 ? xpReward : 0}
+              stats={[
+                { label: 'الحركات', value: String(moves) },
+                { label: 'الوقت', value: formatTime(elapsedSec) },
+              ]}
+              onReplay={() => startLevel((levelIdx + 1) % LEVELS.length)}
+              replayLabel="العصب اللي بعده"
+              onBack={() => startLevel(levelIdx)}
+              backLabel="العب تاني"
+            />
+          </div>
+        ) : (
+          <div className="mt-4 flex flex-col gap-3 pt-3.5 border-t border-white/5">
               <p className="text-xs font-bold text-zinc-400 text-center leading-relaxed w-full">
                 اضغط على أي مكعب جنب المكان الفاضي عشان تحركه وتوصل الكهربا من الجدع للعضلة ⚡
               </p>
@@ -755,7 +731,6 @@ export const NervePathGame: React.FC<NervePathGameProps> = ({
               </button>
             </div>
           )}
-        </AnimatePresence>
       </div>
     </div>
   );

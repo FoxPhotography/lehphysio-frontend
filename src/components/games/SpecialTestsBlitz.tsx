@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { Timer, Zap, Trophy, Flame, CheckCircle, XCircle, RefreshCw, Play } from 'lucide-react';
+import { Timer, Zap, Flame, CheckCircle, XCircle, Play } from 'lucide-react';
 import { playChatSound } from '../../utils/helpers';
-import { fireWinConfetti, fireStreakBurst } from '../../utils/confetti';
+import { fireStreakBurst } from '../../utils/confetti';
+import { GameResultScreen } from './ui/GameResultScreen';
+import { haptic } from './ui/feedback';
 
 interface SpecialTestsBlitzProps {
   onClaimXp: () => void;
@@ -200,7 +202,6 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
     if (correctCount >= 5 && !claimedRef.current) {
       claimedRef.current = true;
       playChatSound('win');
-      fireWinConfetti();
       onClaimXp();
     }
   }, [finished, score, bestScore, correctCount, onClaimXp]);
@@ -236,6 +237,7 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
       setConsecutive(nextConsec);
       setCombo(nextCombo);
       playChatSound('success');
+      haptic('success');
 
       if (nextConsec % 3 === 0) {
         setTimeLeft((t) => Math.min(75, t + 4));
@@ -245,6 +247,7 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
       setConsecutive(0);
       setCombo(1);
       playChatSound('error');
+      haptic('error');
     }
 
     setTimeout(() => {
@@ -289,50 +292,26 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
 
   if (finished) {
     return (
-      <m.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-col items-center text-center p-6 md:p-8 rounded-2xl border border-zinc-800 bg-zinc-900/50 space-y-4"
-      >
-        <Trophy className="w-14 h-14 text-brand-amber drop-shadow-[0_0_16px_rgba(255,176,0,0.4)]" />
-        <div className="space-y-1">
-          <h3 className="text-xl font-black text-white">انتهى الوقت! ⏱️</h3>
-          <p className="text-xs text-zinc-400 font-semibold">
-            جاوبت <span className="text-emerald-400 font-black">{correctCount}</span> اختبار صح • سكورك:{' '}
-            <span className="text-brand-orange font-black font-mono">{score}</span> • أفضل رقم:{' '}
-            <span className="text-brand-amber font-black font-mono">{bestScore}</span>
-          </p>
-        </div>
-
-        {correctCount >= 5 ? (
-          gamePlaySuccess ? (
-            <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2.5 rounded-xl">
-              {gamePlaySuccess}
-            </div>
-          ) : gamePlayError ? (
-            <div className="text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 px-4 py-2.5 rounded-xl">
-              {gamePlayError}
-            </div>
-          ) : (
-            <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2.5 rounded-xl">
-              عاش! حققت {correctCount} اختبارات صح وكسبت +{xpReward} XP.
-            </div>
-          )
-        ) : (
-          <div className="text-xs font-bold text-zinc-400 bg-zinc-800/70 border border-zinc-700 px-4 py-2.5 rounded-xl">
-            محتاج تجاوب 5 اختبارات صح على الأقل عشان تاخد الـ XP!
-          </div>
-        )}
-
-        <button
-          type="button"
-          onClick={handleStart}
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs py-3 px-6 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all"
-        >
-          <RefreshCw className="w-4 h-4" />
-          <span>جولة جديدة</span>
-        </button>
-      </m.div>
+      <GameResultScreen
+        status={correctCount >= 5 ? 'won' : 'lost'}
+        accent="violet"
+        title="انتهى الوقت! ⏱️"
+        subtitle={`جاوبت ${correctCount} اختبار صح`}
+        xp={correctCount >= 5 ? xpReward : 0}
+        stats={[
+          { label: 'الاختبارات الصح', value: String(correctCount) },
+          { label: 'السكور', value: String(score) },
+          { label: 'أفضل رقم', value: String(bestScore) },
+        ]}
+        successMsg={correctCount >= 5 ? gamePlaySuccess || undefined : undefined}
+        errorMsg={
+          correctCount >= 5
+            ? gamePlayError || undefined
+            : 'محتاج تجاوب 5 اختبارات صح على الأقل عشان تاخد الـ XP!'
+        }
+        onReplay={handleStart}
+        replayLabel="جولة جديدة"
+      />
     );
   }
 
@@ -402,9 +381,9 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
                 'bg-zinc-950/80 border-zinc-800 text-zinc-200 hover:border-violet-400/60 hover:bg-zinc-900 cursor-pointer';
               if (feedback) {
                 if (isCorrectOpt) {
-                  cls = 'bg-emerald-500/15 border-emerald-500/60 text-emerald-300';
+                  cls = `bg-emerald-500/15 border-emerald-500/60 text-emerald-300 ${isSelected ? 'lp-correct' : ''}`;
                 } else if (isSelected) {
-                  cls = 'bg-red-500/15 border-red-500/60 text-red-300';
+                  cls = 'lp-wrong bg-red-500/15 border-red-500/60 text-red-300';
                 } else {
                   cls = 'bg-zinc-950/40 border-zinc-800/50 text-zinc-500 opacity-60';
                 }

@@ -110,6 +110,16 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   const prevWinnerRef = useRef<string | null>(null);
   const prevStatusRef = useRef<string | null>(null);
 
+  // Flag active multiplayer game for deferred PWA update prompt
+  useEffect(() => {
+    document.documentElement.dataset.gameActive = '1';
+    window.dispatchEvent(new Event('lp:game-active-change'));
+    return () => {
+      document.documentElement.dataset.gameActive = '';
+      window.dispatchEvent(new Event('lp:game-active-change'));
+    };
+  }, []);
+
   // Local timer ticker
   const [, setTick] = useState(0);
   useEffect(() => {

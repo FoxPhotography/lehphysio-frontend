@@ -1,11 +1,9 @@
-import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
   Gamepad2,
   ArrowLeft,
-  Trophy,
   Users,
-  Zap,
   RefreshCw,
   AlertCircle,
   Play,
@@ -13,17 +11,39 @@ import {
   Activity,
   Brain,
   DoorOpen,
-  Sparkles,
   Clock,
   Loader2,
+  RotateCcw,
 } from 'lucide-react';
+import '../styles/games.css';
 import type { SpinResult } from '../components/games/LuckyWheel';
 import { gameService } from '../services/gameService';
-import { fireWinConfetti } from '../utils/confetti';
 import { UserAvatar } from '../components/UserAvatar';
 import { useSocket } from '../context/SocketContext';
-import { StreakFlame } from '../components/streak/Streak';
-import { getStreakTheme } from '../utils/streakTheme';
+import { useAuth } from '../context/AuthContext';
+import {
+  GAME_CATALOG,
+  GAME_CATEGORIES,
+  FEATURED_PRIORITY,
+  type GameArtKey,
+  type GameCategory,
+  type SingleGameKey,
+} from '../components/games/catalog';
+import { PlayerProgressCard } from '../components/games/ui/PlayerProgressCard';
+import { GameTile } from '../components/games/ui/GameTile';
+import { GameResultScreen } from '../components/games/ui/GameResultScreen';
+import { haptic } from '../components/games/ui/feedback';
+import {
+  EcgArt,
+  OsceArt,
+  MuscleArt,
+  SudokuArt,
+  WordleArt,
+  NerveArt,
+  MemoryArt,
+  WheelArt,
+  MpArt,
+} from '../components/games/ui/GameArt';
 
 const LuckyWheel = lazy(() =>
   import('../components/games/LuckyWheel').then((mod) => ({ default: mod.LuckyWheel }))
@@ -176,8 +196,27 @@ export const Games: React.FC<GamesProps> = ({
   const [showMultiplayerSetup, setShowMultiplayerSetup] = useState(false);
   const [openRooms, setOpenRooms] = useState<OpenRoom[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
-  const memoryConfettiFiredRef = useRef(false);
+  const [selectedCategory, setSelectedCategory] = useState<'all' | GameCategory>('all');
+  const [lastGameKey, setLastGameKey] = useState<SingleGameKey | null>(() => {
+    try {
+      const saved = localStorage.getItem('lp:lastGame') as SingleGameKey | null;
+      return saved && GAME_CATALOG.some((g) => g.key === saved) ? saved : null;
+    } catch {
+      return null;
+    }
+  });
   const socket = useSocket();
+  const { changePage } = useAuth();
+
+  // Flag active single-player game for deferred PWA update prompt
+  useEffect(() => {
+    document.documentElement.dataset.gameActive = activeGame ? '1' : '';
+    window.dispatchEvent(new Event('lp:game-active-change'));
+    return () => {
+      document.documentElement.dataset.gameActive = '';
+      window.dispatchEvent(new Event('lp:game-active-change'));
+    };
+  }, [activeGame]);
 
   const xpPerPlay = xpSettings.game_play || 20;
   const diagnosisXp = 100;
@@ -190,6 +229,113 @@ export const Games: React.FC<GamesProps> = ({
   const responsiblePlays = dailyPlays?.[5] ?? 0;
   const sudokuPlays = dailyPlays?.[6] ?? 0;
   const wordlePlays = dailyPlays?.[7] ?? 0;
+
+  const getPlays = useCallback(
+    (key: SingleGameKey): number | undefined => {
+      switch (key) {
+        case 'diagnosis':
+          return detectivePlays;
+        case 'special-tests':
+          return oscePlays;
+        case 'whos-responsible':
+          return responsiblePlays;
+        case 'sudoku':
+          return sudokuPlays;
+        case 'wordle':
+          return wordlePlays;
+        case 'nerve-path':
+          return nervePlays;
+        case 'memory':
+          return memoryPlays;
+        case 'spin':
+          return undefined;
+      }
+    },
+    [detectivePlays, memoryPlays, nervePlays, oscePlays, responsiblePlays, sudokuPlays, wordlePlays]
+  );
+
+  const getXpLabel = useCallback(
+    (key: SingleGameKey): string => {
+      switch (key) {
+        case 'diagnosis':
+          return `+${diagnosisXp} XP`;
+        case 'special-tests':
+          return `+${osceXp} XP`;
+        case 'whos-responsible':
+          return `+${xpSettings?.game_whos_responsible ?? 150} XP`;
+        case 'sudoku': {
+          const tiers = [
+            xpSettings?.game_sudoku_1 ?? 150,
+            xpSettings?.game_sudoku_2 ?? 300,
+            xpSettings?.game_sudoku_3 ?? 500,
+          ];
+          return `+${tiers[Math.min(sudokuPlays, 2)]} XP`;
+        }
+        case 'wordle':
+          return `+${xpSettings?.game_wordle ?? 150} XP`;
+        case 'nerve-path':
+          return '+120 XP';
+        case 'memory':
+          return `+${xpPerPlay} XP`;
+        case 'spin':
+          return 'جاكبوت 500 XP';
+      }
+    },
+    [diagnosisXp, osceXp, sudokuPlays, xpPerPlay, xpSettings]
+  );
+
+  const launchGame = useCallback(
+    (key: SingleGameKey) => {
+      if (key === 'spin' && hasSpunToday) return;
+      haptic('tap');
+      try {
+        localStorage.setItem('lp:lastGame', key);
+      } catch {
+        // ignore storage restrictions
+      }
+      setLastGameKey(key);
+      if (key === 'memory') {
+        setActiveGame('memory');
+        initMemoryGame();
+        return;
+      }
+      setActiveGame(key);
+    },
+    [hasSpunToday, initMemoryGame, setActiveGame]
+  );
+
+  const renderArt = useCallback((artKey: GameArtKey) => {
+    switch (artKey) {
+      case 'ecg':
+        return <EcgArt />;
+      case 'osce':
+        return <OsceArt />;
+      case 'muscle':
+        return <MuscleArt />;
+      case 'sudoku':
+        return <SudokuArt />;
+      case 'wordle':
+        return <WordleArt />;
+      case 'nerve':
+        return <NerveArt />;
+      case 'memory':
+        return <MemoryArt />;
+      case 'wheel':
+        return <WheelArt />;
+    }
+  }, []);
+
+  const sudokuTiersTag = useMemo(
+    () =>
+      `تصاعدي · ${xpSettings?.game_sudoku_1 ?? 150} → ${xpSettings?.game_sudoku_2 ?? 300} → ${xpSettings?.game_sudoku_3 ?? 500} XP`,
+    [xpSettings]
+  );
+
+  const sudokuDynamicDesc = useMemo(
+    () =>
+      `كل مربع يكمل بيكشف حروف، وفي الآخر جمّع المصطلح الطبي السري واكسب لحد ${xpSettings?.game_sudoku_3 ?? 500} XP!`,
+    [xpSettings]
+  );
 
   const skipSetupResetRef = useRef(false);
 
@@ -235,17 +381,6 @@ export const Games: React.FC<GamesProps> = ({
     return () => window.removeEventListener('open_game', onOpenGame);
   }, []);
 
-  // Fire confetti once when Memory Match finishes
-  useEffect(() => {
-    if (activeGame === 'memory' && gameFinished && !memoryConfettiFiredRef.current) {
-      memoryConfettiFiredRef.current = true;
-      fireWinConfetti();
-    }
-    if (!gameFinished) {
-      memoryConfettiFiredRef.current = false;
-    }
-  }, [activeGame, gameFinished]);
-
   const loadOpenRooms = useCallback(async () => {
     setLoadingRooms(true);
     try {
@@ -280,76 +415,18 @@ export const Games: React.FC<GamesProps> = ({
   };
 
   return (
-    <div className="space-y-6 xl:pt-6 max-w-4xl mx-auto px-4 text-start pb-8">
-      {/* ── Premium Arcade Hero Header ───────────────────────────────────────── */}
-      <m.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl border border-brand-orange/25 bg-gradient-to-br from-brand-orange/15 via-zinc-900/90 to-amber-500/10 p-5 md:p-6 shadow-[0_12px_40px_rgba(255,106,0,0.08)]"
-      >
-        <div className="absolute -top-16 -end-16 w-48 h-48 rounded-full bg-brand-orange/20 blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-orange/15 border border-brand-orange/30 text-brand-orange text-2xs font-black">
-              <Sparkles className="w-3 h-3" />
-              <span>ساحة ألعاب ليه فيزيو</span>
-            </div>
-            <h2 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
-              <Gamepad2 className="w-6 h-6 text-brand-orange" />
-              <span>اتعلّم، نافس، واكسب XP</span>
-            </h2>
-            <p className="text-xs text-zinc-400 font-semibold max-w-lg">
-              ألعاب إكلينيكية وتشريحية ممتعة تلعبها لوحدك أو أونلاين في غرف مباشرة مع صحابك.
-            </p>
-          </div>
+    <div className="lp-games space-y-5 xl:pt-6 max-w-5xl mx-auto px-4 text-start pb-10">
+      {/* ── Compact Player Progress Header ────────────────────────────────────── */}
+      <PlayerProgressCard
+        user={user}
+        dailyPlays={dailyPlays}
+        hasSpunToday={hasSpunToday}
+        onOpenStore={() => changePage('rewards')}
+        onLoginClick={() => changePage('login')}
+      />
 
-          {user && (() => {
-            const streakDays = user.streak_count || 0;
-            const st = getStreakTheme(streakDays);
-            const hasStreak = st.key !== 'none';
-            return (
-              <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-                <div className="px-3.5 py-2 rounded-2xl bg-zinc-950/80 border border-white/10 text-center">
-                  <span className="block text-2xs font-bold text-zinc-500">مجموع XP</span>
-                  <span className="text-sm font-black text-brand-amber font-mono tabular-nums">
-                    {user.total_xp || 0}
-                  </span>
-                </div>
-                <div
-                  className="px-3.5 py-2 rounded-2xl border flex items-center gap-2.5 transition-all"
-                  style={{
-                    backgroundColor: hasStreak ? `rgb(${st.glow} / 0.12)` : 'rgba(9, 9, 11, 0.8)',
-                    borderColor: hasStreak ? `rgb(${st.glow} / 0.38)` : 'rgba(255, 255, 255, 0.1)',
-                    boxShadow: hasStreak ? `0 0 18px rgb(${st.glow} / 0.16)` : undefined,
-                  }}
-                >
-                  <StreakFlame days={streakDays} size={22} />
-                  <div className="text-start leading-tight">
-                    <span className="block text-[10px] font-bold text-zinc-400 whitespace-nowrap">
-                      الستريك{hasStreak ? ` · ${st.name}` : ''}
-                    </span>
-                    <span
-                      className="block text-sm font-black whitespace-nowrap mt-0.5"
-                      style={{ color: hasStreak ? st.text : '#a1a1aa' }}
-                    >
-                      {streakDays > 0 ? (streakDays === 1 ? 'يوم واحد' : streakDays === 2 ? 'يومين' : streakDays > 10 ? `${streakDays} يوم` : `${streakDays} أيام`) : '0 أيام'}
-                    </span>
-                  </div>
-                </div>
-                <div className="px-3.5 py-2 rounded-2xl bg-zinc-950/80 border border-white/10 text-center">
-                  <span className="block text-2xs font-bold text-zinc-500">مكافأة اللعب</span>
-                  <span className="text-sm font-black text-emerald-400 font-mono">
-                    3 محاولات / لعبة
-                  </span>
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-      </m.div>
-
-      {/* ── Animated Tab Switcher ────────────────────────────────────────────── */}
-      <div className="relative flex gap-1.5 p-1.5 bg-zinc-900/75 border border-zinc-800/80 rounded-2xl max-w-md">
+      {/* ── Segmented Mode Switcher ────────────────────────────────────────────── */}
+      <div className="relative flex gap-1 p-1 bg-[#111113] border border-white/[0.08] rounded-2xl max-w-md">
         {[
           { id: 'single' as const, label: 'لعب فردي وتدريب', icon: <Gamepad2 className="w-4 h-4" /> },
           { id: 'multiplayer' as const, label: 'أونلاين مع صحابك', icon: <Users className="w-4 h-4" /> },
@@ -359,16 +436,19 @@ export const Games: React.FC<GamesProps> = ({
             <button
               key={tab.id}
               type="button"
-              onClick={() => setGameTab(tab.id)}
-              className={`relative flex-1 py-2.5 px-3 rounded-xl font-black text-xs cursor-pointer transition-colors flex items-center justify-center gap-2 z-10 ${
+              onClick={() => {
+                haptic('tap');
+                setGameTab(tab.id);
+              }}
+              className={`relative flex-1 min-h-[44px] py-2 px-3 rounded-xl font-black text-xs cursor-pointer transition-colors flex items-center justify-center gap-2 z-10 ${
                 active ? 'text-black' : 'text-zinc-400 hover:text-white'
               }`}
             >
               {active && (
                 <m.span
                   layoutId="gamesTabPill"
-                  transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber shadow-md -z-10"
+                  transition={{ type: 'spring', stiffness: 440, damping: 32 }}
+                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber shadow-sm -z-10"
                 />
               )}
               {tab.icon}
@@ -387,12 +467,12 @@ export const Games: React.FC<GamesProps> = ({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="sm:glass-card sm:p-6 md:p-7 space-y-4 sm:space-y-6 sm:border sm:border-white/10"
+              className="sm:rounded-[var(--g-radius-lg)] sm:bg-[#111113] sm:p-6 md:p-7 space-y-4 sm:space-y-6 sm:border sm:border-white/[0.08]"
             >
               {!['nerve-path', 'whos-responsible', 'sudoku', 'wordle'].includes(activeGame) && (
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/60 text-zinc-300 font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer active:scale-95 transition-all"
+                  className="lp-press inline-flex items-center gap-2 min-h-[44px] border border-white/10 hover:border-white/25 bg-[#17171a] hover:bg-zinc-800 text-zinc-200 font-bold text-xs px-4 rounded-xl cursor-pointer"
                   onClick={() => {
                     setActiveGame(null);
                     setGameFinished(false);
@@ -532,30 +612,24 @@ export const Games: React.FC<GamesProps> = ({
                   </div>
 
                   {gameFinished ? (
-                    <m.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="flex flex-col items-center justify-center text-center p-8 bg-zinc-900/50 border border-zinc-800 rounded-2xl gap-4"
-                    >
-                      <Trophy className="w-14 h-14 text-brand-amber fill-brand-amber/10 drop-shadow-[0_0_15px_rgba(255,176,0,0.4)]" />
-                      <h2 className="text-brand-orange font-black text-lg">مبروك! وصّلت كل الأزواج في {memoryMoves} حركة!</h2>
-                      {gamePlaySuccess ? (
-                        <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl">
-                          {gamePlaySuccess}
-                        </div>
-                      ) : gamePlayError ? (
-                        <div className="text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl">
-                          {gamePlayError}
-                        </div>
-                      ) : null}
-                      <button
-                        type="button"
-                        className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs py-3 px-6 rounded-xl cursor-pointer hover:shadow-orange-intense active:scale-95 transition-all shadow-orange-glow"
-                        onClick={initMemoryGame}
-                      >
-                        العب تاني
-                      </button>
-                    </m.div>
+                    <GameResultScreen
+                      status="won"
+                      accent="orange"
+                      title={`مبروك! وصّلت كل الأزواج في ${memoryMoves} حركة!`}
+                      xp={memoryPlays < 3 ? xpPerPlay : 0}
+                      stats={[
+                        { label: 'الحركات', value: String(memoryMoves) },
+                        { label: 'الأزواج', value: `${memoryMatches}/8` },
+                      ]}
+                      successMsg={gamePlaySuccess || undefined}
+                      errorMsg={gamePlayError || undefined}
+                      onReplay={initMemoryGame}
+                      replayLabel="العب تاني"
+                      onBack={() => {
+                        setActiveGame(null);
+                        setGameFinished(false);
+                      }}
+                    />
                   ) : (
                     <div className="space-y-4">
                       <div className="grid grid-cols-4 gap-2.5 max-w-lg mx-auto">
@@ -632,387 +706,168 @@ export const Games: React.FC<GamesProps> = ({
               )}
             </m.div>
           ) : (
-            /* Single Player Arcade Grid */
-            <m.div
-              key="single-grid"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-5"
-            >
-              {/* Game 1: Clinical Detective */}
-              <m.div
-                whileHover={{ y: -4 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-                className="relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-zinc-900/65 p-5 md:p-6 text-start flex flex-col justify-between min-h-[220px] hover:border-emerald-400/50 group shadow-lg"
-              >
-                <div className="absolute -top-12 -end-12 w-32 h-32 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
-                <div className="relative space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-2xs font-black tracking-wider bg-emerald-500/15 text-emerald-300 px-2.5 py-1 rounded-lg border border-emerald-500/25">
-                      تفكير إكلينيكي • جديد
-                    </span>
-                    <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
-                      <Stethoscope className="w-5 h-5" />
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-black text-white group-hover:text-emerald-300 transition-colors">
-                    شخّص الحالة (عيادة الطوارئ)
-                  </h3>
-                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                    حالات عظام وأعصاب و Red Flags حقيقية بتتكشف على 4 دلائل. كل ما تشخّص أسرع تاخد نقاط أعلى!
-                  </p>
-                </div>
-                <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-extrabold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">
-                      +{diagnosisXp} XP
-                    </span>
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
-                      detectivePlays >= 3 
-                        ? 'bg-zinc-800 text-zinc-400 border-zinc-700' 
-                        : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                    }`}>
-                      {detectivePlays >= 3 ? 'استنفدت محاولات اليوم (3/3)' : `${3 - detectivePlays}/3 محاولات XP`}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black text-xs py-2.5 px-5 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all flex items-center gap-1.5 shadow-md"
-                    onClick={() => setActiveGame('diagnosis')}
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" /> ابدأ العيادة
-                  </button>
-                </div>
-              </m.div>
+            /* Single Player Discovery Experience */
+            (() => {
+              const isEntryExhausted = (entry: (typeof GAME_CATALOG)[number]) => {
+                if (entry.key === 'spin') return hasSpunToday;
+                const used = getPlays(entry.key) ?? 0;
+                return used >= 3;
+              };
 
-              {/* Game 2: OSCE Special Tests Blitz */}
-              <m.div
-                whileHover={{ y: -4 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-                className="relative overflow-hidden rounded-3xl border border-violet-500/20 bg-zinc-900/65 p-5 md:p-6 text-start flex flex-col justify-between min-h-[220px] hover:border-violet-400/50 group shadow-lg"
-              >
-                <div className="absolute -top-12 -end-12 w-32 h-32 rounded-full bg-violet-500/10 blur-2xl pointer-events-none" />
-                <div className="relative space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-2xs font-black tracking-wider bg-violet-500/15 text-violet-300 px-2.5 py-1 rounded-lg border border-violet-500/25">
-                      سرعة وتركيز • 60 ثانية
-                    </span>
-                    <div className="w-9 h-9 rounded-xl bg-violet-500/15 border border-violet-500/25 flex items-center justify-center text-violet-400">
-                      <Activity className="w-5 h-5" />
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-black text-white group-hover:text-violet-300 transition-colors">
-                    سباق الـ Special Tests (OSCE)
-                  </h3>
-                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                    اختبارات الـ Orthopedic والـ Neuro تحت ضغط الوقت مع نظام Combo x4 وبونص ثواني!
-                  </p>
-                </div>
-                <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-extrabold text-violet-300 bg-violet-500/10 px-2.5 py-1 rounded-full">
-                      +{osceXp} XP
-                    </span>
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
-                      oscePlays >= 3 
-                        ? 'bg-zinc-800 text-zinc-400 border-zinc-700' 
-                        : 'bg-violet-500/15 text-violet-300 border-violet-500/30'
-                    }`}>
-                      {oscePlays >= 3 ? 'استنفدت محاولات اليوم (3/3)' : `${3 - oscePlays}/3 محاولات XP`}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-black text-xs py-2.5 px-5 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all flex items-center gap-1.5 shadow-md"
-                    onClick={() => setActiveGame('special-tests')}
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" /> ابدأ السباق
-                  </button>
-                </div>
-              </m.div>
+              let featuredKey: SingleGameKey | null = null;
+              if (selectedCategory === 'all') {
+                const candidate = FEATURED_PRIORITY.find((k) => (getPlays(k) ?? 0) < 3);
+                if (candidate) featuredKey = candidate;
+                else if (!hasSpunToday) featuredKey = 'spin';
+              }
 
-              {/* Game 6: Who's Responsible */}
-              <m.div
-                whileHover={{ y: -4 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-                className="relative overflow-hidden rounded-3xl border border-emerald-500/25 bg-zinc-900/65 p-5 md:p-6 text-start flex flex-col justify-between min-h-[220px] hover:border-emerald-400/60 group shadow-lg"
-              >
-                <div className="absolute -top-12 -end-12 w-32 h-32 rounded-full bg-emerald-500/15 blur-2xl pointer-events-none" />
-                <div className="relative space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-2xs font-black tracking-wider bg-emerald-500/15 text-emerald-300 px-2.5 py-1 rounded-lg border border-emerald-500/25">
-                      جديد · كينيسيولوجي
-                    </span>
-                    <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-300">
-                      <Stethoscope className="w-5 h-5" />
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-black text-white group-hover:text-emerald-300 transition-colors">
-                    مين المسؤول؟ Who&apos;s Responsible?
-                  </h3>
-                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                    اختار العضلة المسؤولة عن الحركة، واربطها بالـ Nerve والـ Origin والـ Insertion!
-                  </p>
-                </div>
-                <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-extrabold text-emerald-300 bg-emerald-500/10 px-2.5 py-1 rounded-full">
-                      +{xpSettings?.game_whos_responsible ?? 150} XP
-                    </span>
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
-                      responsiblePlays >= 3 
-                        ? 'bg-zinc-800 text-zinc-400 border-zinc-700' 
-                        : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                    }`}>
-                      {responsiblePlays >= 3 ? 'استنفدت محاولات اليوم (3/3)' : `${3 - responsiblePlays}/3 محاولات XP`}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black text-xs py-2.5 px-5 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all flex items-center gap-1.5"
-                    onClick={() => setActiveGame('whos-responsible')}
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" /> العب
-                  </button>
-                </div>
-              </m.div>
+              const featuredEntry = featuredKey
+                ? GAME_CATALOG.find((e) => e.key === featuredKey) || null
+                : null;
 
-              {/* Game 7: Anatomy Sudoku */}
-              <m.div
-                whileHover={{ y: -4 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-                className="relative overflow-hidden rounded-3xl border border-purple-500/25 bg-zinc-900/65 p-5 md:p-6 text-start flex flex-col justify-between min-h-[220px] hover:border-purple-400/60 group shadow-lg"
-              >
-                <div className="absolute -top-12 -end-12 w-32 h-32 rounded-full bg-purple-500/15 blur-2xl pointer-events-none" />
-                <div className="relative space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-2xs font-black tracking-wider bg-purple-500/15 text-purple-300 px-2.5 py-1 rounded-lg border border-purple-500/25">
-                      تصاعدي · {xpSettings?.game_sudoku_1 ?? 150} → {xpSettings?.game_sudoku_2 ?? 300} → {xpSettings?.game_sudoku_3 ?? 500} XP
-                    </span>
-                    <div className="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/25 flex items-center justify-center text-purple-300">
-                      <Zap className="w-5 h-5 fill-current" />
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-black text-white group-hover:text-purple-300 transition-colors">
-                    سودوكو التشريح
-                  </h3>
-                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                    كل مربع يكمل بيكشف حروف، وفي الآخر جمّع المصطلح الطبي السري واكسب لحد {xpSettings?.game_sudoku_3 ?? 500} XP!
-                  </p>
-                </div>
-                <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-extrabold text-purple-300 bg-purple-500/10 px-2.5 py-1 rounded-full">
-                      +{[xpSettings?.game_sudoku_1 ?? 150, xpSettings?.game_sudoku_2 ?? 300, xpSettings?.game_sudoku_3 ?? 500][Math.min(sudokuPlays, 2)]} XP
-                    </span>
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
-                      sudokuPlays >= 3 
-                        ? 'bg-zinc-800 text-zinc-400 border-zinc-700' 
-                        : 'bg-purple-500/15 text-purple-300 border-purple-500/30'
-                    }`}>
-                      {sudokuPlays >= 3 ? 'استنفدت محاولات اليوم (3/3)' : `${3 - sudokuPlays}/3 محاولات XP`}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-black text-xs py-2.5 px-5 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all flex items-center gap-1.5"
-                    onClick={() => setActiveGame('sudoku')}
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" /> العب
-                  </button>
-                </div>
-              </m.div>
+              const filteredEntries = GAME_CATALOG.filter(
+                (entry) => selectedCategory === 'all' || entry.category === selectedCategory
+              ).filter((entry) => entry.key !== featuredKey);
 
-              {/* Game 8: Physio Wordle */}
-              <m.div
-                whileHover={{ y: -4 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-                className="relative overflow-hidden rounded-3xl border border-amber-500/25 bg-zinc-900/65 p-5 md:p-6 text-start flex flex-col justify-between min-h-[220px] hover:border-amber-400/60 group shadow-lg"
-              >
-                <div className="absolute -top-12 -end-12 w-32 h-32 rounded-full bg-amber-500/15 blur-2xl pointer-events-none" />
-                <div className="relative space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-2xs font-black tracking-wider bg-amber-500/15 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-500/25">
-                      جديد · Wordle طبي
-                    </span>
-                    <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-300">
-                      <Sparkles className="w-5 h-5" />
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-black text-white group-hover:text-amber-300 transition-colors">
-                    أكمل الجملة الطبية (Wordle)
-                  </h3>
-                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                    خمّن الكلمة الطبية الناقصة في جملة مفيدة (زي Sartorius) خلال 6 محاولات!
-                  </p>
-                </div>
-                <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-extrabold text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-full">
-                      +{xpSettings?.game_wordle ?? 150} XP
-                    </span>
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
-                      wordlePlays >= 3 
-                        ? 'bg-zinc-800 text-zinc-400 border-zinc-700' 
-                        : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                    }`}>
-                      {wordlePlays >= 3 ? 'استنفدت محاولات اليوم (3/3)' : `${3 - wordlePlays}/3 محاولات XP`}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs py-2.5 px-5 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all flex items-center gap-1.5"
-                    onClick={() => setActiveGame('wordle')}
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" /> العب
-                  </button>
-                </div>
-              </m.div>
+              const sortedEntries = [...filteredEntries].sort(
+                (a, b) => Number(isEntryExhausted(a)) - Number(isEntryExhausted(b))
+              );
 
-              {/* Game 5: Nerve Path Sliding Puzzle */}
-              <m.div
-                whileHover={{ y: -4 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-                className="relative overflow-hidden rounded-3xl border border-cyan-500/25 bg-zinc-900/65 p-5 md:p-6 text-start flex flex-col justify-between min-h-[220px] hover:border-cyan-400/60 group shadow-lg"
-              >
-                <div className="absolute -top-12 -end-12 w-32 h-32 rounded-full bg-cyan-500/15 blur-2xl pointer-events-none" />
-                <div className="relative space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-2xs font-black tracking-wider bg-cyan-500/15 text-cyan-300 px-2.5 py-1 rounded-lg border border-cyan-500/25">
-                      جديد · ألغاز عصبية
-                    </span>
-                    <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-500/25 flex items-center justify-center text-cyan-300">
-                      <Activity className="w-5 h-5" />
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-black text-white group-hover:text-cyan-300 transition-colors">
-                    مسار الأعصاب
-                  </h3>
-                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                    حرّك المكعبات ورتّب المسار العصبي عشان توصل الإشارة الكهربائية من الجدع للعضلة!
-                  </p>
-                </div>
-                <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-extrabold text-cyan-300 bg-cyan-500/10 px-2.5 py-1 rounded-full">
-                      +120 XP
-                    </span>
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
-                      nervePlays >= 3 
-                        ? 'bg-zinc-800 text-zinc-400 border-zinc-700' 
-                        : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
-                    }`}>
-                      {nervePlays >= 3 ? 'استنفدت محاولات اليوم (3/3)' : `${3 - nervePlays}/3 محاولات XP`}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="bg-gradient-to-r from-cyan-500 to-emerald-400 text-black font-black text-xs py-2.5 px-5 rounded-xl cursor-pointer hover:opacity-95 active:scale-95 transition-all flex items-center gap-1.5"
-                    onClick={() => setActiveGame('nerve-path')}
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" /> العب
-                  </button>
-                </div>
-              </m.div>
+              const lastGameEntry = lastGameKey
+                ? GAME_CATALOG.find((g) => g.key === lastGameKey) || null
+                : null;
+              const canResumeLast =
+                !!lastGameEntry && !(lastGameEntry.key === 'spin' && hasSpunToday);
 
-              {/* Game 3: Clinical Anatomy Memory Match */}
-              <m.div
-                whileHover={{ y: -4 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-                className="relative overflow-hidden rounded-3xl border border-brand-orange/20 bg-zinc-900/65 p-5 md:p-6 text-start flex flex-col justify-between min-h-[220px] hover:border-brand-orange/50 group shadow-lg"
-              >
-                <div className="absolute -top-12 -end-12 w-32 h-32 rounded-full bg-brand-orange/10 blur-2xl pointer-events-none" />
-                <div className="relative space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-2xs font-black tracking-wider bg-brand-orange/15 text-brand-orange px-2.5 py-1 rounded-lg border border-brand-orange/25">
-                      ذاكرة تشريحية
-                    </span>
-                    <div className="w-9 h-9 rounded-xl bg-brand-orange/15 border border-brand-orange/25 flex items-center justify-center text-brand-orange">
-                      <Brain className="w-5 h-5" />
+              return (
+                <div key="single-grid" className="space-y-4">
+                  {/* Category Rail + Resume Last Game Pill */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div
+                      className="flex items-center gap-1.5 overflow-x-auto lp-no-scrollbar snap-x py-0.5"
+                      role="tablist"
+                      aria-label="تصنيف الألعاب"
+                    >
+                      {GAME_CATEGORIES.map((cat) => {
+                        const active = selectedCategory === cat.id;
+                        return (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            role="tab"
+                            aria-selected={active}
+                            onClick={() => {
+                              haptic('tap');
+                              setSelectedCategory(cat.id);
+                            }}
+                            className={`lp-press snap-start shrink-0 min-h-[38px] px-3.5 py-1.5 rounded-full text-xs font-black border cursor-pointer transition-colors ${
+                              active
+                                ? 'bg-brand-orange text-black border-brand-orange'
+                                : 'bg-[#111113] text-zinc-300 border-white/[0.08] hover:border-white/20 hover:text-white'
+                            }`}
+                          >
+                            {cat.label}
+                          </button>
+                        );
+                      })}
                     </div>
-                  </div>
-                  <h3 className="text-lg font-black text-white group-hover:text-brand-orange transition-colors">
-                    توصيل التشريح الإكلينيكي
-                  </h3>
-                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                    وصّل كل عضلة بالعصب المغذي لها أو الاختبار التشخيصي بتاعها بأقل عدد من الحركات.
-                  </p>
-                </div>
-                <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-extrabold text-brand-orange bg-brand-orange/10 px-2.5 py-1 rounded-full">
-                      +{xpPerPlay} XP
-                    </span>
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
-                      memoryPlays >= 3 
-                        ? 'bg-zinc-800 text-zinc-400 border-zinc-700' 
-                        : 'bg-brand-orange/15 text-brand-orange border-brand-orange/30'
-                    }`}>
-                      {memoryPlays >= 3 ? 'استنفدت محاولات اليوم (3/3)' : `${3 - memoryPlays}/3 محاولات XP`}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="bg-zinc-950 border border-zinc-700 hover:border-brand-orange text-white font-black text-xs py-2.5 px-5 rounded-xl cursor-pointer hover:bg-brand-orange/10 active:scale-95 transition-all flex items-center gap-1.5"
-                    onClick={() => {
-                      setActiveGame('memory');
-                      initMemoryGame();
-                    }}
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" /> العب
-                  </button>
-                </div>
-              </m.div>
 
-              {/* Game 4: Lucky Wheel */}
-              <m.div
-                whileHover={{ y: -4 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-                className={`relative overflow-hidden rounded-3xl border border-amber-500/20 bg-zinc-900/65 p-5 md:p-6 text-start flex flex-col justify-between min-h-[220px] hover:border-amber-400/50 group shadow-lg ${
-                  hasSpunToday ? 'opacity-75' : ''
-                }`}
-              >
-                <div className="absolute -top-12 -end-12 w-32 h-32 rounded-full bg-amber-500/10 blur-2xl pointer-events-none" />
-                <div className="relative space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-2xs font-black tracking-wider bg-amber-500/15 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-500/25">
-                      جاكبوت 500 XP
-                    </span>
-                    <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400">
-                      <Zap className="w-5 h-5 fill-current" />
-                    </div>
+                    {canResumeLast && lastGameEntry && (
+                      <button
+                        type="button"
+                        onClick={() => launchGame(lastGameEntry.key)}
+                        className="lp-press self-start sm:self-auto shrink-0 min-h-[38px] px-3.5 py-1.5 rounded-full bg-[#17171a] border border-brand-orange/35 hover:border-brand-orange text-brand-amber text-xs font-black inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>كمّل آخر لعبة: {lastGameEntry.title}</span>
+                      </button>
+                    )}
                   </div>
-                  <h3 className="text-lg font-black text-white group-hover:text-amber-300 transition-colors">
-                    عجلة الحظ اليومية
-                  </h3>
-                  <p className="text-zinc-400 text-xs font-semibold leading-relaxed">
-                    لفة مجانية كل يوم بفيزيكس حقيقية وجاكبوت Mystery Box بـ 500 XP!
-                  </p>
+
+                  {/* Featured Hero Tile */}
+                  {featuredEntry && (() => {
+                    const isSpin = featuredEntry.key === 'spin';
+                    const used = getPlays(featuredEntry.key);
+                    const tags =
+                      featuredEntry.key === 'sudoku'
+                        ? [sudokuTiersTag]
+                        : featuredEntry.tags;
+                    const desc =
+                      featuredEntry.key === 'sudoku'
+                        ? sudokuDynamicDesc
+                        : featuredEntry.desc;
+                    return (
+                      <GameTile
+                        accent={featuredEntry.accent}
+                        title={featuredEntry.title}
+                        titleEn={featuredEntry.titleEn}
+                        desc={desc}
+                        tags={['مميز اليوم', ...tags]}
+                        isNew={featuredEntry.isNew}
+                        xpLabel={getXpLabel(featuredEntry.key)}
+                        used={used}
+                        locked={isSpin ? hasSpunToday : false}
+                        lockedLabel={isSpin ? 'لفّيت النهارده ✓' : undefined}
+                        disableOnLock={isSpin}
+                        art={renderArt(featuredEntry.artKey)}
+                        ctaLabel={featuredEntry.ctaLabel}
+                        onPlay={() => launchGame(featuredEntry.key)}
+                        variant="hero"
+                        index={0}
+                      />
+                    );
+                  })()}
+
+                  {/* Bento Discovery Grid */}
+                  {sortedEntries.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {sortedEntries.map((entry, idx) => {
+                        const isSpin = entry.key === 'spin';
+                        const used = getPlays(entry.key);
+                        const locked = isSpin ? hasSpunToday : (used ?? 0) >= 3;
+                        const tags =
+                          entry.key === 'sudoku' ? [sudokuTiersTag] : entry.tags;
+                        const desc =
+                          entry.key === 'sudoku' ? sudokuDynamicDesc : entry.desc;
+                        const isWideTile = idx === 0 || (sortedEntries.length > 5 && idx === 5);
+
+                        return (
+                          <GameTile
+                            key={entry.key}
+                            accent={entry.accent}
+                            title={entry.title}
+                            titleEn={entry.titleEn}
+                            desc={desc}
+                            tags={tags}
+                            isNew={entry.isNew}
+                            xpLabel={getXpLabel(entry.key)}
+                            used={used}
+                            locked={locked}
+                            lockedLabel={
+                              isSpin ? 'لفّيت النهارده ✓' : 'خلّصت محاولات اليوم'
+                            }
+                            disableOnLock={isSpin}
+                            art={renderArt(entry.artKey)}
+                            ctaLabel={entry.ctaLabel}
+                            onPlay={() => launchGame(entry.key)}
+                            variant={isWideTile ? 'wide' : 'compact'}
+                            className={isWideTile ? 'lg:col-span-2' : ''}
+                            index={idx + (featuredEntry ? 1 : 0)}
+                          />
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    !featuredEntry && (
+                      <div className="rounded-3xl border border-dashed border-zinc-800 bg-[#111113] py-12 px-4 text-center space-y-2">
+                        <Gamepad2 className="w-7 h-7 text-zinc-600 mx-auto" />
+                        <p className="text-sm font-black text-zinc-300">مفيش ألعاب في التصنيف ده حالياً</p>
+                      </div>
+                    )
+                  )}
                 </div>
-                <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
-                  <span className={`text-xs font-extrabold px-2.5 py-1 rounded-full border ${
-                    hasSpunToday
-                      ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/25'
-                      : 'text-amber-300 bg-amber-500/10 border-amber-500/25'
-                  }`}>
-                    {hasSpunToday ? 'لفّيت النهارده ✓' : 'جاهزة للّف'}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={hasSpunToday}
-                    className={`font-black text-xs py-2.5 px-5 rounded-xl transition-all flex items-center gap-1.5 ${
-                      hasSpunToday
-                        ? 'bg-zinc-800 text-zinc-400 border border-zinc-700 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-brand-orange to-brand-amber text-black cursor-pointer hover:shadow-orange-glow active:scale-95'
-                    }`}
-                    onClick={() => !hasSpunToday && setActiveGame('spin')}
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" /> {hasSpunToday ? 'مفتوحة بكرة' : 'افتح العجلة'}
-                  </button>
-                </div>
-              </m.div>
-            </m.div>
+              );
+            })()
           )}
         </AnimatePresence>
       ) : (
@@ -1028,43 +883,43 @@ export const Games: React.FC<GamesProps> = ({
             >
               {/* 3 Online Game Mode Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {(['anatomy', 'clinical', 'special_tests'] as GameMode[]).map((mode) => {
+                {(['anatomy', 'clinical', 'special_tests'] as GameMode[]).map((mode, idx) => {
                   const mMeta = MODE_META[mode];
+                  const accent =
+                    mode === 'anatomy' ? 'orange' : mode === 'clinical' ? 'teal' : 'violet';
+                  const art =
+                    mode === 'anatomy' ? (
+                      <MpArt />
+                    ) : mode === 'clinical' ? (
+                      <EcgArt />
+                    ) : (
+                      <OsceArt />
+                    );
                   return (
-                    <m.div
+                    <GameTile
                       key={mode}
-                      whileHover={{ y: -4 }}
-                      transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-                      className={`relative overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/65 p-5 text-start flex flex-col justify-between min-h-[215px] ${mMeta.accentBorder} group shadow-lg`}
-                    >
-                      <div className={`absolute inset-0 bg-gradient-to-br ${mMeta.accentBg} pointer-events-none`} />
-                      <div className="relative space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md bg-white/5 border border-white/10 ${mMeta.accentText}`}>
-                            {mMeta.badge}
-                          </span>
-                          {mMeta.icon}
-                        </div>
-                        <h3 className="text-base font-black text-white pt-1">{mMeta.title}</h3>
-                        <p className="text-zinc-400 text-xs font-semibold leading-relaxed">{mMeta.desc}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => openModeSetup(mode)}
-                        className="relative mt-4 w-full py-2.5 rounded-xl bg-zinc-950 border border-zinc-700 hover:border-brand-orange text-white font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer hover:bg-brand-orange/10 active:scale-95 transition-all"
-                      >
-                        <Play className="w-3.5 h-3.5 fill-current" />
-                        <span>اعمل غرفة بالمود ده</span>
-                      </button>
-                    </m.div>
+                      accent={accent}
+                      title={mMeta.title}
+                      desc={mMeta.desc}
+                      tags={[mMeta.badge]}
+                      xpLabel="XP مفتوح"
+                      art={art}
+                      ctaLabel="اعمل غرفة"
+                      onPlay={() => {
+                        haptic('tap');
+                        openModeSetup(mode);
+                      }}
+                      variant="compact"
+                      index={idx}
+                    />
                   );
                 })}
               </div>
 
               {/* Quick Join by Code + Live Open Rooms */}
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                 {/* Quick Join */}
-                <div className="lg:col-span-2 rounded-3xl border border-white/10 bg-zinc-900/65 p-5 flex flex-col justify-between gap-4">
+                <div className="lg:col-span-2 rounded-[var(--g-radius-lg)] border border-white/[0.08] bg-[#111113] p-5 flex flex-col justify-between gap-4">
                   <div>
                     <h4 className="text-sm font-black text-white flex items-center gap-2">
                       <DoorOpen className="w-4 h-4 text-brand-orange" />
@@ -1079,7 +934,7 @@ export const Games: React.FC<GamesProps> = ({
                     <input
                       type="text"
                       dir="ltr"
-                      className="w-full bg-zinc-950 border border-zinc-800 focus:border-brand-orange rounded-xl py-2.5 text-center text-lg font-black tracking-[6px] uppercase text-white outline-none transition-colors"
+                      className="w-full min-h-[44px] bg-[#17171a] border border-white/10 focus:border-brand-orange rounded-xl py-2.5 text-center text-lg font-black tracking-[6px] uppercase text-white outline-none transition-colors"
                       placeholder="ABCD"
                       value={gameRoomCodeInput}
                       onChange={(e) => setGameRoomCodeInput(e.target.value.toUpperCase())}
@@ -1089,7 +944,7 @@ export const Games: React.FC<GamesProps> = ({
                       type="button"
                       onClick={() => handleJoinGameRoom(gameRoomCodeInput)}
                       disabled={isGameLoading || !gameRoomCodeInput.trim()}
-                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs cursor-pointer hover:shadow-orange-glow active:scale-95 transition-all disabled:opacity-50"
+                      className="lp-press w-full min-h-[44px] py-2.5 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs cursor-pointer disabled:opacity-50"
                     >
                       {isGameLoading ? 'بندخلك…' : 'ادخل الغرفة'}
                     </button>
@@ -1097,7 +952,7 @@ export const Games: React.FC<GamesProps> = ({
                 </div>
 
                 {/* Live Open Rooms Browser */}
-                <div className="lg:col-span-3 rounded-3xl border border-white/10 bg-zinc-900/65 p-5 space-y-3">
+                <div className="lg:col-span-3 rounded-[var(--g-radius-lg)] border border-white/[0.08] bg-[#111113] p-5 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -1178,11 +1033,11 @@ export const Games: React.FC<GamesProps> = ({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="glass-card p-6 md:p-8 space-y-6 border border-white/10"
+              className="rounded-[var(--g-radius-lg)] bg-[#111113] p-6 md:p-8 space-y-6 border border-white/[0.08]"
             >
               <button
                 type="button"
-                className="inline-flex items-center gap-2 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer active:scale-95 transition-all"
+                className="lp-press inline-flex items-center gap-2 min-h-[44px] border border-white/10 hover:border-white/25 bg-[#17171a] hover:bg-zinc-800 text-zinc-200 font-bold text-xs px-4 rounded-xl cursor-pointer"
                 onClick={() => setShowMultiplayerSetup(false)}
               >
                 <ArrowLeft className="rtl:-scale-x-100 w-4 h-4" />
