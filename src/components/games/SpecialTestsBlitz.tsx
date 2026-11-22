@@ -167,6 +167,9 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
   xpReward,
   gamePlaySuccess,
   gamePlayError,
+  dailyPlaysCount = 0,
+  maxDailyPlays = 3,
+  onBack,
 }) => {
   const [deck, setDeck] = useState<BlitzQuestion[]>(() => buildDeck());
   const [qIdx, setQIdx] = useState(0);
@@ -218,7 +221,7 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
       playSound(correctCount >= 10 ? 'jackpot' : 'game_win');
       onClaimXp();
     } else if (correctCount < 5) {
-      playSound('game_lose');
+      playSound('xp_loss');
     }
   }, [finished, score, bestScore, correctCount, onClaimXp]);
 
@@ -342,7 +345,7 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
                   ? 'happy'
                   : 'confused'
                 : timeLeft <= 10
-                  ? 'nervous'
+                  ? 'surprised'
                   : combo >= 2
                     ? 'excited'
                     : 'thinking'

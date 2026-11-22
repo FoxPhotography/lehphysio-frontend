@@ -1277,7 +1277,7 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
         playSound('game_win');
         onClaimXp();
       } else {
-        playSound('game_lose');
+        playSound('xp_loss');
       }
       return;
     }
@@ -1364,7 +1364,7 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
                   ? 'celebrating'
                   : 'confused'
                 : current?.isRedFlag
-                  ? 'nervous'
+                  ? 'surprised'
                   : 'thinking'
             }
             size={42}

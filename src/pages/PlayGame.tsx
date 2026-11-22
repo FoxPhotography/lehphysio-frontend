@@ -217,7 +217,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         playSound('correct');
         haptic('success');
       } else {
-        playSound('message');
+        playSound('receive');
       }
     } else if (currentWinner === 'draw' && prevWinner !== 'draw') {
       playSound('wrong');
@@ -402,7 +402,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
       const data = await res.json();
       if (res.ok) {
         setActiveGameRoom(data);
-        playSound('message');
+        playSound('send');
       }
     } catch (err) {
       console.error(err);
@@ -775,7 +775,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           <div className="flex items-center gap-2.5 min-w-0">
             <Mascot
               character={modeTheme.mascot}
-              mood={room.roundWinner ? 'happy' : timeLeft <= 5 ? 'nervous' : 'thinking'}
+              mood={room.roundWinner ? 'happy' : timeLeft <= 5 ? 'surprised' : 'thinking'}
               size={38}
             />
             <div className="min-w-0">

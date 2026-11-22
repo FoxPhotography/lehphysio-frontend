@@ -25,7 +25,7 @@ export const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
     if (reduced || startVal === safeTarget || duration <= 0) {
       prevRef.current = safeTarget;
       setDisplay(safeTarget);
-      return;
+      return undefined;
     }
 
     let raf = 0;

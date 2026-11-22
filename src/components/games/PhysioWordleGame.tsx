@@ -268,7 +268,7 @@ export const PhysioWordleGame: React.FC<PhysioWordleGameProps> = ({
       onWin();
     } else if (nextGuesses.length >= MAX_ATTEMPTS) {
       setStatus('lost');
-      playSound('game_lose');
+      playSound('xp_loss');
       haptic('error');
     } else {
       playSound('wordle_flip');
@@ -373,7 +373,7 @@ export const PhysioWordleGame: React.FC<PhysioWordleGameProps> = ({
                   : status === 'lost'
                     ? 'sad'
                     : guesses.length >= 4
-                      ? 'nervous'
+                      ? 'surprised'
                       : 'thinking'
               }
               size={40}
