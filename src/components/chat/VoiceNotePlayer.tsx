@@ -13,7 +13,7 @@ interface VoiceNotePlayerProps {
 const WAVE_BAR_COUNT = 26;
 
 function resolveMediaUrl(raw: string): string {
-  if (!raw) return '';
+  if (!raw || typeof raw !== 'string') return '';
   if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('blob:')) return raw;
   return `${API_BASE}${raw.startsWith('/') ? '' : '/'}${raw}`;
 }

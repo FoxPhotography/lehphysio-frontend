@@ -991,15 +991,24 @@ export const Games: React.FC<GamesProps> = ({
                   </p>
                 </div>
                 <div className="relative flex justify-between items-center pt-4 mt-4 border-t border-white/5">
-                  <span className="text-xs font-extrabold text-zinc-400 bg-zinc-950 border border-white/10 px-2.5 py-1 rounded-full">
+                  <span className={`text-xs font-extrabold px-2.5 py-1 rounded-full border ${
+                    hasSpunToday
+                      ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/25'
+                      : 'text-amber-300 bg-amber-500/10 border-amber-500/25'
+                  }`}>
                     {hasSpunToday ? 'لفّيت النهارده ✓' : 'جاهزة للّف'}
                   </span>
                   <button
                     type="button"
-                    className="bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs py-2.5 px-5 rounded-xl cursor-pointer hover:shadow-orange-glow active:scale-95 transition-all flex items-center gap-1.5"
-                    onClick={() => setActiveGame('spin')}
+                    disabled={hasSpunToday}
+                    className={`font-black text-xs py-2.5 px-5 rounded-xl transition-all flex items-center gap-1.5 ${
+                      hasSpunToday
+                        ? 'bg-zinc-800 text-zinc-400 border border-zinc-700 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-brand-orange to-brand-amber text-black cursor-pointer hover:shadow-orange-glow active:scale-95'
+                    }`}
+                    onClick={() => !hasSpunToday && setActiveGame('spin')}
                   >
-                    <Play className="w-3.5 h-3.5 fill-current" /> افتح العجلة
+                    <Play className="w-3.5 h-3.5 fill-current" /> {hasSpunToday ? 'مفتوحة بكرة' : 'افتح العجلة'}
                   </button>
                 </div>
               </m.div>

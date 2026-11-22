@@ -1815,6 +1815,7 @@ function InnerApp() {
         return { xp_earned: data.xp_earned ?? 50 };
       } else {
         showToast(data.error || 'معرفناش نفتح الصندوق.');
+        if (res.status === 400) fetchUserProfile();
         playChatSound('error');
         return null;
       }
@@ -2021,8 +2022,11 @@ function InnerApp() {
   const unseenEpisodesCount = currentPage === 'episodes' || currentPage === 'episode-detail' || lastSeenEpisodeId === null
     ? 0
     : episodes.filter((ep: any) => Number(ep.id || 0) > lastSeenEpisodeId).length;
+  const hasSpunToday = !!(user && user.last_spin_wheel_date === getLocalDateString());
   const availableGamesCount = user
-    ? [1, 2, 3, 4, 5, 6, 7].filter((id) => (gamesHook.dailyPlays?.[id] ?? 0) < 3).length
+    ? [1, 2, 3, 4, 5, 6, 7].filter((id) => (gamesHook.dailyPlays?.[id] ?? 0) < 3).length +
+      (hasSpunToday ? 0 : 1) +
+      3
     : 0;
 
   return (

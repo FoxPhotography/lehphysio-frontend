@@ -333,6 +333,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [token]);
 
+  // Sync user profile (e.g. spin wheel / surprise box played on another device) when tab/PWA regains focus
+  useEffect(() => {
+    if (!token) return undefined;
+    let lastSyncAt = Date.now();
+    const syncOnReturn = () => {
+      if (document.visibilityState && document.visibilityState !== 'visible') return;
+      const now = Date.now();
+      if (now - lastSyncAt < 10000) return;
+      lastSyncAt = now;
+      fetchUserProfile();
+    };
+    window.addEventListener('focus', syncOnReturn);
+    document.addEventListener('visibilitychange', syncOnReturn);
+    return () => {
+      window.removeEventListener('focus', syncOnReturn);
+      document.removeEventListener('visibilitychange', syncOnReturn);
+    };
+  }, [token]);
+
   const fetchUserProfile = async () => {
     if (!token) return;
     if (profileFetchInProgress.current) return;

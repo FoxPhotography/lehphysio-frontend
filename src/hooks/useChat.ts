@@ -338,9 +338,8 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
         return;
       }
 
-      if (communityTab === 'chat' && currentPage === 'community') {
-        if (payload?.type === 'reaction') {
-          // Patch just this message's reactions — no full refetch
+      if (payload?.type === 'reaction') {
+        if (communityTab === 'chat' && currentPage === 'community') {
           const nextReactions = summarizeRawReactions(payload.reactions || [], userRef.current?.id);
           setChatMessages(prev => {
             const updated = prev.map(m => m.id === payload.messageId ? { ...m, reactions: nextReactions } : m);
@@ -349,17 +348,18 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
             }
             return updated;
           });
-        } else if (payload?.type === 'edit') {
-          setChatMessages(prev => {
-            const updated = prev.map(m => m.id === payload.messageId ? { ...m, message: payload.message, is_edited: 1 } : m);
-            if (userRef.current?.id) {
-              scheduleChatCache(userRef.current.id, updated.slice(-1000));
-            }
-            return updated;
-          });
-        } else {
-          fetchChatMessages();
         }
+      } else if (payload?.type === 'edit') {
+        setChatMessages(prev => {
+          const updated = prev.map(m => m.id === payload.messageId ? { ...m, message: payload.message, is_edited: 1 } : m);
+          if (userRef.current?.id) {
+            scheduleChatCache(userRef.current.id, updated.slice(-1000));
+          }
+          return updated;
+        });
+      } else {
+        // Fetch in all pages so the BottomNav/Sidebar unread chat badge updates in real time
+        fetchChatMessages();
       }
     };
     // Someone changed their cosmetics → re-skin their messages without refetching
@@ -381,12 +381,13 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     };
   }, [communityTab, currentPage, socket]);
 
-  // Sync missed messages on reconnect / online status
+  // Sync missed messages on reconnect / online status / login
   useEffect(() => {
+    if (token) {
+      fetchChatMessages();
+    }
     const handleOnlineSync = () => {
-      if (communityTab === 'chat' && currentPage === 'community') {
-        fetchChatMessages();
-      }
+      fetchChatMessages();
     };
 
     socket.on('connect', handleOnlineSync);
@@ -513,20 +514,7 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
     media?: { image_url?: string | null; audio_url?: string | null; audio_duration?: number }
   ) => {
     e.preventDefault();
-    const rawMessageText = (text ?? chatInput).trim();
-    const replyMention = replyingTo?.username && replyingTo.username !== user?.username
-      ? `@${replyingTo.username}`
-      : '';
-    const suggMention = replyingToSuggestion?.username && replyingToSuggestion.username !== user?.username
-      ? `@${replyingToSuggestion.username}`
-      : '';
-    let messageText = rawMessageText;
-    if (messageText && replyMention && !new RegExp(`@${replyingTo.username.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}(?=[\\s.,!?:;)]|$)`, 'i').test(messageText)) {
-      messageText = `${replyMention} ${messageText}`.trim();
-    }
-    if (messageText && suggMention && !new RegExp(`@${replyingToSuggestion.username.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}(?=[\\s.,!?:;)]|$)`, 'i').test(messageText)) {
-      messageText = `${suggMention} ${messageText}`.trim();
-    }
+    const messageText = (text ?? chatInput).trim();
     const hasMedia = Boolean(media?.image_url || media?.audio_url);
     if ((!messageText && !hasMedia) || !token) return;
 

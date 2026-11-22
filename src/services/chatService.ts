@@ -29,14 +29,18 @@ export const chatService = {
     return res;
   },
 
-  async uploadAudio(blob: Blob, filename: string, token?: string) {
+  async uploadAudio(blob: Blob, filename: string, token?: string): Promise<string> {
     const formData = new FormData();
     formData.append('audio', blob, filename);
     const res = await apiFetch('/api/upload/audio', {
       method: 'POST',
       body: formData,
     }, token);
-    return res;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.url) {
+      throw new Error(data?.error || 'فشل رفع الرسالة الصوتية');
+    }
+    return data.url as string;
   },
 
   async toggleReaction(messageId: number, emoji: string, token?: string) {

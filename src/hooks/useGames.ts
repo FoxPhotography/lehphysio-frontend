@@ -367,6 +367,7 @@ export const useGames = () => {
       const data = await res.json();
       if (!res.ok) {
         showToast(data.error || 'العجلة مالفّتش.');
+        if (res.status === 400) fetchUserProfile();
         setIsSpinning(false);
         (window as any).__isSpinningWheel = false;
         return;

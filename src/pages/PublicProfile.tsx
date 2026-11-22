@@ -140,11 +140,11 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
       >
         {/* The profile's background is the owner's current streak colour, alive */}
         <StreakAura days={data.streak_count} override={profileCos} />
-        <div className="relative z-10">
+        <div className="relative z-10 mb-5">
           <UserAvatar username={data.username} avatarUrl={data.avatar_url} equippedFrame={data.equipped_frame} size={112} eager className="mt-2" />
         </div>
-        <div className="relative z-10">
-          <h1 className="text-2xl font-black text-white" dir="auto"><StreakName days={data.streak_count} override={cosmeticVisual(data.cosmetics?.name)}>{data.username}</StreakName></h1>
+        <div className="relative z-10 pt-1">
+          <h1 className="text-2xl font-black text-white leading-snug" dir="auto"><StreakName days={data.streak_count} override={cosmeticVisual(data.cosmetics?.name)}>{data.username}</StreakName></h1>
           {data.batch && <p className="text-sm text-zinc-400 font-bold mt-0.5">{data.batch}</p>}
           {(() => {
             const p = presenceCtx?.getUserPresence(data.username);

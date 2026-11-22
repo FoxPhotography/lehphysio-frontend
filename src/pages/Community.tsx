@@ -275,12 +275,100 @@ export const Community: React.FC<CommunityProps> = ({
 
   // Chat media states (Voice Note + Image Crop/Compress + Lightbox)
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [isVoiceLocked, setIsVoiceLocked] = useState(false);
+  const [voiceActionSignal, setVoiceActionSignal] = useState<'send' | 'cancel' | null>(null);
+  const voiceGestureRef = useRef<HTMLDivElement | null>(null);
+  const voiceGestureCleanupRef = useRef<(() => void) | null>(null);
   const [chatCropSrc, setChatCropSrc] = useState<string | null>(null);
   const [chatCropFileName, setChatCropFileName] = useState<string>('chat-image.jpg');
   const [pendingChatImage, setPendingChatImage] = useState<string | null>(null);
   const [isUploadingChatImage, setIsUploadingChatImage] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const chatImageInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      voiceGestureCleanupRef.current?.();
+    };
+  }, []);
+
+  const resetVoiceState = () => {
+    voiceGestureCleanupRef.current?.();
+    voiceGestureCleanupRef.current = null;
+    if (voiceGestureRef.current) {
+      voiceGestureRef.current.style.setProperty('--cancel-p', '0');
+      voiceGestureRef.current.style.setProperty('--lock-p', '0');
+    }
+    setIsRecordingVoice(false);
+    setIsVoiceLocked(false);
+    setVoiceActionSignal(null);
+  };
+
+  const startVoiceHold = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    e.preventDefault();
+    voiceGestureCleanupRef.current?.();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let settled = false;
+
+    setIsRecordingVoice(true);
+    setIsVoiceLocked(false);
+    setVoiceActionSignal(null);
+
+    const cleanup = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      voiceGestureCleanupRef.current = null;
+    };
+
+    const onMove = (ev: PointerEvent) => {
+      if (settled) return;
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      const cancelProg = Math.min(1, Math.max(0, dx / 75));
+      const lockProg = Math.min(1, Math.max(0, -dy / 60));
+
+      if (voiceGestureRef.current) {
+        voiceGestureRef.current.style.setProperty('--cancel-p', cancelProg.toFixed(3));
+        voiceGestureRef.current.style.setProperty('--lock-p', lockProg.toFixed(3));
+      }
+
+      if (dx > 75) {
+        settled = true;
+        if (navigator.vibrate) navigator.vibrate(35);
+        setVoiceActionSignal('cancel');
+        cleanup();
+      } else if (dy < -60) {
+        settled = true;
+        if (navigator.vibrate) navigator.vibrate(25);
+        if (voiceGestureRef.current) {
+          voiceGestureRef.current.style.setProperty('--cancel-p', '0');
+          voiceGestureRef.current.style.setProperty('--lock-p', '0');
+        }
+        setIsVoiceLocked(true);
+        cleanup();
+      }
+    };
+
+    const onUp = () => {
+      if (settled) return;
+      settled = true;
+      if (voiceGestureRef.current) {
+        voiceGestureRef.current.style.setProperty('--cancel-p', '0');
+        voiceGestureRef.current.style.setProperty('--lock-p', '0');
+      }
+      setVoiceActionSignal('send');
+      cleanup();
+    };
+
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    voiceGestureCleanupRef.current = cleanup;
+  };
 
   // Reactions UX: double-tap ❤️, floating burst, "who reacted" sheet
   const { showToast, changePage, fetchUserProfile, token } = useAuth();
@@ -1566,53 +1654,41 @@ export const Community: React.FC<CommunityProps> = ({
                     )}
                   </div>
                 ) : (
-                <AnimatePresence mode="wait">
-                  {isRecordingVoice ? (
-                    <m.div
-                      key="voice-recorder"
-                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                      className="py-2"
-                    >
-                      <VoiceNoteRecorder
-                        onCancel={() => setIsRecordingVoice(false)}
-                        onError={(msg) => {
-                          showToast(msg);
-                          setIsRecordingVoice(false);
-                        }}
-                        onSend={async (audioBlob, durationSec, mimeType) => {
-                          if (!token) {
-                            showToast('سجّل دخول عشان تبعت فويس نوت 🔐');
-                            return;
-                          }
-                          const ext = mimeType.includes('mp4') ? 'm4a' : mimeType.includes('ogg') ? 'ogg' : 'webm';
-                          const uploadedUrl = await chatService.uploadAudio(audioBlob, `voice-${Date.now()}.${ext}`, token);
-                          const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
-                          handleSendChatMessage(syntheticEvent, '', {
-                            audio_url: uploadedUrl,
-                            audio_duration: durationSec,
-                          });
-                          setIsRecordingVoice(false);
-                        }}
-                      />
-                    </m.div>
-                  ) : (
-                    <m.div
-                      key="text-composer"
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 6 }}
-                      transition={{ duration: 0.16 }}
-                    >
+                <div className="relative">
+                  {isRecordingVoice && (
+                    <div className="absolute inset-0 z-20 flex items-center">
+                      <div className="w-full">
+                        <VoiceNoteRecorder
+                          locked={isVoiceLocked}
+                          gestureRef={voiceGestureRef}
+                          actionSignal={voiceActionSignal}
+                          onCancel={resetVoiceState}
+                          onError={(msg) => {
+                            showToast(msg);
+                            resetVoiceState();
+                          }}
+                          onSend={async (audioBlob, durationSec, mimeType) => {
+                            if (!token) {
+                              showToast('سجّل دخول عشان تبعت فويس نوت 🔐');
+                              resetVoiceState();
+                              return;
+                            }
+                            const ext = mimeType.includes('mp4') ? 'm4a' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+                            const uploadedUrl = await chatService.uploadAudio(audioBlob, `voice-${Date.now()}.${ext}`, token);
+                            const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+                            handleSendChatMessage(syntheticEvent, '', {
+                              audio_url: uploadedUrl,
+                              audio_duration: durationSec,
+                            });
+                            resetVoiceState();
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div className={isRecordingVoice ? 'opacity-0 pointer-events-none select-none' : ''}>
                       {(pendingChatImage || isUploadingChatImage) && (
-                        <m.div
-                          initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 6, scale: 0.96 }}
-                          className="pt-2 pb-1 flex items-center gap-2.5"
-                        >
+                        <div className="pt-2 pb-1 flex items-center gap-2.5">
                           <div className="relative inline-flex items-center gap-2.5 p-1.5 pr-2.5 rounded-2xl bg-zinc-900/90 border border-zinc-800 shadow-lg">
                             {isUploadingChatImage ? (
                               <div className="w-14 h-14 rounded-xl bg-zinc-800 flex items-center justify-center text-brand-orange text-[10px] font-black text-center px-1">
@@ -1641,7 +1717,7 @@ export const Community: React.FC<CommunityProps> = ({
                               <X className="w-3.5 h-3.5" />
                             </button>
                           </div>
-                        </m.div>
+                        </div>
                       )}
 
                       <form
@@ -1768,44 +1844,31 @@ export const Community: React.FC<CommunityProps> = ({
                         </div>
 
                         {!draft.trim() && !pendingChatImage && !editingMessage ? (
-                          <m.button
+                          <button
                             key="mic-btn"
                             type="button"
-                            initial={{ scale: 0.85, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.85, opacity: 0 }}
-                            whileHover={{ scale: 1.06 }}
-                            whileTap={{ scale: 0.92 }}
-                            transition={{ type: 'spring', stiffness: 460, damping: 26 }}
-                            onClick={() => setIsRecordingVoice(true)}
-                            onMouseDown={(e) => e.preventDefault()}
-                            title="تسجيل رسالة صوتية"
+                            onPointerDown={startVoiceHold}
+                            onContextMenu={(e) => e.preventDefault()}
+                            title="اضغط مطولاً للتسجيل • اسحب يمين للإلغاء • اسحب لفوق للقفل"
                             aria-label="تسجيل رسالة صوتية"
-                            className="w-10 h-10 rounded-2xl bg-zinc-900 border border-brand-orange/40 text-brand-orange hover:bg-brand-orange/15 flex items-center justify-center cursor-pointer shadow-md shrink-0 transition-colors"
+                            className="w-10 h-10 rounded-2xl bg-zinc-900 border border-brand-orange/40 text-brand-orange hover:bg-brand-orange/15 active:scale-95 flex items-center justify-center cursor-pointer shadow-sm shrink-0 transition-transform duration-100 touch-none select-none"
                           >
                             <Mic className="w-4.5 h-4.5 stroke-[2.3]" />
-                          </m.button>
+                          </button>
                         ) : (
-                          <m.button
+                          <button
                             key="send-btn"
                             type="submit"
-                            initial={{ scale: 0.85, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.85, opacity: 0 }}
-                            whileHover={{ scale: 1.06 }}
-                            whileTap={{ scale: 0.92 }}
-                            transition={{ type: 'spring', stiffness: 460, damping: 26 }}
                             disabled={isUploadingChatImage}
-                            className="w-10 h-10 rounded-2xl bg-gradient-to-r from-brand-orange to-brand-amber text-black flex items-center justify-center cursor-pointer shadow-md hover:shadow-brand-orange/25 shrink-0 transition-shadow disabled:opacity-50"
+                            className="w-10 h-10 rounded-2xl bg-gradient-to-r from-brand-orange to-brand-amber text-black active:scale-95 flex items-center justify-center cursor-pointer shadow-sm shrink-0 transition-transform duration-100 disabled:opacity-50"
                             onMouseDown={(e) => e.preventDefault()}
                           >
                             {editingMessage ? <Check className="w-5 h-5 stroke-[2.5]" /> : <Send className="rtl:-scale-x-100 w-4.5 h-4.5 stroke-[2.5] translate-x-0.5" />}
-                          </m.button>
+                          </button>
                         )}
                       </form>
-                    </m.div>
-                  )}
-                </AnimatePresence>
+                    </div>
+                  </div>
                 )
               ) : (
                 <div className="text-zinc-500 text-xs font-bold text-center py-2 uppercase tracking-wide">
