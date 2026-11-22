@@ -4,6 +4,9 @@ import { UserAvatar } from './UserAvatar';
 import { PresenceMenu } from './PresenceMenu';
 import logo from '../assets/logo-wordmark.webp';
 import { NotificationBell } from './notifications/NotificationBell';
+import { SoundSettingsButton } from './common/SoundSettings';
+import { playSound } from '../utils/soundEngine';
+import { haptic } from './games/ui/feedback';
 import { 
   Mic, 
   Home, 
@@ -100,12 +103,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       </button>
 
-      {user && (
-        <div className="flex items-center justify-between mb-6 px-3.5 py-1.5 bg-zinc-900/20 rounded-xl border border-zinc-900/40 shrink-0">
-          <span className="text-xs font-bold text-zinc-400">الإشعارات</span>
-          <NotificationBell />
-        </div>
-      )}
+      <div className="flex items-center justify-between gap-2 mb-6 px-3 py-1.5 bg-zinc-900/20 rounded-xl border border-zinc-900/40 shrink-0">
+        {user ? (
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <span className="text-xs font-bold text-zinc-400">الإشعارات</span>
+          </div>
+        ) : (
+          <span className="text-xs font-bold text-zinc-400">الصوت والمؤثرات</span>
+        )}
+        <SoundSettingsButton className="w-8 h-8" />
+      </div>
 
       {/* Navigation List */}
       <nav className="flex-1">
@@ -123,7 +131,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       ? 'bg-gradient-to-r from-brand-orange/15 to-transparent text-white border-e-4 border-brand-orange' 
                       : 'text-zinc-400 hover:text-white hover:bg-zinc-900/40'
                   }`}
-                  onClick={handler}
+                  onClick={() => {
+                    playSound('nav');
+                    haptic('tap');
+                    handler();
+                  }}
                 >
                   <span className="flex items-center gap-3.5">
                     <Icon className={`w-5 h-5 transition-transform duration-200 group-hover:scale-105 ${isActive ? 'text-brand-orange' : 'text-zinc-400 group-hover:text-white'}`} />
@@ -146,7 +158,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ? 'bg-gradient-to-r from-brand-orange/15 to-transparent text-white border-e-4 border-brand-orange' 
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-900/40'
                 }`}
-                onClick={() => setCurrentPage('profile')}
+                onClick={() => {
+                  playSound('nav');
+                  haptic('tap');
+                  setCurrentPage('profile');
+                }}
               >
                 <span className="flex items-center gap-3.5">
                   <User className={`w-5 h-5 transition-transform duration-200 group-hover:scale-105 ${currentPage === 'profile' ? 'text-brand-orange' : 'text-zinc-400 group-hover:text-white'}`} />
@@ -168,7 +184,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           ? 'bg-gradient-to-r from-brand-orange/15 to-transparent text-white border-e-4 border-brand-orange' 
                           : 'text-zinc-400 hover:text-white hover:bg-zinc-900/40'
                       }`}
-                      onClick={() => setCurrentPage('moderator-dashboard')}
+                      onClick={() => {
+                        playSound('nav');
+                        haptic('tap');
+                        setCurrentPage('moderator-dashboard');
+                      }}
                     >
                       <span className="flex items-center gap-3.5">
                         <ShieldCheck className={`w-5 h-5 transition-transform duration-200 group-hover:scale-105 ${currentPage === 'moderator-dashboard' ? 'text-brand-orange' : 'text-zinc-400 group-hover:text-white'}`} />
@@ -185,7 +205,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           ? 'bg-gradient-to-r from-brand-orange/15 to-transparent text-white border-e-4 border-brand-orange' 
                           : 'text-zinc-400 hover:text-white hover:bg-zinc-900/40'
                       }`}
-                      onClick={() => setCurrentPage('admin')}
+                      onClick={() => {
+                        playSound('nav');
+                        haptic('tap');
+                        setCurrentPage('admin');
+                      }}
                     >
                       <span className="flex items-center gap-3.5">
                         <LayoutDashboard className={`w-5 h-5 transition-transform duration-200 group-hover:scale-105 ${currentPage === 'admin' ? 'text-brand-orange' : 'text-zinc-400 group-hover:text-white'}`} />

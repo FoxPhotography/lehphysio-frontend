@@ -31,7 +31,9 @@ import {
 } from '../components/games/catalog';
 import { PlayerProgressCard } from '../components/games/ui/PlayerProgressCard';
 import { GameTile } from '../components/games/ui/GameTile';
-import { GameResultScreen } from '../components/games/ui/GameResultScreen';
+import { Mascot } from '../components/games/ui/Mascot';
+import { SoundSettingsButton } from '../components/common/SoundSettings';
+import { playSound } from '../utils/soundEngine';
 import { haptic } from '../components/games/ui/feedback';
 import {
   EcgArt,
@@ -42,7 +44,9 @@ import {
   NerveArt,
   MemoryArt,
   WheelArt,
-  MpArt,
+  MpAnatomyArt,
+  MpClinicalArt,
+  MpOsceArt,
 } from '../components/games/ui/GameArt';
 
 const LuckyWheel = lazy(() =>
@@ -65,6 +69,9 @@ const AnatomySudokuGame = lazy(() =>
 );
 const PhysioWordleGame = lazy(() =>
   import('../components/games/PhysioWordleGame').then((mod) => ({ default: mod.PhysioWordleGame }))
+);
+const ClinicalMemoryGame = lazy(() =>
+  import('../components/games/ClinicalMemoryGame').then((mod) => ({ default: mod.ClinicalMemoryGame }))
 );
 
 type GameMode = 'anatomy' | 'clinical' | 'special_tests';
@@ -287,6 +294,7 @@ export const Games: React.FC<GamesProps> = ({
   const launchGame = useCallback(
     (key: SingleGameKey) => {
       if (key === 'spin' && hasSpunToday) return;
+      playSound('tap');
       haptic('tap');
       try {
         localStorage.setItem('lp:lastGame', key);
@@ -397,7 +405,7 @@ export const Games: React.FC<GamesProps> = ({
   }, []);
 
   useEffect(() => {
-    if (gameTab !== 'multiplayer' || showMultiplayerSetup) return undefined;
+    if (showMultiplayerSetup) return undefined;
     loadOpenRooms();
     if (!socket) return undefined;
     const onRoomsUpdated = (rooms: OpenRoom[]) => {
@@ -425,37 +433,54 @@ export const Games: React.FC<GamesProps> = ({
         onLoginClick={() => changePage('login')}
       />
 
-      {/* ── Segmented Mode Switcher ────────────────────────────────────────────── */}
-      <div className="relative flex gap-1 p-1 bg-[#111113] border border-white/[0.08] rounded-2xl max-w-md">
-        {[
-          { id: 'single' as const, label: 'لعب فردي وتدريب', icon: <Gamepad2 className="w-4 h-4" /> },
-          { id: 'multiplayer' as const, label: 'أونلاين مع صحابك', icon: <Users className="w-4 h-4" /> },
-        ].map((tab) => {
-          const active = gameTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => {
-                haptic('tap');
-                setGameTab(tab.id);
-              }}
-              className={`relative flex-1 min-h-[44px] py-2 px-3 rounded-xl font-black text-xs cursor-pointer transition-colors flex items-center justify-center gap-2 z-10 ${
-                active ? 'text-black' : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              {active && (
-                <m.span
-                  layoutId="gamesTabPill"
-                  transition={{ type: 'spring', stiffness: 440, damping: 32 }}
-                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber shadow-sm -z-10"
-                />
-              )}
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
+      {/* ── Segmented Mode Switcher + Audio Controls ──────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="relative flex flex-1 min-w-[260px] gap-1 p-1 bg-[#111113] border border-white/[0.08] rounded-2xl max-w-md">
+          {[
+            { id: 'single' as const, label: 'لعب فردي وتدريب', icon: <Gamepad2 className="w-4 h-4" /> },
+            { id: 'multiplayer' as const, label: 'أونلاين مع صحابك', icon: <Users className="w-4 h-4" /> },
+          ].map((tab) => {
+            const active = gameTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  playSound('tap');
+                  haptic('tap');
+                  setGameTab(tab.id);
+                }}
+                className={`relative flex-1 min-h-[44px] py-2 px-3 rounded-xl font-black text-xs cursor-pointer transition-colors flex items-center justify-center gap-2 z-10 ${
+                  active ? 'text-black' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                {active && (
+                  <m.span
+                    layoutId="gamesTabPill"
+                    transition={{ type: 'spring', stiffness: 440, damping: 32 }}
+                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber shadow-sm -z-10"
+                  />
+                )}
+                {tab.icon}
+                <span>{tab.label}</span>
+                {tab.id === 'multiplayer' && openRooms.length > 0 && (
+                  <span
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-black tabular-nums ${
+                      active
+                        ? 'bg-black/20 text-black'
+                        : 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${active ? 'bg-black' : 'bg-emerald-400'}`} />
+                    {openRooms.length}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <SoundSettingsButton />
       </div>
 
       {/* ── Single Player Area ───────────────────────────────────────────────── */}
@@ -469,7 +494,7 @@ export const Games: React.FC<GamesProps> = ({
               exit={{ opacity: 0, y: -8 }}
               className="sm:rounded-[var(--g-radius-lg)] sm:bg-[#111113] sm:p-6 md:p-7 space-y-4 sm:space-y-6 sm:border sm:border-white/[0.08]"
             >
-              {!['nerve-path', 'whos-responsible', 'sudoku', 'wordle'].includes(activeGame) && (
+              {activeGame === 'spin' && (
                 <button
                   type="button"
                   className="lp-press inline-flex items-center gap-2 min-h-[44px] border border-white/10 hover:border-white/25 bg-[#17171a] hover:bg-zinc-800 text-zinc-200 font-bold text-xs px-4 rounded-xl cursor-pointer"
@@ -496,6 +521,9 @@ export const Games: React.FC<GamesProps> = ({
                     xpReward={diagnosisXp}
                     gamePlaySuccess={gamePlaySuccess}
                     gamePlayError={gamePlayError}
+                    dailyPlaysCount={detectivePlays}
+                    maxDailyPlays={3}
+                    onBack={() => setActiveGame(null)}
                   />
                 </Suspense>
               )}
@@ -513,6 +541,9 @@ export const Games: React.FC<GamesProps> = ({
                     xpReward={osceXp}
                     gamePlaySuccess={gamePlaySuccess}
                     gamePlayError={gamePlayError}
+                    dailyPlaysCount={oscePlays}
+                    maxDailyPlays={3}
+                    onBack={() => setActiveGame(null)}
                   />
                 </Suspense>
               )}
@@ -590,101 +621,31 @@ export const Games: React.FC<GamesProps> = ({
               )}
 
               {activeGame === 'memory' && (
-                <div className="space-y-5">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-black text-white flex items-center gap-2">
-                        <Brain className="w-5 h-5 text-brand-orange" />
-                        <span>توصيل التشريح الإكلينيكي</span>
-                      </h3>
-                      <p className="text-xs text-zinc-400 font-semibold">
-                        وصّل كل عضلة أو رباط بالعصب المغذي أو الاختبار الخاص بيه!
-                      </p>
+                <Suspense
+                  fallback={
+                    <div className="py-12 flex items-center justify-center">
+                      <Loader2 className="w-7 h-7 animate-spin text-brand-orange" />
                     </div>
-                    <div className="flex items-center gap-2 text-xs font-black">
-                      <span className="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 tabular-nums">
-                        حركات: {memoryMoves}
-                      </span>
-                      <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 tabular-nums">
-                        {memoryMatches}/8 أزواج
-                      </span>
-                    </div>
-                  </div>
-
-                  {gameFinished ? (
-                    <GameResultScreen
-                      status="won"
-                      accent="orange"
-                      title={`مبروك! وصّلت كل الأزواج في ${memoryMoves} حركة!`}
-                      xp={memoryPlays < 3 ? xpPerPlay : 0}
-                      stats={[
-                        { label: 'الحركات', value: String(memoryMoves) },
-                        { label: 'الأزواج', value: `${memoryMatches}/8` },
-                      ]}
-                      successMsg={gamePlaySuccess || undefined}
-                      errorMsg={gamePlayError || undefined}
-                      onReplay={initMemoryGame}
-                      replayLabel="العب تاني"
-                      onBack={() => {
-                        setActiveGame(null);
-                        setGameFinished(false);
-                      }}
-                    />
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-4 gap-2.5 max-w-lg mx-auto">
-                        {memoryCards.map((card, idx) => {
-                          const flipped = card.isFlipped || card.isMatched;
-                          return (
-                            <m.div
-                              key={card.id}
-                              whileTap={flipped ? undefined : { scale: 0.94 }}
-                              className="relative rounded-2xl cursor-pointer overflow-hidden aspect-square select-none [perspective:1000px]"
-                              onClick={() => handleCardClick(idx)}
-                            >
-                              <div
-                                className={`relative w-full h-full text-center transition-transform duration-500 [transform-style:preserve-3d] ${
-                                  flipped ? '[transform:rotateY(180deg)]' : ''
-                                }`}
-                              >
-                                {/* Card Back */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 hover:border-brand-orange/50 flex flex-col items-center justify-center text-brand-orange rounded-2xl [backface-visibility:hidden] shadow-inner">
-                                  <Brain className="w-5 h-5 opacity-70" />
-                                  <span className="text-[9px] font-black text-zinc-600 mt-1">PHYSIO</span>
-                                </div>
-                                {/* Card Front */}
-                                <div
-                                  className={`absolute inset-0 rounded-2xl flex flex-col items-center justify-center text-center px-1.5 [transform:rotateY(180deg)] [backface-visibility:hidden] border-2 transition-colors ${
-                                    card.isMatched
-                                      ? 'bg-emerald-500/15 border-emerald-500/60 text-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-                                      : 'bg-zinc-800/95 border-brand-orange/50 text-white'
-                                  }`}
-                                >
-                                  <span dir="ltr" className="text-[11px] md:text-xs font-black leading-tight break-words">
-                                    {card.value}
-                                  </span>
-                                  {card.sub && (
-                                    <span className="text-[9px] font-bold text-zinc-400 mt-1 leading-tight">
-                                      {card.sub}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </m.div>
-                          );
-                        })}
-                      </div>
-
-                      <button
-                        type="button"
-                        className="w-full max-w-lg mx-auto block border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-300 font-bold text-xs py-3 rounded-xl cursor-pointer active:scale-95 transition-all"
-                        onClick={initMemoryGame}
-                      >
-                        لخبط الكروت من جديد
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  }
+                >
+                  <ClinicalMemoryGame
+                    memoryCards={memoryCards}
+                    memoryMoves={memoryMoves}
+                    memoryMatches={memoryMatches}
+                    gameFinished={gameFinished}
+                    handleCardClick={handleCardClick}
+                    initMemoryGame={initMemoryGame}
+                    gamePlaySuccess={gamePlaySuccess}
+                    gamePlayError={gamePlayError}
+                    dailyPlaysCount={memoryPlays}
+                    maxDailyPlays={3}
+                    xpReward={xpPerPlay}
+                    onBack={() => {
+                      setActiveGame(null);
+                      setGameFinished(false);
+                    }}
+                  />
+                </Suspense>
               )}
 
               {activeGame === 'spin' && (
@@ -726,7 +687,10 @@ export const Games: React.FC<GamesProps> = ({
                 : null;
 
               const filteredEntries = GAME_CATALOG.filter(
-                (entry) => selectedCategory === 'all' || entry.category === selectedCategory
+                (entry) =>
+                  selectedCategory === 'all'
+                    ? entry.key !== 'spin'
+                    : entry.category === selectedCategory
               ).filter((entry) => entry.key !== featuredKey);
 
               const sortedEntries = [...filteredEntries].sort(
@@ -741,6 +705,56 @@ export const Games: React.FC<GamesProps> = ({
 
               return (
                 <div key="single-grid" className="space-y-4">
+                  {/* Dedicated Daily Lucky Wheel Ritual Card */}
+                  <section
+                    data-accent="amber"
+                    className="lp-tile p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-amber-500/30 bg-gradient-to-r from-brand-orange/12 via-[#141418] to-amber-500/10"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="w-20 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/25 p-1.5 flex items-center justify-center shrink-0">
+                        <WheelArt />
+                      </div>
+                      <Mascot
+                        character="doctor"
+                        mood={hasSpunToday ? 'sleeping' : 'excited'}
+                        size={42}
+                      />
+                      <div className="min-w-0 text-start">
+                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-brand-amber">
+                            طقس الحظ اليومي · 1 لفة / يوم
+                          </span>
+                          <span
+                            className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                              hasSpunToday
+                                ? 'bg-zinc-800 text-zinc-400'
+                                : 'bg-emerald-500/20 text-emerald-300'
+                            }`}
+                          >
+                            {hasSpunToday ? 'لفّيت النهارده ✓' : 'متاحة دلوقتي'}
+                          </span>
+                        </div>
+                        <h3 className="text-base font-black text-white">عجلة الحظ اليومية (جاكبوت 500 XP)</h3>
+                        <p className="text-xs text-zinc-400 font-semibold truncate">
+                          لف العجلة واكسب XP مجاني — والـ Mystery بتوصلك لـ 500 XP!
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={hasSpunToday}
+                      onClick={() => launchGame('spin')}
+                      className={`lp-press shrink-0 min-h-[44px] px-5 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 ${
+                        hasSpunToday
+                          ? 'bg-zinc-800 text-zinc-400 border border-zinc-700 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-brand-orange to-brand-amber text-black cursor-pointer shadow-orange-glow'
+                      }`}
+                    >
+                      {hasSpunToday ? <Clock className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                      <span>{hasSpunToday ? 'لفّيت النهارده ✓' : 'افتح العجلة'}</span>
+                    </button>
+                  </section>
+
                   {/* Category Rail + Resume Last Game Pill */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                     <div
@@ -757,6 +771,7 @@ export const Games: React.FC<GamesProps> = ({
                             role="tab"
                             aria-selected={active}
                             onClick={() => {
+                              playSound('tap');
                               haptic('tap');
                               setSelectedCategory(cat.id);
                             }}
@@ -788,6 +803,7 @@ export const Games: React.FC<GamesProps> = ({
                   {featuredEntry && (() => {
                     const isSpin = featuredEntry.key === 'spin';
                     const used = getPlays(featuredEntry.key);
+                    const isPractice = !isSpin && (used ?? 0) >= 3 && featuredEntry.practiceSupported;
                     const tags =
                       featuredEntry.key === 'sudoku'
                         ? [sudokuTiersTag]
@@ -799,6 +815,8 @@ export const Games: React.FC<GamesProps> = ({
                     return (
                       <GameTile
                         accent={featuredEntry.accent}
+                        mascot={featuredEntry.mascot}
+                        practiceMode={isPractice}
                         title={featuredEntry.title}
                         titleEn={featuredEntry.titleEn}
                         desc={desc}
@@ -824,7 +842,8 @@ export const Games: React.FC<GamesProps> = ({
                       {sortedEntries.map((entry, idx) => {
                         const isSpin = entry.key === 'spin';
                         const used = getPlays(entry.key);
-                        const locked = isSpin ? hasSpunToday : (used ?? 0) >= 3;
+                        const exhausted = isSpin ? hasSpunToday : (used ?? 0) >= 3;
+                        const isPractice = !isSpin && exhausted && entry.practiceSupported;
                         const tags =
                           entry.key === 'sudoku' ? [sudokuTiersTag] : entry.tags;
                         const desc =
@@ -835,6 +854,8 @@ export const Games: React.FC<GamesProps> = ({
                           <GameTile
                             key={entry.key}
                             accent={entry.accent}
+                            mascot={entry.mascot}
+                            practiceMode={isPractice}
                             title={entry.title}
                             titleEn={entry.titleEn}
                             desc={desc}
@@ -842,7 +863,7 @@ export const Games: React.FC<GamesProps> = ({
                             isNew={entry.isNew}
                             xpLabel={getXpLabel(entry.key)}
                             used={used}
-                            locked={locked}
+                            locked={exhausted}
                             lockedLabel={
                               isSpin ? 'لفّيت النهارده ✓' : 'خلّصت محاولات اليوم'
                             }
@@ -887,18 +908,21 @@ export const Games: React.FC<GamesProps> = ({
                   const mMeta = MODE_META[mode];
                   const accent =
                     mode === 'anatomy' ? 'orange' : mode === 'clinical' ? 'teal' : 'violet';
+                  const mascot =
+                    mode === 'anatomy' ? 'brain' : mode === 'clinical' ? 'doctor' : 'muscle';
                   const art =
                     mode === 'anatomy' ? (
-                      <MpArt />
+                      <MpAnatomyArt />
                     ) : mode === 'clinical' ? (
-                      <EcgArt />
+                      <MpClinicalArt />
                     ) : (
-                      <OsceArt />
+                      <MpOsceArt />
                     );
                   return (
                     <GameTile
                       key={mode}
                       accent={accent}
+                      mascot={mascot}
                       title={mMeta.title}
                       desc={mMeta.desc}
                       tags={[mMeta.badge]}
@@ -906,6 +930,7 @@ export const Games: React.FC<GamesProps> = ({
                       art={art}
                       ctaLabel="اعمل غرفة"
                       onPlay={() => {
+                        playSound('tap');
                         haptic('tap');
                         openModeSetup(mode);
                       }}
@@ -970,10 +995,10 @@ export const Games: React.FC<GamesProps> = ({
                   </div>
 
                   {openRooms.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-950/50 py-8 px-4 text-center space-y-1.5">
-                      <Users className="w-6 h-6 text-zinc-600 mx-auto" />
-                      <p className="text-xs font-bold text-zinc-400">مفيش غرف مستنية لاعبين دلوقتي</p>
-                      <p className="text-2xs text-zinc-600">اختار أي مود فوق واعمل غرفة وشاركها مع صحابك في الشات!</p>
+                    <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-950/50 py-8 px-4 text-center flex flex-col items-center gap-2">
+                      <Mascot character="doctor" mood="happy" size={50} />
+                      <p className="text-xs font-bold text-zinc-300">مفيش غرف مستنية لاعبين دلوقتي</p>
+                      <p className="text-2xs text-zinc-500">اختار أي مود فوق واعمل غرفة وشاركها مع صحابك في الشات!</p>
                     </div>
                   ) : (
                     <div className="space-y-2 max-h-56 overflow-y-auto pe-1">

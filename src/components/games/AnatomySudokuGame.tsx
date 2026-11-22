@@ -1,8 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { m } from 'framer-motion';
 import { ArrowRight, RotateCcw, Grid3X3, Lightbulb } from 'lucide-react';
-import { playChatSound } from '../../utils/helpers';
+import { playSound } from '../../utils/soundEngine';
+import { GameIntroScreen } from './ui/GameIntroScreen';
 import { GameResultScreen } from './ui/GameResultScreen';
+import { PracticeModeBanner } from './ui/PracticeModeBanner';
+import { Mascot } from './ui/Mascot';
+import { SudokuArt } from './ui/GameArt';
 import { haptic } from './ui/feedback';
 
 interface SudokuPuzzle {
@@ -267,6 +271,15 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
   const [wordError, setWordError] = useState('');
   const [wordShakeKey, setWordShakeKey] = useState(0);
   const [hasWon, setHasWon] = useState(false);
+  const [started, setStarted] = useState(false);
+
+  const remainingXpPlays = Math.max(0, maxDailyPlays - dailyPlaysCount);
+  const activeTierIdx = Math.min(dailyPlaysCount, 2);
+  const TIERS = [
+    { label: 'الأولى', xp: 150 },
+    { label: 'التانية', xp: 300 },
+    { label: 'التالتة', xp: 500 },
+  ];
 
   const loadPuzzle = (idx: number) => {
     const p = PUZZLES[idx];
@@ -296,11 +309,11 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
     next[selectedCell] = num;
     setBoard(next);
     if (num === puzzle.solution[selectedCell]) {
-      playChatSound('success');
+      playSound('sudoku_place');
       haptic('success');
       setSelectedCell(null);
     } else {
-      playChatSound('error');
+      playSound('wrong');
       haptic('error');
     }
   };
@@ -317,7 +330,7 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
     setBoard(next);
     setHintsUsed((h) => h + 1);
     setSelectedCell(null);
-    playChatSound('success');
+    playSound('sudoku_place');
     haptic('tap');
   };
 
@@ -327,18 +340,40 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
     if (wordGuess.trim().toUpperCase() === puzzle.word) {
       setWordError('');
       setHasWon(true);
-      playChatSound('success');
+      playSound(xpReward >= 500 ? 'jackpot' : 'game_win');
       haptic('success');
       onWin();
     } else {
-      playChatSound('error');
+      playSound('wrong');
       haptic('error');
       setWordShakeKey((k) => k + 1);
       setWordError('الكلمة مش مظبوطة! رتب الحروف العشوائية كويس واكتب المصطلح الصح.');
     }
   };
 
-  const remainingXpPlays = Math.max(0, maxDailyPlays - dailyPlaysCount);
+  if (!started) {
+    return (
+      <GameIntroScreen
+        accent="purple"
+        character="brain"
+        art={<SudokuArt />}
+        title="سودوكو التشريح"
+        titleEn="Anatomy Sudoku 6×6"
+        subtitle="حل شبكة الـ 6×6 وافتح كل مربع عشان تكشف حروف المصطلح الطبي السري!"
+        rules={[
+          'كل صف وعمود ومربع (2×3) لازم يحتوي الأرقام 1 لـ 6 بدون تكرار',
+          'كل مربع يكتمل بيفك قفل حروف عشوائية من المصطلح الطبي المطلوب',
+          'نظام المكافآت التصاعدي: 150 ثم 300 ثم 500 XP في أول 3 جولات يومياً!',
+        ]}
+        xpLabel={`+${xpReward} XP`}
+        dailyPlaysCount={dailyPlaysCount}
+        maxDailyPlays={maxDailyPlays}
+        onStart={() => setStarted(true)}
+        onBack={onBack}
+        startLabel="ابدأ السودوكو"
+      />
+    );
+  }
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto px-0 sm:px-2 pb-10 text-start">
@@ -353,15 +388,53 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
         </button>
 
         <span className="text-2xs font-black px-3 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 tabular-nums">
-          محاولات XP: {remainingXpPlays}/{maxDailyPlays} · +{xpReward} XP
+          {remainingXpPlays > 0 ? `محاولات XP: ${remainingXpPlays}/${maxDailyPlays} · +${xpReward} XP` : 'وضع التدريب'}
         </span>
       </div>
 
+      {remainingXpPlays <= 0 && !hasWon && (
+        <PracticeModeBanner character="brain" />
+      )}
+
+      {/* Progressive 3-Tier Reward Ladder */}
+      {remainingXpPlays > 0 && (
+        <div className="grid grid-cols-3 gap-2">
+          {TIERS.map((tier, idx) => {
+            const done = dailyPlaysCount > idx;
+            const currentTier = activeTierIdx === idx && !hasWon;
+            return (
+              <div
+                key={tier.xp}
+                className={`rounded-xl px-2.5 py-2 border text-center transition-all ${
+                  done
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                    : currentTier
+                      ? 'bg-purple-500/20 border-purple-400/60 text-white shadow-[0_0_16px_rgba(168,85,247,0.2)]'
+                      : 'bg-zinc-900/70 border-zinc-800 text-zinc-500'
+                }`}
+              >
+                <span className="text-[10px] font-bold block">الجولة {tier.label}</span>
+                <span className="text-xs font-black tabular-nums">
+                  {done ? '✓ ' : ''}+{tier.xp} XP
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       <div className="sm:glass-card sm:p-5 sm:border sm:border-purple-500/25 relative overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-          <div className="flex items-center gap-2">
-            <Grid3X3 className="w-5 h-5 text-purple-400" />
-            <h2 className="text-lg font-black text-white">سودوكو التشريح (+{xpReward} XP)</h2>
+          <div className="flex items-center gap-2.5">
+            <Mascot
+              character="brain"
+              mood={hasWon ? 'celebrating' : wordError ? 'confused' : 'thinking'}
+              size={40}
+            />
+            <div className="flex items-center gap-2">
+              <Grid3X3 className="w-5 h-5 text-purple-400" />
+              <h2 className="text-base sm:text-lg font-black text-white">سودوكو التشريح (+{xpReward} XP)</h2>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-1 rounded-lg text-2xs font-black bg-zinc-900 border border-zinc-800 text-zinc-300 tabular-nums">
@@ -536,6 +609,9 @@ export const AnatomySudokuGame: React.FC<AnatomySudokuGameProps> = ({
             <GameResultScreen
               status="won"
               accent="purple"
+              character="brain"
+              tier={xpReward >= 500 ? 'legendary' : 'major'}
+              isPractice={remainingXpPlays <= 0}
               title={`أحسنت! الكلمة هي ${puzzle.word}`}
               subtitle={`💡 ${puzzle.pearl}`}
               xp={remainingXpPlays > 0 ? xpReward : 0}

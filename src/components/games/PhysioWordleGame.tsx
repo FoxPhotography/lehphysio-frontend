@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ArrowRight, Delete, Type } from 'lucide-react';
-import { playChatSound } from '../../utils/helpers';
+import { playSound } from '../../utils/soundEngine';
+import { GameIntroScreen } from './ui/GameIntroScreen';
 import { GameResultScreen } from './ui/GameResultScreen';
+import { PracticeModeBanner } from './ui/PracticeModeBanner';
+import { Mascot } from './ui/Mascot';
+import { WordleArt } from './ui/GameArt';
 import { haptic } from './ui/feedback';
 
 interface WordleQuestion {
@@ -230,6 +234,9 @@ export const PhysioWordleGame: React.FC<PhysioWordleGameProps> = ({
   const [status, setStatus] = useState<'playing' | 'won' | 'lost'>('playing');
   const [lastRevealRow, setLastRevealRow] = useState<number | null>(null);
   const [shakeKey, setShakeKey] = useState(0);
+  const [started, setStarted] = useState(false);
+
+  const remainingXpPlays = Math.max(0, maxDailyPlays - dailyPlaysCount);
 
   const resetWithIndex = useCallback((nextIdx: number) => {
     setQIdx(nextIdx);
@@ -244,6 +251,7 @@ export const PhysioWordleGame: React.FC<PhysioWordleGameProps> = ({
     if (status !== 'playing') return;
     if (currentGuess.length !== wordLen) {
       setShakeKey((k) => k + 1);
+      playSound('wrong');
       haptic('error');
       return;
     }
@@ -255,31 +263,33 @@ export const PhysioWordleGame: React.FC<PhysioWordleGameProps> = ({
 
     if (currentGuess === question.answer) {
       setStatus('won');
-      playChatSound('success');
+      playSound('game_win');
       haptic('success');
       onWin();
     } else if (nextGuesses.length >= MAX_ATTEMPTS) {
       setStatus('lost');
-      playChatSound('error');
+      playSound('game_lose');
       haptic('error');
     } else {
-      playChatSound('send');
+      playSound('wordle_flip');
       haptic('tap');
     }
   }, [currentGuess, guesses, onWin, question.answer, status, wordLen]);
 
   const handleKey = useCallback(
     (key: string) => {
-      if (status !== 'playing') return;
+      if (!started || status !== 'playing') return;
       if (key === 'ENTER') {
         submitGuess();
       } else if (key === 'BACK') {
+        playSound('tap');
         setCurrentGuess((prev) => prev.slice(0, -1));
       } else if (/^[A-Z]$/.test(key) && currentGuess.length < wordLen) {
+        playSound('wordle_key');
         setCurrentGuess((prev) => prev + key);
       }
     },
-    [currentGuess.length, status, submitGuess, wordLen]
+    [currentGuess.length, started, status, submitGuess, wordLen]
   );
 
   useEffect(() => {
@@ -307,7 +317,29 @@ export const PhysioWordleGame: React.FC<PhysioWordleGameProps> = ({
     }
   });
 
-  const remainingXpPlays = Math.max(0, maxDailyPlays - dailyPlaysCount);
+  if (!started) {
+    return (
+      <GameIntroScreen
+        accent="gold"
+        character="brain"
+        art={<WordleArt />}
+        title="أكمل الجملة الطبية (Wordle)"
+        titleEn="Clinical Term Wordle"
+        subtitle={`خمّن الكلمة الإكلينيكية الناقصة في الجملة خلال ${MAX_ATTEMPTS} محاولات!`}
+        rules={[
+          'اقرأ الجملة الطبية والتلميح العربي في الصندوق فوق الشبكة',
+          'الأخضر = الحرف في مكانه الصح · الأصفر = موجود في مكان تاني',
+          `عندك ${MAX_ATTEMPTS} محاولات لكشف الكلمة كاملة واكتمال الجملة`,
+        ]}
+        xpLabel={`+${xpReward} XP`}
+        dailyPlaysCount={dailyPlaysCount}
+        maxDailyPlays={maxDailyPlays}
+        onStart={() => setStarted(true)}
+        onBack={onBack}
+        startLabel="ابدأ التحدي"
+      />
+    );
+  }
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto px-0 sm:px-2 pb-10 text-start">
@@ -322,17 +354,39 @@ export const PhysioWordleGame: React.FC<PhysioWordleGameProps> = ({
         </button>
 
         <span className="text-2xs font-black px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 tabular-nums">
-          محاولات XP: {remainingXpPlays}/{maxDailyPlays}
+          {remainingXpPlays > 0 ? `محاولات XP: ${remainingXpPlays}/${maxDailyPlays}` : 'وضع التدريب'}
         </span>
       </div>
 
+      {remainingXpPlays <= 0 && status === 'playing' && (
+        <PracticeModeBanner character="brain" />
+      )}
+
       <div className="sm:glass-card sm:p-5 sm:border sm:border-amber-500/25 relative overflow-hidden">
         <div className="flex items-center justify-between gap-2 mb-3">
-          <div className="flex items-center gap-2">
-            <Type className="w-5 h-5 text-amber-400" />
-            <h2 className="text-base sm:text-lg font-black text-white">أكمل الجملة الطبية (Wordle)</h2>
+          <div className="flex items-center gap-2.5">
+            <Mascot
+              character="brain"
+              mood={
+                status === 'won'
+                  ? 'celebrating'
+                  : status === 'lost'
+                    ? 'sad'
+                    : guesses.length >= 4
+                      ? 'nervous'
+                      : 'thinking'
+              }
+              size={40}
+            />
+            <div>
+              <div className="flex items-center gap-1.5">
+                <Type className="w-4 h-4 text-amber-400" />
+                <h2 className="text-base sm:text-lg font-black text-white">أكمل الجملة الطبية (Wordle)</h2>
+              </div>
+              <span className="text-[11px] font-bold text-zinc-400">{wordLen} حروف · {MAX_ATTEMPTS - guesses.length} محاولات متبقية</span>
+            </div>
           </div>
-          <span className="text-2xs font-black text-zinc-400">{wordLen} حروف</span>
+          <span className="text-2xs font-black px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300">{wordLen} حروف</span>
         </div>
 
         {/* Medical Sentence Clue */}
@@ -401,6 +455,8 @@ export const PhysioWordleGame: React.FC<PhysioWordleGameProps> = ({
             <GameResultScreen
               status="won"
               accent="gold"
+              character="brain"
+              isPractice={remainingXpPlays <= 0}
               title={`برافو! الجملة اكتملت: ${question.answer}`}
               subtitle={question.arHint}
               xp={remainingXpPlays > 0 ? xpReward : 0}
@@ -420,6 +476,8 @@ export const PhysioWordleGame: React.FC<PhysioWordleGameProps> = ({
             <GameResultScreen
               status="lost"
               accent="gold"
+              character="brain"
+              isPractice={remainingXpPlays <= 0}
               title={`انتهت المحاولات! الإجابة الصح: ${question.answer}`}
               subtitle={question.arHint}
               stats={[{ label: 'الإجابة', value: question.answer }]}

@@ -5,6 +5,7 @@ import { cosmeticVisual } from '../utils/cosmetics';
 import { CosmeticsStudio } from '../components/shop/CosmeticsStudio';
 import { rankName, rankEmoji, rankProgress } from '../utils/ranks';
 import { RankLadderModal } from '../components/ranks/RankLadderModal';
+import { SoundSettingsPanel } from '../components/common/SoundSettings';
 import { m, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -825,6 +826,9 @@ export const Profile: React.FC<ProfileProps> = ({
               </span>
             </m.button>
           )}
+
+          {/* Sound & Audio Controls */}
+          <SoundSettingsPanel compact />
 
           {/* Web Push Notifications Settings */}
           <m.button

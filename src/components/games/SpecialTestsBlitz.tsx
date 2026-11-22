@@ -1,9 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { Timer, Zap, Flame, CheckCircle, XCircle, Play } from 'lucide-react';
-import { playChatSound } from '../../utils/helpers';
+import { Timer, Flame, CheckCircle, XCircle } from 'lucide-react';
+import { playSound } from '../../utils/soundEngine';
 import { fireStreakBurst } from '../../utils/confetti';
+import { GameIntroScreen } from './ui/GameIntroScreen';
 import { GameResultScreen } from './ui/GameResultScreen';
+import { PracticeModeBanner } from './ui/PracticeModeBanner';
+import { Mascot } from './ui/Mascot';
+import { OsceArt } from './ui/GameArt';
 import { haptic } from './ui/feedback';
 
 interface SpecialTestsBlitzProps {
@@ -11,6 +15,9 @@ interface SpecialTestsBlitzProps {
   xpReward: number;
   gamePlaySuccess?: string;
   gamePlayError?: string;
+  dailyPlaysCount?: number;
+  maxDailyPlays?: number;
+  onBack?: () => void;
 }
 
 interface BlitzQuestion {
@@ -194,6 +201,13 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
   }, [started, finished]);
 
   useEffect(() => {
+    if (!started || finished) return;
+    if (timeLeft > 0 && timeLeft <= 10) {
+      playSound('timer_warn');
+    }
+  }, [started, finished, timeLeft]);
+
+  useEffect(() => {
     if (!finished) return;
     if (score > bestScore) {
       setBestScore(score);
@@ -201,8 +215,10 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
     }
     if (correctCount >= 5 && !claimedRef.current) {
       claimedRef.current = true;
-      playChatSound('win');
+      playSound(correctCount >= 10 ? 'jackpot' : 'game_win');
       onClaimXp();
+    } else if (correctCount < 5) {
+      playSound('game_lose');
     }
   }, [finished, score, bestScore, correctCount, onClaimXp]);
 
@@ -220,7 +236,7 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
     claimedRef.current = false;
     setFinished(false);
     setStarted(true);
-    playChatSound('start');
+    playSound('round_start');
   };
 
   const handlePick = (opt: string) => {
@@ -236,7 +252,7 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
       setCorrectCount((c) => c + 1);
       setConsecutive(nextConsec);
       setCombo(nextCombo);
-      playChatSound('success');
+      playSound('correct');
       haptic('success');
 
       if (nextConsec % 3 === 0) {
@@ -246,7 +262,7 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
     } else {
       setConsecutive(0);
       setCombo(1);
-      playChatSound('error');
+      playSound('wrong');
       haptic('error');
     }
 
@@ -256,37 +272,29 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
     }, isCorrect ? 420 : 850);
   };
 
+  const isPractice = (dailyPlaysCount ?? 0) >= (maxDailyPlays ?? 3);
+
   if (!started) {
     return (
-      <div className="flex flex-col items-center text-center p-6 md:p-8 rounded-2xl border border-zinc-800 bg-zinc-900/50 space-y-5">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-violet-500/30 flex items-center justify-center">
-          <Zap className="w-8 h-8 text-violet-400 fill-violet-400/20" />
-        </div>
-        <div className="space-y-1.5 max-w-md">
-          <h3 className="text-xl font-black text-white">سباق الـ Special Tests (OSCE Blitz)</h3>
-          <p className="text-xs text-zinc-400 font-semibold leading-relaxed">
-            قدامك 60 ثانية تختار فيهم اسم الاختبار الصح لأكبر عدد ممكن من الحالات! كل 3 إجابات ورا بعض بيدوك <span className="text-emerald-400 font-black">+4 ثواني</span> ومضاعف نقاط لحد <span className="text-brand-amber font-black">x4</span>.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 text-xs font-bold">
-          <span className="px-3 py-1.5 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-300">
-            أعلى سكور ليك: <strong className="text-brand-amber font-mono">{bestScore}</strong>
-          </span>
-          <span className="px-3 py-1.5 rounded-xl bg-brand-orange/10 border border-brand-orange/30 text-brand-orange">
-            جاوب 5+ صح للـ XP
-          </span>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleStart}
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-black text-sm py-3.5 px-8 rounded-xl cursor-pointer shadow-lg shadow-violet-500/25 hover:opacity-95 active:scale-95 transition-all"
-        >
-          <Play className="w-4 h-4 fill-current" />
-          <span>ابدأ التحدي</span>
-        </button>
-      </div>
+      <GameIntroScreen
+        accent="violet"
+        character="doctor"
+        art={<OsceArt />}
+        title="سباق الـ Special Tests (OSCE Blitz)"
+        titleEn="60s Rapid OSCE Challenge"
+        subtitle={`قدامك 60 ثانية تختار فيهم اسم الاختبار الصح! أعلى سكور ليك: ${bestScore}`}
+        rules={[
+          'اختار اسم الاختبار التشخيصي الصح لكل حالة بأقصى سرعة',
+          'كل 3 إجابات متتالية بتكسبك +4 ثواني إضافية ومضاعف Combo لحد x4',
+          'جاوب 5 اختبارات صح على الأقل في الجولة عشان تاخد الـ XP اليومي',
+        ]}
+        xpLabel={`+${xpReward} XP`}
+        dailyPlaysCount={dailyPlaysCount}
+        maxDailyPlays={maxDailyPlays}
+        onStart={handleStart}
+        onBack={onBack}
+        startLabel="ابدأ السباق"
+      />
     );
   }
 
@@ -295,9 +303,12 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
       <GameResultScreen
         status={correctCount >= 5 ? 'won' : 'lost'}
         accent="violet"
+        character="doctor"
+        tier={correctCount >= 10 ? 'legendary' : 'major'}
+        isPractice={isPractice}
         title="انتهى الوقت! ⏱️"
         subtitle={`جاوبت ${correctCount} اختبار صح`}
-        xp={correctCount >= 5 ? xpReward : 0}
+        xp={correctCount >= 5 && !isPractice ? xpReward : 0}
         stats={[
           { label: 'الاختبارات الصح', value: String(correctCount) },
           { label: 'السكور', value: String(score) },
@@ -311,15 +322,33 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
         }
         onReplay={handleStart}
         replayLabel="جولة جديدة"
+        onBack={onBack}
       />
     );
   }
 
   return (
     <div className="space-y-5">
+      {isPractice && <PracticeModeBanner character="doctor" />}
+
       {/* HUD */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
+          <Mascot
+            character="doctor"
+            mood={
+              feedback
+                ? feedback.isCorrect
+                  ? 'happy'
+                  : 'confused'
+                : timeLeft <= 10
+                  ? 'nervous'
+                  : combo >= 2
+                    ? 'excited'
+                    : 'thinking'
+            }
+            size={38}
+          />
           <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-black font-mono ${
             timeLeft <= 10
               ? 'bg-red-500/15 border-red-500/40 text-red-400 animate-pulse'
@@ -329,7 +358,10 @@ export const SpecialTestsBlitz: React.FC<SpecialTestsBlitzProps> = ({
             <span>{timeLeft}s</span>
           </span>
 
-          <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-violet-500/15 border border-violet-500/35 text-violet-300 text-xs font-black">
+          <span
+            key={combo}
+            className="lp-pop inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-violet-500/15 border border-violet-500/35 text-violet-300 text-xs font-black"
+          >
             <Flame className="w-3.5 h-3.5" />
             <span>Combo x{combo}</span>
           </span>

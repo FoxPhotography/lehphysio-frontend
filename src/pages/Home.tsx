@@ -14,8 +14,11 @@ import {
   ListVideo, 
   Zap,
   Megaphone,
+  Gamepad2,
 } from 'lucide-react';
 import { episodeLabel } from '../utils/episode';
+import { Mascot } from '../components/games/ui/Mascot';
+import { playSound } from '../utils/soundEngine';
 
 // Subcomponents
 import { StatsGrid } from '../components/home/StatsGrid';
@@ -278,6 +281,37 @@ export const Home: React.FC<HomeProps> = ({
         setCurrentPage={setCurrentPage}
         setCommunityTab={setCommunityTab}
       />
+
+      {/* Gaming Universe Spotlight Banner */}
+      <section className="rounded-3xl border border-brand-orange/30 bg-gradient-to-br from-brand-orange/12 via-zinc-900/70 to-amber-500/10 p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="flex items-center -space-x-2 rtl:space-x-reverse shrink-0">
+            <Mascot character="doctor" mood="happy" size={44} />
+            <Mascot character="brain" mood="excited" size={40} />
+          </div>
+          <div className="min-w-0 text-start">
+            <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-brand-orange/20 text-brand-amber mb-1">
+              <Gamepad2 className="w-3 h-3" />
+              <span>جديد · LEH PHYSIO ARCADE</span>
+            </span>
+            <h2 className="text-base md:text-lg font-black text-white">ساحة الألعاب والتحديات</h2>
+            <p className="text-xs text-zinc-400 font-semibold leading-relaxed">
+              تحديات إكلينيكية، سودوكو التشريح، Wordle طبي، وعجلة حظ ومسابقات أونلاين مع دفعتك!
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            playSound('tap');
+            setCurrentPage('games');
+          }}
+          className="shrink-0 min-h-[44px] px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs cursor-pointer active:scale-95 transition-transform shadow-orange-glow flex items-center justify-center gap-2"
+        >
+          <Gamepad2 className="w-4 h-4" />
+          <span>ادخل الساحة</span>
+        </button>
+      </section>
 
       {/* Stats Grid */}
       <StatsGrid

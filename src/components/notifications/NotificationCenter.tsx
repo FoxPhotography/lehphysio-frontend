@@ -4,6 +4,7 @@ import { CheckCheck, Settings, X, BellRing, AtSign, MessageCircle, Tv, Shield, T
 import { useNotifications } from '../../context/NotificationContext';
 import { NotificationItem } from './NotificationItem';
 import { NotificationPreferencesPanel } from './NotificationPreferences';
+import { Mascot } from '../games/ui/Mascot';
 import type { AppNotification } from '../../types';
 
 type Filter = 'all' | 'unread' | 'mentions' | 'comments' | 'posts' | 'moderation';
@@ -101,7 +102,6 @@ export const NotificationCenter: React.FC = () => {
   }, [isOpen, hasMore, isLoading, loadMore]);
 
   const empty = EMPTY[activeFilter as Filter] ?? EMPTY.all;
-  const EmptyIcon = empty.icon;
   const hasRead = notifications.some((n) => n.is_read);
 
   return (
@@ -195,8 +195,12 @@ export const NotificationCenter: React.FC = () => {
                       <div role="status" aria-label="جاري التحميل">{Array.from({ length: 7 }, (_, i) => <RowSkeleton key={i} />)}</div>
                     ) : notifications.length === 0 ? (
                       <div className="flex flex-col items-center justify-center text-center px-8 py-20">
-                        <div className="w-20 h-20 rounded-full border-2 border-zinc-800 flex items-center justify-center mb-5">
-                          <EmptyIcon className="w-9 h-9 text-zinc-400" strokeWidth={1.6} />
+                        <div className="mb-4">
+                          <Mascot
+                            character="doctor"
+                            mood={activeFilter === 'unread' ? 'happy' : 'sleeping'}
+                            size={64}
+                          />
                         </div>
                         <p className="text-lg font-black text-white">{empty.title}</p>
                         <p className="text-sm text-zinc-500 mt-1.5 max-w-[260px] leading-relaxed">{empty.body}</p>

@@ -91,9 +91,9 @@ export const UpdatePrompt: React.FC = () => {
                 <RefreshCw className={`w-4.5 h-4.5 ${updating ? 'animate-spin' : ''}`} />
               </div>
               <div className="space-y-0.5 min-w-0 flex-1">
-                <h4 className="text-sm font-black text-white leading-snug">في تحديث جديد جاهز! 🚀</h4>
+                <h4 className="text-sm font-black text-white leading-snug">🚀 تحديث جديد من ليه فيزيو!</h4>
                 <p className="text-xs font-semibold text-zinc-400 leading-relaxed">
-                  حدّث التطبيق واستمتع بأحدث تجربة من ليه فيزيو.
+                  في تجربة جديدة مستنياك!
                 </p>
               </div>
             </div>

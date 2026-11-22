@@ -22,13 +22,19 @@ import {
   UserMinus,
   Flame,
 } from 'lucide-react';
-import { playChatSound, copyToClipboard } from '../utils/helpers';
+import { copyToClipboard } from '../utils/helpers';
+import { playSound } from '../utils/soundEngine';
 import { fireWinConfetti, firePodiumFireworks } from '../utils/confetti';
 import { GAME_MODE_LABELS, buildGameInvite, getGameModeLabel } from '../utils/gameInvite';
 import { chatService } from '../services/chatService';
 import { gameService } from '../services/gameService';
 import { useSocket } from '../context/SocketContext';
 import { UserAvatar } from '../components/UserAvatar';
+import { Mascot, type MascotCharacter } from '../components/games/ui/Mascot';
+import { AnimatedNumber } from '../components/games/ui/AnimatedNumber';
+import { MpAnatomyArt, MpClinicalArt, MpOsceArt } from '../components/games/ui/GameArt';
+import { haptic } from '../components/games/ui/feedback';
+import '../styles/games.css';
 
 interface FloatingReaction {
   id: number;
@@ -109,6 +115,10 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
   const prevWinnerRef = useRef<string | null>(null);
   const prevStatusRef = useRef<string | null>(null);
+  const prevPlayersCountRef = useRef<number>(activeGameRoom?.players?.length || 0);
+  const prevRoundRef = useRef<number>(0);
+  const lastWarnSecRef = useRef<number>(-1);
+  const [roundBanner, setRoundBanner] = useState<number | null>(null);
 
   // Flag active multiplayer game for deferred PWA update prompt
   useEffect(() => {
@@ -150,7 +160,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     try {
       await copyToClipboard(inviteUrl);
       showToast('تم نسخ رابط الدعوة بنجاح! 📋');
-      playChatSound('success');
+      playSound('tap');
       
       const modeLabel = getGameModeLabel(room.mode);
       const shareData = {
@@ -179,7 +189,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
       if (res.ok) {
         setSharedAt(Date.now());
         showToast('الدعوة اتبعتت في الشات العام 🎮');
-        playChatSound('success');
+        playSound('correct');
       } else {
         const data = await res.json().catch(() => ({}));
         showToast(data.error || 'الدعوة ماتبعتتش');
@@ -204,12 +214,14 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     if (currentWinner && currentWinner !== prevWinner && currentWinner !== 'timeout' && currentWinner !== 'draw') {
       if (currentWinner === user?.username) {
         fireWinConfetti();
-        playChatSound('success');
+        playSound('correct');
+        haptic('success');
       } else {
-        playChatSound('receive');
+        playSound('message');
       }
     } else if (currentWinner === 'draw' && prevWinner !== 'draw') {
-      playChatSound('error');
+      playSound('wrong');
+      haptic('error');
     }
     prevWinnerRef.current = currentWinner;
 
@@ -218,13 +230,53 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     if (currentStatus === 'finished' && prevStatus === 'playing') {
       if (room.finalWinner === user?.username) {
         firePodiumFireworks();
-        playChatSound('win');
+        playSound('jackpot');
+        haptic('success');
       } else {
         fireWinConfetti();
+        playSound('game_win');
       }
     }
     prevStatusRef.current = currentStatus;
   }, [room.status, room.roundWinner, room.finalWinner, user?.username]);
+
+  // Reactive room join, round start banner, and countdown warning audio
+  useEffect(() => {
+    const count = room.players?.length || 0;
+    if (prevPlayersCountRef.current > 0 && count > prevPlayersCountRef.current) {
+      playSound('room_join');
+      haptic('tap');
+    }
+    prevPlayersCountRef.current = count;
+  }, [room.players?.length]);
+
+  useEffect(() => {
+    if (room.status !== 'playing') {
+      prevRoundRef.current = 0;
+      setRoundBanner(null);
+      return undefined;
+    }
+    const curRound = room.currentRound || 1;
+    if (curRound !== prevRoundRef.current) {
+      prevRoundRef.current = curRound;
+      playSound('round_start');
+      setRoundBanner(curRound);
+      const t = setTimeout(() => setRoundBanner(null), 1200);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [room.status, room.currentRound]);
+
+  useEffect(() => {
+    if (room.status === 'playing' && !room.roundWinner && timeLeft > 0 && timeLeft <= 5) {
+      if (lastWarnSecRef.current !== timeLeft) {
+        lastWarnSecRef.current = timeLeft;
+        playSound('timer_warn');
+      }
+    } else {
+      lastWarnSecRef.current = -1;
+    }
+  }, [room.status, room.roundWinner, timeLeft]);
 
   // Listen for live floating emoji reactions
   useEffect(() => {
@@ -260,9 +312,11 @@ export const PlayGame: React.FC<PlayGameProps> = ({
       if (res.ok) {
         if (data.room) setActiveGameRoom(data.room);
         if (data.isCorrect) {
-          playChatSound('success');
+          playSound('correct');
+          haptic('success');
         } else {
-          playChatSound('error');
+          playSound('wrong');
+          haptic('error');
         }
       } else if (data?.error) {
         showToast(data.error);
@@ -317,7 +371,18 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     </div>
   );
 
-  const modeInfo = GAME_MODE_LABELS[room.gameMode || 'anatomy'] || GAME_MODE_LABELS.anatomy;
+  const modeKey = (room.gameMode || 'anatomy') as 'anatomy' | 'clinical' | 'special_tests';
+  const modeInfo = GAME_MODE_LABELS[modeKey] || GAME_MODE_LABELS.anatomy;
+  const modeTheme: {
+    accent: 'orange' | 'teal' | 'violet';
+    mascot: MascotCharacter;
+    art: React.ReactNode;
+  } =
+    modeKey === 'clinical'
+      ? { accent: 'teal', mascot: 'doctor', art: <MpClinicalArt /> }
+      : modeKey === 'special_tests'
+        ? { accent: 'violet', mascot: 'muscle', art: <MpOsceArt /> }
+        : { accent: 'orange', mascot: 'brain', art: <MpAnatomyArt /> };
 
   // Send chat message
   const handleSendChatMessage = async (e: React.FormEvent) => {
@@ -337,7 +402,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
       const data = await res.json();
       if (res.ok) {
         setActiveGameRoom(data);
-        playChatSound('send');
+        playSound('message');
       }
     } catch (err) {
       console.error(err);
@@ -359,7 +424,7 @@ export const PlayGame: React.FC<PlayGameProps> = ({
       if (res.ok) {
         setActiveGameRoom(data);
         showToast(`تم طرد اللاعب @${targetUsername} بنجاح 🚨`);
-        playChatSound('error');
+        playSound('wrong');
       } else {
         showToast(data.error || 'معرفناش نطرد اللاعب.');
       }
@@ -492,17 +557,29 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   // ─── WAITING ROOM / LOBBY (FLAT FULL PAGE) ────────────────────────────────────
   if (room.status === 'waiting') {
     return (
-      <div className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-32 px-4 max-w-xl mx-auto text-start space-y-4">
+      <div
+        data-accent={modeTheme.accent}
+        className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-32 px-4 max-w-xl mx-auto text-start space-y-4"
+      >
         {renderFloatingReactions()}
 
         {/* Top Header Bar */}
         <div className="flex items-center justify-between gap-3 pt-1">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-2xs font-extrabold uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-2xs font-extrabold uppercase tracking-wider">
               <Loader2 className="w-3 h-3 animate-spin" />
               <span>مستنيين اللاعبين • {modeInfo.badge}</span>
             </div>
-            <h2 className="text-xl font-black text-white">{modeInfo.title}</h2>
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black border ${
+                socket?.connected
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  : 'bg-zinc-900 border-zinc-700 text-zinc-400'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${socket?.connected ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
+              <span>{socket?.connected ? 'متصل لحظياً' : 'جاري الاتصال…'}</span>
+            </span>
           </div>
           <m.button
             whileHover={{ scale: 1.03 }}
@@ -515,18 +592,32 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           </m.button>
         </div>
 
-        {/* Room Code Card */}
-        <div className="text-center py-5 bg-zinc-900/50 rounded-2xl border border-zinc-800/70">
-          <p className="text-2xs text-zinc-500 font-extrabold uppercase tracking-widest mb-1.5">كود الغرفة</p>
+        {/* Mode Hero Card */}
+        <div className="lp-tile p-4 flex items-center gap-3.5">
+          <div className="w-24 h-16 rounded-xl bg-black/30 border border-white/10 p-1.5 flex items-center justify-center shrink-0">
+            {modeTheme.art}
+          </div>
+          <Mascot character={modeTheme.mascot} mood="happy" size={46} />
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg font-black text-white leading-tight">{modeInfo.title}</h2>
+            <p className="text-xs text-zinc-400 font-semibold mt-0.5">
+              {room.rounds} جولات · {room.roundDuration} ثانية للجولة · XP مفتوح للفائز
+            </p>
+          </div>
+        </div>
+
+        {/* Room Code Ticket Card */}
+        <div className="text-center py-5 bg-zinc-900/60 rounded-2xl border border-brand-orange/25 relative overflow-hidden">
+          <p className="text-2xs text-zinc-400 font-extrabold uppercase tracking-widest mb-1.5">كود الغرفة</p>
           <m.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={async () => {
               await copyToClipboard(room.code);
               showToast(`تم نسخ كود الغرفة: ${room.code} 📋`);
-              playChatSound('success');
+              playSound('tap');
             }}
-            className="inline-flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-zinc-950 border border-zinc-700/80 hover:border-brand-orange text-white cursor-pointer transition-all shadow-md"
+            className="inline-flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-zinc-950 border border-brand-orange/40 hover:border-brand-orange text-white cursor-pointer transition-all shadow-md"
           >
             <span className="text-3xl font-black tracking-[6px] text-brand-orange font-mono">{room.code}</span>
             <Copy className="w-4 h-4 text-zinc-400" />
@@ -617,8 +708,9 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               onClick={() => {
                 if (room.players.length < 2) {
                   showToast('لازم يبقى فيه لاعبين على الأقل عشان التحدي يبدأ!');
-                  playChatSound('error');
+                  playSound('wrong');
                 } else {
+                  playSound('round_start');
                   handleStartGame();
                 }
               }}
@@ -653,20 +745,48 @@ export const PlayGame: React.FC<PlayGameProps> = ({
     const timerColor = timeLeft <= 5 ? 'text-red-400 animate-pulse' : timeLeft <= 10 ? 'text-amber-400' : 'text-white';
     const hasUsedOptionThisRound = Array.isArray(room.roundOptionUsed) && room.roundOptionUsed.includes(user?.username);
 
+    const sortedPlayers = [...room.players].sort((a: any, b: any) => (b.score || 0) - (a.score || 0));
+
     return (
-      <div className="w-full max-w-xl mx-auto text-start pt-20 xl:pt-8 pb-8 px-4 flex flex-col space-y-3">
+      <div
+        data-accent={modeTheme.accent}
+        className="w-full max-w-xl mx-auto text-start pt-20 xl:pt-8 pb-8 px-4 flex flex-col space-y-3"
+      >
         {renderFloatingReactions()}
+
+        {/* Non-blocking Round Start Pill */}
+        <AnimatePresence>
+          {roundBanner !== null && !room.roundWinner && (
+            <m.div
+              initial={{ opacity: 0, y: -14, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="fixed top-20 inset-x-0 z-40 flex justify-center pointer-events-none"
+            >
+              <div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-brand-orange to-brand-amber text-black font-black text-xs shadow-orange-glow">
+                ⚡ الجولة {roundBanner} من {room.rounds} بدأت!
+              </div>
+            </m.div>
+          )}
+        </AnimatePresence>
 
         {/* Top Arena Header Bar */}
         <div className="flex items-center justify-between pb-2 border-b border-zinc-800/70 gap-2">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 text-brand-orange text-2xs font-black uppercase tracking-wider mb-1">
-              Round {room.currentRound} of {room.rounds} • {modeInfo.badge}
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Mascot
+              character={modeTheme.mascot}
+              mood={room.roundWinner ? 'happy' : timeLeft <= 5 ? 'nervous' : 'thinking'}
+              size={38}
+            />
+            <div className="min-w-0">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 text-brand-orange text-2xs font-black uppercase tracking-wider mb-1">
+                Round {room.currentRound} of {room.rounds} • {modeInfo.badge}
+              </div>
+              <h3 className="text-base font-black text-white flex items-center gap-1.5 truncate">
+                <Zap className="w-4 h-4 text-brand-orange fill-current shrink-0" />
+                <span className="truncate">{modeInfo.title}</span>
+              </h3>
             </div>
-            <h3 className="text-base font-black text-white flex items-center gap-1.5">
-              <Zap className="w-4 h-4 text-brand-orange fill-current" />
-              <span>{modeInfo.title}</span>
-            </h3>
           </div>
           <div className="flex items-center gap-2">
             {/* Timer */}
@@ -705,7 +825,25 @@ export const PlayGame: React.FC<PlayGameProps> = ({
         )}
 
         {/* Question Card */}
-        <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/80 p-4 space-y-2">
+        <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/80 p-4 space-y-2.5">
+          {/* 4-Step Progressive Hint Strip */}
+          {!room.roundWinner && (
+            <div className="grid grid-cols-4 gap-1.5" dir="ltr">
+              {[0, 1, 2, 3].map((step) => (
+                <div
+                  key={step}
+                  className={`h-1.5 rounded-full transition-colors ${
+                    step < currentHintIdx
+                      ? 'bg-emerald-500'
+                      : step === currentHintIdx
+                        ? 'bg-brand-orange'
+                        : 'bg-zinc-800'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+
           <div className="flex gap-2">
             <span className="px-2.5 py-0.5 rounded-md text-2xs font-black border border-brand-orange/30 bg-brand-orange/10 text-brand-orange uppercase">
               {getTypeLabel(question?.type)}
@@ -770,8 +908,21 @@ export const PlayGame: React.FC<PlayGameProps> = ({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="rounded-2xl border border-brand-orange/30 bg-brand-orange/5 p-4 text-center space-y-1.5"
+              className="rounded-2xl border border-brand-orange/30 bg-brand-orange/5 p-4 text-center space-y-2"
             >
+              <div className="flex justify-center">
+                <Mascot
+                  character={modeTheme.mascot}
+                  mood={
+                    room.roundWinner === user?.username
+                      ? 'celebrating'
+                      : room.roundWinner === 'timeout' || room.roundWinner === 'draw'
+                        ? 'confused'
+                        : 'happy'
+                  }
+                  size={44}
+                />
+              </div>
               <h4 className="text-sm md:text-base font-black text-brand-amber">
                 {room.roundWinner === 'timeout'
                   ? '⏱️ الوقت خلص!'
@@ -797,10 +948,18 @@ export const PlayGame: React.FC<PlayGameProps> = ({
           )}
         </AnimatePresence>
 
-        {/* Players Scores Row */}
+        {/* Sorted Live Scoreboard Strip */}
         <div className="flex flex-wrap gap-2 pt-1">
-          {room.players.map((p: any) => (
-            <div key={p.username} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/80 border border-zinc-800">
+          {sortedPlayers.map((p: any, idx: number) => (
+            <div
+              key={p.username}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${
+                idx === 0
+                  ? 'bg-amber-500/10 border-amber-500/35'
+                  : 'bg-zinc-900/80 border-zinc-800'
+              }`}
+            >
+              <span className="text-[10px] font-black text-zinc-400">#{idx + 1}</span>
               <UserAvatar 
                 username={p.username} 
                 avatarUrl={p.avatar_url} 
@@ -814,7 +973,9 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                   {p.streak}
                 </span>
               )}
-              <span className="text-xs font-black text-brand-orange font-mono">{p.score}</span>
+              <span className="text-xs font-black text-brand-orange font-mono tabular-nums">
+                <AnimatedNumber value={p.score || 0} />
+              </span>
             </div>
           ))}
         </div>
@@ -831,26 +992,73 @@ export const PlayGame: React.FC<PlayGameProps> = ({
   // ─── FINISHED STATE (FLAT FULL PAGE) ──────────────────────────────────────────
   if (room.status === 'finished') {
     const sorted = [...room.players].sort((a, b) => b.score - a.score);
+    const podiumSlots = [
+      { player: sorted[1], rank: 2, heightCls: 'h-20', borderCls: 'border-zinc-400/50 bg-zinc-400/10', badgeCls: 'bg-zinc-300 text-black' },
+      { player: sorted[0], rank: 1, heightCls: 'h-28', borderCls: 'border-amber-400/60 bg-gradient-to-t from-amber-500/20 to-brand-orange/20 shadow-[0_0_24px_rgba(245,158,11,0.2)]', badgeCls: 'bg-gradient-to-r from-amber-400 to-brand-orange text-black' },
+      { player: sorted[2], rank: 3, heightCls: 'h-16', borderCls: 'border-amber-700/50 bg-amber-800/15', badgeCls: 'bg-amber-700 text-white' },
+    ].filter((s) => !!s.player);
 
     return (
-      <div className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-32 px-4 max-w-md mx-auto text-start space-y-4">
+      <div
+        data-accent={modeTheme.accent}
+        className="w-full min-h-[100dvh] overflow-y-auto pt-20 xl:pt-8 pb-32 px-4 max-w-md mx-auto text-start space-y-4"
+      >
         {renderFloatingReactions()}
 
-        {/* Trophy Icon */}
+        {/* Trophy + Mascot */}
         <div className="text-center pt-2">
-          <m.div
-            initial={{ scale: 0, rotate: -10 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-            className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-500/20 to-brand-orange/20 border border-amber-500/40 flex items-center justify-center mx-auto shadow-orange-glow mb-3"
-          >
-            <Trophy className="w-10 h-10 text-brand-amber fill-current" />
-          </m.div>
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <m.div
+              initial={{ scale: 0, rotate: -10 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
+              className="w-16 h-16 rounded-3xl bg-gradient-to-br from-amber-500/20 to-brand-orange/20 border border-amber-500/40 flex items-center justify-center shadow-orange-glow"
+            >
+              <Trophy className="w-8 h-8 text-brand-amber fill-current" />
+            </m.div>
+            <Mascot
+              character={modeTheme.mascot}
+              mood={room.finalWinner === user?.username ? 'celebrating' : 'happy'}
+              size={54}
+            />
+          </div>
 
           <h2 className="text-2xl font-black text-white">التحدي خلص</h2>
           <p className="text-xs text-zinc-400 mt-1">
             <span className="text-brand-amber font-black">@{room.finalWinner || 'محدش'}</span> كسب التحدي! 👑
           </p>
+        </div>
+
+        {/* 3-Step Victory Podium */}
+        {sorted.length >= 2 && (
+          <div className="grid grid-cols-3 items-end gap-2 pt-2 px-1" dir="ltr">
+            {podiumSlots.map(({ player, rank, heightCls, borderCls, badgeCls }) => (
+              <div key={player.username} className="flex flex-col items-center text-center gap-1.5">
+                <UserAvatar
+                  username={player.username}
+                  avatarUrl={player.avatar_url}
+                  equippedFrame={player.equipped_frame}
+                  size={rank === 1 ? 44 : 36}
+                />
+                <span className="text-[11px] font-black text-white truncate max-w-full">
+                  @{player.username}
+                </span>
+                <div className={`w-full ${heightCls} rounded-t-2xl border flex flex-col items-center justify-center p-2 ${borderCls}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black mb-1 ${badgeCls}`}>
+                    {rank === 1 ? '👑 #1' : `#${rank}`}
+                  </span>
+                  <span className="text-xs font-black text-white font-mono tabular-nums">
+                    <AnimatedNumber value={player.score || 0} /> pts
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Unlimited Multiplayer XP Note */}
+        <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/25 px-3 py-2 text-center text-[11px] font-bold text-emerald-300">
+          ⚡ التحديات الأونلاين بتحسب XP مفتوح بدون حد يومي!
         </div>
 
         {/* Final Leaderboard */}
@@ -882,7 +1090,9 @@ export const PlayGame: React.FC<PlayGameProps> = ({
                 size={28} 
               />
               <span className="flex-1 text-xs font-black text-white"><bdi dir="ltr">@{p.username}</bdi></span>
-              <span className="text-xs font-black text-brand-orange font-mono">{p.score} pts</span>
+              <span className="text-xs font-black text-brand-orange font-mono tabular-nums">
+                <AnimatedNumber value={p.score || 0} /> pts
+              </span>
             </m.div>
           ))}
         </div>

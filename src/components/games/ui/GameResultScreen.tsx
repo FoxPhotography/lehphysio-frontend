@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { Trophy, RotateCcw, ArrowRight, AlertCircle } from 'lucide-react';
-import { fireWinConfetti } from '../../../utils/confetti';
+import { fireWinConfetti, firePodiumFireworks } from '../../../utils/confetti';
+import { playSound } from '../../../utils/soundEngine';
 import { AnimatedNumber } from './AnimatedNumber';
 import type { GameAccent } from './GameTile';
+import { Mascot, type MascotCharacter } from './Mascot';
 
 interface StatItem {
   label: string;
@@ -12,6 +14,9 @@ interface StatItem {
 interface GameResultScreenProps {
   status: 'won' | 'lost';
   accent: GameAccent;
+  character?: MascotCharacter;
+  tier?: 'standard' | 'major' | 'legendary';
+  isPractice?: boolean;
   title: string;
   subtitle?: string;
   xp?: number;
@@ -38,6 +43,9 @@ const BURST_ANGLES = [
 export const GameResultScreen: React.FC<GameResultScreenProps> = ({
   status,
   accent,
+  character,
+  tier = 'major',
+  isPractice = false,
   title,
   subtitle,
   xp,
@@ -49,19 +57,25 @@ export const GameResultScreen: React.FC<GameResultScreenProps> = ({
   onBack,
   backLabel = 'رجوع للألعاب',
 }) => {
-  const confettiFiredRef = useRef(false);
+  const effectsFiredRef = useRef(false);
 
   useEffect(() => {
-    if (status !== 'won' || confettiFiredRef.current) return;
-    confettiFiredRef.current = true;
+    if (status !== 'won' || effectsFiredRef.current) return;
+    effectsFiredRef.current = true;
+    playSound(tier === 'legendary' ? 'jackpot' : 'game_win');
+
     const reduced =
       typeof window !== 'undefined' &&
       (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ||
         document.documentElement.classList.contains('fx-lite'));
     if (!reduced) {
-      fireWinConfetti();
+      if (tier === 'legendary') {
+        firePodiumFireworks();
+      } else {
+        fireWinConfetti();
+      }
     }
-  }, [status]);
+  }, [status, tier]);
 
   const isWon = status === 'won';
 
@@ -69,11 +83,15 @@ export const GameResultScreen: React.FC<GameResultScreenProps> = ({
     <div
       data-accent={accent}
       className={`lp-rise relative overflow-hidden rounded-3xl border bg-[#111113] p-6 md:p-8 text-center flex flex-col items-center gap-4 ${
-        isWon ? 'border-emerald-500/30' : 'lp-shake border-zinc-700/80'
+        isWon
+          ? tier === 'legendary'
+            ? 'border-amber-400/45 lp-shimmer-sweep'
+            : 'border-emerald-500/30'
+          : 'lp-shake border-zinc-700/80'
       }`}
     >
-      {/* Badge + Lightweight CSS Particle Burst */}
-      <div className="relative flex items-center justify-center my-1">
+      {/* Badge / Mascot + Lightweight CSS Particle Burst */}
+      <div className="relative flex items-center justify-center gap-3 my-1">
         {isWon &&
           BURST_ANGLES.map((pos, idx) => (
             <span
@@ -90,12 +108,20 @@ export const GameResultScreen: React.FC<GameResultScreenProps> = ({
             />
           ))}
 
+        {character && (
+          <Mascot
+            character={character}
+            mood={isWon ? 'celebrating' : 'encouraging'}
+            size={68}
+          />
+        )}
+
         <div
-          className={`lp-pop relative w-16 h-16 rounded-2xl flex items-center justify-center border ${
+          className={`lp-pop relative w-14 h-14 rounded-2xl flex items-center justify-center border ${
             isWon ? 'bg-amber-500/15 border-amber-400/35 text-brand-amber' : 'bg-zinc-900 border-zinc-700 text-zinc-400'
           }`}
         >
-          {isWon ? <Trophy className="w-8 h-8" /> : <AlertCircle className="w-8 h-8" />}
+          {isWon ? <Trophy className="w-7 h-7" /> : <AlertCircle className="w-7 h-7" />}
         </div>
       </div>
 
@@ -104,8 +130,15 @@ export const GameResultScreen: React.FC<GameResultScreenProps> = ({
         {subtitle && <p className="text-xs md:text-sm font-semibold text-zinc-400">{subtitle}</p>}
       </div>
 
+      {/* Practice Mode Clarity Note */}
+      {isWon && isPractice && (
+        <span className="text-[11px] font-black px-3 py-1 rounded-full bg-zinc-900 border border-white/10 text-zinc-300">
+          وضع التدريب — مفيش XP مضاف (للتمرين فقط)
+        </span>
+      )}
+
       {/* XP Reward Display */}
-      {isWon && typeof xp === 'number' && xp > 0 && !errorMsg && (
+      {isWon && !isPractice && typeof xp === 'number' && xp > 0 && !errorMsg && (
         <div
           className="lp-pop inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border font-black text-sm tabular-nums"
           dir="ltr"
@@ -153,7 +186,10 @@ export const GameResultScreen: React.FC<GameResultScreenProps> = ({
         {onReplay && (
           <button
             type="button"
-            onClick={onReplay}
+            onClick={() => {
+              playSound('tap');
+              onReplay();
+            }}
             className="lp-press min-h-[44px] px-5 py-2.5 rounded-xl text-black font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer"
             style={{ backgroundColor: 'rgb(var(--a))' }}
           >
@@ -164,7 +200,10 @@ export const GameResultScreen: React.FC<GameResultScreenProps> = ({
         {onBack && (
           <button
             type="button"
-            onClick={onBack}
+            onClick={() => {
+              playSound('tap');
+              onBack();
+            }}
             className="lp-press min-h-[44px] px-5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 hover:border-white/25 text-zinc-200 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <ArrowRight className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />

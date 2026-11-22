@@ -90,8 +90,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         {/* Offline Banner */}
         {isOffline && (
           <div className="bg-red-600/90 text-white text-center py-1.5 px-4 text-xs font-black flex items-center justify-center gap-2 z-[999] border-b border-red-500/20 shadow-lg shrink-0">
-            <WifiOff className="w-3.5 h-3.5" />
-            <span>انت أوفلاين دلوقتي، بنعرض آخر محتوى اتحمّل.</span>
+            <WifiOff className="w-3.5 h-3.5 shrink-0" />
+            <span>انت أوفلاين دلوقتي — تقدر تتصفح المحتوى المحفوظ أو تتدرّب في الألعاب الأوفلاين، والمزامنة واللعب الأونلاين مستنيين النت.</span>
           </div>
         )}
 

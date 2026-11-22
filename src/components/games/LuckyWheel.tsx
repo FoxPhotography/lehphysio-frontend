@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { Zap, Gift, RotateCw, Sparkles } from 'lucide-react';
+import { Mascot } from './ui/Mascot';
+import { AnimatedNumber } from './ui/AnimatedNumber';
 
 export interface SpinResult {
   label: string;
@@ -91,16 +93,36 @@ export const LuckyWheel: React.FC<LuckyWheelProps> = ({
   const canSpin = !isSpinning && !hasSpunToday;
 
   return (
-    <div className="flex flex-col items-center space-y-6 py-2">
+    <div className="flex flex-col items-center space-y-5 py-2">
       {/* Header */}
-      <div className="space-y-1.5 text-center">
-        <h3 className="text-lg md:text-xl font-black text-white flex items-center justify-center gap-2">
-          <Zap className="w-5 h-5 text-brand-orange fill-brand-orange" />
-          <span>عجلة الحظ اليومية</span>
-        </h3>
-        <p className="text-xs text-zinc-400 font-semibold">
-          لف العجلة كل يوم واكسب XP — الـ <span className="text-amber-300 font-black">Mystery</span> بتدي 500 XP!
-        </p>
+      <div className="flex flex-col items-center gap-2 text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-orange/15 border border-brand-orange/30 text-[11px] font-black text-brand-amber">
+          <span>1 لفة مجانية يومياً · جاكبوت 500 XP</span>
+        </div>
+        <div className="flex items-center justify-center gap-3">
+          <Mascot
+            character="doctor"
+            mood={
+              isSpinning
+                ? 'excited'
+                : lastSpinResult && !lastSpinResult.tryAgain
+                  ? 'celebrating'
+                  : hasSpunToday
+                    ? 'sleeping'
+                    : 'happy'
+            }
+            size={52}
+          />
+          <div className="text-start">
+            <h3 className="text-lg md:text-xl font-black text-white flex items-center gap-2">
+              <Zap className="w-5 h-5 text-brand-orange fill-brand-orange" />
+              <span>عجلة الحظ اليومية</span>
+            </h3>
+            <p className="text-xs text-zinc-400 font-semibold mt-0.5">
+              لف العجلة كل يوم واكسب XP — الـ <span className="text-amber-300 font-black">Mystery</span> بتدي 500 XP!
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Wheel Stage */}
@@ -316,9 +338,9 @@ export const LuckyWheel: React.FC<LuckyWheelProps> = ({
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6 }}
-            className={`w-full max-w-xs rounded-2xl px-4 py-3 border text-center flex items-center justify-center gap-2.5 ${
+            className={`relative overflow-hidden w-full max-w-xs rounded-2xl px-4 py-3 border text-center flex items-center justify-center gap-2.5 ${
               lastSpinResult.isMystery
-                ? 'bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-brand-orange/20 border-amber-400/50 text-amber-200 shadow-[0_0_25px_rgba(245,158,11,0.25)]'
+                ? 'lp-shimmer-sweep bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-brand-orange/20 border-amber-400/50 text-amber-200 shadow-[0_0_25px_rgba(245,158,11,0.25)]'
                 : lastSpinResult.tryAgain
                   ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
                   : 'bg-brand-orange/10 border-brand-orange/30 text-white'
@@ -330,11 +352,17 @@ export const LuckyWheel: React.FC<LuckyWheelProps> = ({
               <Sparkles className="w-4 h-4 text-brand-orange shrink-0" />
             )}
             <span className="text-sm font-black">
-              {lastSpinResult.tryAgain
-                ? 'لفة مجانية! جرّب تاني دلوقتي 🍀'
-                : lastSpinResult.isMystery
-                  ? `جاكبوت! فتحت الـ Mystery وكسبت +${lastSpinResult.xp} XP!`
-                  : `عاش! كسبت +${lastSpinResult.xp} XP`}
+              {lastSpinResult.tryAgain ? (
+                'لفة مجانية! جرّب تاني دلوقتي 🍀'
+              ) : lastSpinResult.isMystery ? (
+                <>
+                  جاكبوت! فتحت الـ Mystery وكسبت +<AnimatedNumber value={lastSpinResult.xp} /> XP!
+                </>
+              ) : (
+                <>
+                  عاش! كسبت +<AnimatedNumber value={lastSpinResult.xp} /> XP
+                </>
+              )}
             </span>
           </m.div>
         )}

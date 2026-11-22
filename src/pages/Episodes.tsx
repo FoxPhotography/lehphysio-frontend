@@ -3,6 +3,7 @@ import { Thumb } from '../components/common/Thumb';
 import { m } from 'framer-motion';
 import { Tv, Heart, MessageCircle, Send, Key } from 'lucide-react';
 import { groupBySeason, episodeNumber, seasonName } from '../utils/episode';
+import { Mascot } from '../components/games/ui/Mascot';
 
 interface EpisodesProps {
   episodes: any[];
@@ -32,7 +33,7 @@ export const Episodes: React.FC<EpisodesProps> = ({
         <h2 className="text-xl md:text-2xl font-black text-white">حلقات البودكاست</h2>
       </div>
       <p className="text-zinc-400 text-sm font-medium leading-relaxed max-w-2xl">
-"        اتفرج على الحلقة، دوّر على الكود السري وحل الكويز، واكسب لحد +250 XP في كل حلقة!
+        اتفرج على الحلقة، دوّر على الكود السري وحل الكويز، واكسب لحد +250 XP في كل حلقة!
       </p>
 
       {/* Season switcher */}
@@ -184,6 +185,14 @@ export const Episodes: React.FC<EpisodesProps> = ({
           </m.div>
         ))}
       </m.div>
+
+      {list.length === 0 && (
+        <div className="rounded-3xl border border-dashed border-zinc-800 bg-zinc-900/40 py-14 px-4 text-center flex flex-col items-center gap-3">
+          <Mascot character="doctor" mood="sleeping" size={64} />
+          <p className="text-sm font-black text-white">مفيش حلقات في الموسم ده لسه</p>
+          <p className="text-xs text-zinc-500 font-semibold">تابعنا قريباً هينزل حلقات جديدة!</p>
+        </div>
+      )}
     </div>
   );
 };

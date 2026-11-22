@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { gameService } from '../services/gameService';
 import { playChatSound, getLocalDateString } from '../utils/helpers';
+import { playSound } from '../utils/soundEngine';
+import { firePodiumFireworks } from '../utils/confetti';
 import { GameRoom } from '../types';
 
 export const useGames = () => {
@@ -420,7 +422,7 @@ export const useGames = () => {
           const progress = Math.min(elapsed / duration, 1);
           const minThrottle = progress > 0.8 ? 70 : 32;
           if (timeNow - lastTickTime > minThrottle) {
-            playChatSound('tick');
+            playSound('wheel_tick');
             lastTickTime = timeNow;
           }
           lastSegmentIndex = currentSegmentIndex;
@@ -449,10 +451,11 @@ export const useGames = () => {
         } else {
           showToast(isMystery ? `جاكبوت! كسبت +${xpAmount} XP 🎁` : `كسبت +${xpAmount} XP ⚡`);
           if (xpAmount > 0) {
-            playChatSound('win');
+            playSound(isMystery ? 'jackpot' : 'game_win');
+            if (isMystery) firePodiumFireworks();
             triggerXpPopup(xpAmount);
           } else {
-            playChatSound('error');
+            playSound('wrong');
           }
         }
 

@@ -1,8 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Sparkles, Stethoscope, AlertCircle } from 'lucide-react';
-import { playChatSound } from '../../utils/helpers';
+import { playSound } from '../../utils/soundEngine';
+import { GameIntroScreen } from './ui/GameIntroScreen';
 import { GameResultScreen } from './ui/GameResultScreen';
+import { PracticeModeBanner } from './ui/PracticeModeBanner';
+import { Mascot } from './ui/Mascot';
+import { MuscleArt } from './ui/GameArt';
 import { haptic } from './ui/feedback';
 
 interface KinesiologyCase {
@@ -386,7 +390,9 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
   const [selectedInsertion, setSelectedInsertion] = useState<string | null>(null);
   const [roundCleared, setRoundCleared] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [started, setStarted] = useState(false);
 
+  const remainingXpPlays = Math.max(0, maxDailyPlays - dailyPlaysCount);
   const current = cases[roundIdx];
 
   const muscleOptions = useMemo(
@@ -408,13 +414,13 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
 
   const handlePickMuscle = (mName: string) => {
     if (mName === current.muscle) {
-      playChatSound('success');
+      playSound('muscle_pick');
       haptic('success');
       setWrongMsg('');
       setWrongOpt(null);
       setStep(2);
     } else {
-      playChatSound('error');
+      playSound('wrong');
       haptic('error');
       setWrongOpt(mName);
       setWrongKey((k) => k + 1);
@@ -424,10 +430,11 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
 
   const checkPhase2Complete = (n: string | null, o: string | null, i: string | null) => {
     if (n === current.nerve && o === current.origin && i === current.insertion) {
-      playChatSound('success');
+      const isLast = roundIdx + 1 >= ROUNDS_PER_SESSION;
+      playSound(isLast ? 'game_win' : 'correct');
       haptic('success');
       setRoundCleared(true);
-      if (roundIdx + 1 >= ROUNDS_PER_SESSION) {
+      if (isLast) {
         setFinished(true);
         onWin();
       }
@@ -458,7 +465,29 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
     setFinished(false);
   };
 
-  const remainingXpPlays = Math.max(0, maxDailyPlays - dailyPlaysCount);
+  if (!started) {
+    return (
+      <GameIntroScreen
+        accent="green"
+        character="muscle"
+        art={<MuscleArt />}
+        title="مين المسؤول؟ Who's Responsible?"
+        titleEn="Kinesiology & Functional Anatomy"
+        subtitle="اربط كل حركة بالعضلة المسؤولة عنها وحدد العصب والـ Origin والـ Insertion!"
+        rules={[
+          'المرحلة 1: اختار العضلة المسؤولة عن الحركة المطلوبة (Prime Mover)',
+          'المرحلة 2: حدد الـ Nerve Supply والـ Origin والـ Insertion بدقة',
+          `كمّل ${ROUNDS_PER_SESSION} حالات متتالية عشان تكسب مكافأة الـ XP`,
+        ]}
+        xpLabel={`+${xpReward} XP`}
+        dailyPlaysCount={dailyPlaysCount}
+        maxDailyPlays={maxDailyPlays}
+        onStart={() => setStarted(true)}
+        onBack={onBack}
+        startLabel="ابدأ التحدي"
+      />
+    );
+  }
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto px-0 sm:px-2 pb-10 text-start">
@@ -473,19 +502,60 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
         </button>
 
         <span className="text-2xs font-black px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 tabular-nums">
-          محاولات XP: {remainingXpPlays}/{maxDailyPlays}
+          {remainingXpPlays > 0 ? `محاولات XP: ${remainingXpPlays}/${maxDailyPlays}` : 'وضع التدريب'}
         </span>
       </div>
 
+      {remainingXpPlays <= 0 && !finished && (
+        <PracticeModeBanner character="muscle" />
+      )}
+
       <div className="sm:glass-card sm:p-5 sm:border sm:border-emerald-500/25 relative overflow-hidden">
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2">
-            <Stethoscope className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-lg font-black text-white">مين المسؤول؟ Who&apos;s Responsible?</h2>
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2.5">
+            <Mascot
+              character="muscle"
+              mood={
+                finished
+                  ? 'celebrating'
+                  : wrongMsg
+                    ? 'confused'
+                    : roundCleared
+                      ? 'happy'
+                      : 'thinking'
+              }
+              size={42}
+            />
+            <div className="flex items-center gap-2">
+              <Stethoscope className="w-5 h-5 text-emerald-400 shrink-0" />
+              <h2 className="text-base sm:text-lg font-black text-white">مين المسؤول؟ Who&apos;s Responsible?</h2>
+            </div>
           </div>
-          <span className="text-xs font-black px-2.5 py-1 rounded-xl bg-black/40 border border-white/10 text-emerald-300">
+          <span className="text-xs font-black px-2.5 py-1 rounded-xl bg-black/40 border border-white/10 text-emerald-300 shrink-0">
             حالة {roundIdx + 1} / {ROUNDS_PER_SESSION}
           </span>
+        </div>
+
+        {/* Phase Stepper */}
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <div
+            className={`px-3 py-1.5 rounded-xl border text-[11px] font-black text-center transition-colors ${
+              step === 1
+                ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-200'
+                : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+            }`}
+          >
+            {step === 2 ? '✓ ' : '1. '}العضلة (Prime Mover)
+          </div>
+          <div
+            className={`px-3 py-1.5 rounded-xl border text-[11px] font-black text-center transition-colors ${
+              step === 2
+                ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-200'
+                : 'bg-zinc-900/70 border-zinc-800 text-zinc-500'
+            }`}
+          >
+            2. العصب والـ Origin / Insertion
+          </div>
         </div>
 
         {/* Movement Prompt */}
@@ -561,10 +631,11 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
                           setSelectedNerve(opt);
                           if (isRight) {
                             setWrongMsg('');
+                            playSound('muscle_pick');
                             haptic('success');
                             checkPhase2Complete(opt, selectedOrigin, selectedInsertion);
                           } else {
-                            playChatSound('error');
+                            playSound('wrong');
                             haptic('error');
                             setWrongMsg('تأكد من العصب المغذي للعضلة!');
                           }
@@ -600,10 +671,11 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
                           setSelectedOrigin(opt);
                           if (isRight) {
                             setWrongMsg('');
+                            playSound('muscle_pick');
                             haptic('success');
                             checkPhase2Complete(selectedNerve, opt, selectedInsertion);
                           } else {
-                            playChatSound('error');
+                            playSound('wrong');
                             haptic('error');
                             setWrongMsg('الـ Origin مش مظبوط، جرب اختيار تاني!');
                           }
@@ -639,10 +711,11 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
                           setSelectedInsertion(opt);
                           if (isRight) {
                             setWrongMsg('');
+                            playSound('muscle_pick');
                             haptic('success');
                             checkPhase2Complete(selectedNerve, selectedOrigin, opt);
                           } else {
-                            playChatSound('error');
+                            playSound('wrong');
                             haptic('error');
                             setWrongMsg('الـ Insertion مش مظبوط، راجع مكان الارتكاز!');
                           }
@@ -678,6 +751,8 @@ export const WhosResponsibleGame: React.FC<WhosResponsibleGameProps> = ({
                   <GameResultScreen
                     status="won"
                     accent="green"
+                    character="muscle"
+                    isPractice={remainingXpPlays <= 0}
                     title="ممتاز! ربطت الحركة بالعضلة والعصب صح 💪"
                     xp={remainingXpPlays > 0 ? xpReward : 0}
                     stats={[{ label: 'الحالات', value: `${ROUNDS_PER_SESSION}/${ROUNDS_PER_SESSION}` }]}

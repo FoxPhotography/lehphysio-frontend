@@ -1,4 +1,5 @@
 import type { GameAccent } from './ui/GameTile';
+import type { MascotCharacter } from './ui/Mascot';
 
 export type SingleGameKey =
   | 'diagnosis'
@@ -31,6 +32,8 @@ export interface GameCatalogEntry {
   tags: string[];
   category: GameCategory;
   accent: GameAccent;
+  mascot: MascotCharacter;
+  practiceSupported: boolean;
   isNew: boolean;
   artKey: GameArtKey;
   ctaLabel: string;
@@ -63,6 +66,8 @@ export const GAME_CATALOG: GameCatalogEntry[] = [
     tags: ['تفكير إكلينيكي'],
     category: 'clinical',
     accent: 'teal',
+    mascot: 'doctor',
+    practiceSupported: true,
     isNew: true,
     artKey: 'ecg',
     ctaLabel: 'ابدأ العيادة',
@@ -75,6 +80,8 @@ export const GAME_CATALOG: GameCatalogEntry[] = [
     tags: ['سرعة وتركيز', '60 ثانية'],
     category: 'clinical',
     accent: 'violet',
+    mascot: 'doctor',
+    practiceSupported: true,
     isNew: false,
     artKey: 'osce',
     ctaLabel: 'ابدأ السباق',
@@ -88,6 +95,8 @@ export const GAME_CATALOG: GameCatalogEntry[] = [
     tags: ['كينيسيولوجي'],
     category: 'anatomy',
     accent: 'green',
+    mascot: 'muscle',
+    practiceSupported: true,
     isNew: true,
     artKey: 'muscle',
     ctaLabel: 'العب',
@@ -100,6 +109,8 @@ export const GAME_CATALOG: GameCatalogEntry[] = [
     tags: ['تصاعدي · 150 → 300 → 500 XP'],
     category: 'puzzle',
     accent: 'purple',
+    mascot: 'brain',
+    practiceSupported: true,
     isNew: false,
     artKey: 'sudoku',
     ctaLabel: 'العب',
@@ -112,6 +123,8 @@ export const GAME_CATALOG: GameCatalogEntry[] = [
     tags: ['Wordle طبي'],
     category: 'puzzle',
     accent: 'gold',
+    mascot: 'brain',
+    practiceSupported: true,
     isNew: true,
     artKey: 'wordle',
     ctaLabel: 'العب',
@@ -124,6 +137,8 @@ export const GAME_CATALOG: GameCatalogEntry[] = [
     tags: ['ألغاز عصبية'],
     category: 'anatomy',
     accent: 'cyan',
+    mascot: 'nerve',
+    practiceSupported: true,
     isNew: true,
     artKey: 'nerve',
     ctaLabel: 'العب',
@@ -136,6 +151,8 @@ export const GAME_CATALOG: GameCatalogEntry[] = [
     tags: ['ذاكرة تشريحية'],
     category: 'anatomy',
     accent: 'orange',
+    mascot: 'skeleton',
+    practiceSupported: true,
     isNew: false,
     artKey: 'memory',
     ctaLabel: 'العب',
@@ -148,6 +165,8 @@ export const GAME_CATALOG: GameCatalogEntry[] = [
     tags: ['جاكبوت 500 XP'],
     category: 'daily',
     accent: 'amber',
+    mascot: 'doctor',
+    practiceSupported: false,
     isNew: false,
     artKey: 'wheel',
     ctaLabel: 'افتح العجلة',

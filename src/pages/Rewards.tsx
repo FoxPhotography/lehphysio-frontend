@@ -11,7 +11,9 @@ import {
   Clock,
   Frame,
 } from 'lucide-react';
-import { playChatSound, setFramesCache } from '../utils/helpers';
+import { setFramesCache } from '../utils/helpers';
+import { playSound } from '../utils/soundEngine';
+import { AnimatedNumber } from '../components/games/ui/AnimatedNumber';
 import { UserAvatar } from '../components/UserAvatar';
 import { API_BASE } from '../services/api';
 import { CosmeticsStudio } from '../components/shop/CosmeticsStudio';
@@ -167,6 +169,7 @@ export const Rewards: React.FC<RewardsProps> = ({
 
   // Switch frames right from the shop (tap again to remove)
   const switchFrame = (frameId: string) => {
+    playSound('tap');
     const next = String(equippedFrame) === String(frameId) ? 'none' : String(frameId);
     setEquippedFrame(next);
     localStorage.setItem('eq_frame', next);
@@ -179,13 +182,21 @@ export const Rewards: React.FC<RewardsProps> = ({
   const [claimedXp, setClaimedXp] = useState(0);
   const [claimingBox, setClaimingBox] = useState(false);
 
+  useEffect(() => {
+    if (redeemSuccess) playSound('reward');
+  }, [redeemSuccess]);
+
+  useEffect(() => {
+    if (redeemError) playSound('wrong');
+  }, [redeemError]);
+
   const onOpenSurpriseBox = async () => {
     if (hasOpenedBoxToday || claimingBox) return;
     setClaimingBox(true);
     setBoxPhase('charging');
     setClaimedXp(0);
     setBoxModalOpen(true);
-    playChatSound('start');
+    playSound('round_start');
 
     try {
       const [result] = await Promise.all([
@@ -200,7 +211,7 @@ export const Rewards: React.FC<RewardsProps> = ({
 
       setClaimedXp(result.xp_earned);
       setBoxPhase('burst');
-      playChatSound('win');
+      playSound(result.xp_earned >= 300 ? 'jackpot' : 'reward');
 
       setTimeout(() => {
         setBoxPhase('revealed');
@@ -262,12 +273,15 @@ export const Rewards: React.FC<RewardsProps> = ({
       });
       const data = await res.json();
       if (res.ok) {
+        playSound('reward');
         showToast(data.message || 'الفريم بقى بتاعك!');
         if (handleBuyFrame) await handleBuyFrame(frameId, 0);
       } else {
+        playSound('wrong');
         showToast(data.error || 'معرفناش نفتح الفريم.');
       }
     } catch {
+      playSound('wrong');
       showToast('حصل خطأ.');
     }
     setBuyingFrameId(null);
@@ -290,7 +304,9 @@ export const Rewards: React.FC<RewardsProps> = ({
         </div>
         {user && (
           <div className="ms-auto px-3 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20">
-            <span className="text-xs font-black text-orange-400" dir="ltr">{user.total_xp?.toLocaleString() || 0} XP</span>
+            <span className="text-xs font-black text-orange-400 tabular-nums" dir="ltr">
+              <AnimatedNumber value={user.total_xp || 0} /> XP
+            </span>
           </div>
         )}
       </div>

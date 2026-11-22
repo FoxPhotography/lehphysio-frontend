@@ -1,5 +1,7 @@
 import React from 'react';
 import { Play, Key, MessageSquare, Gamepad2, Store } from 'lucide-react';
+import { playSound } from '../../utils/soundEngine';
+import { haptic } from '../games/ui/feedback';
 
 interface QuickActionsProps {
   xpSettings: any;
@@ -25,7 +27,11 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ xpSettings = {}, set
             <button
               key={act.label}
               type="button"
-              onClick={act.onClick}
+              onClick={() => {
+                playSound('tap');
+                haptic('tap');
+                act.onClick();
+              }}
               className="snap-start shrink-0 w-[30%] min-w-[104px] sm:w-auto glass-card p-3.5 flex flex-col items-center justify-center text-center gap-2 cursor-pointer hover:border-brand-orange/30 active:scale-[0.97] transition-transform group"
             >
               <span className="w-11 h-11 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 group-hover:text-brand-orange group-hover:border-brand-orange/20 transition-colors">

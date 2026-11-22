@@ -4,6 +4,9 @@ import { Store, LogIn } from 'lucide-react';
 import logo from '../assets/logo-wordmark.webp';
 import { NotificationBell } from './notifications/NotificationBell';
 import { PresenceMenu } from './PresenceMenu';
+import { SoundSettingsButton } from './common/SoundSettings';
+import { playSound } from '../utils/soundEngine';
+import { haptic } from './games/ui/feedback';
 
 interface MobileHeaderProps {
   setCurrentPage: (page: string) => void;
@@ -26,7 +29,11 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ setCurrentPage, user
           className="flex items-center hover:opacity-90 transition-opacity cursor-pointer select-none bg-transparent border-0 p-0"
           style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
           onContextMenu={(e) => e.preventDefault()}
-          onClick={() => setCurrentPage('home')}
+          onClick={() => {
+            playSound('nav');
+            haptic('tap');
+            setCurrentPage('home');
+          }}
           aria-label="ليه فيزيو؟ — الرئيسية"
         >
           <img
@@ -42,7 +49,18 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ setCurrentPage, user
         </button>
 
         <div className="flex items-center gap-2">
-          <button className={iconBtn} onClick={() => setCurrentPage('rewards')} aria-label="متجر المكافآت" title="متجر المكافآت">
+          <SoundSettingsButton />
+
+          <button
+            className={iconBtn}
+            onClick={() => {
+              playSound('nav');
+              haptic('tap');
+              setCurrentPage('rewards');
+            }}
+            aria-label="متجر المكافآت"
+            title="متجر المكافآت"
+          >
             <Store className="w-[18px] h-[18px]" />
           </button>
 
@@ -61,14 +79,27 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ setCurrentPage, user
               <PresenceMenu
                 open={menuOpen}
                 onClose={() => setMenuOpen(false)}
-                onOpenProfile={() => setCurrentPage('profile')}
+                onOpenProfile={() => {
+                  playSound('nav');
+                  haptic('tap');
+                  setCurrentPage('profile');
+                }}
                 containerRef={menuRef}
                 direction="down"
                 alignClass="top-12 end-0 origin-top-end"
               />
             </div>
           ) : (
-            <button className={iconBtn} onClick={() => setCurrentPage('login')} aria-label="تسجيل الدخول" title="تسجيل الدخول">
+            <button
+              className={iconBtn}
+              onClick={() => {
+                playSound('nav');
+                haptic('tap');
+                setCurrentPage('login');
+              }}
+              aria-label="تسجيل الدخول"
+              title="تسجيل الدخول"
+            >
               <LogIn className="rtl:-scale-x-100 w-[18px] h-[18px]" />
             </button>
           )}

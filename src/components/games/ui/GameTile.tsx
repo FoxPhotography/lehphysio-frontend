@@ -1,6 +1,7 @@
 import React from 'react';
 import { Play, Sparkles, Clock } from 'lucide-react';
 import { AttemptPips } from './AttemptPips';
+import { Mascot, type MascotCharacter } from './Mascot';
 
 export type GameAccent =
   | 'teal'
@@ -25,6 +26,8 @@ interface GameTileProps {
   locked?: boolean;
   lockedLabel?: string;
   disableOnLock?: boolean;
+  practiceMode?: boolean;
+  mascot?: MascotCharacter;
   art: React.ReactNode;
   ctaLabel: string;
   onPlay: () => void;
@@ -46,6 +49,8 @@ export const GameTile: React.FC<GameTileProps> = ({
   locked = false,
   lockedLabel,
   disableOnLock = false,
+  practiceMode = false,
+  mascot,
   art,
   ctaLabel,
   onPlay,
@@ -59,7 +64,7 @@ export const GameTile: React.FC<GameTileProps> = ({
   const artBox = (
     <div
       className={`relative shrink-0 rounded-2xl border overflow-hidden flex items-center justify-center transition-opacity ${
-        locked ? 'opacity-55 grayscale-[45%]' : ''
+        locked && !practiceMode ? 'opacity-55 grayscale-[45%]' : ''
       } ${
         isHero
           ? 'w-full h-36 md:h-full md:w-52 lg:w-60 p-3'
@@ -73,6 +78,15 @@ export const GameTile: React.FC<GameTileProps> = ({
       }}
     >
       {art}
+      {mascot && (
+        <span className="absolute bottom-1.5 start-1.5 pointer-events-none drop-shadow">
+          <Mascot
+            character={mascot}
+            mood={locked && !practiceMode ? 'sleeping' : 'happy'}
+            size={isHero ? 38 : 30}
+          />
+        </span>
+      )}
     </div>
   );
 
@@ -124,22 +138,30 @@ export const GameTile: React.FC<GameTileProps> = ({
         disabled={locked && disableOnLock}
         onClick={onPlay}
         className={`lp-press min-h-[44px] px-4 py-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shrink-0 ${
-          locked
-            ? disableOnLock
-              ? 'bg-zinc-800 text-zinc-400 border border-zinc-700 cursor-not-allowed'
-              : 'bg-zinc-900 text-zinc-200 border border-zinc-700 hover:border-white/25 cursor-pointer'
-            : 'text-black cursor-pointer shadow-sm'
+          practiceMode
+            ? 'bg-amber-500/15 text-amber-300 border border-amber-500/35 hover:bg-amber-500/25 cursor-pointer'
+            : locked
+              ? disableOnLock
+                ? 'bg-zinc-800 text-zinc-400 border border-zinc-700 cursor-not-allowed'
+                : 'bg-zinc-900 text-zinc-200 border border-zinc-700 hover:border-white/25 cursor-pointer'
+              : 'text-black cursor-pointer shadow-sm'
         }`}
         style={
-          locked
+          locked || practiceMode
             ? undefined
             : {
                 backgroundColor: 'rgb(var(--a))',
               }
         }
       >
-        {locked ? <Clock className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-        <span>{locked ? lockedLabel || 'رجع بكرة' : ctaLabel}</span>
+        {practiceMode ? (
+          <Play className="w-3.5 h-3.5 fill-current" />
+        ) : locked ? (
+          <Clock className="w-3.5 h-3.5" />
+        ) : (
+          <Play className="w-3.5 h-3.5 fill-current" />
+        )}
+        <span>{practiceMode ? 'تدرّب (بدون XP)' : locked ? lockedLabel || 'رجع بكرة' : ctaLabel}</span>
       </button>
     </div>
   );

@@ -9,9 +9,13 @@ import {
   ArrowRight,
   AlertTriangle,
 } from 'lucide-react';
-import { playChatSound } from '../../utils/helpers';
+import { playSound } from '../../utils/soundEngine';
 import { fireStreakBurst } from '../../utils/confetti';
+import { GameIntroScreen } from './ui/GameIntroScreen';
 import { GameResultScreen } from './ui/GameResultScreen';
+import { PracticeModeBanner } from './ui/PracticeModeBanner';
+import { Mascot } from './ui/Mascot';
+import { EcgArt } from './ui/GameArt';
 import { haptic } from './ui/feedback';
 
 interface ClinicalDetectiveGameProps {
@@ -19,6 +23,9 @@ interface ClinicalDetectiveGameProps {
   xpReward: number;
   gamePlaySuccess?: string;
   gamePlayError?: string;
+  dailyPlaysCount?: number;
+  maxDailyPlays?: number;
+  onBack?: () => void;
 }
 
 interface ClinicalCase {
@@ -1211,6 +1218,9 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
   xpReward,
   gamePlaySuccess,
   gamePlayError,
+  dailyPlaysCount = 0,
+  maxDailyPlays = 3,
+  onBack,
 }) => {
   const [cases, setCases] = useState<ClinicalCase[]>(() => pickSessionCases());
   const [caseIdx, setCaseIdx] = useState(0);
@@ -1220,7 +1230,9 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
   const [correctCount, setCorrectCount] = useState(0);
   const [streak, setStreak] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [started, setStarted] = useState(false);
 
+  const isPractice = dailyPlaysCount >= maxDailyPlays;
   const current = cases[caseIdx];
   const potentialPts = Math.max(100, 500 - revealedClues * 100);
   const isAnswered = selectedOpt !== null;
@@ -1235,7 +1247,7 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
   const handleRevealClue = () => {
     if (isAnswered || revealedClues >= 4) return;
     setRevealedClues((c) => c + 1);
-    playChatSound('tick');
+    playSound('clinic_clue');
   };
 
   const handleSelectOption = (idx: number) => {
@@ -1248,12 +1260,12 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
       setScore((s) => s + potentialPts + streakBonus);
       setCorrectCount((c) => c + 1);
       setStreak(nextStreak);
-      playChatSound('success');
+      playSound('correct');
       haptic('success');
       if (nextStreak >= 2) fireStreakBurst();
     } else {
       setStreak(0);
-      playChatSound('error');
+      playSound('wrong');
       haptic('error');
     }
   };
@@ -1262,8 +1274,10 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
     if (caseIdx + 1 >= cases.length) {
       setFinished(true);
       if (correctCount >= 3) {
-        playChatSound('win');
+        playSound('game_win');
         onClaimXp();
+      } else {
+        playSound('game_lose');
       }
       return;
     }
@@ -1283,14 +1297,41 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
     setFinished(false);
   };
 
+  if (!started) {
+    return (
+      <GameIntroScreen
+        accent="teal"
+        character="doctor"
+        art={<EcgArt />}
+        title="شخّص الحالة (عيادة الطوارئ)"
+        titleEn="Emergency Clinic Detective"
+        subtitle="فحص إكلينيكي سريع! شخّص 5 حالات عظام وأعصاب من أقل عدد دلائل."
+        rules={[
+          'كل حالة بتبدأ بدليل واحد — طلب دليل زيادة بيقلل نقاط الحالة (-100)',
+          'شخّص 3 حالات صح من 5 على الأقل عشان تكسب الـ XP اليومي',
+          'خد بالك من علامات الخطر (Red Flags) ومضاعف الـ Streak (+50)',
+        ]}
+        xpLabel={`+${xpReward} XP`}
+        dailyPlaysCount={dailyPlaysCount}
+        maxDailyPlays={maxDailyPlays}
+        onStart={() => setStarted(true)}
+        onBack={onBack}
+        startLabel="ابدأ الشيفت"
+      />
+    );
+  }
+
   if (finished) {
     return (
       <GameResultScreen
         status={correctCount >= 3 ? 'won' : 'lost'}
         accent="teal"
+        character="doctor"
+        tier={correctCount === 5 ? 'legendary' : 'major'}
+        isPractice={isPractice}
         title="خلصت الشيفت الإكلينيكي!"
         subtitle={`${rankBadge.title} — شخّصت ${correctCount} من 5 حالات صح`}
-        xp={correctCount >= 3 ? xpReward : 0}
+        xp={correctCount >= 3 && !isPractice ? xpReward : 0}
         stats={[
           { label: 'التشخيص الصح', value: `${correctCount}/5` },
           { label: 'النقاط', value: String(score) },
@@ -1303,22 +1344,40 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
         }
         onReplay={handleRestart}
         replayLabel="حالات جديدة"
+        onBack={onBack}
       />
     );
   }
 
   return (
     <div className="space-y-5">
+      {isPractice && <PracticeModeBanner character="doctor" />}
+
       {/* Top HUD */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="space-y-1">
-          <h3 className="text-lg font-black text-white flex items-center gap-2">
-            <Stethoscope className="w-5 h-5 text-emerald-400" />
-            <span>شخّص الحالة (عيادة الطوارئ)</span>
-          </h3>
-          <p className="text-xs text-zinc-400 font-semibold">
-            خمن التشخيص من أقل عدد دلائل عشان تاخد أعلى نقاط! (3 حالات صح على الأقل للـ XP)
-          </p>
+        <div className="flex items-center gap-2.5">
+          <Mascot
+            character="doctor"
+            mood={
+              isAnswered
+                ? isCorrect
+                  ? 'celebrating'
+                  : 'confused'
+                : current?.isRedFlag
+                  ? 'nervous'
+                  : 'thinking'
+            }
+            size={42}
+          />
+          <div className="space-y-1">
+            <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+              <Stethoscope className="w-5 h-5 text-emerald-400" />
+              <span>شخّص الحالة (عيادة الطوارئ)</span>
+            </h3>
+            <p className="text-xs text-zinc-400 font-semibold">
+              خمن التشخيص من أقل عدد دلائل عشان تاخد أعلى نقاط! (3 حالات صح على الأقل للـ XP)
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -1339,6 +1398,22 @@ export const ClinicalDetectiveGame: React.FC<ClinicalDetectiveGameProps> = ({
             {score} pts
           </span>
         </div>
+      </div>
+
+      {/* Emergency Monitor Diagnostic Stepper */}
+      <div className="grid grid-cols-5 gap-1.5" dir="ltr">
+        {cases.map((c, idx) => (
+          <div
+            key={c.id}
+            className={`h-2 rounded-full transition-all ${
+              idx < caseIdx
+                ? 'bg-emerald-500'
+                : idx === caseIdx
+                  ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.6)]'
+                  : 'bg-zinc-800'
+            }`}
+          />
+        ))}
       </div>
 
       {/* Case Card */}

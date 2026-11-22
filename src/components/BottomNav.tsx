@@ -1,6 +1,8 @@
 import React from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { Home, Tv, MessageSquare, Gamepad2, User } from 'lucide-react';
+import { playSound } from '../utils/soundEngine';
+import { haptic } from './games/ui/feedback';
 
 interface BottomNavProps {
   currentPage: string;
@@ -96,7 +98,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               className={`relative flex-1 min-w-0 flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors duration-150 active:scale-95 ${
                 isActive ? 'text-brand-orange' : 'text-zinc-500 hover:text-zinc-300'
               }`}
-              onClick={handler}
+              onClick={() => {
+                playSound('nav');
+                haptic('tap');
+                handler();
+              }}
             >
               {isActive && <span className="absolute top-0 inset-x-6 h-0.5 rounded-full bg-brand-orange" aria-hidden />}
               <span className="relative">

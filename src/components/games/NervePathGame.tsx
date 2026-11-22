@@ -1,7 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, RotateCcw, Zap, Brain, RefreshCw } from 'lucide-react';
-import { playChatSound } from '../../utils/helpers';
+import { m } from 'framer-motion';
+import { ArrowRight, Brain, RefreshCw } from 'lucide-react';
+import { playSound } from '../../utils/soundEngine';
+import { GameIntroScreen } from './ui/GameIntroScreen';
 import { GameResultScreen } from './ui/GameResultScreen';
+import { PracticeModeBanner } from './ui/PracticeModeBanner';
+import { Mascot } from './ui/Mascot';
+import { NerveArt } from './ui/GameArt';
 import { haptic } from './ui/feedback';
 
 type Port = 'T' | 'R' | 'B' | 'L';
@@ -461,8 +466,10 @@ export const NervePathGame: React.FC<NervePathGameProps> = ({
   const [moves, setMoves] = useState(0);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [hasWon, setHasWon] = useState(false);
+  const [started, setStarted] = useState(false);
 
   const { energized, won } = useMemo(() => evaluateBoard(grid), [grid]);
+  const remainingXpPlays = Math.max(0, maxDailyPlays - dailyPlaysCount);
 
   const startLevel = useCallback((idx: number) => {
     const targetLevel = LEVELS[idx];
@@ -474,15 +481,15 @@ export const NervePathGame: React.FC<NervePathGameProps> = ({
   }, []);
 
   useEffect(() => {
-    if (hasWon) return undefined;
+    if (!started || hasWon) return undefined;
     const timer = setInterval(() => setElapsedSec((s) => s + 1), 1000);
     return () => clearInterval(timer);
-  }, [hasWon, levelIdx]);
+  }, [started, hasWon, levelIdx]);
 
   useEffect(() => {
     if (won && !hasWon) {
       setHasWon(true);
-      playChatSound('success');
+      playSound('game_win');
       haptic('success');
       onWin();
     }
@@ -496,9 +503,16 @@ export const NervePathGame: React.FC<NervePathGameProps> = ({
     if (!adj.includes(idx)) return;
 
     haptic('tap');
+    const prevLit = energized.size;
     const next = [...grid];
     next[emptyIdx] = next[idx];
     next[idx] = null;
+    const { energized: nextEnergized } = evaluateBoard(next);
+    if (nextEnergized.size > prevLit) {
+      playSound('nerve_pulse');
+    } else {
+      playSound('tap');
+    }
     setGrid(next);
     setMoves((m) => m + 1);
   };
@@ -509,7 +523,29 @@ export const NervePathGame: React.FC<NervePathGameProps> = ({
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const remainingXpPlays = Math.max(0, maxDailyPlays - dailyPlaysCount);
+  if (!started) {
+    return (
+      <GameIntroScreen
+        accent="cyan"
+        character="nerve"
+        art={<NerveArt />}
+        title="مسار الأعصاب"
+        titleEn="Nerve Conduction Puzzle"
+        subtitle="حرّك المكعبات ورتّب المسار العصبي لتوصيل الكهرباء من الجدع للعضلة!"
+        rules={[
+          'اضغط على أي مكعب جنب المربع الفاضي عشان يتحرك مكانه',
+          'تابع الإشارة الكهربائية المضيئة لحد ما توصل للعضلة المستهدفة تحت',
+          'العب بالسرعة اللي تناسبك — الأهم تحلها بأقل حركات ممكنة',
+        ]}
+        xpLabel={`+${xpReward} XP`}
+        dailyPlaysCount={dailyPlaysCount}
+        maxDailyPlays={maxDailyPlays}
+        onStart={() => setStarted(true)}
+        onBack={onBack}
+        startLabel="ابدأ توصيل العصب"
+      />
+    );
+  }
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto px-0 sm:px-2 pb-10 text-start">
@@ -526,10 +562,14 @@ export const NervePathGame: React.FC<NervePathGameProps> = ({
 
         <div className="flex items-center gap-2">
           <span className="text-2xs font-black px-3 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 tabular-nums">
-            محاولات XP: {remainingXpPlays}/{maxDailyPlays}
+            {remainingXpPlays > 0 ? `محاولات XP: ${remainingXpPlays}/${maxDailyPlays}` : 'وضع التدريب'}
           </span>
         </div>
       </div>
+
+      {remainingXpPlays <= 0 && !hasWon && (
+        <PracticeModeBanner character="nerve" />
+      )}
 
       {/* Main Card */}
       <div className="sm:glass-card sm:p-5 sm:border sm:border-cyan-500/20 relative overflow-hidden">
@@ -537,12 +577,19 @@ export const NervePathGame: React.FC<NervePathGameProps> = ({
 
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-3 mb-4 relative z-10">
-          <div>
-            <div className="flex items-center gap-2">
-              <Brain className="w-5 h-5 text-cyan-400" />
-              <h2 className="text-lg sm:text-xl font-black text-white">مسار الأعصاب</h2>
+          <div className="flex items-center gap-2.5">
+            <Mascot
+              character="nerve"
+              mood={hasWon ? 'celebrating' : energized.size >= 4 ? 'excited' : 'thinking'}
+              size={42}
+            />
+            <div>
+              <div className="flex items-center gap-2">
+                <Brain className="w-5 h-5 text-cyan-400" />
+                <h2 className="text-lg sm:text-xl font-black text-white">مسار الأعصاب</h2>
+              </div>
+              <p className="text-xs font-bold text-cyan-300 mt-0.5">{level.title} · {level.enTitle}</p>
             </div>
-            <p className="text-xs font-bold text-cyan-300 mt-0.5">{level.title} · {level.enTitle}</p>
           </div>
 
           <div className="flex items-center gap-2 text-xs font-black tabular-nums">
@@ -617,7 +664,7 @@ export const NervePathGame: React.FC<NervePathGameProps> = ({
                     hasWon && isLit
                       ? 'bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border-emerald-400/70 shadow-[0_0_20px_rgba(52,211,153,0.35)]'
                       : isLit
-                        ? 'bg-gradient-to-br from-cyan-500/15 to-zinc-900 border-cyan-400/50 shadow-[0_0_14px_rgba(34,211,238,0.2)]'
+                        ? 'lp-spark-pulse bg-gradient-to-br from-cyan-500/15 to-zinc-900 border-cyan-400/50 shadow-[0_0_14px_rgba(34,211,238,0.2)]'
                         : 'bg-zinc-900/90 border-zinc-800 hover:border-zinc-600'
                   } ${canMove ? 'cursor-pointer active:scale-95' : 'cursor-default'}`}
                   aria-label="حرك القطعة"
@@ -703,6 +750,8 @@ export const NervePathGame: React.FC<NervePathGameProps> = ({
             <GameResultScreen
               status="won"
               accent="cyan"
+              character="nerve"
+              isPractice={remainingXpPlays <= 0}
               title="عاش! وصلت الإشارة العصبية بنجاح ⚡"
               subtitle={`💡 معلومة كلينيكية: ${level.clinicalTip}`}
               xp={remainingXpPlays > 0 ? xpReward : 0}
