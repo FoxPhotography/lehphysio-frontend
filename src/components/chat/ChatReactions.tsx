@@ -7,6 +7,7 @@ import type { ChatReaction } from '../../types';
 import { QUICK_REACTIONS, normalizeEmoji } from '../../utils/chatReactions';
 import { streakVars, type StreakTheme } from '../../utils/streakTheme';
 import { StreakBubbleLayers } from '../streak/Streak';
+import { playSound } from '../../utils/soundEngine';
 
 // ─── Phone back button closes overlays ──────────────────────────────────────
 
@@ -160,6 +161,11 @@ export const MessageActionOverlay: React.FC<MessageActionOverlayProps> = ({
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; side: number } | null>(null);
+  const isKittyPreview = preview?.bubble?.fx === 'kitties';
+
+  useEffect(() => {
+    if (open && isKittyPreview) playSound('kitty_purr');
+  }, [open, messageId, isKittyPreview]);
 
   useBackButtonClose(open, onClose);
 
@@ -303,14 +309,31 @@ export const MessageActionOverlay: React.FC<MessageActionOverlayProps> = ({
 
             {/* Message preview */}
             {preview && preview.bubble && (
-              <div
-                onClick={(e) => e.stopPropagation()}
-                className={`pointer-events-auto max-w-full rounded-2xl px-3.5 py-2.5 shadow-xl streak-bubble ${preview.bubble.fx ? `cos-fx cos-fx--${preview.bubble.fx}` : ''} ${isMine ? 'self-start' : 'self-end'}`}
-                style={streakVars(preview.bubble)}
-              >
-                <StreakBubbleLayers days={preview.days || 0} override={preview.bubble.fx ? (preview.bubble as any) : undefined} />
-                <div className="text-[11px] font-black mb-0.5" style={{ color: preview.bubble.text }}>{preview.username}</div>
-                <p dir="auto" className="text-[13px] font-semibold leading-relaxed line-clamp-3 whitespace-pre-wrap break-words">{preview.text}</p>
+              <div className={`relative pointer-events-auto ${isKittyPreview ? 'max-w-[calc(100%-56px)]' : 'max-w-full'} ${isMine ? 'self-start' : 'self-end'}`}>
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className={`rounded-2xl px-3.5 py-2.5 shadow-xl streak-bubble overflow-hidden relative ${preview.bubble.fx ? `cos-fx cos-fx--${preview.bubble.fx}` : ''}`}
+                  style={streakVars(preview.bubble)}
+                >
+                  <StreakBubbleLayers days={preview.days || 0} override={preview.bubble.fx ? (preview.bubble as any) : undefined} />
+                  <div className="text-[11px] font-black mb-0.5" style={{ color: preview.bubble.text }}>{preview.username}</div>
+                  <p dir="auto" className="text-[13px] font-semibold leading-relaxed line-clamp-3 whitespace-pre-wrap break-words">{preview.text}</p>
+                </div>
+                {isKittyPreview && (
+                  <m.img
+                    src={isMine ? '/kitties/kitty-side-left.png' : '/kitties/kitty-side-right.png'}
+                    alt=""
+                    aria-hidden
+                    draggable={false}
+                    initial={{ opacity: 0, x: isMine ? 22 : -22, rotate: isMine ? 10 : -10, scale: 0.85 }}
+                    animate={{ opacity: 1, x: 0, rotate: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: isMine ? 16 : -16, scale: 0.85 }}
+                    transition={{ type: 'spring', stiffness: 420, damping: 24, delay: 0.04 }}
+                    className={`pointer-events-none select-none absolute top-1/2 -translate-y-1/2 w-14 h-14 object-contain z-20 drop-shadow-[0_4px_12px_rgba(192,132,252,0.55)] ${
+                      isMine ? 'right-[calc(100%-5px)]' : 'left-[calc(100%-5px)]'
+                    }`}
+                  />
+                )}
               </div>
             )}
             {preview && !preview.bubble && (

@@ -48,6 +48,7 @@ import { ReactionSummary, ReactionBurst, MessageActionOverlay, ReactionDetailsSh
 import { StreakBubbleLayers, StreakName, StreakFlame } from '../components/streak/Streak';
 import { getStreakTheme, streakVars } from '../utils/streakTheme';
 import { cosmeticVisual } from '../utils/cosmetics';
+import { playSound } from '../utils/soundEngine';
 import { parseGameInvite, parseGameInviteTitle, joinGameRoomFromInvite } from '../utils/gameInvite';
 import { QUICK_REACTIONS, normalizeEmoji } from '../utils/chatReactions';
 import { copyToClipboard } from '../utils/helpers';
@@ -1049,9 +1050,11 @@ export const Community: React.FC<CommunityProps> = ({
                 const isSwiping = swipeMessageIdRef.current === msg.id;
                 const framePngUrl = getFrameImage(msg.equipped_frame);
 
-                const toggleSelect = () => setSelectedMessageIds(prev =>
-                  prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]
-                );
+                const toggleSelect = () => setSelectedMessageIds(prev => {
+                  const removing = prev.includes(msg.id);
+                  if (!removing && bubbleCos?.fx === 'kitties') playSound('kitty_purr');
+                  return removing ? prev.filter(id => id !== msg.id) : [...prev, msg.id];
+                });
 
                 return (
                   <React.Fragment key={msg.id}>
@@ -1206,11 +1209,29 @@ export const Community: React.FC<CommunityProps> = ({
                         )}
 
                         {/* Text card bubble */}
-                        <HighlightWrapper
-                          isHighlighted={deepLinkTarget?.type === 'chat_message' && deepLinkTarget?.messageId === msg.id}
-                          highlightColor="#FFB000"
-                          className="rounded-2xl max-w-full min-w-0"
-                        >
+                        <div className="relative max-w-full min-w-0">
+                          <AnimatePresence>
+                            {isSelected && bubbleCos?.fx === 'kitties' && (
+                              <m.img
+                                src={isMyMsg ? '/kitties/kitty-side-right.png' : '/kitties/kitty-side-left.png'}
+                                alt=""
+                                aria-hidden
+                                draggable={false}
+                                initial={{ opacity: 0, x: isMyMsg ? -20 : 20, rotate: isMyMsg ? -10 : 10, scale: 0.85 }}
+                                animate={{ opacity: 1, x: 0, rotate: 0, scale: 1 }}
+                                exit={{ opacity: 0, x: isMyMsg ? -14 : 14, scale: 0.85 }}
+                                transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+                                className={`pointer-events-none select-none absolute top-1/2 -translate-y-1/2 w-12 h-12 sm:w-14 sm:h-14 object-contain z-20 drop-shadow-[0_4px_10px_rgba(192,132,252,0.55)] ${
+                                  isMyMsg ? 'left-[calc(100%-5px)]' : 'right-[calc(100%-5px)]'
+                                }`}
+                              />
+                            )}
+                          </AnimatePresence>
+                          <HighlightWrapper
+                            isHighlighted={deepLinkTarget?.type === 'chat_message' && deepLinkTarget?.messageId === msg.id}
+                            highlightColor="#FFB000"
+                            className="rounded-2xl max-w-full min-w-0"
+                          >
                           <div 
                             className={`px-3 py-2 rounded-2xl text-xs md:text-sm font-semibold shadow-lg text-start relative min-w-0 max-w-full overflow-hidden ${
                               isMyMsg
@@ -1426,6 +1447,7 @@ export const Community: React.FC<CommunityProps> = ({
                           <ReactionBurst emoji={reactionBurst && reactionBurst.id === msg.id ? reactionBurst.emoji : null} burstKey={reactionBurst?.key} />
                         </div>
                       </HighlightWrapper>
+                      </div>
 
                         {/* Reactions capsule hanging off the bubble */}
                         {msg.reactions && msg.reactions.length > 0 && (
@@ -2278,7 +2300,12 @@ export const Community: React.FC<CommunityProps> = ({
           if (isMine) {
             actions.push({ key: 'edit', label: 'تعديل', icon: Edit2, onSelect: () => { setEditingMessage(msg); setChatInput(msg.message); setReplyingTo(null); } });
           }
-          actions.push({ key: 'select', label: 'تحديد', icon: CheckSquare, onSelect: () => { setIsMultiSelectMode(true); setSelectedMessageIds([msg.id]); } });
+          actions.push({ key: 'select', label: 'تحديد', icon: CheckSquare, onSelect: () => {
+            const cosB = cosmeticVisual((isMine ? (user?.cosmetics || msg.cosmetics) : msg.cosmetics)?.bubble);
+            if (cosB?.fx === 'kitties') playSound('kitty_purr');
+            setIsMultiSelectMode(true);
+            setSelectedMessageIds([msg.id]);
+          } });
           if (isStaff && !isMine) {
             actions.push({ key: 'mod', label: 'إجراء على المستخدم', icon: ShieldAlert, tone: 'accent', onSelect: () => handleOpenModerationModal(msg.username, msg.user_id) });
           }
