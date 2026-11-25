@@ -5,6 +5,7 @@ import { useNotifications } from '../context/NotificationContext';
 import { chatService } from '../services/chatService';
 import { API_BASE } from '../services/api';
 import { playChatSound } from '../utils/helpers';
+import { playSound } from '../utils/soundEngine';
 import { usePresenceOptional } from '../context/PresenceContext';
 import { ChatMessage } from '../types';
 import { applyReactionToggle, summarizeRawReactions } from '../utils/chatReactions';
@@ -205,9 +206,11 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
           setHasMoreChat(true);
           if (chatMessagesRef.current && chatMessagesRef.current.length > 0 && data.length > 0) {
             const currentIds = new Set(chatMessagesRef.current.map((m: any) => m.id));
-            const hasNewIncoming = data.some((m: any) => !currentIds.has(m.id) && (!userRef.current || m.username !== userRef.current.username));
-            if (hasNewIncoming && myStatusRef.current !== 'dnd') {
-              playChatSound('receive');
+            const newIncomingMsgs = data.filter((m: any) => !currentIds.has(m.id) && (!userRef.current || m.username !== userRef.current.username));
+            if (newIncomingMsgs.length > 0 && myStatusRef.current !== 'dnd') {
+              const hasKittyMsg = newIncomingMsgs.some((m: any) => m.cosmetics?.bubble === 'bubble:kitties');
+              if (hasKittyMsg) playSound('kitty_meow');
+              else playChatSound('receive');
             }
           }
           
@@ -569,7 +572,11 @@ export const useChat = (communityTab: 'feed' | 'chat') => {
       );
       const data = await res.json();
       if (res.ok) {
-        playChatSound('send');
+        if ((userRef.current as any)?.cosmetics?.bubble === 'bubble:kitties') {
+          playSound('kitty_paw');
+        } else {
+          playChatSound('send');
+        }
         setChatMessages(prev => prev.map(m => m.id === optimisticId ? {
           ...m,
           id: data.id,

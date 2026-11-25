@@ -131,6 +131,90 @@
 .cos-fx--stars .streak-plate__embers span,
 .cos-fx--stars .streak-aura__embers span { background: radial-gradient(circle, #fff 0 25%, var(--s3) 45%, transparent 70%); }
 
+/* Kitties (Yuumi-inspired Magical Cats): enchanted lavender-violet cosmos + warm golden shimmer */
+@keyframes kitty-float {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-2deg); }
+  50% { transform: translate3d(0, -9px, 0) rotate(2.5deg); }
+}
+@keyframes kitty-sleep-breathe {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, -2px, 0) scale(1.045, 0.97); }
+}
+@keyframes kitty-peek-bob {
+  0%, 100% { transform: translate3d(0, 1px, 0) rotate(-1.5deg); }
+  50% { transform: translate3d(0, -2px, 0) rotate(1.5deg); }
+}
+@keyframes kitty-heart-rise {
+  0% { opacity: 0; transform: translate3d(0, 4px, 0) scale(0.6); }
+  20% { opacity: 1; transform: translate3d(0, -8px, 0) scale(1.1); }
+  100% { opacity: 0; transform: translate3d(var(--kx, 6px), -42px, 0) scale(0.85); }
+}
+@keyframes kitty-pet-bounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.14, 0.92) rotate(-5deg); }
+  65% { transform: scale(0.95, 1.08) rotate(4deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.streak-aura.cos-fx--kitties {
+  background:
+    radial-gradient(75% 60% at 50% 8%, rgba(126, 34, 206, 0.35), transparent 72%),
+    radial-gradient(50% 45% at 15% 80%, rgba(244, 114, 182, 0.2), transparent 70%),
+    #0d0717;
+}
+.cos-fx--kitties .streak-plate__bg {
+  background: linear-gradient(
+    105deg,
+    rgb(46 16 101 / 0.92) 0%,
+    rgb(168 85 247 / 0.34) 34%,
+    rgb(253 230 138 / 0.24) 55%,
+    rgb(236 72 153 / 0.28) 76%,
+    rgb(46 16 101 / 0.92) 100%
+  );
+}
+.cos-fx--kitties .streak-aura__glow {
+  background:
+    radial-gradient(36% 32% at 24% 28%, rgb(192 132 252 / 0.42), transparent 72%),
+    radial-gradient(34% 30% at 76% 30%, rgb(253 224 71 / 0.28), transparent 72%),
+    radial-gradient(38% 30% at 52% 72%, rgb(244 114 182 / 0.26), transparent 74%);
+}
+.streak-plate--cos-kitties .streak-plate__edge {
+  background: linear-gradient(to bottom, #fde68a, #f0abfc, #7e22ce);
+  box-shadow: 0 0 14px rgba(216, 180, 254, 0.8), 0 0 22px rgba(253, 224, 71, 0.45);
+}
+.streak-bubble.cos-fx--kitties {
+  background: linear-gradient(130deg, #1e0b3a 0%, #3b1768 48%, #5b2185 82%, #29104e 100%);
+  border-color: rgb(253 230 138 / 0.48);
+  box-shadow: 0 0 20px -4px rgba(192, 132, 252, 0.45), inset 0 0 14px rgba(253, 230, 138, 0.14);
+  color: #ffffff !important;
+}
+.streak-bubble.cos-fx--kitties p {
+  color: #ffffff !important;
+}
+.streak-text.cos-fx--kitties {
+  background: linear-gradient(110deg, #e9d5ff 0%, #fde68a 30%, #f472b6 56%, #ffffff 78%, #c084fc 100%);
+  background-size: 230% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  display: inline-block;
+  animation: streak-text-pan 3.6s ease-in-out infinite;
+  filter: drop-shadow(0 0 7px rgba(216, 180, 254, 0.55)) drop-shadow(0 2px 6px rgba(46, 16, 101, 0.8));
+}
+.streak-aura.cos-fx--kitties .kitty-pet-btn {
+  pointer-events: auto !important;
+}
+.kitty-float-anim { animation: kitty-float 3.4s ease-in-out infinite; }
+.kitty-sleep-anim { animation: kitty-sleep-breathe 3.8s ease-in-out infinite; }
+.kitty-peek-anim { animation: kitty-peek-bob 2.8s ease-in-out infinite; }
+.kitty-pet-pop { animation: kitty-pet-bounce 0.48s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.kitty-heart-float { animation: kitty-heart-rise 1.05s ease-out forwards; }
+
+.fx-lite .kitty-float-anim,
+.fx-lite .kitty-sleep-anim,
+.fx-lite .kitty-peek-anim { animation: none; }
+
 @media (prefers-reduced-motion: reduce) {
-  .cos-fx, .cos-fx * { animation: none !important; }
+  .cos-fx, .cos-fx *, .kitty-float-anim, .kitty-sleep-anim, .kitty-peek-anim, .kitty-heart-float { animation: none !important; }
 }

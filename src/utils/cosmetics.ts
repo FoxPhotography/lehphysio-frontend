@@ -6,7 +6,7 @@ import type { StreakTheme } from './streakTheme';
  * XP is never deducted (same rule as frames).
  */
 export type CosmeticCategory = 'name' | 'bubble' | 'nameplate' | 'profile';
-export type CosmeticFx = 'flow' | 'embers' | 'shine' | 'stars' | 'holo' | 'shadow' | 'snow' | 'curva';
+export type CosmeticFx = 'flow' | 'embers' | 'shine' | 'stars' | 'holo' | 'shadow' | 'snow' | 'curva' | 'kitties';
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
 
 export interface CosmeticVisual extends StreakTheme {
@@ -22,6 +22,8 @@ export interface CosmeticTheme {
   c1: string; c2: string; c3: string; glow: string; text: string;
   intensity: number;
   fx: CosmeticFx;
+  exclusiveTo?: string[];
+  bundleFrameId?: number;
 }
 
 export const COSMETIC_THEMES: CosmeticTheme[] = [
@@ -35,6 +37,7 @@ export const COSMETIC_THEMES: CosmeticTheme[] = [
   { key: 'shadow', name: 'شادو',      vibe: 'ظلال سوداء وهالة كسوف مرعبة 🌑', rarity: 'mythic', base: 7500,  c1: '#050507', c2: '#27272a', c3: '#e4e4e7', glow: '161 161 170', text: '#e4e4e7', intensity: 1,    fx: 'shadow' },
   { key: 'snow',   name: 'جليد',      vibe: 'عاصفة ثلجية بتتحرك وبتتراكم ❄️', rarity: 'mythic', base: 8500, c1: '#081726', c2: '#38bdf8', c3: '#e0f2fe', glow: '56 189 248',  text: '#bae6fd', intensity: 1,    fx: 'snow' },
   { key: 'curvanord', name: 'كورفانورد', vibe: 'حريقة في المدرجات وهدف في التسعين ⚽🔥', rarity: 'mythic', base: 10000, c1: '#022c22', c2: '#10b981', c3: '#f97316', glow: '249 115 22', text: '#34d399', intensity: 1, fx: 'curva' },
+  { key: 'kitties', name: 'كيتيز 🐾', vibe: 'قطط سحرية زي يومي + فريم وصوت حصري ✨', rarity: 'mythic', base: 0, c1: '#2e1065', c2: '#c084fc', c3: '#fde68a', glow: '216 180 254', text: '#f5d0fe', intensity: 1, fx: 'kitties', exclusiveTo: ['sana', 'fox'], bundleFrameId: 10 },
 ];
 
 export const COSMETIC_CATEGORIES: { key: CosmeticCategory; label: string; hint: string; mult: number; field: string }[] = [
@@ -83,4 +86,27 @@ export function cosmeticVisual(id?: string | null): CosmeticVisual | null {
     next: null,
     fx: t.fx,
   };
+}
+
+export function isThemeAllowedForUser(theme: Pick<CosmeticTheme, 'exclusiveTo'>, username?: string | null): boolean {
+  if (!theme.exclusiveTo || theme.exclusiveTo.length === 0) return true;
+  const clean = String(username || '').trim().toLowerCase();
+  if (!clean) return false;
+  return theme.exclusiveTo.some((u) => u.toLowerCase() === clean);
+}
+
+export function isFrameAllowedForUser(
+  frame: { _id?: number; id?: number; exclusive_users?: string[] },
+  username?: string | null
+): boolean {
+  const numId = Number(frame._id ?? frame.id);
+  const hardcodedExclusive = numId === 10 ? ['sana', 'fox'] : undefined;
+  const list =
+    Array.isArray(frame.exclusive_users) && frame.exclusive_users.length > 0
+      ? frame.exclusive_users
+      : hardcodedExclusive;
+  if (!list || list.length === 0) return true;
+  const clean = String(username || '').trim().toLowerCase();
+  if (!clean) return false;
+  return list.some((u) => String(u).trim().toLowerCase() === clean);
 }

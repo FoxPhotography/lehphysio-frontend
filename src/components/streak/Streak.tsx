@@ -7,6 +7,7 @@ import PixelSnow from './PixelSnow';
 import FireGoalBackground from './FireGoalBackground';
 import PlasmaEnergy from './PlasmaEnergy';
 import ShadowVoid from './ShadowVoid';
+import { KittyAuraBackground } from './KittyAuraBackground';
 
 /** Equipped shop cosmetic (if any) wins over the automatic streak colours. */
 type Override = CosmeticVisual | null | undefined;
@@ -645,6 +646,9 @@ export const StreakAura: React.FC<{ days: number; density?: 'full' | 'lite'; cla
       )}
       <PackageParticles themeKey={t.key} compact={density !== 'full'} />
       <div className="streak-aura__vignette" />
+      {(t.key === ('cos-kitties' as any) || override?.fx === 'kitties') && (
+        <KittyAuraBackground density={density} interactive={density === 'full'} />
+      )}
     </div>
   );
 };
@@ -746,6 +750,15 @@ export const StreakNameplate: React.FC<{
         </span>
       )}
       <PackageParticles themeKey={t.key} compact />
+      {(t.key === ('cos-kitties' as any) || override?.fx === 'kitties') && (
+        <img
+          src="/kitties/kitty-peek.png"
+          alt=""
+          aria-hidden
+          draggable={false}
+          className="kitty-peek-anim pointer-events-none absolute -top-2 end-2 w-8 h-8 object-contain drop-shadow-[0_2px_6px_rgba(192,132,252,0.55)] z-10 select-none"
+        />
+      )}
       {children}
     </div>
   );
@@ -847,6 +860,15 @@ export const StreakBubbleLayers: React.FC<{ days: number; override?: Override }>
         </span>
       )}
       <PackageParticles themeKey={t.key} compact />
+      {(t.key === ('cos-kitties' as any) || override?.fx === 'kitties') && (
+        <img
+          src="/kitties/kitty-peek.png"
+          alt=""
+          aria-hidden
+          draggable={false}
+          className="kitty-peek-anim pointer-events-none absolute -bottom-0.5 end-1.5 w-7 h-7 object-contain drop-shadow-[0_2px_5px_rgba(192,132,252,0.5)] z-10 select-none opacity-95"
+        />
+      )}
     </>
   );
 };

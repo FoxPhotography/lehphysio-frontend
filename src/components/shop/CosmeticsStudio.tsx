@@ -11,9 +11,11 @@ import {
   cosmeticId,
   cosmeticPrice,
   cosmeticVisual,
+  isThemeAllowedForUser,
   type CosmeticCategory,
   type CosmeticVisual,
 } from '../../utils/cosmetics';
+import { playSound } from '../../utils/soundEngine';
 import { API_BASE } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -32,7 +34,7 @@ const EMPTY: Look = { nameplate: 'none', bubble: 'none', profile: 'none', name: 
 
 // ─── Live previews (the same components the app uses everywhere) ─────────────
 
-const NameplatePreview: React.FC<{ user: any; look: Look; compact?: boolean }> = ({ user, look, compact }) => {
+const NameplatePreview: React.FC<{ user: any; look: Look; compact?: boolean; frameOverride?: string }> = ({ user, look, compact, frameOverride }) => {
   const streak = user?.streak_count || 0;
   return (
     <StreakNameplate
@@ -41,7 +43,7 @@ const NameplatePreview: React.FC<{ user: any; look: Look; compact?: boolean }> =
       className={`flex items-center gap-2.5 rounded-xl border border-white/8 bg-zinc-950/70 ${compact ? 'px-2.5 py-2' : 'px-3 py-2.5'}`}
     >
       <span className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center text-[11px] font-black text-white">1</span>
-      <UserAvatar username={user?.username || 'A'} avatarUrl={user?.avatar_url} equippedFrame={user?.equipped_frame} size={compact ? 26 : 32} />
+      <UserAvatar username={user?.username || 'A'} avatarUrl={user?.avatar_url} equippedFrame={frameOverride || user?.equipped_frame} size={compact ? 26 : 32} />
       <div className="flex-1 min-w-0 text-start">
         <div className={`${compact ? 'text-[11px]' : 'text-[13px]'} font-black text-white truncate`}>
           <StreakName days={streak} override={cosmeticVisual(look.name)}>{user?.username || 'إنت'}</StreakName>
@@ -81,13 +83,13 @@ const BubblePreview: React.FC<{ user: any; look: Look; text?: string; compact?: 
   );
 };
 
-const ProfilePreview: React.FC<{ user: any; look: Look; compact?: boolean }> = ({ user, look, compact }) => {
+const ProfilePreview: React.FC<{ user: any; look: Look; compact?: boolean; frameOverride?: string }> = ({ user, look, compact, frameOverride }) => {
   const streak = user?.streak_count || 0;
   return (
     <div className={`relative overflow-hidden rounded-2xl border border-white/10 flex flex-col items-center justify-center gap-1.5 ${compact ? 'h-[104px]' : 'h-40'}`}>
       <StreakAura days={streak} override={cosmeticVisual(look.profile)} density={compact ? 'lite' : 'full'} />
       <div className="relative z-10">
-        <UserAvatar username={user?.username || 'A'} avatarUrl={user?.avatar_url} equippedFrame={user?.equipped_frame} size={compact ? 40 : 58} />
+        <UserAvatar username={user?.username || 'A'} avatarUrl={user?.avatar_url} equippedFrame={frameOverride || user?.equipped_frame} size={compact ? 40 : 58} />
       </div>
       <span className={`relative z-10 ${compact ? 'text-[11px]' : 'text-sm'} font-black text-white`}>
         <StreakName days={streak} override={cosmeticVisual(look.name)}>{user?.username || 'إنت'}</StreakName>
@@ -108,16 +110,32 @@ const NamePreview: React.FC<{ user: any; look: Look }> = ({ user, look }) => (
 // ─── Studio ──────────────────────────────────────────────────────────────────
 
 export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = false }) => {
-  const { setUser } = useAuth() as any;
+  const { setUser, setEquippedFrame } = useAuth() as any;
   const [category, setCategory] = useState<Tab>('package');
   const [tryOn, setTryOn] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState<string | null>(null);
 
+  const visibleThemes = useMemo(
+    () => COSMETIC_THEMES.filter((t) => isThemeAllowedForUser(t, user?.username)),
+    [user?.username]
+  );
+
+  const selectTryOn = (next: string | null) => {
+    setTryOn(next);
+    if (next && next.endsWith(':kitties')) {
+      playSound('kitty_meow');
+    }
+  };
+
   const xp = user?.total_xp || 0;
   const owned: string[] = user?.unlocked_cosmetics || [];
   const equipped: Look = { ...EMPTY, ...(user?.cosmetics || {}) };
   const cat = COSMETIC_CATEGORIES.find(c => c.key === category);
+  const tryOnThemeKey = tryOn?.split(':')[1];
+  const tryOnBundleFrame = tryOn === 'package:kitties' || (tryOnThemeKey && COSMETIC_THEMES.find((t) => t.key === tryOnThemeKey)?.bundleFrameId && tryOn?.startsWith('package:'))
+    ? String(COSMETIC_THEMES.find((t) => t.key === tryOnThemeKey)?.bundleFrameId || '')
+    : undefined;
 
   // What the mirror shows: your current look, plus the item you're trying on
   const mirror: Look = useMemo(() => {
@@ -161,15 +179,27 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = f
     return ok;
   };
 
-  /** Apply several categories in one request (used by packages). */
-  const applyLook = async (changes: Partial<Look>, busyKey: string, okMsg: string) => {
+  /** Apply several categories (plus optional bundle frame) in one request. */
+  const applyLook = async (changes: Partial<Look>, busyKey: string, okMsg: string, bundleFrameId?: number) => {
     setBusy(busyKey);
     const prevLook = equipped;
-    setUser((prev: any) => (prev ? { ...prev, cosmetics: { ...EMPTY, ...(prev.cosmetics || {}), ...changes } } : prev));
+    const prevFrame = user?.equipped_frame;
+    setUser((prev: any) =>
+      prev
+        ? {
+            ...prev,
+            cosmetics: { ...EMPTY, ...(prev.cosmetics || {}), ...changes },
+            ...(bundleFrameId ? { equipped_frame: String(bundleFrameId) } : {}),
+          }
+        : prev
+    );
     const body: Record<string, string> = {};
     for (const [k, v] of Object.entries(changes)) {
       const field = COSMETIC_CATEGORIES.find(c => c.key === k)!.field;
       body[field] = v as string;
+    }
+    if (bundleFrameId) {
+      body.equipped_frame = String(bundleFrameId);
     }
     try {
       const res = await fetch(`${API_BASE}/api/users/profile`, {
@@ -179,15 +209,19 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = f
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
+        if (bundleFrameId) {
+          setEquippedFrame?.(String(bundleFrameId));
+          try { localStorage.setItem('eq_frame', String(bundleFrameId)); } catch { /* ignore */ }
+        }
         if (data.cosmetics) setUser((prev: any) => (prev ? { ...prev, cosmetics: data.cosmetics } : prev));
         showToast(okMsg);
         setTryOn(null);
       } else {
-        setUser((prev: any) => (prev ? { ...prev, cosmetics: prevLook } : prev));
+        setUser((prev: any) => (prev ? { ...prev, cosmetics: prevLook, equipped_frame: prevFrame } : prev));
         showToast(data.error || 'معرفناش نطبّقه');
       }
     } catch {
-      setUser((prev: any) => (prev ? { ...prev, cosmetics: prevLook } : prev));
+      setUser((prev: any) => (prev ? { ...prev, cosmetics: prevLook, equipped_frame: prevFrame } : prev));
       showToast('مشكلة في النت');
     }
     setBusy(null);
@@ -195,6 +229,7 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = f
 
   // Package = the same theme across all four categories
   const applyPackage = async (themeKey: string) => {
+    const themeObj = COSMETIC_THEMES.find((t) => t.key === themeKey);
     const ids = CATEGORY_KEYS.map(c => cosmeticId(c, themeKey));
     const toUnlock = ids.filter(id => !owned.includes(id) && xp >= cosmeticPrice(id.split(':')[0] as CosmeticCategory, themeKey));
     setBusy(`package:${themeKey}`);
@@ -209,7 +244,19 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = f
       setTimeout(() => setCelebrate(null), 1600);
       if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
     }
-    await applyLook(changes, `package:${themeKey}`, usable.length === 4 ? 'الباكدج كله اتفعّل — الكل شايفه ✨' : `اتفعّل ${usable.length} من 4 — كمّل وافتح الباقي 💪`);
+    if (themeKey === 'kitties') {
+      playSound('kitty_zoomies');
+    }
+    const bundleFrameId =
+      themeObj?.bundleFrameId && (user?.unlocked_frames || []).includes(themeObj.bundleFrameId)
+        ? themeObj.bundleFrameId
+        : undefined;
+    await applyLook(
+      changes,
+      `package:${themeKey}`,
+      usable.length === 4 ? 'الباكدج كله اتفعّل — الكل شايفه ✨' : `اتفعّل ${usable.length} من 4 — كمّل وافتح الباقي 💪`,
+      bundleFrameId
+    );
   };
 
   const removePackage = (themeKey: string) => {
@@ -246,7 +293,7 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = f
     setBusy(null);
   };
 
-  const ownedCount = (c: CosmeticCategory) => COSMETIC_THEMES.filter(t => owned.includes(cosmeticId(c, t.key))).length;
+  const ownedCount = (c: CosmeticCategory) => visibleThemes.filter(t => owned.includes(cosmeticId(c, t.key))).length;
 
   return (
     <section id="cosmetics-studio" className="space-y-4 scroll-mt-24">
@@ -277,12 +324,12 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = f
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-[1fr_190px] gap-3">
           <div className="space-y-3 min-w-0">
-            <NameplatePreview user={user} look={mirror} />
+            <NameplatePreview user={user} look={mirror} frameOverride={tryOnBundleFrame} />
             <div className="rounded-2xl bg-black/30 border border-white/5 p-3">
               <BubblePreview user={user} look={mirror} />
             </div>
           </div>
-          <ProfilePreview user={user} look={mirror} />
+          <ProfilePreview user={user} look={mirror} frameOverride={tryOnBundleFrame} />
         </div>
       </div>
 
@@ -313,7 +360,7 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = f
             >
               {c.label}
               <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${active ? 'bg-black/10' : 'bg-white/5 text-zinc-500'}`}>
-                {ownedCount(c.key)}/{COSMETIC_THEMES.length}
+                {ownedCount(c.key)}/{visibleThemes.length}
               </span>
             </button>
           );
@@ -363,18 +410,18 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = f
               </div>
             );
           })()}
-          {COSMETIC_THEMES.map((t, i) => {
+          {visibleThemes.map((t, i) => {
             const ids = CATEGORY_KEYS.map(c => cosmeticId(c, t.key));
-            const ownedN = ids.filter(id => owned.includes(id)).length;
-            const total = CATEGORY_KEYS.reduce((sum, c) => sum + cosmeticPrice(c, t.key), 0);
             const maxPrice = Math.max(...CATEGORY_KEYS.map(c => cosmeticPrice(c, t.key)));
+            const ownedN = ids.filter(id => owned.includes(id)).length;
             const affordableN = ids.filter(id => owned.includes(id) || xp >= cosmeticPrice(id.split(':')[0] as CosmeticCategory, t.key)).length;
             const fullyActive = CATEGORY_KEYS.every(c => equipped[c] === cosmeticId(c, t.key));
             const vis = cosmeticVisual(cosmeticId('profile', t.key)) as CosmeticVisual;
             const rarity = RARITY[t.rarity];
             const key = `package:${t.key}`;
             const look: Look = { nameplate: ids[0], bubble: ids[1], profile: ids[2], name: ids[3] };
-            const pct = Math.min(100, Math.round((xp / maxPrice) * 100));
+            const pct = maxPrice > 0 ? Math.min(100, Math.round((xp / maxPrice) * 100)) : 100;
+            const frameIdStr = t.bundleFrameId ? String(t.bundleFrameId) : undefined;
             return (
               <m.div
                 key={key}
@@ -384,17 +431,26 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = f
                 className={`relative rounded-3xl border p-3 flex flex-col gap-2.5 bg-zinc-900/70 ${tryOn === key ? 'ring-2 ring-white/40' : ''}`}
                 style={{ borderColor: fullyActive ? `rgb(${vis.glow} / 0.75)` : `rgb(${vis.glow} / 0.22)`, boxShadow: fullyActive ? `0 0 28px -6px rgb(${vis.glow} / 0.65)` : undefined }}
               >
-                <button type="button" onClick={() => setTryOn(tryOn === key ? null : key)} className="relative overflow-hidden rounded-2xl text-start cursor-pointer" aria-label={`جرّب باكدج ${t.name}`}>
+                <button type="button" onClick={() => selectTryOn(tryOn === key ? null : key)} className="relative overflow-hidden rounded-2xl text-start cursor-pointer" aria-label={`جرّب باكدج ${t.name}`}>
                   <StreakAura days={0} override={vis} density="lite" />
                   <div className="relative z-10 p-2.5 space-y-2">
-                    <NameplatePreview user={user} look={look} compact />
-                    <BubblePreview user={user} look={look} text="الباكدج ده عليا 🔥" compact />
+                    <NameplatePreview user={user} look={look} compact frameOverride={frameIdStr} />
+                    <BubblePreview user={user} look={look} text={t.key === 'kitties' ? 'مياو! يلا نطير بالكتاب ✨' : 'الباكدج ده عليا 🔥'} compact />
                   </div>
                 </button>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-sm font-black text-white leading-tight">باكدج {t.name}</p>
-                    <p className="text-[10px] text-zinc-500 font-bold">{t.vibe} · {ownedN}/4 مفتوحين</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="text-sm font-black text-white leading-tight">باكدج {t.name}</p>
+                      {t.exclusiveTo && (
+                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-fuchsia-500/20 border border-fuchsia-400/40 text-fuchsia-200">
+                          حصري 🐾
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-zinc-500 font-bold">
+                      {t.vibe} · {ownedN}/4 مفتوحين
+                    </p>
                   </div>
                   <span className="shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5" style={{ color: rarity.color, background: rarity.bg }}>
                     {t.rarity === 'mythic' && <Crown className="w-3 h-3" />}
@@ -486,14 +542,14 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = f
             </div>
           );
         })()}
-        {COSMETIC_THEMES.map((t, i) => {
+        {visibleThemes.map((t, i) => {
           const itemCat = category as CosmeticCategory;
           const id = cosmeticId(itemCat, t.key);
           const price = cosmeticPrice(itemCat, t.key);
           const isOwned = owned.includes(id);
           const isEquipped = equipped[itemCat] === id;
           const canUnlock = !isOwned && xp >= price;
-          const pct = Math.min(100, Math.round((xp / price) * 100));
+          const pct = price > 0 ? Math.min(100, Math.round((xp / price) * 100)) : 100;
           const rarity = RARITY[t.rarity];
           const vis = cosmeticVisual(id) as CosmeticVisual;
           const look: Look = { ...EMPTY, [itemCat]: id };
@@ -516,14 +572,14 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = f
               {/* Live preview — tap to try it on in the mirror */}
               <button
                 type="button"
-                onClick={() => setTryOn(tryOn === id ? null : id)}
+                onClick={() => selectTryOn(tryOn === id ? null : id)}
                 className="text-start cursor-pointer"
                 aria-label={`جرّب ${t.name}`}
               >
                 {itemCat === 'nameplate' && <NameplatePreview user={user} look={look} compact />}
                 {itemCat === 'bubble' && (
                   <div className="h-[72px] rounded-xl bg-black/30 border border-white/5 p-2 flex items-center">
-                    <BubblePreview user={user} look={look} text="يا عم إنت جامد 🔥" compact />
+                    <BubblePreview user={user} look={look} text={t.key === 'kitties' ? 'مياو يا بطل 🐾' : 'يا عم إنت جامد 🔥'} compact />
                   </div>
                 )}
                 {itemCat === 'profile' && <ProfilePreview user={user} look={look} compact />}
@@ -532,7 +588,14 @@ export const CosmeticsStudio: React.FC<Props> = ({ user, showToast, embedded = f
 
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-[13px] font-black text-white leading-tight truncate">{t.name}</p>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <p className="text-[13px] font-black text-white leading-tight truncate">{t.name}</p>
+                    {t.exclusiveTo && (
+                      <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-200">
+                        حصري
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[10px] text-zinc-500 font-bold truncate">{t.vibe}</p>
                 </div>
                 <span className="shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5" style={{ color: rarity.color, background: rarity.bg }}>

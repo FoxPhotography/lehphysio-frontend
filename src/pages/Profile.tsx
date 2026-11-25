@@ -459,7 +459,7 @@ export const Profile: React.FC<ProfileProps> = ({
       </div>
 
       {/* Username */}
-      <h2 className="text-2xl font-black text-white mt-4 mb-1 leading-snug pointer-events-none select-none" dir="auto">
+      <h2 className="text-2xl font-black text-white mt-4 mb-1 leading-snug text-center pointer-events-none select-none" dir="auto">
         <StreakName days={streak} override={cosmeticVisual(user.cosmetics?.name)}>{user.username}</StreakName>
       </h2>
       {streak > 0 && <StreakChip days={streak} size="sm" showName className="mb-2 pointer-events-none" />}

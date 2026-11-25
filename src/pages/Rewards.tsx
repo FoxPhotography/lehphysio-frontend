@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { setFramesCache } from '../utils/helpers';
 import { playSound } from '../utils/soundEngine';
+import { isFrameAllowedForUser } from '../utils/cosmetics';
 import { AnimatedNumber } from '../components/games/ui/AnimatedNumber';
 import { UserAvatar } from '../components/UserAvatar';
 import { API_BASE } from '../services/api';
@@ -169,12 +170,12 @@ export const Rewards: React.FC<RewardsProps> = ({
 
   // Switch frames right from the shop (tap again to remove)
   const switchFrame = (frameId: string) => {
-    playSound('tap');
     const next = String(equippedFrame) === String(frameId) ? 'none' : String(frameId);
+    playSound(next === '10' ? 'kitty_meow' : 'tap');
     setEquippedFrame(next);
     localStorage.setItem('eq_frame', next);
     handleUpdateProfile(undefined, undefined, next, undefined);
-    showToast(next === 'none' ? 'اتشال الفريم 👌' : 'الفريم اتفعّل ✨');
+    showToast(next === 'none' ? 'اتشال الفريم 👌' : next === '10' ? 'فريم كيتيز اتفعّل 🐾✨' : 'الفريم اتفعّل ✨');
   };
   const [buyingFrameId, setBuyingFrameId] = useState<string | null>(null);
   const [boxModalOpen, setBoxModalOpen] = useState(false);
@@ -505,7 +506,9 @@ export const Rewards: React.FC<RewardsProps> = ({
           })}
 
           {/* Dynamic frame items */}
-          {shopFrames.map((f: any) => {
+          {shopFrames
+            .filter((f: any) => isFrameAllowedForUser(f, user?.username))
+            .map((f: any) => {
             const owned = isFrameOwned(f._id);
             const canAfford = user && user.total_xp >= f.price;
             const isBuying = buyingFrameId === String(f._id);

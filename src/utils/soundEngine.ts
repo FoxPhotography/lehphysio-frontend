@@ -38,7 +38,11 @@ export type SoundEvent =
   | 'wordle_flip'
   | 'nerve_pulse'
   | 'match_connect'
-  | 'wheel_tick';
+  | 'wheel_tick'
+  | 'kitty_meow'
+  | 'kitty_purr'
+  | 'kitty_zoomies'
+  | 'kitty_paw';
 
 const STORAGE_KEY = 'lp:audio-settings';
 
@@ -57,6 +61,92 @@ const lastPlayedAt = new Map<string, number>();
 let audioCtx: AudioContext | null = null;
 let bgmTimer: number | null = null;
 let bgmStep = 0;
+
+const KITTY_SAMPLE_URLS = [
+  '/sounds/kitty-meow.mp3',
+  '/sounds/kitty-meow-2.mp3',
+  '/sounds/kitty-paw.mp3',
+  '/sounds/kitty-zoomies.mp3',
+  '/sounds/kitty-purr.mp3',
+] as const;
+
+const sampleCache = new Map<string, AudioBuffer>();
+const samplePending = new Map<string, Promise<AudioBuffer | null>>();
+let meowToggle = 0;
+let kittyPreloaded = false;
+
+function loadAudioSample(ctx: AudioContext, url: string): Promise<AudioBuffer | null> {
+  const cached = sampleCache.get(url);
+  if (cached) return Promise.resolve(cached);
+  const existing = samplePending.get(url);
+  if (existing) return existing;
+
+  const task = fetch(url)
+    .then((res) => (res.ok ? res.arrayBuffer() : Promise.reject(new Error(`HTTP ${res.status}`))))
+    .then((buf) => ctx.decodeAudioData(buf.slice(0)))
+    .then((decoded) => {
+      sampleCache.set(url, decoded);
+      return decoded;
+    })
+    .catch(() => null)
+    .finally(() => {
+      samplePending.delete(url);
+    });
+
+  samplePending.set(url, task);
+  return task;
+}
+
+function playBuffer(ctx: AudioContext, buffer: AudioBuffer, gainVal: number, playbackRate = 1.0): void {
+  const src = ctx.createBufferSource();
+  const gain = ctx.createGain();
+  src.buffer = buffer;
+  src.playbackRate.value = playbackRate;
+  gain.gain.value = Math.max(0.005, Math.min(1.0, gainVal));
+  src.connect(gain);
+  gain.connect(ctx.destination);
+  src.start();
+  src.onended = () => {
+    try {
+      src.disconnect();
+      gain.disconnect();
+    } catch {
+      // ignore disconnect errors
+    }
+  };
+}
+
+function warmKittySamples(ctx: AudioContext): void {
+  if (kittyPreloaded) return;
+  kittyPreloaded = true;
+  for (const url of KITTY_SAMPLE_URLS) {
+    if (!sampleCache.has(url) && !samplePending.has(url)) {
+      void loadAudioSample(ctx, url);
+    }
+  }
+}
+
+function playAudioSample(
+  ctx: AudioContext,
+  url: string,
+  gainVal: number,
+  playbackRate = 1.0,
+  fallback?: () => void
+): void {
+  warmKittySamples(ctx);
+  const cached = sampleCache.get(url);
+  if (cached) {
+    playBuffer(ctx, cached, gainVal, playbackRate);
+    return;
+  }
+  void loadAudioSample(ctx, url).then((decoded) => {
+    if (decoded) {
+      playBuffer(ctx, decoded, gainVal, playbackRate);
+    } else if (fallback) {
+      fallback();
+    }
+  });
+}
 
 function loadSettings(): AudioSettings {
   try {
@@ -136,6 +226,110 @@ function tone(
   };
 }
 
+function playKittyMeowVoice(ctx: AudioContext, v: number): void {
+  const now = ctx.currentTime;
+  const dur = 0.44;
+  const osc = ctx.createOscillator();
+  const f1 = ctx.createBiquadFilter();
+  const f2 = ctx.createBiquadFilter();
+  const mainGain = ctx.createGain();
+
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(540, now);
+  osc.frequency.exponentialRampToValueAtTime(930, now + 0.14);
+  osc.frequency.exponentialRampToValueAtTime(630, now + dur);
+
+  f1.type = 'bandpass';
+  f1.Q.value = 3.2;
+  f1.frequency.setValueAtTime(680, now);
+  f1.frequency.exponentialRampToValueAtTime(1180, now + 0.16);
+  f1.frequency.exponentialRampToValueAtTime(620, now + dur);
+
+  f2.type = 'bandpass';
+  f2.Q.value = 4.2;
+  f2.frequency.setValueAtTime(1550, now);
+  f2.frequency.exponentialRampToValueAtTime(2750, now + 0.16);
+  f2.frequency.exponentialRampToValueAtTime(1350, now + dur);
+
+  mainGain.gain.setValueAtTime(0.0001, now);
+  mainGain.gain.linearRampToValueAtTime(0.11 * v, now + 0.045);
+  mainGain.gain.exponentialRampToValueAtTime(0.075 * v, now + 0.24);
+  mainGain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+  osc.connect(f1);
+  osc.connect(f2);
+  f1.connect(mainGain);
+  f2.connect(mainGain);
+  mainGain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + dur + 0.03);
+  osc.onended = () => {
+    try {
+      osc.disconnect();
+      f1.disconnect();
+      f2.disconnect();
+      mainGain.disconnect();
+    } catch {
+      // ignore disconnect errors
+    }
+  };
+
+  // Yuumi magical fairy-bell shimmer layer
+  tone(ctx, 987.77, 1318.51, 0.03, 0.16, 0.045 * v, 'sine');
+  tone(ctx, 1318.51, 1567.98, 0.12, 0.18, 0.038 * v, 'sine');
+}
+
+function playKittyPurrVoice(ctx: AudioContext, v: number): void {
+  const now = ctx.currentTime;
+  const dur = 0.56;
+  const osc = ctx.createOscillator();
+  const lfo = ctx.createOscillator();
+  const lfoGain = ctx.createGain();
+  const lp = ctx.createBiquadFilter();
+  const amp = ctx.createGain();
+
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(52, now);
+  osc.frequency.linearRampToValueAtTime(48, now + dur);
+
+  lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(240, now);
+
+  lfo.type = 'sine';
+  lfo.frequency.setValueAtTime(26, now);
+  lfoGain.gain.setValueAtTime(0.045 * v, now);
+
+  amp.gain.setValueAtTime(0.0001, now);
+  amp.gain.linearRampToValueAtTime(0.08 * v, now + 0.08);
+  amp.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+  lfo.connect(lfoGain);
+  lfoGain.connect(amp.gain);
+  osc.connect(lp);
+  lp.connect(amp);
+  amp.connect(ctx.destination);
+
+  lfo.start(now);
+  osc.start(now);
+  lfo.stop(now + dur + 0.02);
+  osc.stop(now + dur + 0.02);
+  osc.onended = () => {
+    try {
+      osc.disconnect();
+      lfo.disconnect();
+      lfoGain.disconnect();
+      lp.disconnect();
+      amp.disconnect();
+    } catch {
+      // ignore disconnect errors
+    }
+  };
+
+  // Soft celestial bell ping
+  tone(ctx, 1046.5, 1318.51, 0.06, 0.22, 0.035 * v, 'sine');
+}
+
 export function getAudioSettings(): AudioSettings {
   return cachedSettings;
 }
@@ -167,6 +361,10 @@ const THROTTLE_MS: Partial<Record<SoundEvent, number>> = {
   wheel_tick: 28,
   osce_tick: 28,
   nav: 80,
+  kitty_meow: 280,
+  kitty_purr: 650,
+  kitty_zoomies: 400,
+  kitty_paw: 180,
 };
 
 export function playSound(event: SoundEvent): void {
@@ -287,6 +485,31 @@ export function playSound(event: SoundEvent): void {
       break;
     case 'wheel_tick':
       tone(ctx, 1120, 780, 0, 0.035, 0.048 * v, 'triangle');
+      break;
+    // Yuumi-style magical kitty voices (real recordings + subtle fairy sparkle)
+    case 'kitty_meow': {
+      const meowUrl = meowToggle % 2 === 0 ? '/sounds/kitty-meow.mp3' : '/sounds/kitty-meow-2.mp3';
+      meowToggle += 1;
+      const rate = 0.98 + Math.random() * 0.06;
+      playAudioSample(ctx, meowUrl, 0.72 * v, rate, () => playKittyMeowVoice(ctx, v));
+      tone(ctx, 1318.51, 1567.98, 0.04, 0.16, 0.024 * v, 'sine');
+      break;
+    }
+    case 'kitty_purr':
+      playAudioSample(ctx, '/sounds/kitty-purr.mp3', 0.85 * v, 1.0, () => playKittyPurrVoice(ctx, v));
+      tone(ctx, 1046.5, 1318.51, 0.06, 0.22, 0.02 * v, 'sine');
+      break;
+    case 'kitty_zoomies':
+      // Playful kitten welcome meow + Yuumi Zoomies harp arpeggio
+      playAudioSample(ctx, '/sounds/kitty-zoomies.mp3', 0.68 * v, 1.04);
+      [659.25, 830.61, 987.77, 1318.51, 1661.22].forEach((freq, i) => {
+        tone(ctx, freq, freq * 1.015, i * 0.055, 0.2, 0.075 * v, 'sine');
+      });
+      break;
+    case 'kitty_paw':
+      playAudioSample(ctx, '/sounds/kitty-paw.mp3', 0.55 * v, 1.02, () => {
+        tone(ctx, 783.99, 1174.66, 0, 0.1, 0.06 * v, 'sine');
+      });
       break;
   }
 }

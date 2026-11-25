@@ -143,9 +143,9 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
         <div className="relative z-10 mb-5">
           <UserAvatar username={data.username} avatarUrl={data.avatar_url} equippedFrame={data.equipped_frame} size={112} eager className="mt-2" />
         </div>
-        <div className="relative z-10 pt-1">
-          <h1 className="text-2xl font-black text-white leading-snug" dir="auto"><StreakName days={data.streak_count} override={cosmeticVisual(data.cosmetics?.name)}>{data.username}</StreakName></h1>
-          {data.batch && <p className="text-sm text-zinc-400 font-bold mt-0.5">{data.batch}</p>}
+        <div className="relative z-10 w-full flex flex-col items-center pt-1">
+          <h1 className="text-2xl font-black text-white leading-snug text-center" dir="auto"><StreakName days={data.streak_count} override={cosmeticVisual(data.cosmetics?.name)}>{data.username}</StreakName></h1>
+          {data.batch && <p className="text-sm text-zinc-400 font-bold mt-0.5 text-center">{data.batch}</p>}
           {(() => {
             const p = presenceCtx?.getUserPresence(data.username);
             if (!p) return null;
@@ -206,7 +206,7 @@ export const PublicProfile: React.FC<Props> = ({ setCurrentPage, showToast }) =>
 const Stat: React.FC<{ icon: React.ReactNode; value: string; label: string; accent?: string }> = ({ icon, value, label, accent }) => (
   <div className="glass-card p-3.5 flex flex-col items-center gap-1.5 text-center">
     {icon}
-    <span className="text-base font-black text-white" dir="auto">{value}</span>
+    <span className="text-base font-black text-white text-center" dir="auto">{value}</span>
     <span className="text-2xs font-bold" style={{ color: accent || '#71717a' }}>{label}</span>
   </div>
 );

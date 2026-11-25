@@ -74,6 +74,11 @@
   img:not([src]), img[src=""], img[src="null"], img[src="undefined"] {
     visibility: hidden !important;
   }
+
+  /* User-generated text (posts, comments, chat) picks its own direction; align to its start unless overridden by utilities */
+  [dir="auto"] {
+    text-align: start;
+  }
 }
 
 /* Specialized Animations & Utilities */
@@ -277,13 +282,6 @@ html, body {
   input, textarea, select {
     font-size: 16px !important;
   }
-}
-
-
-
-/* User-generated text (posts, comments, chat) picks its own direction; align to its start */
-[dir="auto"] {
-  text-align: start;
 }
 
 /* Notification panel: full screen on phones, anchored dropdown from md up */
